@@ -1,14 +1,19 @@
 # Open questions and gaps
 
-Found while building; the requirements doc is not edited from here.
+Undecided items only. Decisions go into `docs/requirements.md` (canonical, edited directly) and are removed from here.
 
-1. **Requirements filename.** CLAUDE.md points to `docs/requirements.md`, the file is `docs/Requirements-v0.1.md`. Fix the reference or rename the exported snapshot.
-2. **AES export (EX-6).** `fflate`, used for the ZIP, does not write AES-256 ZIPs. Needs a spike for an Expo Go compatible library (pure JS, e.g. zip.js with WebCrypto if Hermes supports it) or a fallback decision.
-3. **Test coverage gap for expo-sqlite.** SQLite adapter logic is tested against Node's built-in `node:sqlite` through the `SqlDb` seam, not against `expo-sqlite` itself. The thin wrapper (`expoSqliteDb.ts`) is only verified on a device. Transactions there are non-exclusive (same connection), which is fine for one user and one UI.
-4. **Replace import semantics (EX-10).** `replace` currently wipes all areas (including user-created ones not in the file), then restores the six predefined ones. Should user-created areas survive a replace?
-5. **Renaming predefined areas (SK-2).** SK-2 says users add, rename and archive "their own areas". The skeleton locks predefined names (they are localized by id) and lets them be archived. Confirm that is intended.
-6. **Merge conflicts by id.** Merge skips an incoming row whose id already exists, even if its content differs (for example an edited meal). There is no edit feature yet; revisit when entries become editable (maybe compare a modified-at stamp).
-7. **Range semantics.** Export ranges are inclusive on both ends in UTC. The doctor-facing "date range" is probably local calendar days; the UI will need to convert local day boundaries to UTC bounds.
-8. **Large imports.** `data.json` is capped at 50 MB when unzipping; photos (SK-4) will need a different limit and streaming.
-9. **Polish strings are a first draft** and should be reviewed by a native speaker (the project owner).
-10. **Unused template dependencies.** `create-expo-app` pulled in reanimated, gesture-handler, expo-image, expo-glass-effect, `@expo/ui` etc. Not used by the skeleton; consider pruning before a standalone build.
+## Open
+
+1. **AES export (EX-6).** `fflate`, used for the ZIP, does not write AES-256 ZIPs. Decision: run a spike for an Expo Go compatible library (pure JS, e.g. zip.js with WebCrypto if Hermes supports it) before building EX-6.
+2. **expo-sqlite wrapper is device-verified only.** Storage logic is tested through the `SqlDb` seam on Node's built-in `node:sqlite`; the ~20-line wrapper `app/src/adapters/storage/expoSqliteDb.ts` is only exercised on a phone. Accepted for now. Optional later: an in-app self-test that runs the storage contract against a throwaway database.
+3. **Polish strings are a first draft** and need review by the project owner.
+4. **Unused template dependencies** (reanimated, gesture-handler, expo-image, expo-glass-effect, `@expo/ui`, ...). Prune before a standalone build.
+
+## Decided, code not yet changed
+
+These are in the requirements already; the skeleton still behaves the old way.
+
+- **Records vs settings in export/import** (EX-1, EX-10): separate sections and a choice of records, settings or both; replace touches only the chosen parts. Today `replace` wipes areas too.
+- **`name_override` for predefined areas** (SK-2): today predefined areas cannot be renamed.
+- **Date range as local days to UTC** (EX-11 note): the core accepts UTC bounds; the UI conversion does not exist yet.
+- **Newest-wins merge with tombstones** (EX-12, Later): needed only once entries are editable or deletable. Adds modified timestamps and a schema version bump at that point.

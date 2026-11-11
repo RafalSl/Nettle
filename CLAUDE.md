@@ -4,8 +4,7 @@ Private, single-user iPhone diary: logs food, other intake and skin/health
 status. Local-only storage, on-demand LLM analysis, doctor-ready export.
 Expo (React Native) + TypeScript. Not for the App Store.
 
-Requirements: @docs/requirements.md (exported snapshot of the canonical doc;
-do not edit it here).
+Requirements: @docs/requirements.md.
 
 ## Architecture rules
 - Ports and adapters: core logic depends on small interfaces, with one adapter
@@ -35,8 +34,9 @@ do not edit it here).
 - Prefer the simplest solution that meets the requirement; state trade-offs.
 - Check current docs (Expo SDK, Expo Go, library behavior) before relying on
   memory.
-- If the code reveals a gap or conflict in the requirements, add it to
-  docs/open-questions.md instead of editing the requirements.
+- docs/requirements.md is canonical and lives in this repo: edit it directly
+  when a decision is made, and note the change in its Changelog. Use
+  docs/open-questions.md only for undecided items; move them out once resolved.
 - I'm an experienced backend developer (Go), new to mobile: explain Expo and
   iOS specifics briefly, with backend analogies.
 

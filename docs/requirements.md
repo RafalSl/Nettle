@@ -1,4 +1,4 @@
-# Food Allergy & Skin Condition Diary: Requirements v0.1
+# Food Allergy & Skin Condition Diary: Requirements v0.2
 
 Nov 11, 2026 · @Rafal
 
@@ -38,7 +38,7 @@ Skin status is logged per body area, with several separate scores, so the analys
 | ID | Requirement | Priority |
 | --- | --- | --- |
 | SK-1 | Predefined skin areas: chin, neck, ears (inside), behind the ears, sternum, intimate area | Must |
-| SK-2 | The user can add, rename and archive their own areas | Must |
+| SK-2 | The user can add, rename and archive areas. Predefined areas keep a stable id and show a localized name; renaming one stores a `name_override` that takes precedence until cleared | Must |
 | SK-3 | Per area and entry, separate 0–10 scores for severity, itch, pain, dryness and scaling | Must |
 | SK-4 | Dated photos attached to an area entry, several per entry | Must |
 | SK-5 | Each photo has a sensitive flag; areas can be sensitive by default (intimate area is) and the user can override per photo | Must |
@@ -75,7 +75,7 @@ Export is the backup and the way to share data with a doctor. It produces one ZI
 
 | ID | Requirement | Priority |
 | --- | --- | --- |
-| EX-1 | `data.json`: full raw data, with a `schema_version` field, stable entry IDs, and UTC timestamps plus local timezone. It is a snapshot of the chosen range, not the live store | Must |
+| EX-1 | `data.json`: full raw data, with a `schema_version` field, stable entry IDs, and UTC timestamps plus local timezone. It is a snapshot of the chosen range, not the live store. Records (meals, health and skin entries) and settings (skin areas) are separate sections, and the user chooses to export records, settings or both | Must |
 | EX-2 | `photos/` folder with predictable file names (for example `2026-11-11_chin_01.jpg`), referenced from `data.json` by relative path | Must |
 | EX-3 | `report.pdf`: readable summary for a doctor with a flare timeline, per-area trends, photo comparisons and the intake log, in a selectable language (English or Polish) | Must |
 | EX-4 | LLM analyses appear in a separate, clearly labeled section of the PDF as AI-generated, tentative hypotheses | Must |
@@ -84,8 +84,11 @@ Export is the backup and the way to share data with a doctor. It produces one ZI
 | EX-7 | Photo selection for export: all, none, non-sensitive only, or a custom selection by area, date range or single photo; default excludes sensitive photos | Must |
 | EX-8 | The selection applies to everything in the bundle, including photos shown in the PDF | Must |
 | EX-9 | Delivery through the iOS share sheet (Files, AirDrop, email) | Must |
-| EX-10 | Import of a `data.json` export (the ZIP) to restore or migrate: Expo Go to a standalone build, or an old phone to a new one. Import checks schema\_version, shows entry counts before applying, offers merge or replace, and skips duplicates by entry ID. The API key is not part of an export, so it is re-entered after a migration | Must |
+| EX-10 | Import of a `data.json` export (the ZIP) to restore or migrate: Expo Go to a standalone build, or an old phone to a new one. Import checks schema\_version, shows entry counts before applying, offers merge or replace, and skips duplicates by entry ID. The user chooses what to import (records, settings or both) when the file contains both; replace affects only the chosen parts, so replacing records leaves areas untouched. The API key is not part of an export, so it is re-entered after a migration. Rejects a `data.json` over 50 MB (text only; photos are not subject to this limit) | Must |
 | EX-11 | Export “since last export” as an alternative to a date range, to keep files small over months of logging | Should |
+| EX-12 | Merge conflict handling: once entries can be edited or deleted, each record gets a modified timestamp and deletions leave a tombstone, and merge keeps the newest version. Until then, merge skips ids that already exist | Later |
+
+Date ranges are chosen as local calendar days and converted to UTC bounds using the device's current timezone at export time (inclusive at both ends). A later setting may change this.
 
 The API key is never included in any export. The export screen warns that photos may be sensitive, and that a forgotten ZIP password cannot be recovered. Some tools do not open AES-encrypted ZIPs natively, so the recipient may need a tool such as 7-Zip.
 
@@ -168,3 +171,7 @@ No decision blocks v0.1; the open items below are checks to run during developme
 
 - [ ] Barcode data: is Open Food Facts coverage of Polish products good enough in practice? Polish codes are present, but the data is crowd-sourced, so it will be tested in the app on products actually bought. The lookup sits behind an interface, so the source can be swapped.
 - [ ] Before starting the project, check which Expo SDK the current App Store version of Expo Go supports, and create the project on that SDK.
+
+## Changelog
+
+- **v0.2 (2026-11-12):** this file is now canonical in the repo (was an exported snapshot). Export/import split into records and settings (EX-1, EX-10); SK-2 gets `name_override` for predefined areas; EX-10 states the 50 MB `data.json` limit; EX-12 (newest-wins merge) added as Later; export date ranges are local days converted to UTC.

@@ -41,9 +41,20 @@ describe.each(repos)('export/import round trip (%s)', (_name, make) => {
     const deps = makeDeps(target);
     const parsed = await previewImport(deps, zip);
     expect(parsed.preview.incoming).toEqual({ meals: 2, skinAreas: 7, skinEntries: 2 });
-    await applyImport(deps, parsed, 'merge');
+    // Replace, not merge: the empty store already holds the six predefined areas, and merge keeps local rows.
+    await applyImport(deps, parsed, 'replace');
 
     expect(await target.snapshot()).toEqual(await source.snapshot());
+  });
+
+  it('EX-10 merge keeps local area settings, so a renamed predefined area in the file does not override', async () => {
+    const source = await seeded(make);
+    const zip = await exportBundle(makeDeps(source));
+    const target = await make();
+    const deps = makeDeps(target);
+    await applyImport(deps, await previewImport(deps, zip), 'merge');
+    const chin = (await target.listAreas()).find((a) => a.id === 'area-chin');
+    expect(chin?.nameOverride).toBeNull();
   });
 
   it('EX-10 preview reports duplicates, and merge skips them', async () => {

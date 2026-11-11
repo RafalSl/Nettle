@@ -4,7 +4,7 @@ Undecided items only. Decisions go into `docs/requirements.md` (canonical, edite
 
 ## Open
 
-1. **AES export (EX-6): spike soon.** `fflate`, used for the ZIP, does not write AES-256 ZIPs. Run a spike for an Expo Go compatible library (pure JS, e.g. zip.js with WebCrypto if Hermes supports it) before building EX-6.
+1. **AES export (EX-6): speed on the phone.** The spike works (pure JS WinZip AES-256, verified against 7-Zip, see `docs/spikes/aes-zip.md`). Unknown: how slow Hermes is for photo-sized exports. Needs a device benchmark before building EX-6.
 2. **Polish strings: review at the end of the project.** First draft lives in `app/src/i18n/pl.json` (English in `en.json`).
 3. **Unused template dependencies: prune when moving to a standalone build** (reanimated, gesture-handler, expo-image, expo-glass-effect, `@expo/ui`, ...). No effect in Expo Go.
 

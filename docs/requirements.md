@@ -90,7 +90,7 @@ Export is the backup and the way to share data with a doctor. It produces one ZI
 
 Date ranges are chosen as local calendar days and converted to UTC bounds using the device's current timezone at export time (inclusive at both ends). A later setting may change this.
 
-The API key is never included in any export. The export screen warns that photos may be sensitive, and that a forgotten ZIP password cannot be recovered. Some tools do not open AES-encrypted ZIPs natively, so the recipient may need a tool such as 7-Zip.
+The API key is never included in any export. The export screen warns that photos may be sensitive, and that a forgotten ZIP password cannot be recovered. Some tools do not open AES-encrypted ZIPs natively, so the recipient may need a tool such as 7-Zip. In an encrypted ZIP the file names, sizes and dates stay readable (a limitation of the ZIP format), so photo file names must not reveal more than necessary, and the password key derivation is weak by design (1000 PBKDF2 rounds), so the export screen asks for a long passphrase.
 
 ## Data, privacy and security
 

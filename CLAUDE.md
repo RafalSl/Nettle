@@ -40,5 +40,23 @@ do not edit it here).
 - I'm an experienced backend developer (Go), new to mobile: explain Expo and
   iOS specifics briefly, with backend analogies.
 
+- Keep a log of work in docs/work-log.md: add a short dated entry whenever a
+  task or meaningful step finishes (what, why, what is next). No personal data.
+- Branching: committing straight to main is fine while the project is young;
+  switch to feature branches (one per task) once there is a working baseline.
+
 ## Commands
-(fill in after scaffolding: install, start, typecheck, lint, test)
+Run from `app/` (Node >= 22.13, installed via fnm):
+- install: `npm install`
+- add an Expo library: `npx expo install <pkg>` (never plain `npm i` for Expo modules)
+- start dev server: `npx expo start` (add `--tunnel` if Wi-Fi blocks it), open in Expo Go
+- typecheck: `npm run typecheck`
+- lint: `npm run lint` (also enforces that `src/core` imports no Expo/RN/adapters)
+- test: `npm test`
+- all three: `npm run check`
+
+## Layout
+- `app/src/core`: pure TS (model, ports, usecases, export). No platform imports.
+- `app/src/adapters`: one folder per external concern (storage, keystore, share).
+- `app/src/app`: expo-router screens; `app/src/services.tsx` is the composition root.
+- `app/test`: tests, fakes (`test/fakes`) and the storage contract (`test/contract`).

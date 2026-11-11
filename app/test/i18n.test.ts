@@ -20,7 +20,7 @@ describe('i18n (NF-6)', () => {
   it('every error code has a translation', () => {
     const codes: ErrorCode[] = [
       'empty_description', 'invalid_score', 'unknown_area', 'area_archived', 'empty_area_name',
-      'predefined_area_locked', 'import_corrupt_zip', 'import_missing_data', 'import_invalid_json',
+      'import_corrupt_zip', 'import_missing_data', 'import_invalid_json',
       'import_unsupported_version', 'import_invalid_data',
     ];
     for (const c of codes) expect(en.errors).toHaveProperty([c]);

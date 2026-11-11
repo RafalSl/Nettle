@@ -62,7 +62,6 @@
     "unknown_area": "That area does not exist.",
     "area_archived": "That area is archived.",
     "empty_area_name": "Enter an area name.",
-    "predefined_area_locked": "Built-in areas cannot be renamed.",
     "import_corrupt_zip": "This file is not a valid ZIP.",
     "import_missing_data": "The ZIP does not contain data.json.",
     "import_invalid_json": "data.json is not valid JSON.",

@@ -22,6 +22,7 @@ export interface DataJson {
     predefined: boolean;
     archived: boolean;
     sensitive_default: boolean;
+    name_override: string | null;
   }[];
   skin_entries: {
     id: string;
@@ -56,6 +57,7 @@ export function toDataJson(
       predefined: a.predefined,
       archived: a.archived,
       sensitive_default: a.sensitiveDefault,
+      name_override: a.nameOverride,
     })),
     skin_entries: snap.skinEntries.map((e) => ({
       id: e.id,

@@ -14,4 +14,5 @@ export const PREDEFINED_AREAS: readonly SkinArea[] = [
   predefined: true,
   archived: false,
   sensitiveDefault: sensitiveDefault as boolean,
+  nameOverride: null,
 }));

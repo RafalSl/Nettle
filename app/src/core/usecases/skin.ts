@@ -46,6 +46,7 @@ export async function addSkinArea(deps: Deps, name: string): Promise<SkinArea> {
     predefined: false,
     archived: false,
     sensitiveDefault: false,
+    nameOverride: null,
   };
   await deps.repo.upsertArea(area);
   return area;
@@ -57,13 +58,20 @@ async function findArea(deps: Deps, id: string): Promise<SkinArea> {
   return area;
 }
 
-/** Predefined areas keep their localized names, so only user areas can be renamed. */
+/** SK-2: user areas change `name`; predefined areas keep their id and localized default and get a `nameOverride`. */
 export async function renameSkinArea(deps: Deps, id: string, name: string): Promise<void> {
   const trimmed = name.trim();
   if (!trimmed) throw new NettleError('empty_area_name');
   const area = await findArea(deps, id);
-  if (area.predefined) throw new NettleError('predefined_area_locked', id);
-  await deps.repo.upsertArea({ ...area, name: trimmed });
+  await deps.repo.upsertArea(
+    area.predefined ? { ...area, nameOverride: trimmed } : { ...area, name: trimmed },
+  );
+}
+
+/** Back to the localized default name for a predefined area. */
+export async function resetSkinAreaName(deps: Deps, id: string): Promise<void> {
+  const area = await findArea(deps, id);
+  await deps.repo.upsertArea({ ...area, nameOverride: null });
 }
 
 export async function archiveSkinArea(deps: Deps, id: string, archived = true): Promise<void> {

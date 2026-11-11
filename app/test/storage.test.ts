@@ -24,6 +24,22 @@ describe('sqlite migrations', () => {
     expect(v?.user_version).toBe(MIGRATIONS.length);
   });
 
+  it('NF-3 upgrades an existing version-1 database in place and keeps its data', async () => {
+    const db = createNodeSqliteDb();
+    await db.exec('PRAGMA foreign_keys = ON');
+    await db.exec(MIGRATIONS[0]!);
+    await db.exec('PRAGMA user_version = 1');
+    await db.run(
+      `INSERT INTO skin_area (id, name, predefined, archived, sensitive_default) VALUES ('area-chin', 'Chin', 1, 0, 0)`,
+    );
+    await db.run(`INSERT INTO meal (id, ts_utc, tz, description) VALUES ('m1', '2026-01-01T08:00:00.000Z', 'UTC', 'Synthetic')`);
+    const repo = await SqliteRepo.open(db);
+    expect(await repo.listMeals()).toHaveLength(1);
+    expect((await repo.listAreas()).find((a) => a.id === 'area-chin')?.nameOverride).toBeNull();
+    const [v] = await db.all<{ user_version: number }>('PRAGMA user_version');
+    expect(v?.user_version).toBe(MIGRATIONS.length);
+  });
+
   it('SK-3 enforces 0-10 scores in the database itself', async () => {
     const db = createNodeSqliteDb();
     await SqliteRepo.open(db);

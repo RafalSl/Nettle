@@ -17,7 +17,12 @@ export function errorMessage(e: unknown): string {
   return t(e instanceof NettleError ? `errors.${e.code}` : 'errors.generic');
 }
 
-/** Predefined areas are localized by id; user-created areas show their own name. */
-export function areaLabel(area: { id: string; name: string; predefined: boolean }): string {
-  return area.predefined ? t(`areas.${area.id}`) : area.name;
+/** SK-2: the user's override wins; otherwise predefined areas are localized by id and user areas show their name. */
+export function areaLabel(area: {
+  id: string;
+  name: string;
+  predefined: boolean;
+  nameOverride: string | null;
+}): string {
+  return area.nameOverride ?? (area.predefined ? t(`areas.${area.id}`) : area.name);
 }

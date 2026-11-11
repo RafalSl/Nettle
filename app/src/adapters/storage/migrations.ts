@@ -38,6 +38,8 @@ export const MIGRATIONS: string[] = [
   );
   CREATE INDEX skin_entry_ts ON skin_entry (ts_utc);
   `,
+  // SK-2: name_override for predefined areas.
+  `ALTER TABLE skin_area ADD COLUMN name_override TEXT;`,
 ];
 
 export async function migrate(db: SqlDb): Promise<void> {

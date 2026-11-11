@@ -15,7 +15,9 @@ const repos: [string, () => Promise<StorageRepository>][] = [
 
 async function seeded(make: () => Promise<StorageRepository>) {
   const repo = await make();
-  await repo.upsertArea({ id: 'a-custom', name: 'Synthetic elbow', predefined: false, archived: false, sensitiveDefault: false });
+  await repo.upsertArea({ id: 'a-custom', name: 'Synthetic elbow', predefined: false, archived: false, sensitiveDefault: false, nameOverride: null });
+  const chin = (await repo.listAreas()).find((a) => a.id === 'area-chin')!;
+  await repo.upsertArea({ ...chin, nameOverride: 'Synthetic jaw' }); // SK-2 override must survive the round trip
   await repo.addMeal(syntheticMeal('m1', '2026-01-10T08:00:00.000Z'));
   await repo.addMeal(syntheticMeal('m2', '2026-01-12T08:00:00.000Z', []));
   await repo.addSkinEntry(syntheticEntry('e1', '2026-01-10T09:00:00.000Z', 'area-intimate'));

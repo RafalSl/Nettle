@@ -5,7 +5,6 @@ export type ErrorCode =
   | 'unknown_area'
   | 'area_archived'
   | 'empty_area_name'
-  | 'predefined_area_locked'
   | 'import_corrupt_zip'
   | 'import_missing_data'
   | 'import_invalid_json'

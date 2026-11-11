@@ -31,3 +31,7 @@ Newest entry last. One short entry per working session or meaningful step: what 
 
 ## 2026-11-12: branching policy
 - Skeleton merged to main (fast-forward, b38eba1). Worktrees are no longer used; development happens in the main checkout on `dev/<task>` branches, merged to main when checks pass (CLAUDE.md updated).
+
+## 2026-11-12: SK-2 name_override (branch dev/area-name-override)
+- Predefined areas can be renamed through `nameOverride` (stored in new column `name_override`, migration 2, exported as `name_override`). Label order: override, then localized default, then the user area's own name. Removed the `predefined_area_locked` error. Tested: use cases, both repos, round trip, and in-place upgrade of a version-1 database.
+- No UI to rename areas yet (core only). Next: records/settings export split.

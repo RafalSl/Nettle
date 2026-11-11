@@ -50,6 +50,7 @@ export function parseDataJson(raw: unknown): Snapshot {
       predefined: bool(o, 'predefined', w),
       archived: bool(o, 'archived', w),
       sensitiveDefault: bool(o, 'sensitive_default', w),
+      nameOverride: nullableText(o, 'name_override', w),
     };
   });
   const meals: Meal[] = list(raw, 'meals').map((o, i) => {

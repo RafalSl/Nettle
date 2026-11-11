@@ -1,0 +1,72 @@
+{
+  "tabs": { "meal": "Meal", "skin": "Skin", "data": "Data" },
+  "common": {
+    "save": "Save",
+    "saved": "Saved",
+    "cancel": "Cancel",
+    "time": "Time",
+    "note": "Note (optional)",
+    "nothingYet": "Nothing logged yet",
+    "recent": "Recent",
+    "increase": "Increase",
+    "decrease": "Decrease",
+    "loadingFailed": "The app could not open its local database."
+  },
+  "meal": {
+    "title": "Log a meal",
+    "description": "Meal description",
+    "ingredients": "Ingredients",
+    "ingredientPlaceholder": "Ingredient",
+    "addIngredient": "Add ingredient",
+    "removeIngredient": "Remove ingredient"
+  },
+  "skin": {
+    "title": "Log skin status",
+    "area": "Area",
+    "scores": {
+      "severity": "Severity",
+      "itch": "Itch",
+      "pain": "Pain",
+      "dryness": "Dryness",
+      "scaling": "Scaling"
+    },
+    "scale": "0 = none, 10 = worst"
+  },
+  "areas": {
+    "area-chin": "Chin",
+    "area-neck": "Neck",
+    "area-ears-inside": "Ears (inside)",
+    "area-behind-ears": "Behind the ears",
+    "area-sternum": "Sternum",
+    "area-intimate": "Intimate area"
+  },
+  "data": {
+    "exportTitle": "Export",
+    "exportHint": "Creates a ZIP with data.json. Share it to Files, AirDrop or email. Anyone who opens the file can read your diary.",
+    "exportButton": "Export all data",
+    "importTitle": "Import",
+    "importHint": "Restore or migrate from an exported ZIP. The API key is not part of an export; enter it again after migrating.",
+    "importButton": "Choose ZIP to import",
+    "previewTitle": "File contents",
+    "preview": "{{meals}} meals, {{entries}} skin entries, {{areas}} areas. Merge would add {{newMeals}} meals, {{newEntries}} entries and {{newAreas}} areas; the rest already exist.",
+    "merge": "Merge (skip duplicates)",
+    "replace": "Replace all data",
+    "replaceConfirmTitle": "Replace all data?",
+    "replaceConfirmBody": "Everything currently in the app will be deleted and cannot be recovered. Export first if you are unsure.",
+    "imported": "Import complete"
+  },
+  "errors": {
+    "generic": "Something went wrong.",
+    "empty_description": "Enter a description.",
+    "invalid_score": "Scores must be whole numbers from 0 to 10.",
+    "unknown_area": "That area does not exist.",
+    "area_archived": "That area is archived.",
+    "empty_area_name": "Enter an area name.",
+    "predefined_area_locked": "Built-in areas cannot be renamed.",
+    "import_corrupt_zip": "This file is not a valid ZIP.",
+    "import_missing_data": "The ZIP does not contain data.json.",
+    "import_invalid_json": "data.json is not valid JSON.",
+    "import_unsupported_version": "This export was made by a newer version of the app.",
+    "import_invalid_data": "data.json has invalid or inconsistent content."
+  }
+}

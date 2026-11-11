@@ -1,0 +1,72 @@
+{
+  "tabs": { "meal": "Posiłek", "skin": "Skóra", "data": "Dane" },
+  "common": {
+    "save": "Zapisz",
+    "saved": "Zapisano",
+    "cancel": "Anuluj",
+    "time": "Czas",
+    "note": "Notatka (opcjonalnie)",
+    "nothingYet": "Brak wpisów",
+    "recent": "Ostatnie",
+    "increase": "Zwiększ",
+    "decrease": "Zmniejsz",
+    "loadingFailed": "Aplikacja nie mogła otworzyć lokalnej bazy danych."
+  },
+  "meal": {
+    "title": "Dodaj posiłek",
+    "description": "Opis posiłku",
+    "ingredients": "Składniki",
+    "ingredientPlaceholder": "Składnik",
+    "addIngredient": "Dodaj składnik",
+    "removeIngredient": "Usuń składnik"
+  },
+  "skin": {
+    "title": "Dodaj stan skóry",
+    "area": "Obszar",
+    "scores": {
+      "severity": "Nasilenie",
+      "itch": "Swędzenie",
+      "pain": "Ból",
+      "dryness": "Suchość",
+      "scaling": "Łuszczenie"
+    },
+    "scale": "0 = brak, 10 = najgorzej"
+  },
+  "areas": {
+    "area-chin": "Broda",
+    "area-neck": "Szyja",
+    "area-ears-inside": "Uszy (wewnątrz)",
+    "area-behind-ears": "Za uszami",
+    "area-sternum": "Mostek",
+    "area-intimate": "Okolice intymne"
+  },
+  "data": {
+    "exportTitle": "Eksport",
+    "exportHint": "Tworzy plik ZIP z data.json. Udostępnij go do Plików, AirDrop lub e-mail. Każdy, kto otworzy plik, przeczyta Twój dziennik.",
+    "exportButton": "Eksportuj wszystkie dane",
+    "importTitle": "Import",
+    "importHint": "Przywróć dane lub przenieś je z wyeksportowanego pliku ZIP. Klucz API nie jest częścią eksportu; po migracji wprowadź go ponownie.",
+    "importButton": "Wybierz plik ZIP do importu",
+    "previewTitle": "Zawartość pliku",
+    "preview": "Posiłki: {{meals}}, wpisy o skórze: {{entries}}, obszary: {{areas}}. Scalenie doda: posiłki {{newMeals}}, wpisy {{newEntries}}, obszary {{newAreas}}; reszta już istnieje.",
+    "merge": "Scal (pomiń duplikaty)",
+    "replace": "Zastąp wszystkie dane",
+    "replaceConfirmTitle": "Zastąpić wszystkie dane?",
+    "replaceConfirmBody": "Wszystko, co jest teraz w aplikacji, zostanie usunięte bez możliwości odzyskania. Jeśli nie masz pewności, najpierw wyeksportuj dane.",
+    "imported": "Import zakończony"
+  },
+  "errors": {
+    "generic": "Coś poszło nie tak.",
+    "empty_description": "Wpisz opis.",
+    "invalid_score": "Oceny muszą być liczbami całkowitymi od 0 do 10.",
+    "unknown_area": "Taki obszar nie istnieje.",
+    "area_archived": "Ten obszar jest zarchiwizowany.",
+    "empty_area_name": "Wpisz nazwę obszaru.",
+    "predefined_area_locked": "Wbudowanych obszarów nie można zmieniać.",
+    "import_corrupt_zip": "To nie jest prawidłowy plik ZIP.",
+    "import_missing_data": "Plik ZIP nie zawiera data.json.",
+    "import_invalid_json": "data.json nie jest prawidłowym plikiem JSON.",
+    "import_unsupported_version": "Ten eksport pochodzi z nowszej wersji aplikacji.",
+    "import_invalid_data": "data.json ma nieprawidłową lub niespójną zawartość."
+  }
+}

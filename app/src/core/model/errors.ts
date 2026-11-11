@@ -9,7 +9,9 @@ export type ErrorCode =
   | 'import_missing_data'
   | 'import_invalid_json'
   | 'import_unsupported_version'
-  | 'import_invalid_data';
+  | 'import_invalid_data'
+  | 'import_unknown_area'
+  | 'nothing_selected';
 
 export class NettleError extends Error {
   constructor(

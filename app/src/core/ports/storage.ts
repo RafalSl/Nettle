@@ -1,4 +1,4 @@
-import type { DateRange, Meal, SkinArea, SkinEntry, Snapshot } from '../model/types';
+import type { DateRange, Meal, Payload, SkinArea, SkinEntry, Snapshot } from '../model/types';
 
 export type ImportMode = 'merge' | 'replace';
 
@@ -27,8 +27,11 @@ export interface StorageRepository {
   snapshot(range?: DateRange): Promise<Snapshot>;
   existingIds(): Promise<ExistingIds>;
   /**
-   * Atomic. merge: insert rows whose id is not present, skip the rest.
-   * replace: delete everything, insert the snapshot, then restore predefined areas.
+   * Atomic; only the parts present in the payload are touched (EX-10).
+   * merge: insert rows whose id is not present, skip the rest.
+   * replace records: delete all meals and skin entries, insert the payload's.
+   * replace settings: overwrite areas by id, delete user areas that are neither in the payload
+   * nor used by a remaining entry, keep predefined areas.
    */
-  importSnapshot(snapshot: Snapshot, mode: ImportMode): Promise<void>;
+  importData(payload: Payload, mode: ImportMode): Promise<void>;
 }

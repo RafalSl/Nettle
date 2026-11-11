@@ -1,5 +1,5 @@
 import { PREDEFINED_AREAS } from '@/core/model/areas';
-import type { DateRange, Meal, SkinArea, SkinEntry, Snapshot } from '@/core/model/types';
+import type { DateRange, Meal, Payload, SkinArea, SkinEntry, Snapshot } from '@/core/model/types';
 import type { ExistingIds, ImportMode, StorageRepository } from '@/core/ports/storage';
 import { migrate } from './migrations';
 import type { SqlDb, SqlValue } from './sqlDb';
@@ -203,14 +203,32 @@ export class SqliteRepo implements StorageRepository {
     };
   }
 
-  async importSnapshot(s: Snapshot, mode: ImportMode) {
+  async importData(payload: Payload, mode: ImportMode) {
+    const { records, settings } = payload;
     await this.db.transaction(async () => {
-      if (mode === 'replace') {
-        await this.db.exec('DELETE FROM skin_entry; DELETE FROM meal_ingredient; DELETE FROM meal; DELETE FROM skin_area;');
+      if (records && mode === 'replace') {
+        await this.db.exec('DELETE FROM skin_entry; DELETE FROM meal_ingredient; DELETE FROM meal;');
       }
-      for (const a of s.skinAreas) await this.insertArea(a, true);
-      for (const m of s.meals) await this.insertMeal(m, true);
-      for (const e of s.skinEntries) await this.insertEntry(e, true);
+      if (settings) {
+        for (const a of settings.skinAreas) {
+          if (mode === 'replace') await this.upsertArea(a);
+          else await this.insertArea(a, true);
+        }
+      }
+      if (records) {
+        for (const m of records.meals) await this.insertMeal(m, true);
+        for (const e of records.skinEntries) await this.insertEntry(e, true);
+      }
+      if (settings && mode === 'replace') {
+        // Drop user areas the file does not have, unless an entry still uses them. Predefined areas stay.
+        const keep = new Set(settings.skinAreas.map((a) => a.id));
+        const used = await this.db.all<{ area_id: string }>('SELECT DISTINCT area_id FROM skin_entry');
+        used.forEach((r) => keep.add(r.area_id));
+        const current = await this.db.all<{ id: string }>('SELECT id FROM skin_area WHERE predefined = 0');
+        for (const { id } of current) {
+          if (!keep.has(id)) await this.db.run('DELETE FROM skin_area WHERE id = ?', [id]);
+        }
+      }
       await this.seedAreas();
     });
   }

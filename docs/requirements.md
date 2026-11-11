@@ -84,7 +84,7 @@ Export is the backup and the way to share data with a doctor. It produces one ZI
 | EX-7 | Photo selection for export: all, none, non-sensitive only, or a custom selection by area, date range or single photo; default excludes sensitive photos | Must |
 | EX-8 | The selection applies to everything in the bundle, including photos shown in the PDF | Must |
 | EX-9 | Delivery through the iOS share sheet (Files, AirDrop, email) | Must |
-| EX-10 | Import of a `data.json` export (the ZIP) to restore or migrate: Expo Go to a standalone build, or an old phone to a new one. Import checks schema\_version, shows entry counts before applying, offers merge or replace, and skips duplicates by entry ID. The user chooses what to import (records, settings or both) when the file contains both; replace affects only the chosen parts, so replacing records leaves areas untouched. The API key is not part of an export, so it is re-entered after a migration. Rejects a `data.json` over 50 MB (text only; photos are not subject to this limit) | Must |
+| EX-10 | Import of a `data.json` export (the ZIP) to restore or migrate: Expo Go to a standalone build, or an old phone to a new one. Import checks schema\_version, shows entry counts before applying, offers merge or replace, and skips duplicates by entry ID. The user chooses what to import (records, settings or both) when the file contains both; replace affects only the chosen parts: replacing records leaves areas untouched; replacing settings overwrites areas by id and removes user areas that are not in the file and not used by any remaining entry (predefined areas always stay). Merge keeps local values of areas that already exist. The API key is not part of an export, so it is re-entered after a migration. Rejects a `data.json` over 50 MB (text only; photos are not subject to this limit) | Must |
 | EX-11 | Export “since last export” as an alternative to a date range, to keep files small over months of logging | Should |
 | EX-12 | Merge conflict handling: once entries can be edited or deleted, each record gets a modified timestamp and deletions leave a tombstone, and merge keeps the newest version. Until then, merge skips ids that already exist | Later |
 
@@ -174,4 +174,5 @@ No decision blocks v0.1; the open items below are checks to run during developme
 
 ## Changelog
 
+- **v0.2.1 (2026-11-12):** EX-10 states the replace/merge rules per part.
 - **v0.2 (2026-11-12):** this file is now canonical in the repo (was an exported snapshot). Export/import split into records and settings (EX-1, EX-10); SK-2 gets `name_override` for predefined areas; EX-10 states the 50 MB `data.json` limit; EX-12 (newest-wins merge) added as Later; export date ranges are local days converted to UTC.

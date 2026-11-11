@@ -1,5 +1,9 @@
 {
-  "tabs": { "meal": "Meal", "skin": "Skin", "data": "Data" },
+  "tabs": {
+    "meal": "Meal",
+    "skin": "Skin",
+    "data": "Data"
+  },
   "common": {
     "save": "Save",
     "saved": "Saved",
@@ -43,17 +47,21 @@
   "data": {
     "exportTitle": "Export",
     "exportHint": "Creates a ZIP with data.json. Share it to Files, AirDrop or email. Anyone who opens the file can read your diary.",
-    "exportButton": "Export all data",
     "importTitle": "Import",
     "importHint": "Restore or migrate from an exported ZIP. The API key is not part of an export; enter it again after migrating.",
     "importButton": "Choose ZIP to import",
     "previewTitle": "File contents",
-    "preview": "{{meals}} meals, {{entries}} skin entries, {{areas}} areas. Merge would add {{newMeals}} meals, {{newEntries}} entries and {{newAreas}} areas; the rest already exist.",
     "merge": "Merge (skip duplicates)",
     "replace": "Replace all data",
     "replaceConfirmTitle": "Replace all data?",
-    "replaceConfirmBody": "Everything currently in the app will be deleted and cannot be recovered. Export first if you are unsure.",
-    "imported": "Import complete"
+    "replaceConfirmBody": "The selected data currently in the app will be replaced and cannot be recovered. Export first if you are unsure.",
+    "imported": "Import complete",
+    "partRecords": "Records (meals, skin entries)",
+    "partSettings": "Settings (skin areas)",
+    "exportButton": "Export",
+    "previewRecords": "Records: {{meals}} meals, {{entries}} skin entries. Merge would add {{newMeals}} meals and {{newEntries}} entries.",
+    "previewSettings": "Settings: {{areas}} areas. Merge would add {{newAreas}}; existing areas keep your local values.",
+    "applyParts": "Apply to"
   },
   "errors": {
     "generic": "Something went wrong.",
@@ -66,6 +74,8 @@
     "import_missing_data": "The ZIP does not contain data.json.",
     "import_invalid_json": "data.json is not valid JSON.",
     "import_unsupported_version": "This export was made by a newer version of the app.",
-    "import_invalid_data": "data.json has invalid or inconsistent content."
+    "import_invalid_data": "data.json has invalid or inconsistent content.",
+    "import_unknown_area": "Some entries use a skin area that is not in the app. Import the settings too, or add the area first.",
+    "nothing_selected": "Select records, settings or both."
   }
 }

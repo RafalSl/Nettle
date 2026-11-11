@@ -1,6 +1,6 @@
 import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate';
 import { NettleError } from '../model/errors';
-import type { Snapshot } from '../model/types';
+import type { Payload } from '../model/types';
 import type { DataJson } from './schema';
 import { parseDataJson } from './validate';
 
@@ -13,7 +13,7 @@ export function packBundle(data: DataJson): Uint8Array {
   return zipSync({ [DATA_FILE]: strToU8(JSON.stringify(data, null, 2)) });
 }
 
-export function unpackBundle(bytes: Uint8Array): Snapshot {
+export function unpackBundle(bytes: Uint8Array): Payload {
   let files: Record<string, Uint8Array>;
   try {
     files = unzipSync(bytes, { filter: (f) => f.name === DATA_FILE && f.originalSize <= MAX_DATA_BYTES });

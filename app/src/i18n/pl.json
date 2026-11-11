@@ -1,5 +1,9 @@
 {
-  "tabs": { "meal": "Posiłek", "skin": "Skóra", "data": "Dane" },
+  "tabs": {
+    "meal": "Posiłek",
+    "skin": "Skóra",
+    "data": "Dane"
+  },
   "common": {
     "save": "Zapisz",
     "saved": "Zapisano",
@@ -43,17 +47,21 @@
   "data": {
     "exportTitle": "Eksport",
     "exportHint": "Tworzy plik ZIP z data.json. Udostępnij go do Plików, AirDrop lub e-mail. Każdy, kto otworzy plik, przeczyta Twój dziennik.",
-    "exportButton": "Eksportuj wszystkie dane",
+    "exportButton": "Eksportuj",
     "importTitle": "Import",
     "importHint": "Przywróć dane lub przenieś je z wyeksportowanego pliku ZIP. Klucz API nie jest częścią eksportu; po migracji wprowadź go ponownie.",
     "importButton": "Wybierz plik ZIP do importu",
     "previewTitle": "Zawartość pliku",
-    "preview": "Posiłki: {{meals}}, wpisy o skórze: {{entries}}, obszary: {{areas}}. Scalenie doda: posiłki {{newMeals}}, wpisy {{newEntries}}, obszary {{newAreas}}; reszta już istnieje.",
     "merge": "Scal (pomiń duplikaty)",
     "replace": "Zastąp wszystkie dane",
     "replaceConfirmTitle": "Zastąpić wszystkie dane?",
-    "replaceConfirmBody": "Wszystko, co jest teraz w aplikacji, zostanie usunięte bez możliwości odzyskania. Jeśli nie masz pewności, najpierw wyeksportuj dane.",
-    "imported": "Import zakończony"
+    "replaceConfirmBody": "Wybrane dane w aplikacji zostaną zastąpione bez możliwości odzyskania. Jeśli nie masz pewności, najpierw wyeksportuj dane.",
+    "imported": "Import zakończony",
+    "partRecords": "Wpisy (posiłki, wpisy o skórze)",
+    "partSettings": "Ustawienia (obszary skóry)",
+    "previewRecords": "Wpisy: posiłki {{meals}}, wpisy o skórze {{entries}}. Scalenie doda posiłki: {{newMeals}}, wpisy: {{newEntries}}.",
+    "previewSettings": "Ustawienia: obszary {{areas}}. Scalenie doda {{newAreas}}; istniejące obszary zachowają Twoje lokalne wartości.",
+    "applyParts": "Zastosuj do"
   },
   "errors": {
     "generic": "Coś poszło nie tak.",
@@ -66,6 +74,8 @@
     "import_missing_data": "Plik ZIP nie zawiera data.json.",
     "import_invalid_json": "data.json nie jest prawidłowym plikiem JSON.",
     "import_unsupported_version": "Ten eksport pochodzi z nowszej wersji aplikacji.",
-    "import_invalid_data": "data.json ma nieprawidłową lub niespójną zawartość."
+    "import_invalid_data": "data.json ma nieprawidłową lub niespójną zawartość.",
+    "import_unknown_area": "Niektóre wpisy dotyczą obszaru skóry, którego nie ma w aplikacji. Zaimportuj też ustawienia albo najpierw dodaj obszar.",
+    "nothing_selected": "Wybierz wpisy, ustawienia lub oba."
   }
 }

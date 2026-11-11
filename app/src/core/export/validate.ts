@@ -1,6 +1,6 @@
 import { NettleError } from '../model/errors';
 import { CANONICAL_UTC } from '../model/time';
-import type { Meal, SkinArea, SkinEntry, Snapshot } from '../model/types';
+import type { Meal, Payload, SkinArea, SkinEntry } from '../model/types';
 import { isScore } from '../usecases/skin';
 import { SCHEMA_VERSION } from './schema';
 
@@ -31,8 +31,18 @@ const unique = (ids: string[], where: string) => {
   if (new Set(ids).size !== ids.length) bad(`${where} duplicate id`);
 };
 
-/** Turns untrusted parsed JSON into a Snapshot, or throws a NettleError. Checks schema_version first (EX-10). */
-export function parseDataJson(raw: unknown): Snapshot {
+const section = (o: Obj, k: string): Obj | null => {
+  const v = o[k];
+  if (v === undefined) return null;
+  return isObj(v) ? v : bad(k);
+};
+
+/**
+ * Turns untrusted parsed JSON into a Payload, or throws a NettleError. Checks schema_version first (EX-10).
+ * Sections are optional but at least one must be present. References from entries to areas are checked
+ * when the import is applied, because a records-only file legitimately points at areas it does not contain.
+ */
+export function parseDataJson(raw: unknown): Payload {
   if (!isObj(raw)) return bad('root');
   const version = raw.schema_version;
   if (typeof version !== 'number' || !Number.isInteger(version) || version < 1) {
@@ -42,54 +52,64 @@ export function parseDataJson(raw: unknown): Snapshot {
     throw new NettleError('import_unsupported_version', String(version));
   }
 
-  const skinAreas: SkinArea[] = list(raw, 'skin_areas').map((o, i) => {
-    const w = `skin_areas[${i}]`;
-    return {
-      id: str(o, 'id', w),
-      name: str(o, 'name', w),
-      predefined: bool(o, 'predefined', w),
-      archived: bool(o, 'archived', w),
-      sensitiveDefault: bool(o, 'sensitive_default', w),
-      nameOverride: nullableText(o, 'name_override', w),
-    };
-  });
-  const meals: Meal[] = list(raw, 'meals').map((o, i) => {
-    const w = `meals[${i}]`;
-    const ing = o.ingredients;
-    if (!Array.isArray(ing) || ing.some((x) => typeof x !== 'string')) bad(`${w}.ingredients`);
-    return {
-      id: str(o, 'id', w),
-      at: { utc: utc(o, w), tz: str(o, 'tz', w) },
-      description: str(o, 'description', w),
-      ingredients: ing as string[],
-      note: nullableText(o, 'note', w),
-    };
-  });
-  const areaIds = new Set(skinAreas.map((a) => a.id));
-  const skinEntries: SkinEntry[] = list(raw, 'skin_entries').map((o, i) => {
-    const w = `skin_entries[${i}]`;
-    const s = o.scores;
-    if (!isObj(s)) return bad(`${w}.scores`);
-    const scores = {
-      severity: s.severity,
-      itch: s.itch,
-      pain: s.pain,
-      dryness: s.dryness,
-      scaling: s.scaling,
-    };
-    for (const [k, v] of Object.entries(scores)) if (!isScore(v)) bad(`${w}.scores.${k}`);
-    const areaId = str(o, 'area_id', w);
-    if (!areaIds.has(areaId)) bad(`${w}.area_id unknown`);
-    return {
-      id: str(o, 'id', w),
-      at: { utc: utc(o, w), tz: str(o, 'tz', w) },
-      areaId,
-      scores: scores as SkinEntry['scores'],
-      note: nullableText(o, 'note', w),
-    };
-  });
-  unique(skinAreas.map((a) => a.id), 'skin_areas');
-  unique(meals.map((m) => m.id), 'meals');
-  unique(skinEntries.map((e) => e.id), 'skin_entries');
-  return { meals, skinAreas, skinEntries };
+  const payload: Payload = {};
+
+  const settings = section(raw, 'settings');
+  if (settings) {
+    const skinAreas: SkinArea[] = list(settings, 'skin_areas').map((o, i) => {
+      const w = `settings.skin_areas[${i}]`;
+      return {
+        id: str(o, 'id', w),
+        name: str(o, 'name', w),
+        predefined: bool(o, 'predefined', w),
+        archived: bool(o, 'archived', w),
+        sensitiveDefault: bool(o, 'sensitive_default', w),
+        nameOverride: nullableText(o, 'name_override', w),
+      };
+    });
+    unique(skinAreas.map((a) => a.id), 'settings.skin_areas');
+    payload.settings = { skinAreas };
+  }
+
+  const records = section(raw, 'records');
+  if (records) {
+    const meals: Meal[] = list(records, 'meals').map((o, i) => {
+      const w = `records.meals[${i}]`;
+      const ing = o.ingredients;
+      if (!Array.isArray(ing) || ing.some((x) => typeof x !== 'string')) bad(`${w}.ingredients`);
+      return {
+        id: str(o, 'id', w),
+        at: { utc: utc(o, w), tz: str(o, 'tz', w) },
+        description: str(o, 'description', w),
+        ingredients: ing as string[],
+        note: nullableText(o, 'note', w),
+      };
+    });
+    const skinEntries: SkinEntry[] = list(records, 'skin_entries').map((o, i) => {
+      const w = `records.skin_entries[${i}]`;
+      const s = o.scores;
+      if (!isObj(s)) return bad(`${w}.scores`);
+      const scores = {
+        severity: s.severity,
+        itch: s.itch,
+        pain: s.pain,
+        dryness: s.dryness,
+        scaling: s.scaling,
+      };
+      for (const [k, v] of Object.entries(scores)) if (!isScore(v)) bad(`${w}.scores.${k}`);
+      return {
+        id: str(o, 'id', w),
+        at: { utc: utc(o, w), tz: str(o, 'tz', w) },
+        areaId: str(o, 'area_id', w),
+        scores: scores as SkinEntry['scores'],
+        note: nullableText(o, 'note', w),
+      };
+    });
+    unique(meals.map((m) => m.id), 'records.meals');
+    unique(skinEntries.map((e) => e.id), 'records.skin_entries');
+    payload.records = { meals, skinEntries };
+  }
+
+  if (!payload.records && !payload.settings) return bad('no records or settings section');
+  return payload;
 }

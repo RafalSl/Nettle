@@ -63,44 +63,91 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
       expect((await repo.listAreas()).find((a) => a.id === 'area-chin')?.nameOverride).toBeNull();
     });
 
+    const custom = {
+      id: 'a-custom',
+      name: 'Synthetic elbow',
+      predefined: false,
+      archived: false,
+      sensitiveDefault: false,
+      nameOverride: null,
+    };
+
     it('EX-10 merge adds new rows and skips ids that already exist', async () => {
       await repo.addMeal(syntheticMeal('m1', '2026-01-10T08:00:00.000Z', ['original']));
-      const incoming = {
-        meals: [
-          syntheticMeal('m1', '2026-01-10T08:00:00.000Z', ['changed', 'extra']),
-          syntheticMeal('m2', '2026-01-11T08:00:00.000Z'),
-        ],
-        skinAreas: await repo.listAreas(),
-        skinEntries: [syntheticEntry('e1', '2026-01-11T09:00:00.000Z')],
+      const payload = {
+        records: {
+          meals: [
+            syntheticMeal('m1', '2026-01-10T08:00:00.000Z', ['changed', 'extra']),
+            syntheticMeal('m2', '2026-01-11T08:00:00.000Z'),
+          ],
+          skinEntries: [syntheticEntry('e1', '2026-01-11T09:00:00.000Z')],
+        },
+        settings: { skinAreas: await repo.listAreas() },
       };
-      await repo.importSnapshot(incoming, 'merge');
-      await repo.importSnapshot(incoming, 'merge'); // idempotent
+      await repo.importData(payload, 'merge');
+      await repo.importData(payload, 'merge'); // idempotent
       const meals = await repo.listMeals();
       expect(meals.map((m) => m.id)).toEqual(['m2', 'm1']);
       expect(meals.find((m) => m.id === 'm1')?.ingredients).toEqual(['original']);
       expect(await repo.listSkinEntries()).toHaveLength(1);
     });
 
-    it('EX-10 replace wipes existing data and keeps predefined areas', async () => {
+    it('EX-10 replace records wipes meals and entries but leaves areas untouched', async () => {
+      await repo.upsertArea(custom);
       await repo.addMeal(syntheticMeal('old', '2026-01-01T08:00:00.000Z'));
-      await repo.addSkinEntry(syntheticEntry('old-e', '2026-01-01T09:00:00.000Z'));
-      await repo.importSnapshot(
-        { meals: [syntheticMeal('new', '2026-01-02T08:00:00.000Z')], skinAreas: [], skinEntries: [] },
+      await repo.addSkinEntry(syntheticEntry('old-e', '2026-01-01T09:00:00.000Z', 'a-custom'));
+      await repo.importData(
+        { records: { meals: [syntheticMeal('new', '2026-01-02T08:00:00.000Z')], skinEntries: [] } },
         'replace',
       );
       expect((await repo.listMeals()).map((m) => m.id)).toEqual(['new']);
       expect(await repo.listSkinEntries()).toEqual([]);
-      expect(await repo.listAreas()).toHaveLength(6);
+      expect((await repo.listAreas()).some((a) => a.id === 'a-custom')).toBe(true);
+    });
+
+    it('EX-10 replace settings leaves records alone and overwrites areas by id', async () => {
+      await repo.addMeal(syntheticMeal('keep', '2026-01-01T08:00:00.000Z'));
+      const chin = (await repo.listAreas()).find((a) => a.id === 'area-chin')!;
+      await repo.importData(
+        { settings: { skinAreas: [{ ...chin, nameOverride: 'Synthetic jaw', archived: true }] } },
+        'replace',
+      );
+      expect((await repo.listMeals()).map((m) => m.id)).toEqual(['keep']);
+      expect((await repo.listAreas()).find((a) => a.id === 'area-chin')).toMatchObject({
+        nameOverride: 'Synthetic jaw',
+        archived: true,
+      });
+    });
+
+    it('EX-10 replace settings drops unused user areas, keeps used ones and all predefined', async () => {
+      await repo.upsertArea(custom);
+      await repo.upsertArea({ ...custom, id: 'a-unused', name: 'Synthetic wrist' });
+      await repo.addSkinEntry(syntheticEntry('e1', '2026-01-01T09:00:00.000Z', 'a-custom'));
+      await repo.importData({ settings: { skinAreas: [] } }, 'replace');
+      const ids = (await repo.listAreas()).map((a) => a.id);
+      expect(ids).toContain('a-custom'); // still referenced by e1
+      expect(ids).not.toContain('a-unused');
+      expect(ids).toContain('area-chin');
+      expect(ids).toHaveLength(7);
+    });
+
+    it('EX-10 merge settings adds new areas and keeps local versions of existing ones', async () => {
+      const chin = (await repo.listAreas()).find((a) => a.id === 'area-chin')!;
+      await repo.importData({ settings: { skinAreas: [{ ...chin, nameOverride: 'ignored' }, custom] } }, 'merge');
+      const areas = await repo.listAreas();
+      expect(areas.find((a) => a.id === 'area-chin')?.nameOverride).toBeNull();
+      expect(areas.some((a) => a.id === 'a-custom')).toBe(true);
     });
 
     it('EX-10 import is atomic: a bad row leaves the store unchanged', async () => {
       await repo.addMeal(syntheticMeal('keep', '2026-01-01T08:00:00.000Z'));
       const broken = {
-        meals: [syntheticMeal('new', '2026-01-02T08:00:00.000Z')],
-        skinAreas: [],
-        skinEntries: [syntheticEntry('bad', '2026-01-02T09:00:00.000Z', 'missing-area')],
+        records: {
+          meals: [syntheticMeal('new', '2026-01-02T08:00:00.000Z')],
+          skinEntries: [syntheticEntry('bad', '2026-01-02T09:00:00.000Z', 'missing-area')],
+        },
       };
-      await expect(repo.importSnapshot(broken, 'replace')).rejects.toThrow();
+      await expect(repo.importData(broken, 'replace')).rejects.toThrow();
       expect((await repo.listMeals()).map((m) => m.id)).toEqual(['keep']);
     });
 

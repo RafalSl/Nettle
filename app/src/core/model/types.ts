@@ -40,10 +40,29 @@ export interface SkinEntry {
   note: string | null;
 }
 
-export interface Snapshot {
+/** What the user logged (EX-1 "records"). */
+export interface Records {
   meals: Meal[];
-  skinAreas: SkinArea[];
   skinEntries: SkinEntry[];
+}
+
+/** User configuration (EX-1 "settings"). */
+export interface Settings {
+  skinAreas: SkinArea[];
+}
+
+export interface Snapshot extends Records, Settings {}
+
+/** Either part may be absent: an export or import can carry records, settings or both. */
+export interface Payload {
+  records?: Records;
+  settings?: Settings;
+}
+
+/** Which parts to export or to apply. */
+export interface Parts {
+  records: boolean;
+  settings: boolean;
 }
 
 /** Inclusive bounds on Stamp.utc; either side may be open. */

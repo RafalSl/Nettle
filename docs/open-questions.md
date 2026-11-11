@@ -18,7 +18,5 @@ Undecided items only. Decisions go into `docs/requirements.md` (canonical, edite
 
 These are in the requirements already; the skeleton still behaves the old way.
 
-- **Records vs settings in export/import** (EX-1, EX-10): separate sections and a choice of records, settings or both; replace touches only the chosen parts. Today `replace` wipes areas too.
-- **`name_override` for predefined areas** (SK-2): today predefined areas cannot be renamed.
 - **Date range as local days to UTC** (EX-11 note): the core accepts UTC bounds; the UI conversion does not exist yet.
 - **Newest-wins merge with tombstones** (EX-12, Later): needed only once entries are editable or deletable. Adds modified timestamps and a schema version bump at that point.

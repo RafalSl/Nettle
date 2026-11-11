@@ -1,5 +1,5 @@
 import { PREDEFINED_AREAS } from '@/core/model/areas';
-import type { DateRange, Meal, SkinArea, SkinEntry, Snapshot } from '@/core/model/types';
+import type { DateRange, Meal, Payload, SkinArea, SkinEntry, Snapshot } from '@/core/model/types';
 import type { ExistingIds, ImportMode, StorageRepository } from '@/core/ports/storage';
 
 const inRange = (utc: string, r?: DateRange) =>
@@ -56,16 +56,22 @@ export class MemoryRepo implements StorageRepository {
       skinEntries: new Set(this.entries.keys()),
     };
   }
-  async importSnapshot(s: Snapshot, mode: ImportMode) {
-    // Build on copies so a failure leaves the store untouched (atomic).
-    const meals = new Map(mode === 'replace' ? [] : this.meals);
-    const areas = new Map(mode === 'replace' ? [] : this.areas);
-    const entries = new Map(mode === 'replace' ? [] : this.entries);
-    for (const a of s.skinAreas) if (!areas.has(a.id)) areas.set(a.id, clone(a));
-    for (const m of s.meals) if (!meals.has(m.id)) meals.set(m.id, clone(m));
-    for (const e of s.skinEntries) {
+  async importData({ records, settings }: Payload, mode: ImportMode) {
+    // Work on copies so a failure leaves the store untouched (atomic).
+    const meals = new Map(records && mode === 'replace' ? [] : this.meals);
+    const entries = new Map(records && mode === 'replace' ? [] : this.entries);
+    const areas = new Map(this.areas);
+    for (const a of settings?.skinAreas ?? []) {
+      if (mode === 'replace' || !areas.has(a.id)) areas.set(a.id, clone(a));
+    }
+    for (const m of records?.meals ?? []) if (!meals.has(m.id)) meals.set(m.id, clone(m));
+    for (const e of records?.skinEntries ?? []) {
       if (!areas.has(e.areaId)) throw new Error('unknown area');
       if (!entries.has(e.id)) entries.set(e.id, clone(e));
+    }
+    if (settings && mode === 'replace') {
+      const keep = new Set([...settings.skinAreas.map((a) => a.id), ...[...entries.values()].map((e) => e.areaId)]);
+      for (const [id, a] of areas) if (!a.predefined && !keep.has(id)) areas.delete(id);
     }
     this.meals = meals;
     this.areas = areas;

@@ -13,9 +13,20 @@ const repos: [string, () => Promise<StorageRepository>][] = [
   ['sqlite', async () => SqliteRepo.open(createNodeSqliteDb())],
 ];
 
+const BOTH = { records: true, settings: true };
+const RECORDS = { records: true, settings: false };
+const SETTINGS = { records: false, settings: true };
+
 async function seeded(make: () => Promise<StorageRepository>) {
   const repo = await make();
-  await repo.upsertArea({ id: 'a-custom', name: 'Synthetic elbow', predefined: false, archived: false, sensitiveDefault: false, nameOverride: null });
+  await repo.upsertArea({
+    id: 'a-custom',
+    name: 'Synthetic elbow',
+    predefined: false,
+    archived: false,
+    sensitiveDefault: false,
+    nameOverride: null,
+  });
   const chin = (await repo.listAreas()).find((a) => a.id === 'area-chin')!;
   await repo.upsertArea({ ...chin, nameOverride: 'Synthetic jaw' }); // SK-2 override must survive the round trip
   await repo.addMeal(syntheticMeal('m1', '2026-01-10T08:00:00.000Z'));
@@ -32,17 +43,17 @@ const code = async (p: Promise<unknown>) =>
     (e: unknown) => (e instanceof NettleError ? e.code : 'other'),
   );
 
-describe.each(repos)('export/import round trip (%s)', (_name, make) => {
-  it('EX-1 + EX-10 export then import into an empty store restores everything', async () => {
+describe.each(repos)('export/import (%s)', (_name, make) => {
+  it('EX-1 + EX-10 export both parts then replace both restores everything', async () => {
     const source = await seeded(make);
     const zip = await exportBundle(makeDeps(source));
 
     const target = await make();
     const deps = makeDeps(target);
     const parsed = await previewImport(deps, zip);
-    expect(parsed.preview.incoming).toEqual({ meals: 2, skinAreas: 7, skinEntries: 2 });
-    // Replace, not merge: the empty store already holds the six predefined areas, and merge keeps local rows.
-    await applyImport(deps, parsed, 'replace');
+    expect(parsed.preview.has).toEqual(BOTH);
+    expect(parsed.preview.incoming).toEqual({ meals: 2, skinEntries: 2, skinAreas: 7 });
+    await applyImport(deps, parsed, { mode: 'replace', parts: BOTH });
 
     expect(await target.snapshot()).toEqual(await source.snapshot());
   });
@@ -52,9 +63,8 @@ describe.each(repos)('export/import round trip (%s)', (_name, make) => {
     const zip = await exportBundle(makeDeps(source));
     const target = await make();
     const deps = makeDeps(target);
-    await applyImport(deps, await previewImport(deps, zip), 'merge');
-    const chin = (await target.listAreas()).find((a) => a.id === 'area-chin');
-    expect(chin?.nameOverride).toBeNull();
+    await applyImport(deps, await previewImport(deps, zip), { mode: 'merge', parts: BOTH });
+    expect((await target.listAreas()).find((a) => a.id === 'area-chin')?.nameOverride).toBeNull();
   });
 
   it('EX-10 preview reports duplicates, and merge skips them', async () => {
@@ -65,29 +75,94 @@ describe.each(repos)('export/import round trip (%s)', (_name, make) => {
     const deps = makeDeps(target);
 
     const parsed = await previewImport(deps, zip);
-    expect(parsed.preview.duplicates).toEqual({ meals: 1, skinAreas: 6, skinEntries: 0 });
-    expect(parsed.preview.newRows).toEqual({ meals: 1, skinAreas: 1, skinEntries: 2 });
-    await applyImport(deps, parsed, 'merge');
+    expect(parsed.preview.duplicates).toEqual({ meals: 1, skinEntries: 0, skinAreas: 6 });
+    expect(parsed.preview.newRows).toEqual({ meals: 1, skinEntries: 2, skinAreas: 1 });
+    await applyImport(deps, parsed, { mode: 'merge', parts: BOTH });
     expect((await target.listMeals()).find((m) => m.id === 'm1')?.ingredients).toEqual(['kept']);
     expect(await target.listMeals()).toHaveLength(2);
   });
 
-  it('EX-10 replace discards what was there', async () => {
+  it('EX-1 records-only export has no settings section and restores into a store with the same areas', async () => {
+    const source = await seeded(make);
+    const zip = await exportBundle(makeDeps(source), { parts: RECORDS });
+    const json = dataJson(zip);
+    expect(json.settings).toBeUndefined();
+    expect(json.records.meals).toHaveLength(2);
+
+    const target = await make();
+    await target.upsertArea((await source.listAreas()).find((a) => a.id === 'a-custom')!);
+    const deps = makeDeps(target);
+    const parsed = await previewImport(deps, zip);
+    expect(parsed.preview.has).toEqual(RECORDS);
+    await applyImport(deps, parsed, { mode: 'replace', parts: BOTH });
+    expect((await target.listSkinEntries()).map((e) => e.id).sort()).toEqual(['e1', 'e2']);
+    expect((await target.listAreas()).find((a) => a.id === 'area-chin')?.nameOverride).toBeNull();
+  });
+
+  it('EX-10 importing records that point at a missing user area fails and changes nothing', async () => {
+    const source = await seeded(make);
+    const zip = await exportBundle(makeDeps(source), { parts: RECORDS });
+    const target = await make();
+    await target.addMeal(syntheticMeal('keep', '2026-01-01T08:00:00.000Z'));
+    const deps = makeDeps(target);
+    const parsed = await previewImport(deps, zip);
+    expect(await code(applyImport(deps, parsed, { mode: 'replace', parts: BOTH }))).toBe('import_unknown_area');
+    expect((await target.listMeals()).map((m) => m.id)).toEqual(['keep']);
+  });
+
+  it('EX-1 settings-only export carries all areas and no records', async () => {
+    const source = await seeded(make);
+    const json = dataJson(await exportBundle(makeDeps(source), { parts: SETTINGS }));
+    expect(json.records).toBeUndefined();
+    expect(json.settings.skin_areas).toHaveLength(7);
+    expect(json.settings.skin_areas.find((a: { id: string }) => a.id === 'area-chin').name_override).toBe('Synthetic jaw');
+  });
+
+  it('EX-10 the user chooses which parts of a full file to apply', async () => {
+    const source = await seeded(make);
+    const zip = await exportBundle(makeDeps(source));
+
+    const target = await make();
+    const deps = makeDeps(target);
+    await applyImport(deps, await previewImport(deps, zip), { mode: 'replace', parts: SETTINGS });
+    expect(await target.listMeals()).toEqual([]);
+    expect((await target.listAreas()).find((a) => a.id === 'area-chin')?.nameOverride).toBe('Synthetic jaw');
+
+    await applyImport(deps, await previewImport(deps, zip), { mode: 'replace', parts: RECORDS });
+    expect(await target.listMeals()).toHaveLength(2);
+  });
+
+  it('EX-10 replace records discards what was there and leaves settings alone', async () => {
     const source = await seeded(make);
     const zip = await exportBundle(makeDeps(source));
     const target = await make();
     await target.addMeal(syntheticMeal('only-here', '2026-01-01T08:00:00.000Z'));
+    await target.upsertArea((await source.listAreas()).find((a) => a.id === 'a-custom')!);
     const deps = makeDeps(target);
-    await applyImport(deps, await previewImport(deps, zip), 'replace');
+    await applyImport(deps, await previewImport(deps, zip), { mode: 'replace', parts: RECORDS });
     expect((await target.listMeals()).map((m) => m.id).sort()).toEqual(['m1', 'm2']);
+    expect((await target.listAreas()).find((a) => a.id === 'area-chin')?.nameOverride).toBeNull();
   });
 
-  it('EX-1 range export is a snapshot of the chosen range only', async () => {
+  it('EX-1 / EX-10 selecting nothing is rejected', async () => {
     const source = await seeded(make);
-    const zip = await exportBundle(makeDeps(source), { from: '2026-01-11T00:00:00.000Z' });
+    expect(await code(exportBundle(makeDeps(source), { parts: { records: false, settings: false } }))).toBe(
+      'nothing_selected',
+    );
+    const zip = await exportBundle(makeDeps(source), { parts: RECORDS });
+    const deps = makeDeps(await make());
+    const parsed = await previewImport(deps, zip);
+    // Asking for settings from a records-only file leaves nothing to apply.
+    expect(await code(applyImport(deps, parsed, { mode: 'merge', parts: SETTINGS }))).toBe('nothing_selected');
+  });
+
+  it('EX-1 range export is a snapshot of the chosen range only; settings are not filtered', async () => {
+    const source = await seeded(make);
+    const zip = await exportBundle(makeDeps(source), { range: { from: '2026-01-11T00:00:00.000Z' } });
     const json = dataJson(zip);
-    expect(json.meals.map((m: { id: string }) => m.id)).toEqual(['m2']);
-    expect(json.skin_entries.map((e: { id: string }) => e.id)).toEqual(['e2']);
+    expect(json.records.meals.map((m: { id: string }) => m.id)).toEqual(['m2']);
+    expect(json.records.skin_entries.map((e: { id: string }) => e.id)).toEqual(['e2']);
+    expect(json.settings.skin_areas).toHaveLength(7);
     expect(json.range).toEqual({ from: '2026-01-11T00:00:00.000Z', to: null });
   });
 });
@@ -98,8 +173,8 @@ describe('data.json format', () => {
     const json = dataJson(zip);
     expect(json.schema_version).toBe(1);
     expect(json.exported_at).toEqual({ utc: '2026-01-15T10:00:00.000Z', tz: 'Europe/Warsaw' });
-    expect(json.meals[0]).toMatchObject({ id: 'm2', utc: '2026-01-12T08:00:00.000Z', tz: 'Europe/Warsaw' });
-    expect(json.skin_entries[0].scores).toEqual({ severity: 3, itch: 5, pain: 0, dryness: 2, scaling: 10 });
+    expect(json.records.meals[0]).toMatchObject({ id: 'm2', utc: '2026-01-12T08:00:00.000Z', tz: 'Europe/Warsaw' });
+    expect(json.records.skin_entries[0].scores).toEqual({ severity: 3, itch: 5, pain: 0, dryness: 2, scaling: 10 });
   });
 
   it('SE-6 the API key is never part of an export', async () => {
@@ -136,23 +211,28 @@ describe('import validation', () => {
     expect(await code(previewImport(deps(), zipOf({ schema_version: '1' })))).toBe('import_invalid_data');
   });
 
-  it('EX-10 rejects out-of-range scores, bad timestamps, unknown area refs and duplicate ids', async () => {
+  it('EX-10 rejects a file with neither records nor settings', async () => {
+    expect(await code(previewImport(deps(), zipOf({ schema_version: 1 })))).toBe('import_invalid_data');
+  });
+
+  it('EX-10 rejects out-of-range scores, bad timestamps, bad sections and duplicate ids', async () => {
     const mutate = async (fn: (j: any) => void) => {
       const j = await goodJson();
       fn(j);
       return code(previewImport(deps(), zipOf(j)));
     };
-    expect(await mutate((j) => (j.skin_entries[0].scores.itch = 11))).toBe('import_invalid_data');
-    expect(await mutate((j) => (j.meals[0].utc = '2026-01-12 08:00'))).toBe('import_invalid_data');
-    expect(await mutate((j) => (j.skin_entries[0].area_id = 'ghost'))).toBe('import_invalid_data');
-    expect(await mutate((j) => (j.meals[1].id = j.meals[0].id))).toBe('import_invalid_data');
-    expect(await mutate((j) => (j.meals = 'nope'))).toBe('import_invalid_data');
+    expect(await mutate((j) => (j.records.skin_entries[0].scores.itch = 11))).toBe('import_invalid_data');
+    expect(await mutate((j) => (j.records.meals[0].utc = '2026-01-12 08:00'))).toBe('import_invalid_data');
+    expect(await mutate((j) => (j.records.meals[1].id = j.records.meals[0].id))).toBe('import_invalid_data');
+    expect(await mutate((j) => (j.settings.skin_areas[1].id = j.settings.skin_areas[0].id))).toBe('import_invalid_data');
+    expect(await mutate((j) => (j.records.meals = 'nope'))).toBe('import_invalid_data');
+    expect(await mutate((j) => (j.settings = []))).toBe('import_invalid_data');
   });
 
   it('EX-10 validation failure does not touch the store', async () => {
     const target = new MemoryRepo();
     const d = makeDeps(target);
-    await code(previewImport(d, zipOf({ schema_version: 1, meals: [], skin_areas: [], skin_entries: 5 })));
+    await code(previewImport(d, zipOf({ schema_version: 1, records: { meals: [], skin_entries: 5 } })));
     expect(await target.listMeals()).toEqual([]);
   });
 });

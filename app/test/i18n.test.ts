@@ -21,7 +21,7 @@ describe('i18n (NF-6)', () => {
     const codes: ErrorCode[] = [
       'empty_description', 'invalid_score', 'unknown_area', 'area_archived', 'empty_area_name',
       'import_corrupt_zip', 'import_missing_data', 'import_invalid_json',
-      'import_unsupported_version', 'import_invalid_data',
+      'import_unsupported_version', 'import_invalid_data', 'import_unknown_area', 'nothing_selected',
     ];
     for (const c of codes) expect(en.errors).toHaveProperty([c]);
   });

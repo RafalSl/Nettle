@@ -42,8 +42,9 @@ Requirements: @docs/requirements.md.
 
 - Keep a log of work in docs/work-log.md: add a short dated entry whenever a
   task or meaningful step finishes (what, why, what is next). No personal data.
-- Branching: committing straight to main is fine while the project is young;
-  switch to feature branches (one per task) once there is a working baseline.
+- Branching: no git worktrees; work in the main checkout. Develop on a dev
+  branch per task (`dev/<short-task-name>`, cut from main), keep main stable,
+  and merge when the task's checks pass. Do not commit directly to main.
 
 ## Commands
 Run from `app/` (Node >= 22.13, installed via fnm):

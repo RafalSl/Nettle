@@ -4,10 +4,13 @@ Undecided items only. Decisions go into `docs/requirements.md` (canonical, edite
 
 ## Open
 
-1. **AES export (EX-6).** `fflate`, used for the ZIP, does not write AES-256 ZIPs. Decision: run a spike for an Expo Go compatible library (pure JS, e.g. zip.js with WebCrypto if Hermes supports it) before building EX-6.
-2. **expo-sqlite wrapper is device-verified only.** Storage logic is tested through the `SqlDb` seam on Node's built-in `node:sqlite`; the ~20-line wrapper `app/src/adapters/storage/expoSqliteDb.ts` is only exercised on a phone. Accepted for now. Optional later: an in-app self-test that runs the storage contract against a throwaway database.
-3. **Polish strings are a first draft** and need review by the project owner.
-4. **Unused template dependencies** (reanimated, gesture-handler, expo-image, expo-glass-effect, `@expo/ui`, ...). Prune before a standalone build.
+1. **AES export (EX-6): spike soon.** `fflate`, used for the ZIP, does not write AES-256 ZIPs. Run a spike for an Expo Go compatible library (pure JS, e.g. zip.js with WebCrypto if Hermes supports it) before building EX-6.
+2. **Polish strings: review at the end of the project.** First draft lives in `app/src/i18n/pl.json` (English in `en.json`).
+3. **Unused template dependencies: prune when moving to a standalone build** (reanimated, gesture-handler, expo-image, expo-glass-effect, `@expo/ui`, ...). No effect in Expo Go.
+
+## Accepted
+
+- **`expo-sqlite` wrapper stays untested in code.** Storage logic is tested through the `SqlDb` seam on Node's built-in `node:sqlite`; the ~20-line wrapper `app/src/adapters/storage/expoSqliteDb.ts` is verified on a phone only.
 
 ## Decided, code not yet changed
 

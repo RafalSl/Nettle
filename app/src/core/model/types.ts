@@ -18,6 +18,8 @@ export interface SkinArea {
   predefined: boolean;
   archived: boolean;
   sensitiveDefault: boolean;
+  /** SK-2: user's own name for a predefined area; null shows the localized default. User areas use `name`. */
+  nameOverride: string | null;
 }
 
 /** SK-3: separate 0-10 scores. */

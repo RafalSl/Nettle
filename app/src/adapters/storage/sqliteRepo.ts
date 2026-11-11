@@ -17,6 +17,7 @@ interface AreaRow {
   predefined: number;
   archived: number;
   sensitive_default: number;
+  name_override: string | null;
 }
 interface EntryRow {
   id: string;
@@ -62,9 +63,9 @@ export class SqliteRepo implements StorageRepository {
 
   private async insertArea(a: SkinArea, ignoreIfExists: boolean) {
     await this.db.run(
-      `INSERT ${ignoreIfExists ? 'OR IGNORE ' : ''}INTO skin_area (id, name, predefined, archived, sensitive_default)
-       VALUES (?, ?, ?, ?, ?)`,
-      [a.id, a.name, +a.predefined, +a.archived, +a.sensitiveDefault],
+      `INSERT ${ignoreIfExists ? 'OR IGNORE ' : ''}INTO skin_area (id, name, predefined, archived, sensitive_default, name_override)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [a.id, a.name, +a.predefined, +a.archived, +a.sensitiveDefault, a.nameOverride],
     );
   }
 
@@ -138,10 +139,12 @@ export class SqliteRepo implements StorageRepository {
 
   async upsertArea(area: SkinArea) {
     await this.db.run(
-      `INSERT INTO skin_area (id, name, predefined, archived, sensitive_default) VALUES (?, ?, ?, ?, ?)
+      `INSERT INTO skin_area (id, name, predefined, archived, sensitive_default, name_override)
+       VALUES (?, ?, ?, ?, ?, ?)
        ON CONFLICT(id) DO UPDATE SET name = excluded.name, predefined = excluded.predefined,
-         archived = excluded.archived, sensitive_default = excluded.sensitive_default`,
-      [area.id, area.name, +area.predefined, +area.archived, +area.sensitiveDefault],
+         archived = excluded.archived, sensitive_default = excluded.sensitive_default,
+         name_override = excluded.name_override`,
+      [area.id, area.name, +area.predefined, +area.archived, +area.sensitiveDefault, area.nameOverride],
     );
   }
 
@@ -153,6 +156,7 @@ export class SqliteRepo implements StorageRepository {
       predefined: !!r.predefined,
       archived: !!r.archived,
       sensitiveDefault: !!r.sensitive_default,
+      nameOverride: r.name_override,
     }));
   }
 

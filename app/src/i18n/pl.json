@@ -62,7 +62,6 @@
     "unknown_area": "Taki obszar nie istnieje.",
     "area_archived": "Ten obszar jest zarchiwizowany.",
     "empty_area_name": "Wpisz nazwę obszaru.",
-    "predefined_area_locked": "Wbudowanych obszarów nie można zmieniać.",
     "import_corrupt_zip": "To nie jest prawidłowy plik ZIP.",
     "import_missing_data": "Plik ZIP nie zawiera data.json.",
     "import_invalid_json": "data.json nie jest prawidłowym plikiem JSON.",

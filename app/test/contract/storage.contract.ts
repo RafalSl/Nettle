@@ -48,11 +48,19 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
     });
 
     it('SK-2 upsert adds, renames and archives areas', async () => {
-      const area = { id: 'a-custom', name: 'Synthetic elbow', predefined: false, archived: false, sensitiveDefault: false };
+      const area = { id: 'a-custom', name: 'Synthetic elbow', predefined: false, archived: false, sensitiveDefault: false, nameOverride: null };
       await repo.upsertArea(area);
       await repo.upsertArea({ ...area, name: 'Synthetic knee', archived: true });
       const found = (await repo.listAreas()).find((a) => a.id === 'a-custom');
       expect(found).toEqual({ ...area, name: 'Synthetic knee', archived: true });
+    });
+
+    it('SK-2 stores and clears a name override on a predefined area', async () => {
+      const chin = (await repo.listAreas()).find((a) => a.id === 'area-chin')!;
+      await repo.upsertArea({ ...chin, nameOverride: 'Synthetic jaw' });
+      expect((await repo.listAreas()).find((a) => a.id === 'area-chin')?.nameOverride).toBe('Synthetic jaw');
+      await repo.upsertArea({ ...chin, nameOverride: null });
+      expect((await repo.listAreas()).find((a) => a.id === 'area-chin')?.nameOverride).toBeNull();
     });
 
     it('EX-10 merge adds new rows and skips ids that already exist', async () => {

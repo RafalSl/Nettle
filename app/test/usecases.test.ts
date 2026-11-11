@@ -6,6 +6,7 @@ import {
   listActiveAreas,
   logSkinEntry,
   renameSkinArea,
+  resetSkinAreaName,
 } from '@/core/usecases/skin';
 import { MemoryRepo } from './fakes/memoryRepo';
 import { makeDeps } from './helpers/fixtures';
@@ -77,10 +78,19 @@ describe('areas', () => {
     expect((await listActiveAreas(deps)).some((x) => x.id === a.id)).toBe(true);
   });
 
-  it('SK-2 predefined areas can be archived but not renamed; names must not be empty', async () => {
+  it('SK-2 renaming a predefined area sets an override, keeps its id, and can be reset', async () => {
     const deps = makeDeps(new MemoryRepo());
-    expect(await code(renameSkinArea(deps, 'area-chin', 'x'))).toBe('predefined_area_locked');
+    await renameSkinArea(deps, 'area-chin', ' Synthetic jaw ');
+    const renamed = (await deps.repo.listAreas()).find((a) => a.id === 'area-chin')!;
+    expect(renamed).toMatchObject({ name: 'Chin', nameOverride: 'Synthetic jaw', predefined: true });
+    await resetSkinAreaName(deps, 'area-chin');
+    expect((await deps.repo.listAreas()).find((a) => a.id === 'area-chin')?.nameOverride).toBeNull();
+  });
+
+  it('SK-2 names must not be empty, and predefined areas can be archived', async () => {
+    const deps = makeDeps(new MemoryRepo());
     expect(await code(addSkinArea(deps, ' '))).toBe('empty_area_name');
+    expect(await code(renameSkinArea(deps, 'area-chin', ' '))).toBe('empty_area_name');
     await archiveSkinArea(deps, 'area-chin');
     expect((await listActiveAreas(deps)).map((a) => a.id)).not.toContain('area-chin');
   });

@@ -43,3 +43,9 @@ Newest entry last. One short entry per working session or meaningful step: what 
 - 76 tests pass; typecheck, lint and the iOS Metro bundle pass. Not tried on the phone yet.
 - Hook note: the Write tool was blocked by a stale worktree hook; with the user's OK I wrote files via Bash in the main checkout.
 - Next: AES-256 export/import (EX-6).
+
+## 2026-11-12: AES-256 export/import (EX-6) (branch dev/export-encryption)
+- `app/src/core/export/zip.ts`: WinZip AES-256 (AE-2) writer and reader on `@noble/ciphers` + `@noble/hashes` + fflate, pure JS. `randomBytes` is a new port (expo-crypto in the app). Reader handles plain and AES ZIPs, skips entries not asked for, guards inflated size, and distinguishes missing password, wrong password and tampering.
+- Export: optional password entered twice, minimum 12 characters (fixed 1000-round PBKDF2 in the format). Import: asks for the password when the file is protected. Passwords live only in component state and are cleared after use.
+- Tests: 100 passing (round trips across odd sizes, wrong/missing password, tamper, fresh salts, both repos, and 7-Zip interop in both directions when 7-Zip is installed). jest transforms `@noble/*` (ESM-only). Typecheck, lint and iOS Metro bundle pass. Not tried on the phone.
+- Open: Hermes speed unmeasured (open-questions item 1).

@@ -61,7 +61,13 @@
     "exportButton": "Export",
     "previewRecords": "Records: {{meals}} meals, {{entries}} skin entries. Merge would add {{newMeals}} meals and {{newEntries}} entries.",
     "previewSettings": "Settings: {{areas}} areas. Merge would add {{newAreas}}; existing areas keep your local values.",
-    "applyParts": "Apply to"
+    "applyParts": "Apply to",
+    "passwordLabel": "Password (optional)",
+    "passwordRepeat": "Repeat password",
+    "passwordHint": "Encrypts the ZIP with AES-256. Use a long passphrase (at least 12 characters). A forgotten password cannot be recovered. File names stay visible, and opening the file needs a tool such as 7-Zip.",
+    "unlockTitle": "This file is password protected",
+    "unlockPassword": "File password",
+    "unlockButton": "Unlock"
   },
   "errors": {
     "generic": "Something went wrong.",
@@ -76,6 +82,11 @@
     "import_unsupported_version": "This export was made by a newer version of the app.",
     "import_invalid_data": "data.json has invalid or inconsistent content.",
     "import_unknown_area": "Some entries use a skin area that is not in the app. Import the settings too, or add the area first.",
-    "nothing_selected": "Select records, settings or both."
+    "nothing_selected": "Select records, settings or both.",
+    "password_mismatch": "The two passwords do not match.",
+    "password_too_short": "Use at least 12 characters for the password.",
+    "import_password_required": "This file is password protected. Enter its password.",
+    "import_wrong_password": "Wrong password.",
+    "import_too_large": "The data in this file is larger than the app accepts."
   }
 }

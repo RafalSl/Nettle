@@ -236,3 +236,34 @@ describe('import validation', () => {
     expect(await target.listMeals()).toEqual([]);
   });
 });
+
+describe.each(repos)('password-protected export/import (%s)', (_name, make) => {
+  const PW = 'synthetic-passphrase-1';
+
+  it('EX-6 export with a password then import with it restores everything', async () => {
+    const source = await seeded(make);
+    const zip = await exportBundle(makeDeps(source), { password: PW });
+    expect(Buffer.from(zip).includes('Synthetic')).toBe(false); // data.json content is not readable
+
+    const target = await make();
+    const deps = makeDeps(target);
+    const parsed = await previewImport(deps, zip, PW);
+    await applyImport(deps, parsed, { mode: 'replace', parts: BOTH });
+    expect(await target.snapshot()).toEqual(await source.snapshot());
+  });
+
+  it('EX-6 import asks for a password when missing and rejects a wrong one, changing nothing', async () => {
+    const source = await seeded(make);
+    const zip = await exportBundle(makeDeps(source), { password: PW });
+    const target = await make();
+    const deps = makeDeps(target);
+    expect(await code(previewImport(deps, zip))).toBe('import_password_required');
+    expect(await code(previewImport(deps, zip, 'synthetic-wrong-pass'))).toBe('import_wrong_password');
+    expect(await target.listMeals()).toEqual([]);
+  });
+
+  it('EX-6 a too-short password is rejected before anything is exported', async () => {
+    const source = await seeded(make);
+    expect(await code(exportBundle(makeDeps(source), { password: 'short' }))).toBe('password_too_short');
+  });
+});

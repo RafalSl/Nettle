@@ -10,6 +10,8 @@ export interface ExportOptions {
   /** Applies to records only; settings are always exported in full. */
   range?: DateRange;
   parts?: Parts;
+  /** EX-6: when set, the ZIP is AES-256 encrypted. Never stored or logged. */
+  password?: string;
 }
 
 /** EX-1: a snapshot of the chosen range as a ZIP with data.json, records, settings or both. */
@@ -18,7 +20,7 @@ export async function exportBundle(deps: Deps, options: ExportOptions = {}): Pro
   const parts = options.parts ?? { records: true, settings: true };
   if (!parts.records && !parts.settings) throw new NettleError('nothing_selected');
   const snapshot = await deps.repo.snapshot(range);
-  return packBundle(toDataJson(snapshot, range, makeStamp(deps.clock), parts));
+  return packBundle(toDataJson(snapshot, range, makeStamp(deps.clock), parts), options.password, deps.randomBytes);
 }
 
 export interface PartCounts {
@@ -44,8 +46,8 @@ export interface ParsedImport {
 }
 
 /** EX-10: validate (including schema_version) and count before anything is applied. */
-export async function previewImport(deps: Deps, zip: Uint8Array): Promise<ParsedImport> {
-  const payload = unpackBundle(zip);
+export async function previewImport(deps: Deps, zip: Uint8Array, password?: string): Promise<ParsedImport> {
+  const payload = unpackBundle(zip, password);
   const existing = await deps.repo.existingIds();
   const count = (ids: string[], have: Set<string>) => ({
     total: ids.length,

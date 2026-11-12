@@ -1,5 +1,8 @@
 export type IdGenerator = () => string;
 
+/** Cryptographically secure random bytes (expo-crypto in the app). */
+export type RandomBytes = (length: number) => Uint8Array;
+
 export interface Clock {
   now(): Date;
   /** IANA name, e.g. "Europe/Warsaw". */

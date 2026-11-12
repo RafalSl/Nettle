@@ -30,7 +30,10 @@ To settle it: run the same code on the phone with a temporary benchmark screen (
 - 1000 PBKDF2 rounds is weak against offline guessing, so use a long passphrase. Also recorded.
 - AE-2 omits the CRC; integrity comes from the HMAC.
 
-## Next steps (not done)
+## Status
+Implemented in `app/src/core/export/zip.ts` (tests: `app/test/zip.test.ts`, including a 7-Zip interop test that is skipped when 7-Zip is absent). The device benchmark was skipped by decision; speed on Hermes remains unmeasured.
+
+## Original next steps (historical)
 1. Device benchmark (see above).
 2. Move the writer and reader into `app/src/core/export/` behind a `randomBytes` dependency, add tests (round trip, wrong password, tamper, odd sizes, multi-entry), and wire password input into export and import.
 3. Decide photo file naming (EX-2) with the filename leak in mind.

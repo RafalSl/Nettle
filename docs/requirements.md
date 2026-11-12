@@ -80,7 +80,7 @@ Export is the backup and the way to share data with a doctor. It produces one ZI
 | EX-3 | `report.pdf`: readable summary for a doctor with a flare timeline, per-area trends, photo comparisons and the intake log, in a selectable language (English or Polish) | Must |
 | EX-4 | LLM analyses appear in a separate, clearly labeled section of the PDF as AI-generated, tentative hypotheses | Must |
 | EX-5 | Optional CSV files, one per table, for spreadsheet use | Should |
-| EX-6 | Optional password protection, off by default, entered at export time and never stored; AES-256 encryption, not the legacy ZIP scheme | Must |
+| EX-6 | Optional password protection, off by default, entered at export time (twice) and never stored; AES-256 encryption (WinZip AES), not the legacy ZIP scheme; at least 12 characters. Import asks for the password when the file is protected | Must |
 | EX-7 | Photo selection for export: all, none, non-sensitive only, or a custom selection by area, date range or single photo; default excludes sensitive photos | Must |
 | EX-8 | The selection applies to everything in the bundle, including photos shown in the PDF | Must |
 | EX-9 | Delivery through the iOS share sheet (Files, AirDrop, email) | Must |
@@ -174,5 +174,6 @@ No decision blocks v0.1; the open items below are checks to run during developme
 
 ## Changelog
 
+- **v0.2.2 (2026-11-12):** EX-6 minimum password length 12 and double entry; import prompts for the password.
 - **v0.2.1 (2026-11-12):** EX-10 states the replace/merge rules per part.
 - **v0.2 (2026-11-12):** this file is now canonical in the repo (was an exported snapshot). Export/import split into records and settings (EX-1, EX-10); SK-2 gets `name_override` for predefined areas; EX-10 states the 50 MB `data.json` limit; EX-12 (newest-wins merge) added as Later; export date ranges are local days converted to UTC.

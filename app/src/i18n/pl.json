@@ -61,7 +61,13 @@
     "partSettings": "Ustawienia (obszary skóry)",
     "previewRecords": "Wpisy: posiłki {{meals}}, wpisy o skórze {{entries}}. Scalenie doda posiłki: {{newMeals}}, wpisy: {{newEntries}}.",
     "previewSettings": "Ustawienia: obszary {{areas}}. Scalenie doda {{newAreas}}; istniejące obszary zachowają Twoje lokalne wartości.",
-    "applyParts": "Zastosuj do"
+    "applyParts": "Zastosuj do",
+    "passwordLabel": "Hasło (opcjonalnie)",
+    "passwordRepeat": "Powtórz hasło",
+    "passwordHint": "Szyfruje plik ZIP algorytmem AES-256. Użyj długiej frazy (co najmniej 12 znaków). Zapomnianego hasła nie da się odzyskać. Nazwy plików pozostają widoczne, a do otwarcia pliku potrzebne jest narzędzie, np. 7-Zip.",
+    "unlockTitle": "Ten plik jest chroniony hasłem",
+    "unlockPassword": "Hasło do pliku",
+    "unlockButton": "Odblokuj"
   },
   "errors": {
     "generic": "Coś poszło nie tak.",
@@ -76,6 +82,11 @@
     "import_unsupported_version": "Ten eksport pochodzi z nowszej wersji aplikacji.",
     "import_invalid_data": "data.json ma nieprawidłową lub niespójną zawartość.",
     "import_unknown_area": "Niektóre wpisy dotyczą obszaru skóry, którego nie ma w aplikacji. Zaimportuj też ustawienia albo najpierw dodaj obszar.",
-    "nothing_selected": "Wybierz wpisy, ustawienia lub oba."
+    "nothing_selected": "Wybierz wpisy, ustawienia lub oba.",
+    "password_mismatch": "Hasła nie są takie same.",
+    "password_too_short": "Użyj co najmniej 12 znaków w haśle.",
+    "import_password_required": "Ten plik jest chroniony hasłem. Podaj hasło.",
+    "import_wrong_password": "Nieprawidłowe hasło.",
+    "import_too_large": "Dane w tym pliku są większe, niż aplikacja akceptuje."
   }
 }

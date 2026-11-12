@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Alert, Switch, Text, View } from 'react-native';
+import { Alert, Switch, Text, TextInput, View } from 'react-native';
+import { NettleError } from '@/core/model/errors';
 import type { Parts } from '@/core/model/types';
 import type { ImportMode } from '@/core/ports/storage';
 import { applyImport, exportBundle, previewImport, type ParsedImport } from '@/core/usecases/exchange';
@@ -30,13 +31,42 @@ export default function DataScreen() {
   const [exportParts, setExportParts] = useState<Parts>({ records: true, settings: true });
   const [pending, setPending] = useState<ParsedImport | null>(null);
   const [importParts, setImportParts] = useState<Parts>({ records: true, settings: true });
+  // Passwords live only in component state and are cleared after use; they are never stored or logged.
+  const [password, setPassword] = useState('');
+  const [repeat, setRepeat] = useState('');
+  const [locked, setLocked] = useState<Uint8Array | null>(null);
+  const [filePassword, setFilePassword] = useState('');
 
   async function doExport() {
     try {
+      if (password !== repeat) {
+        Alert.alert(t('errors.password_mismatch'));
+        return;
+      }
       const stamp = deps.clock.now().toISOString().slice(0, 10);
-      const bytes = await exportBundle(deps, { parts: exportParts });
+      const bytes = await exportBundle(deps, { parts: exportParts, password: password || undefined });
       await fileShare.saveAndShare(`nettle-export-${stamp}.zip`, bytes, 'application/zip');
+      setPassword('');
+      setRepeat('');
     } catch (e) {
+      Alert.alert(errorMessage(e));
+    }
+  }
+
+  async function open(bytes: Uint8Array, pw?: string) {
+    try {
+      const parsed = await previewImport(deps, bytes, pw);
+      setImportParts(parsed.preview.has);
+      setPending(parsed);
+      setLocked(null);
+      setFilePassword('');
+    } catch (e) {
+      setPending(null);
+      if (e instanceof NettleError && e.code === 'import_password_required') {
+        setLocked(bytes);
+        return;
+      }
+      if (!(e instanceof NettleError && e.code === 'import_wrong_password')) setLocked(null);
       Alert.alert(errorMessage(e));
     }
   }
@@ -44,12 +74,8 @@ export default function DataScreen() {
   async function choose() {
     try {
       const bytes = await fileShare.pickFile();
-      if (!bytes) return;
-      const parsed = await previewImport(deps, bytes);
-      setImportParts(parsed.preview.has);
-      setPending(parsed);
+      if (bytes) await open(bytes);
     } catch (e) {
-      setPending(null);
       Alert.alert(errorMessage(e));
     }
   }
@@ -88,6 +114,29 @@ export default function DataScreen() {
         value={exportParts.settings}
         onChange={(settings) => setExportParts((s) => ({ ...s, settings }))}
       />
+      <Label>{t('data.passwordLabel')}</Label>
+      <TextInput
+        style={styles.input}
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+        autoCapitalize="none"
+        autoCorrect={false}
+        textContentType="none"
+      />
+      {password.length > 0 && (
+        <TextInput
+          style={styles.input}
+          placeholder={t('data.passwordRepeat')}
+          value={repeat}
+          onChangeText={setRepeat}
+          secureTextEntry
+          autoCapitalize="none"
+          autoCorrect={false}
+          textContentType="none"
+        />
+      )}
+      {password.length > 0 && <Hint>{t('data.passwordHint')}</Hint>}
       {(exportParts.records || exportParts.settings) && (
         <Button title={t('data.exportButton')} onPress={doExport} />
       )}
@@ -95,6 +144,31 @@ export default function DataScreen() {
       <Heading>{t('data.importTitle')}</Heading>
       <Hint>{t('data.importHint')}</Hint>
       <Button kind="secondary" title={t('data.importButton')} onPress={choose} />
+
+      {locked && (
+        <>
+          <Label>{t('data.unlockTitle')}</Label>
+          <TextInput
+            style={styles.input}
+            placeholder={t('data.unlockPassword')}
+            value={filePassword}
+            onChangeText={setFilePassword}
+            secureTextEntry
+            autoCapitalize="none"
+            autoCorrect={false}
+            textContentType="none"
+          />
+          <Button title={t('data.unlockButton')} onPress={() => open(locked, filePassword)} />
+          <Button
+            kind="secondary"
+            title={t('common.cancel')}
+            onPress={() => {
+              setLocked(null);
+              setFilePassword('');
+            }}
+          />
+        </>
+      )}
 
       {p && (
         <>

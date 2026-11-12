@@ -11,6 +11,7 @@ export function makeDeps(repo: StorageRepository, now = '2026-01-15T10:00:00.000
     repo,
     ids: () => `id-${++n}`,
     clock: { now: () => new Date(now), timeZone: () => TZ },
+    randomBytes: (n) => crypto.getRandomValues(new Uint8Array(n)),
   };
 }
 

@@ -11,6 +11,10 @@ export type ErrorCode =
   | 'import_unsupported_version'
   | 'import_invalid_data'
   | 'import_unknown_area'
+  | 'import_password_required'
+  | 'import_wrong_password'
+  | 'import_too_large'
+  | 'password_too_short'
   | 'nothing_selected';
 
 export class NettleError extends Error {

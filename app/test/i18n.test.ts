@@ -22,6 +22,7 @@ describe('i18n (NF-6)', () => {
       'empty_description', 'invalid_score', 'unknown_area', 'area_archived', 'empty_area_name',
       'import_corrupt_zip', 'import_missing_data', 'import_invalid_json',
       'import_unsupported_version', 'import_invalid_data', 'import_unknown_area', 'nothing_selected',
+      'import_password_required', 'import_wrong_password', 'import_too_large', 'password_too_short',
     ];
     for (const c of codes) expect(en.errors).toHaveProperty([c]);
   });

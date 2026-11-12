@@ -1,4 +1,4 @@
-import { randomUUID } from 'expo-crypto';
+import { getRandomBytes, randomUUID } from 'expo-crypto';
 import { getCalendars } from 'expo-localization';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
@@ -35,6 +35,7 @@ export function ServicesProvider({ children }: { children: ReactNode }) {
         const deps: Deps = {
           repo,
           ids: randomUUID,
+          randomBytes: getRandomBytes,
           clock: { now: () => new Date(), timeZone: () => getCalendars()[0]?.timeZone ?? 'UTC' },
         };
         if (!cancelled) setServices({ deps, fileShare: expoFileShare });

@@ -120,3 +120,16 @@ export async function logNailEntry(deps: Deps, input: LogNailEntryInput): Promis
   await deps.repo.addRecord('nailEntries', entry);
   return entry;
 }
+
+/** SK-3: the scores of the area's most recent entry, to prefill a new one; null when there is none yet. */
+export async function lastSkinScores(deps: Deps, areaId: string): Promise<SkinScores | null> {
+  const last = (await deps.repo.listSkinEntries()).find((e) => e.areaId === areaId); // newest first
+  return last ? { ...last.scores } : null;
+}
+
+/** SK-3 "no change": saves a new entry with the area's last scores in one call. */
+export async function repeatSkinEntry(deps: Deps, areaId: string, at?: Date): Promise<SkinEntry> {
+  const scores = await lastSkinScores(deps, areaId);
+  if (!scores) throw new NettleError('no_previous_entry', areaId);
+  return logSkinEntry(deps, { areaId, scores, at });
+}

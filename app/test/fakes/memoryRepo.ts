@@ -10,6 +10,7 @@ import {
   type ListKind,
   type Meal,
   type Payload,
+  type RecordKind,
   type Records,
   type SkinArea,
   type SkinEntry,
@@ -98,6 +99,12 @@ export class MemoryRepo implements StorageRepository {
     if (areaId !== undefined && !areas.has(areaId)) throw new Error('unknown area');
     if (mealId !== undefined && !meals.has(mealId)) throw new Error('unknown meal');
   }
+  async deleteRecords(ids: Partial<Record<RecordKind, string[]>>) {
+    for (const id of ids.meals ?? []) this.meals.delete(id);
+    for (const id of ids.skinEntries ?? []) this.entries.delete(id);
+    for (const kind of EXTRA_KINDS) for (const id of ids[kind] ?? []) this.extra[kind].delete(id);
+  }
+
   async snapshot(range?: DateRange): Promise<Snapshot> {
     const snap = {
       meals: await this.listMeals(range),

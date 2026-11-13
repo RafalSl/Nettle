@@ -1,5 +1,5 @@
 import type { Deps } from '@/core/usecases/deps';
-import type { Meal, SkinEntry } from '@/core/model/types';
+import type { Meal, NailEntry, SkinEntry } from '@/core/model/types';
 import type { StorageRepository } from '@/core/ports/storage';
 
 /** Clearly synthetic data only. */
@@ -28,5 +28,14 @@ export const syntheticEntry = (id: string, utc: string, areaId = 'area-chin'): S
   at: { utc, tz: TZ },
   areaId,
   scores: { severity: 3, itch: 5, pain: 0, dryness: 2, scaling: 10 },
+  note: 'synthetic note',
+});
+
+export const syntheticNailEntry = (id: string, utc: string, areaId = 'a-nail'): NailEntry => ({
+  id,
+  at: { utc, tz: TZ },
+  areaId,
+  stage: 'separation',
+  extent: 'under_quarter',
   note: 'synthetic note',
 });

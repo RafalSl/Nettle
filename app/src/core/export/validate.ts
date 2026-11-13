@@ -1,35 +1,9 @@
 import { NettleError } from '../model/errors';
-import { CANONICAL_UTC } from '../model/time';
-import type { Meal, Payload, SkinArea, SkinEntry } from '../model/types';
+import { EXTRA_KINDS, type Meal, type Payload, type Records, type SkinArea, type SkinEntry } from '../model/types';
 import { isScore } from '../usecases/skin';
+import { EXTRA_CODECS } from './extras';
+import { bad, bool, oneOf, isObj, list, nullableText, str, unique, utc, type Obj } from './guards';
 import { SCHEMA_VERSION } from './schema';
-
-type Obj = Record<string, unknown>;
-
-const bad = (detail: string): never => {
-  throw new NettleError('import_invalid_data', detail);
-};
-const isObj = (v: unknown): v is Obj => typeof v === 'object' && v !== null && !Array.isArray(v);
-const str = (o: Obj, k: string, where: string): string =>
-  typeof o[k] === 'string' && (o[k] as string).length > 0 ? (o[k] as string) : bad(`${where}.${k}`);
-const text = (o: Obj, k: string, where: string): string =>
-  typeof o[k] === 'string' ? (o[k] as string) : bad(`${where}.${k}`);
-const bool = (o: Obj, k: string, where: string): boolean =>
-  typeof o[k] === 'boolean' ? (o[k] as boolean) : bad(`${where}.${k}`);
-const nullableText = (o: Obj, k: string, where: string): string | null =>
-  o[k] === null || o[k] === undefined ? null : text(o, k, where);
-const utc = (o: Obj, where: string): string => {
-  const v = str(o, 'utc', where);
-  return CANONICAL_UTC.test(v) && !Number.isNaN(Date.parse(v)) ? v : bad(`${where}.utc`);
-};
-const list = (o: Obj, k: string): Obj[] => {
-  const v = o[k];
-  if (!Array.isArray(v)) return bad(k);
-  return v.map((x, i) => (isObj(x) ? x : bad(`${k}[${i}]`)));
-};
-const unique = (ids: string[], where: string) => {
-  if (new Set(ids).size !== ids.length) bad(`${where} duplicate id`);
-};
 
 const section = (o: Obj, k: string): Obj | null => {
   const v = o[k];
@@ -60,6 +34,7 @@ export function parseDataJson(raw: unknown): Payload {
       const w = `settings.skin_areas[${i}]`;
       return {
         id: str(o, 'id', w),
+        kind: oneOf(o, 'kind', ['skin', 'nail'] as const, w),
         name: str(o, 'name', w),
         predefined: bool(o, 'predefined', w),
         archived: bool(o, 'archived', w),
@@ -107,7 +82,16 @@ export function parseDataJson(raw: unknown): Payload {
     });
     unique(meals.map((m) => m.id), 'records.meals');
     unique(skinEntries.map((e) => e.id), 'records.skin_entries');
-    payload.records = { meals, skinEntries };
+    const out = { meals, skinEntries } as Records;
+    for (const kind of EXTRA_KINDS) {
+      const codec = EXTRA_CODECS[kind];
+      const rows = list(records, codec.key).map((o, i) =>
+        (codec.parse as (o: Obj, w: string) => Records[typeof kind][number])(o, `records.${codec.key}[${i}]`),
+      );
+      unique(rows.map((r) => r.id), `records.${codec.key}`);
+      Object.assign(out, { [kind]: rows });
+    }
+    payload.records = out;
   }
 
   if (!payload.records && !payload.settings) return bad('no records or settings section');

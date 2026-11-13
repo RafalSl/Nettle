@@ -4,6 +4,8 @@ export type ErrorCode =
   | 'invalid_score'
   | 'unknown_area'
   | 'area_archived'
+  | 'wrong_area_kind'
+  | 'invalid_nail_value'
   | 'empty_area_name'
   | 'import_corrupt_zip'
   | 'import_missing_data'

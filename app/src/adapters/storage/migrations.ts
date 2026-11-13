@@ -40,6 +40,20 @@ export const MIGRATIONS: string[] = [
   `,
   // SK-2: name_override for predefined areas.
   `ALTER TABLE skin_area ADD COLUMN name_override TEXT;`,
+  // SK-10: area kinds and nail entries.
+  `
+  ALTER TABLE skin_area ADD COLUMN kind TEXT NOT NULL DEFAULT 'skin' CHECK (kind IN ('skin', 'nail'));
+  CREATE TABLE nail_entry (
+    id TEXT PRIMARY KEY,
+    ts_utc TEXT NOT NULL,
+    tz TEXT NOT NULL,
+    area_id TEXT NOT NULL REFERENCES skin_area (id),
+    stage TEXT NOT NULL CHECK (stage IN ('red_edge', 'separation', 'yellow', 'white', 'clear')),
+    extent TEXT NOT NULL CHECK (extent IN ('none', 'under_quarter', 'up_to_half', 'over_half')),
+    note TEXT
+  );
+  CREATE INDEX nail_entry_ts ON nail_entry (ts_utc);
+  `,
 ];
 
 export async function migrate(db: SqlDb): Promise<void> {

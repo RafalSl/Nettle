@@ -1,5 +1,5 @@
 import type { StorageRepository } from '@/core/ports/storage';
-import { syntheticEntry, syntheticMeal } from '../helpers/fixtures';
+import { syntheticEntry, syntheticMeal, syntheticNailEntry } from '../helpers/fixtures';
 
 /** Behaviour every StorageRepository must have; run against the fake and the SQLite adapter. */
 export function storageContract(name: string, make: () => Promise<StorageRepository>) {
@@ -47,8 +47,48 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
       await expect(repo.addSkinEntry(syntheticEntry('e1', '2026-01-15T08:00:00.000Z', 'nope'))).rejects.toThrow();
     });
 
+    const nailArea = {
+      id: 'a-nail',
+      kind: 'nail' as const,
+      name: 'Synthetic left thumb',
+      predefined: false,
+      archived: false,
+      sensitiveDefault: false,
+      nameOverride: null,
+    };
+
+    it('SK-10 stores an area kind and a nail entry with stage and extent', async () => {
+      await repo.upsertArea(nailArea);
+      expect((await repo.listAreas()).find((a) => a.id === 'a-nail')?.kind).toBe('nail');
+      expect((await repo.listAreas()).filter((a) => a.predefined).every((a) => a.kind === 'skin')).toBe(true);
+      const entry = syntheticNailEntry('n1', '2026-01-15T08:00:00.000Z');
+      await repo.addRecord('nailEntries', entry);
+      expect(await repo.listRecords('nailEntries')).toEqual([entry]);
+    });
+
+    it('SK-10 lists nail entries newest first, filters by range and rejects unknown areas', async () => {
+      await repo.upsertArea(nailArea);
+      await repo.addRecord('nailEntries', syntheticNailEntry('n1', '2026-01-10T08:00:00.000Z'));
+      await repo.addRecord('nailEntries', syntheticNailEntry('n2', '2026-01-12T08:00:00.000Z'));
+      expect((await repo.listRecords('nailEntries')).map((e) => e.id)).toEqual(['n2', 'n1']);
+      expect((await repo.listRecords('nailEntries', { from: '2026-01-11T00:00:00.000Z' })).map((e) => e.id)).toEqual(['n2']);
+      await expect(repo.addRecord('nailEntries', syntheticNailEntry('n3', '2026-01-13T08:00:00.000Z', 'nope'))).rejects.toThrow();
+    });
+
+    it('EX-10 replace records wipes nail entries; replace settings keeps a nail area that is still used', async () => {
+      await repo.upsertArea(nailArea);
+      await repo.upsertArea({ ...nailArea, id: 'a-nail-unused' });
+      await repo.addRecord('nailEntries', syntheticNailEntry('n1', '2026-01-10T08:00:00.000Z'));
+      await repo.importData({ settings: { skinAreas: [] } }, 'replace');
+      const ids = (await repo.listAreas()).map((a) => a.id);
+      expect(ids).toContain('a-nail');
+      expect(ids).not.toContain('a-nail-unused');
+      await repo.importData({ records: { meals: [], skinEntries: [], nailEntries: [] } }, 'replace');
+      expect(await repo.listRecords('nailEntries')).toEqual([]);
+    });
+
     it('SK-2 upsert adds, renames and archives areas', async () => {
-      const area = { id: 'a-custom', name: 'Synthetic elbow', predefined: false, archived: false, sensitiveDefault: false, nameOverride: null };
+      const area = { id: 'a-custom', kind: 'skin' as const, name: 'Synthetic elbow', predefined: false, archived: false, sensitiveDefault: false, nameOverride: null };
       await repo.upsertArea(area);
       await repo.upsertArea({ ...area, name: 'Synthetic knee', archived: true });
       const found = (await repo.listAreas()).find((a) => a.id === 'a-custom');
@@ -65,6 +105,7 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
 
     const custom = {
       id: 'a-custom',
+      kind: 'skin' as const,
       name: 'Synthetic elbow',
       predefined: false,
       archived: false,
@@ -81,6 +122,7 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
             syntheticMeal('m2', '2026-01-11T08:00:00.000Z'),
           ],
           skinEntries: [syntheticEntry('e1', '2026-01-11T09:00:00.000Z')],
+          nailEntries: [],
         },
         settings: { skinAreas: await repo.listAreas() },
       };
@@ -97,7 +139,7 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
       await repo.addMeal(syntheticMeal('old', '2026-01-01T08:00:00.000Z'));
       await repo.addSkinEntry(syntheticEntry('old-e', '2026-01-01T09:00:00.000Z', 'a-custom'));
       await repo.importData(
-        { records: { meals: [syntheticMeal('new', '2026-01-02T08:00:00.000Z')], skinEntries: [] } },
+        { records: { meals: [syntheticMeal('new', '2026-01-02T08:00:00.000Z')], skinEntries: [], nailEntries: [] } },
         'replace',
       );
       expect((await repo.listMeals()).map((m) => m.id)).toEqual(['new']);
@@ -145,6 +187,7 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
         records: {
           meals: [syntheticMeal('new', '2026-01-02T08:00:00.000Z')],
           skinEntries: [syntheticEntry('bad', '2026-01-02T09:00:00.000Z', 'missing-area')],
+          nailEntries: [],
         },
       };
       await expect(repo.importData(broken, 'replace')).rejects.toThrow();

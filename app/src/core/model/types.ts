@@ -12,8 +12,12 @@ export interface Meal {
   note: string | null;
 }
 
+/** SK-10: every area is either a skin area (five scores) or a nail area (stage and extent). */
+export type AreaKind = 'skin' | 'nail';
+
 export interface SkinArea {
   id: string;
+  kind: AreaKind;
   name: string;
   predefined: boolean;
   archived: boolean;
@@ -40,11 +44,35 @@ export interface SkinEntry {
   note: string | null;
 }
 
+/** SK-10 */
+export const NAIL_STAGES = ['red_edge', 'separation', 'yellow', 'white', 'clear'] as const;
+export type NailStage = (typeof NAIL_STAGES)[number];
+export const NAIL_EXTENTS = ['none', 'under_quarter', 'up_to_half', 'over_half'] as const;
+export type NailExtent = (typeof NAIL_EXTENTS)[number];
+
+/** SK-10: one entry = one nail area at one time; photos attach later (SK-4). */
+export interface NailEntry {
+  id: string;
+  at: Stamp;
+  areaId: string;
+  stage: NailStage;
+  extent: NailExtent;
+  note: string | null;
+}
+
 /** What the user logged (EX-1 "records"). */
 export interface Records {
   meals: Meal[];
   skinEntries: SkinEntry[];
+  nailEntries: NailEntry[];
 }
+
+/**
+ * Record collections that are flat, dated rows with an `id` and an `at` stamp. Storage, import and export
+ * handle them generically; meals and skin entries predate this and have their own methods.
+ */
+export type ExtraKind = Exclude<keyof Records, 'meals' | 'skinEntries'>;
+export const EXTRA_KINDS: readonly ExtraKind[] = ['nailEntries'];
 
 /** User configuration (EX-1 "settings"). */
 export interface Settings {

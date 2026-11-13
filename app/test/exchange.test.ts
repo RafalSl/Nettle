@@ -3,10 +3,11 @@ import { SqliteRepo } from '@/adapters/storage/sqliteRepo';
 import { NettleError } from '@/core/model/errors';
 import type { StorageRepository } from '@/core/ports/storage';
 import { applyImport, exportBundle, previewImport } from '@/core/usecases/exchange';
+import { parseDataJson } from '@/core/export/validate';
 import { MemoryRepo } from './fakes/memoryRepo';
 import { MemoryKeyStore } from './fakes/memoryKeyStore';
 import { createNodeSqliteDb } from './helpers/nodeSqliteDb';
-import { makeDeps, syntheticEntry, syntheticMeal } from './helpers/fixtures';
+import { makeDeps, syntheticEntry, syntheticMeal, syntheticNailEntry } from './helpers/fixtures';
 
 const repos: [string, () => Promise<StorageRepository>][] = [
   ['in-memory', async () => new MemoryRepo()],
@@ -17,22 +18,27 @@ const BOTH = { records: true, settings: true };
 const RECORDS = { records: true, settings: false };
 const SETTINGS = { records: false, settings: true };
 
+const custom = {
+  id: 'a-custom',
+  kind: 'skin' as const,
+  name: 'Synthetic elbow',
+  predefined: false,
+  archived: false,
+  sensitiveDefault: false,
+  nameOverride: null,
+};
+
 async function seeded(make: () => Promise<StorageRepository>) {
   const repo = await make();
-  await repo.upsertArea({
-    id: 'a-custom',
-    name: 'Synthetic elbow',
-    predefined: false,
-    archived: false,
-    sensitiveDefault: false,
-    nameOverride: null,
-  });
+  await repo.upsertArea(custom);
   const chin = (await repo.listAreas()).find((a) => a.id === 'area-chin')!;
   await repo.upsertArea({ ...chin, nameOverride: 'Synthetic jaw' }); // SK-2 override must survive the round trip
   await repo.addMeal(syntheticMeal('m1', '2026-01-10T08:00:00.000Z'));
   await repo.addMeal(syntheticMeal('m2', '2026-01-12T08:00:00.000Z', []));
   await repo.addSkinEntry(syntheticEntry('e1', '2026-01-10T09:00:00.000Z', 'area-intimate'));
   await repo.addSkinEntry(syntheticEntry('e2', '2026-01-12T09:00:00.000Z', 'a-custom'));
+  await repo.upsertArea({ ...custom, id: 'a-nail', kind: 'nail', name: 'Synthetic left thumb' });
+  await repo.addRecord('nailEntries', syntheticNailEntry('n1', '2026-01-12T10:00:00.000Z', 'a-nail'));
   return repo;
 }
 
@@ -43,6 +49,52 @@ const code = async (p: Promise<unknown>) =>
     (e: unknown) => (e instanceof NettleError ? e.code : 'other'),
   );
 
+describe('data.json validation of nail data (SK-10)', () => {
+  const stamp = { utc: '2026-01-10T08:00:00.000Z', tz: 'Europe/Warsaw' };
+  const file = (records: object, settings?: object) => ({
+    schema_version: 1,
+    records,
+    ...(settings && { settings }),
+  });
+  const nailRow = { id: 'n1', utc: stamp.utc, tz: stamp.tz, area_id: 'a', stage: 'white', extent: 'none', note: null };
+  const base = { meals: [], skin_entries: [] };
+
+  it('accepts a nail entry and a nail area', () => {
+    const p = parseDataJson(
+      file(
+        { ...base, nail_entries: [nailRow] },
+        { skin_areas: [{ id: 'a', kind: 'nail', name: 'x', predefined: false, archived: false, sensitive_default: false, name_override: null }] },
+      ),
+    );
+    expect(p.records?.nailEntries).toHaveLength(1);
+    expect(p.settings?.skinAreas[0]?.kind).toBe('nail');
+  });
+
+  it('rejects a bad stage, a bad extent, a missing nail_entries list and an unknown area kind', () => {
+    const bad = (raw: unknown) => {
+      try {
+        parseDataJson(raw);
+        return 'no error';
+      } catch (e) {
+        return e instanceof NettleError ? e.code : 'other';
+      }
+    };
+    expect(bad(file({ ...base, nail_entries: [{ ...nailRow, stage: 'purple' }] }))).toBe('import_invalid_data');
+    expect(bad(file({ ...base, nail_entries: [{ ...nailRow, extent: 'all' }] }))).toBe('import_invalid_data');
+    expect(bad(file(base))).toBe('import_invalid_data');
+    expect(
+      bad(file(undefined as never, { skin_areas: [{ id: 'a', kind: 'toe', name: 'x', predefined: false, archived: false, sensitive_default: false, name_override: null }] })),
+    ).toBe('import_invalid_data');
+  });
+
+  it('refuses to apply a nail entry whose area is unknown (import_unknown_area)', async () => {
+    const target = new MemoryRepo();
+    const deps = makeDeps(target);
+    const parsed = { payload: parseDataJson(file({ ...base, nail_entries: [nailRow] })), preview: undefined as never };
+    expect(await code(applyImport(deps, parsed, { mode: 'merge', parts: RECORDS }))).toBe('import_unknown_area');
+  });
+});
+
 describe.each(repos)('export/import (%s)', (_name, make) => {
   it('EX-1 + EX-10 export both parts then replace both restores everything', async () => {
     const source = await seeded(make);
@@ -52,7 +104,7 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
     const deps = makeDeps(target);
     const parsed = await previewImport(deps, zip);
     expect(parsed.preview.has).toEqual(BOTH);
-    expect(parsed.preview.incoming).toEqual({ meals: 2, skinEntries: 2, skinAreas: 7 });
+    expect(parsed.preview.incoming).toEqual({ meals: 2, skinEntries: 2, nailEntries: 1, skinAreas: 8 });
     await applyImport(deps, parsed, { mode: 'replace', parts: BOTH });
 
     expect(await target.snapshot()).toEqual(await source.snapshot());
@@ -75,8 +127,8 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
     const deps = makeDeps(target);
 
     const parsed = await previewImport(deps, zip);
-    expect(parsed.preview.duplicates).toEqual({ meals: 1, skinEntries: 0, skinAreas: 6 });
-    expect(parsed.preview.newRows).toEqual({ meals: 1, skinEntries: 2, skinAreas: 1 });
+    expect(parsed.preview.duplicates).toEqual({ meals: 1, skinEntries: 0, nailEntries: 0, skinAreas: 6 });
+    expect(parsed.preview.newRows).toEqual({ meals: 1, skinEntries: 2, nailEntries: 1, skinAreas: 2 });
     await applyImport(deps, parsed, { mode: 'merge', parts: BOTH });
     expect((await target.listMeals()).find((m) => m.id === 'm1')?.ingredients).toEqual(['kept']);
     expect(await target.listMeals()).toHaveLength(2);
@@ -90,7 +142,7 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
     expect(json.records.meals).toHaveLength(2);
 
     const target = await make();
-    await target.upsertArea((await source.listAreas()).find((a) => a.id === 'a-custom')!);
+    for (const a of (await source.listAreas()).filter((a) => a.id.startsWith('a-'))) await target.upsertArea(a);
     const deps = makeDeps(target);
     const parsed = await previewImport(deps, zip);
     expect(parsed.preview.has).toEqual(RECORDS);
@@ -114,7 +166,7 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
     const source = await seeded(make);
     const json = dataJson(await exportBundle(makeDeps(source), { parts: SETTINGS }));
     expect(json.records).toBeUndefined();
-    expect(json.settings.skin_areas).toHaveLength(7);
+    expect(json.settings.skin_areas).toHaveLength(8);
     expect(json.settings.skin_areas.find((a: { id: string }) => a.id === 'area-chin').name_override).toBe('Synthetic jaw');
   });
 
@@ -137,7 +189,7 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
     const zip = await exportBundle(makeDeps(source));
     const target = await make();
     await target.addMeal(syntheticMeal('only-here', '2026-01-01T08:00:00.000Z'));
-    await target.upsertArea((await source.listAreas()).find((a) => a.id === 'a-custom')!);
+    for (const a of (await source.listAreas()).filter((a) => a.id.startsWith('a-'))) await target.upsertArea(a);
     const deps = makeDeps(target);
     await applyImport(deps, await previewImport(deps, zip), { mode: 'replace', parts: RECORDS });
     expect((await target.listMeals()).map((m) => m.id).sort()).toEqual(['m1', 'm2']);
@@ -162,7 +214,7 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
     const json = dataJson(zip);
     expect(json.records.meals.map((m: { id: string }) => m.id)).toEqual(['m2']);
     expect(json.records.skin_entries.map((e: { id: string }) => e.id)).toEqual(['e2']);
-    expect(json.settings.skin_areas).toHaveLength(7);
+    expect(json.settings.skin_areas).toHaveLength(8);
     expect(json.range).toEqual({ from: '2026-01-11T00:00:00.000Z', to: null });
   });
 });
@@ -234,6 +286,52 @@ describe('import validation', () => {
     const d = makeDeps(target);
     await code(previewImport(d, zipOf({ schema_version: 1, records: { meals: [], skin_entries: 5 } })));
     expect(await target.listMeals()).toEqual([]);
+  });
+});
+
+describe('data.json validation of nail data (SK-10)', () => {
+  const stamp = { utc: '2026-01-10T08:00:00.000Z', tz: 'Europe/Warsaw' };
+  const file = (records: object, settings?: object) => ({
+    schema_version: 1,
+    records,
+    ...(settings && { settings }),
+  });
+  const nailRow = { id: 'n1', utc: stamp.utc, tz: stamp.tz, area_id: 'a', stage: 'white', extent: 'none', note: null };
+  const base = { meals: [], skin_entries: [] };
+
+  it('accepts a nail entry and a nail area', () => {
+    const p = parseDataJson(
+      file(
+        { ...base, nail_entries: [nailRow] },
+        { skin_areas: [{ id: 'a', kind: 'nail', name: 'x', predefined: false, archived: false, sensitive_default: false, name_override: null }] },
+      ),
+    );
+    expect(p.records?.nailEntries).toHaveLength(1);
+    expect(p.settings?.skinAreas[0]?.kind).toBe('nail');
+  });
+
+  it('rejects a bad stage, a bad extent, a missing nail_entries list and an unknown area kind', () => {
+    const bad = (raw: unknown) => {
+      try {
+        parseDataJson(raw);
+        return 'no error';
+      } catch (e) {
+        return e instanceof NettleError ? e.code : 'other';
+      }
+    };
+    expect(bad(file({ ...base, nail_entries: [{ ...nailRow, stage: 'purple' }] }))).toBe('import_invalid_data');
+    expect(bad(file({ ...base, nail_entries: [{ ...nailRow, extent: 'all' }] }))).toBe('import_invalid_data');
+    expect(bad(file(base))).toBe('import_invalid_data');
+    expect(
+      bad(file(undefined as never, { skin_areas: [{ id: 'a', kind: 'toe', name: 'x', predefined: false, archived: false, sensitive_default: false, name_override: null }] })),
+    ).toBe('import_invalid_data');
+  });
+
+  it('refuses to apply a nail entry whose area is unknown (import_unknown_area)', async () => {
+    const target = new MemoryRepo();
+    const deps = makeDeps(target);
+    const parsed = { payload: parseDataJson(file({ ...base, nail_entries: [nailRow] })), preview: undefined as never };
+    expect(await code(applyImport(deps, parsed, { mode: 'merge', parts: RECORDS }))).toBe('import_unknown_area');
   });
 });
 

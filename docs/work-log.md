@@ -86,3 +86,9 @@ Newest entry last. One short entry per working session or meaningful step: what 
 - Strings: English and a Polish draft for all of it (tags, allergens, nail stages and extents, new error codes). `ERROR_CODES` is now a runtime list, so the i18n test checks every error code, predefined tag, allergen and nail value for a translation instead of a hand-kept list.
 - No screens yet for change events (IN-12), reactions (IN-13, including the urgent-care advice text), editing tag or treatment lists, or nail "no change". Reminders (SK-9) are not started.
 - 175 tests pass with typecheck and lint; `expo export --platform ios` bundles. **Not run in Expo Go**: layout, the new tabs, the date picker with the check-in day, and chip behavior need a look on the phone.
+
+## 2026-11-14: session wrap-up and phone checks
+- Six steps done this session (nails, check-in, treatments/events/reactions/allergens, fast skin logging and local-day ranges, screens, docs); each merged into `develop` with a green `npm run check`. `main` is untouched.
+- open-questions now lists what v0.3 still needs (screens for change events and reactions, reminders, photos, LLM prompt, PDF).
+- **To check on the phone (Expo Go), none of this has run there:** the Today tab (scores with "–" and clear, tag chips, "save and close the day", reopening, back-filling a past day with the date picker, stool chips); the More tab (add a nail, nail entry, save a treatment, apply it to two areas); Skin prefill and "No change"; Meal allergen chips and "suggest"; export then import of the new data on a fresh install (merge and replace); first launch on an existing database to confirm migrations 3 to 5 run.
+- Next big pieces: photos (SK-4, SK-5, NF-5), then the Anthropic adapter and the analysis flow (LL-1 to LL-10), then PDF.

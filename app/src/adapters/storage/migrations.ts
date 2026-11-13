@@ -124,6 +124,28 @@ export const MIGRATIONS: string[] = [
   );
   CREATE INDEX reaction_ts ON reaction (ts_utc);
   `,
+  // IN-4, IN-5: alcohol and medication or supplement entries.
+  `
+  CREATE TABLE alcohol_entry (
+    id TEXT PRIMARY KEY,
+    ts_utc TEXT NOT NULL,
+    tz TEXT NOT NULL,
+    drink TEXT NOT NULL,
+    amount_ml INTEGER NOT NULL CHECK (amount_ml > 0),
+    note TEXT
+  );
+  CREATE INDEX alcohol_entry_ts ON alcohol_entry (ts_utc);
+  CREATE TABLE medication_entry (
+    id TEXT PRIMARY KEY,
+    ts_utc TEXT NOT NULL,
+    tz TEXT NOT NULL,
+    category TEXT NOT NULL CHECK (category IN ('medication', 'supplement')),
+    name TEXT NOT NULL,
+    dose TEXT,
+    note TEXT
+  );
+  CREATE INDEX medication_entry_ts ON medication_entry (ts_utc);
+  `,
 ];
 
 export async function migrate(db: SqlDb): Promise<void> {

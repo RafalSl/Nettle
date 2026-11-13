@@ -29,6 +29,8 @@ export const ERROR_CODES = [
   'import_too_large',
   'password_too_short',
   'invalid_range',
+  'invalid_amount',
+  'empty_name',
   'no_previous_entry',
   'nothing_selected',
 ] as const;

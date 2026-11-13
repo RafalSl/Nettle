@@ -1,6 +1,7 @@
 import { NettleError } from '@/core/model/errors';
 import { suggestAllergens } from '@/core/model/allergens';
 import { ALLERGENS } from '@/core/model/types';
+import { logAlcohol, logMedication } from '@/core/usecases/intake';
 import { applyTreatment, logChangeEvent, logReaction } from '@/core/usecases/events';
 import { addListItem, archiveListItem } from '@/core/usecases/lists';
 import { logMeal } from '@/core/usecases/logMeal';
@@ -100,5 +101,29 @@ describe('immediate reactions (IN-13)', () => {
     expect(await code(logReaction(deps, { mealId: meal.id, symptoms: ['hives'], at: new Date('2026-01-15T11:59:00.000Z') }))).toBe(
       'reaction_before_meal',
     );
+  });
+});
+
+describe('alcohol and medications (IN-4, IN-5)', () => {
+  it('IN-4 logs a drink with type and amount in ml and rejects bad input', async () => {
+    const repo = new MemoryRepo();
+    const deps = makeDeps(repo);
+    const e = await logAlcohol(deps, { drink: ' Synthetic beer ', amountMl: 500, at: new Date('2026-01-15T18:00:00.000Z') });
+    expect(e).toMatchObject({ drink: 'Synthetic beer', amountMl: 500, note: null });
+    expect(await repo.listRecords('alcoholEntries')).toEqual([e]);
+    expect(await code(logAlcohol(deps, { drink: ' ', amountMl: 100 }))).toBe('empty_name');
+    for (const bad of [0, -5, 2.5, NaN]) expect(await code(logAlcohol(deps, { drink: 'x', amountMl: bad }))).toBe('invalid_amount');
+  });
+
+  it('IN-5 logs a medication or supplement with an optional dose', async () => {
+    const repo = new MemoryRepo();
+    const deps = makeDeps(repo);
+    const a = await logMedication(deps, { category: 'supplement', name: ' Synthetic vitamin ', dose: ' 1 tablet ' });
+    const b = await logMedication(deps, { category: 'medication', name: 'Synthetic pill' });
+    expect(a).toMatchObject({ category: 'supplement', name: 'Synthetic vitamin', dose: '1 tablet' });
+    expect(b.dose).toBeNull();
+    expect(await repo.listRecords('medicationEntries')).toHaveLength(2);
+    expect(await code(logMedication(deps, { category: 'medication', name: '' }))).toBe('empty_name');
+    expect(await code(logMedication(deps, { category: 'herb' as never, name: 'x' }))).toBe('invalid_value');
   });
 });

@@ -152,6 +152,29 @@ export interface Reaction {
   note: string | null;
 }
 
+/** IN-4: a drink with its type (beer, wine, ...) and amount in millilitres. */
+export interface AlcoholEntry {
+  id: string;
+  at: Stamp;
+  drink: string;
+  amountMl: number;
+  note: string | null;
+}
+
+/** IN-5 */
+export const MEDICATION_CATEGORIES = ['medication', 'supplement'] as const;
+export type MedicationCategory = (typeof MEDICATION_CATEGORIES)[number];
+
+/** IN-5: a medication or supplement taken, with a free-text dose. Topical treatments are IN-11. */
+export interface MedicationEntry {
+  id: string;
+  at: Stamp;
+  category: MedicationCategory;
+  name: string;
+  dose: string | null;
+  note: string | null;
+}
+
 /** What the user logged (EX-1 "records"). */
 export interface Records {
   meals: Meal[];
@@ -162,6 +185,8 @@ export interface Records {
   treatmentApplications: TreatmentApplication[];
   changeEvents: ChangeEvent[];
   reactions: Reaction[];
+  alcoholEntries: AlcoholEntry[];
+  medicationEntries: MedicationEntry[];
 }
 
 /**
@@ -176,6 +201,8 @@ export const EXTRA_KINDS: readonly ExtraKind[] = [
   'treatmentApplications',
   'changeEvents',
   'reactions',
+  'alcoholEntries',
+  'medicationEntries',
 ];
 
 /**

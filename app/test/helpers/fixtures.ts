@@ -49,6 +49,8 @@ export const noExtra = {
   treatmentApplications: [],
   changeEvents: [],
   reactions: [],
+  alcoholEntries: [],
+  medicationEntries: [],
 };
 
 /** The user lists (see ListKind) with no items, to complete a Settings literal. */

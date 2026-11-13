@@ -59,6 +59,8 @@ async function seeded(make: () => Promise<StorageRepository>) {
     name: 'Synthetic shampoo',
     note: null,
   });
+  await repo.addRecord('alcoholEntries', { id: 'al1', at: { utc: '2026-01-12T19:00:00.000Z', tz: TZ }, drink: 'Synthetic beer', amountMl: 500, note: null });
+  await repo.addRecord('medicationEntries', { id: 'md1', at: { utc: '2026-01-12T08:00:00.000Z', tz: TZ }, category: 'supplement', name: 'Synthetic vitamin', dose: '1 tablet', note: null });
   await repo.addRecord('reactions', {
     id: 'r1',
     at: { utc: '2026-01-12T09:00:00.000Z', tz: TZ },
@@ -85,6 +87,8 @@ const RAW_RECORDS = {
   treatment_applications: [],
   change_events: [],
   reactions: [],
+  alcohol_entries: [],
+  medication_entries: [],
 };
 const RAW_SETTINGS = { skin_areas: [], daily_tags: [], treatments: [] };
 
@@ -190,6 +194,27 @@ describe('data.json validation of check-ins, stool and tags (SK-7, SK-11, IN-6)'
   });
 });
 
+describe('data.json validation of alcohol and medication entries (IN-4, IN-5)', () => {
+  const at = { utc: '2026-01-10T20:00:00.000Z', tz: 'Europe/Warsaw' };
+  const alcohol = { id: 'al1', utc: at.utc, tz: at.tz, drink: 'x', amount_ml: 330, note: null };
+  const med = { id: 'md1', utc: at.utc, tz: at.tz, category: 'medication', name: 'x', dose: null, note: null };
+  const err = (r: object) => {
+    try {
+      parseDataJson({ schema_version: 1, records: { ...RAW_RECORDS, ...r } });
+      return 'no error';
+    } catch (e) {
+      return e instanceof NettleError ? e.code : 'other';
+    }
+  };
+
+  it('accepts valid entries and rejects bad amounts and categories', () => {
+    expect(err({ alcohol_entries: [alcohol], medication_entries: [med] })).toBe('no error');
+    for (const ml of [0, -1, 2.5, '330']) expect(err({ alcohol_entries: [{ ...alcohol, amount_ml: ml }] })).toBe('import_invalid_data');
+    expect(err({ medication_entries: [{ ...med, category: 'herb' }] })).toBe('import_invalid_data');
+    expect(err({ medication_entries: [{ ...med, name: '' }] })).toBe('import_invalid_data');
+  });
+});
+
 describe('data.json validation of treatments, events, reactions and allergens (IN-10 to IN-13)', () => {
   const at = { utc: '2026-01-10T20:00:00.000Z', tz: 'Europe/Warsaw' };
   const application = { id: 'ta1', utc: at.utc, tz: at.tz, treatment_id: 'tr1', area_ids: ['area-chin'], note: null };
@@ -268,6 +293,8 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
       treatmentApplications: 1,
       changeEvents: 1,
       reactions: 1,
+      alcoholEntries: 1,
+      medicationEntries: 1,
       skinAreas: 8,
       dailyTags: 10,
       treatments: 1,
@@ -303,6 +330,8 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
       treatmentApplications: 0,
       changeEvents: 0,
       reactions: 0,
+      alcoholEntries: 0,
+      medicationEntries: 0,
       skinAreas: 6,
       dailyTags: 9,
       treatments: 0,
@@ -316,6 +345,8 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
       treatmentApplications: 1,
       changeEvents: 1,
       reactions: 1,
+      alcoholEntries: 1,
+      medicationEntries: 1,
       skinAreas: 2,
       dailyTags: 1,
       treatments: 1,

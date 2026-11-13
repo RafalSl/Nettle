@@ -1,3 +1,4 @@
+import { IntakeSection } from '@/ui/IntakeSection';
 import { NailSection } from '@/ui/NailSection';
 import { TreatmentSection } from '@/ui/TreatmentSection';
 import { Screen } from '@/ui/components';
@@ -6,6 +7,7 @@ import { Screen } from '@/ui/components';
 export default function MoreScreen() {
   return (
     <Screen>
+      <IntakeSection />
       <NailSection />
       <TreatmentSection />
     </Screen>

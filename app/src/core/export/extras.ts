@@ -1,5 +1,8 @@
 import {
   CHANGE_ACTIONS,
+  MEDICATION_CATEGORIES,
+  type AlcoholEntry,
+  type MedicationEntry,
   CHANGE_CATEGORIES,
   EXTRA_KINDS,
   NAIL_EXTENTS,
@@ -152,6 +155,35 @@ const reaction: Codec<Reaction> = {
   },
 };
 
+const alcohol: Codec<AlcoholEntry> = {
+  key: 'alcohol_entries',
+  toJson: (e) => ({ id: e.id, utc: e.at.utc, tz: e.at.tz, drink: e.drink, amount_ml: e.amountMl, note: e.note }),
+  parse: (o, w) => {
+    const ml = o.amount_ml;
+    if (typeof ml !== 'number' || !Number.isInteger(ml) || ml <= 0) bad(`${w}.amount_ml`);
+    return {
+      id: str(o, 'id', w),
+      at: { utc: utc(o, w), tz: str(o, 'tz', w) },
+      drink: str(o, 'drink', w),
+      amountMl: ml as number,
+      note: nullableText(o, 'note', w),
+    };
+  },
+};
+
+const medication: Codec<MedicationEntry> = {
+  key: 'medication_entries',
+  toJson: (e) => ({ id: e.id, utc: e.at.utc, tz: e.at.tz, category: e.category, name: e.name, dose: e.dose, note: e.note }),
+  parse: (o, w) => ({
+    id: str(o, 'id', w),
+    at: { utc: utc(o, w), tz: str(o, 'tz', w) },
+    category: oneOf(o, 'category', MEDICATION_CATEGORIES, w),
+    name: str(o, 'name', w),
+    dose: nullableText(o, 'dose', w),
+    note: nullableText(o, 'note', w),
+  }),
+};
+
 export const EXTRA_CODECS: { [K in ExtraKind]: Codec<Records[K][number]> } = {
   nailEntries: nail,
   checkIns: checkIn,
@@ -159,6 +191,8 @@ export const EXTRA_CODECS: { [K in ExtraKind]: Codec<Records[K][number]> } = {
   treatmentApplications: treatmentApplication,
   changeEvents: changeEvent,
   reactions: reaction,
+  alcoholEntries: alcohol,
+  medicationEntries: medication,
 };
 
 export { EXTRA_KINDS };

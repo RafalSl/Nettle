@@ -14,10 +14,17 @@ Undecided items only. Decisions go into `docs/requirements.md` (canonical, edite
 
 - **`expo-sqlite` wrapper stays untested in code.** Storage logic is tested through the `SqlDb` seam on Node's built-in `node:sqlite`; the ~20-line wrapper `app/src/adapters/storage/expoSqliteDb.ts` is verified on a phone only.
 
-## Decided, code not yet changed
+## Decided, code partly changed
 
-These are in the requirements already; the skeleton still behaves the old way.
+These are in the requirements already; what remains is listed per item.
 
-- **Date range as local days to UTC** (EX-11 note): the core accepts UTC bounds; the UI conversion does not exist yet.
-- **Newest-wins merge with tombstones** (EX-12, Later): needed only once entries are editable or deletable. Adds modified timestamps and a schema version bump at that point.
-- **Requirements v0.3 tracking changes** (IN-5, IN-6, IN-10 to IN-13, SK-3, SK-7, SK-9 to SK-11, LL-2 to LL-4, EX-1, EX-3): nothing implemented yet. Needs new migrations (area `kind`, tables for daily check-ins, tags, treatments, change events, reactions, nail entries, meal allergens, day-complete marks) and new `data.json` sections with validation. `schema_version` stays 1 in development, so exports made before the change will not import afterwards.
+- **Requirements v0.3 tracking changes.** Done in core, storage and `data.json` (schema, validation, round trips): IN-6, IN-10 to IN-13, SK-3, SK-7, SK-10, SK-11, EX-1 (records and settings), IN-11. Screens exist for the daily check-in with tags and day complete, stool, nails, treatments, "no change" and allergen chips. Still open:
+  - Screens for change events (IN-12) and reactions (IN-13, with the urgent-care advice text), and for renaming, archiving or adding tags and treatments.
+  - "No change" for nail entries, and for all areas at once.
+  - SK-9 reminders (daily check-in, weekly nail photo) and SK-4/SK-5 photos for nails and skin.
+  - LL-2 to LL-4 prompt changes, EX-3 PDF sections (check-in and digestion trends, treatments, change events, per-nail photo timeline).
+  - Allergen suggestions from Open Food Facts or the LLM (only the ingredient-text helper exists).
+- **Date range as local days to UTC** (EX-11 note): the core converts (`localDaysToRange`, `exportBundle({ days })`); the Data screen still exports everything and has no date picker.
+- **Newest-wins merge with tombstones** (EX-12, Later): needed only once entries are editable or deletable. The daily check-in is already updated in place, and a merge cannot tell which version is newer; adds modified timestamps and a schema version bump at that point.
+- **One check-in per day is kept by the use case only.** There is no database constraint, so a merge from another phone could add a second check-in for the same day; the newest is shown. Revisit with EX-12.
+- **`schema_version` stays 1 in development.** Exports made before v0.3 (before the new required sections) will not import.

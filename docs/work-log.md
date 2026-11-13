@@ -100,3 +100,7 @@ Newest entry last. One short entry per working session or meaningful step: what 
 ## 2026-11-14: change event, reaction and list screens (IN-12, IN-13, IN-6, IN-11) (branch feature/events-reactions-screens)
 - More tab now has: started/stopped (product, medication, diet) with a date, reaction after a meal (pick one of the last five meals, symptoms, onset time) with the urgent-care advice always shown above the form, and add/rename/archive/restore for daily tags and treatments. English and Polish strings; the i18n test also covers symptoms, change values and list names.
 - 180 tests pass, iOS bundle builds; not tried on the phone. The urgent-care wording is my draft and should be read once by you.
+
+## 2026-11-14: bulk delete core (SE-9) (branch feature/bulk-delete-core)
+- `planDeletion` (pure) decides which ids a selection of record kinds and an optional date range removes; a meal's reactions go with it. `previewDelete` counts, `deleteData` deletes through the new atomic `deleteRecords(ids)` repo method (flat tables first, meals last). Areas and lists are never deleted. 193 tests pass. No screen yet: it needs the confirmation text, the export-first offer and, later, photos.
+- Next session, in this order: (1) photos SK-4/SK-5/NF-5 with a short Expo Go spike, plus the bulk delete screen and photo cleanup; (2) Anthropic adapter, key screen and LL-1 photo to ingredients; (3) analysis flow LL-2 to LL-8 with the confirmation screen; (4) PDF and CSV export; (5) reminders SK-9.

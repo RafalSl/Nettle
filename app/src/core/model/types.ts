@@ -189,6 +189,9 @@ export interface Records {
   medicationEntries: MedicationEntry[];
 }
 
+/** Every record collection, in the order they are listed in `Records`. */
+export type RecordKind = keyof Records;
+
 /**
  * Record collections that are flat, dated rows with an `id` and an `at` stamp. Storage, import and export
  * handle them generically; meals and skin entries predate this and have their own methods.
@@ -250,3 +253,5 @@ export interface DateRange {
 }
 
 export const SCORE_KEYS = ['severity', 'itch', 'pain', 'dryness', 'scaling'] as const;
+
+export const RECORD_KINDS: readonly RecordKind[] = ['meals', 'skinEntries', ...EXTRA_KINDS];

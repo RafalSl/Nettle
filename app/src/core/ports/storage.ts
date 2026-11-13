@@ -5,6 +5,7 @@ import type {
   ListKind,
   Meal,
   Payload,
+  RecordKind,
   Records,
   Settings,
   SkinArea,
@@ -43,6 +44,9 @@ export interface StorageRepository {
   /** Insert or replace by id, for records that change after they are created (the daily check-in). */
   putRecord<K extends ExtraKind>(kind: K, record: Records[K][number]): Promise<void>;
   listRecords<K extends ExtraKind>(kind: K, range?: DateRange): Promise<Records[K]>;
+
+  /** SE-9: atomically delete the given records by id (unknown ids are ignored). Areas and lists are untouched. */
+  deleteRecords(ids: Partial<Record<RecordKind, string[]>>): Promise<void>;
 
   /** Entries inside the range plus all areas. */
   snapshot(range?: DateRange): Promise<Snapshot>;

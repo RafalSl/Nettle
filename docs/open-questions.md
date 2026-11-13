@@ -14,12 +14,15 @@ Undecided items only. Decisions go into `docs/requirements.md` (canonical, edite
 
 - **`expo-sqlite` wrapper stays untested in code.** Storage logic is tested through the `SqlDb` seam on Node's built-in `node:sqlite`; the ~20-line wrapper `app/src/adapters/storage/expoSqliteDb.ts` is verified on a phone only.
 
+## Built in core, screen missing
+
+- **Bulk delete (SE-9):** `previewDelete` and `deleteData` work by record kind and date range (a deleted meal takes its reactions along; settings stay). Missing: the screen with the confirmation text (what will be removed, cannot be undone), the export-first offer, and photos once SK-4 exists.
+
 ## Decided, code partly changed
 
 These are in the requirements already; what remains is listed per item.
 
 - **Requirements v0.3 tracking changes.** Done in core, storage and `data.json` (schema, validation, round trips): IN-6, IN-10 to IN-13, SK-3, SK-7, SK-10, SK-11, EX-1 (records and settings), IN-11. Screens exist for the daily check-in with tags and day complete, stool, nails, treatments, "no change" and allergen chips. Still open:
-  - Screens for change events (IN-12) and reactions (IN-13, with the urgent-care advice text), and for renaming, archiving or adding tags and treatments.
   - "No change" for nail entries, and for all areas at once.
   - SK-9 reminders (daily check-in, weekly nail photo) and SK-4/SK-5 photos for nails and skin.
   - LL-2 to LL-4 prompt changes, EX-3 PDF sections (check-in and digestion trends, treatments, change events, per-nail photo timeline).

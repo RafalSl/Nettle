@@ -10,6 +10,7 @@ import {
   type ListKind,
   type Meal,
   type Payload,
+  type RecordKind,
   type Records,
   type SkinArea,
   type SkinEntry,
@@ -269,6 +270,23 @@ export class SqliteRepo implements StorageRepository {
       },
       note: r.note,
     }));
+  }
+
+  async deleteRecords(ids: Partial<Record<RecordKind, string[]>>) {
+    // Reactions point at meals, so flat record tables go first, meals last (their ingredients cascade).
+    const steps: [string, string[] | undefined][] = [
+      ...EXTRA_KINDS.map((k): [string, string[] | undefined] => [EXTRA_TABLES[k].table, ids[k]]),
+      ['skin_entry', ids.skinEntries],
+      ['meal', ids.meals],
+    ];
+    await this.db.transaction(async () => {
+      for (const [table, list] of steps) {
+        for (let i = 0; i < (list?.length ?? 0); i += 500) {
+          const chunk = list!.slice(i, i + 500);
+          await this.db.run(`DELETE FROM ${table} WHERE id IN (${chunk.map(() => '?').join(', ')})`, chunk);
+        }
+      }
+    });
   }
 
   async snapshot(range?: DateRange): Promise<Snapshot> {

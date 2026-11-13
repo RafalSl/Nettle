@@ -85,12 +85,14 @@ export async function applyImport(
     // Imported records must not point at areas or list items that will not exist.
     const existing = await deps.repo.existingIds();
     const areas = new Set([...existing.skinAreas, ...(payload.settings?.skinAreas ?? []).map((a) => a.id)]);
-    const items = new Set([
-      ...LIST_KINDS.flatMap((k) => [...existing[k], ...(payload.settings?.[k] ?? []).map((i) => i.id)]),
-    ]);
+    const meals = new Set([...existing.meals, ...payload.records.meals.map((m) => m.id)]);
     const refs = recordRefs(payload.records as Records);
     for (const id of refs.areas) if (!areas.has(id)) throw new NettleError('import_unknown_area', id);
-    for (const id of refs.items) if (!items.has(id)) throw new NettleError('import_unknown_item', id);
+    for (const kind of LIST_KINDS) {
+      const known = new Set([...existing[kind], ...(payload.settings?.[kind] ?? []).map((i) => i.id)]);
+      for (const id of refs.items[kind]) if (!known.has(id)) throw new NettleError('import_unknown_item', id);
+    }
+    for (const id of refs.meals) if (!meals.has(id)) throw new NettleError('import_unknown_meal', id);
   }
   await deps.repo.importData(payload, choice.mode);
 }

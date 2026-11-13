@@ -1,15 +1,21 @@
 import {
+  CHANGE_ACTIONS,
+  CHANGE_CATEGORIES,
   EXTRA_KINDS,
   NAIL_EXTENTS,
   NAIL_STAGES,
+  SYMPTOMS,
+  type ChangeEvent,
   type CheckIn,
   type ExtraKind,
   type NailEntry,
+  type Reaction,
   type Records,
   type StoolEntry,
+  type TreatmentApplication,
 } from '../model/types';
 import { CANONICAL_UTC } from '../model/time';
-import { bad, bool, nullableScore, nullableText, oneOf, str, stringList, utc, type Obj } from './guards';
+import { bad, bool, enumList, nullableScore, nullableText, oneOf, str, stringList, utc, type Obj } from './guards';
 
 /**
  * data.json wire format for the flat record kinds (see ExtraKind): `key` is the snake_case array name inside
@@ -101,10 +107,58 @@ const stool: Codec<StoolEntry> = {
   },
 };
 
+const treatmentApplication: Codec<TreatmentApplication> = {
+  key: 'treatment_applications',
+  toJson: (a) => ({ id: a.id, utc: a.at.utc, tz: a.at.tz, treatment_id: a.treatmentId, area_ids: [...a.areaIds], note: a.note }),
+  parse: (o, w) => {
+    const areaIds = stringList(o, 'area_ids', w);
+    if (areaIds.length === 0) bad(`${w}.area_ids`);
+    return {
+      id: str(o, 'id', w),
+      at: { utc: utc(o, w), tz: str(o, 'tz', w) },
+      treatmentId: str(o, 'treatment_id', w),
+      areaIds,
+      note: nullableText(o, 'note', w),
+    };
+  },
+};
+
+const changeEvent: Codec<ChangeEvent> = {
+  key: 'change_events',
+  toJson: (e) => ({ id: e.id, utc: e.at.utc, tz: e.at.tz, action: e.action, category: e.category, name: e.name, note: e.note }),
+  parse: (o, w) => ({
+    id: str(o, 'id', w),
+    at: { utc: utc(o, w), tz: str(o, 'tz', w) },
+    action: oneOf(o, 'action', CHANGE_ACTIONS, w),
+    category: oneOf(o, 'category', CHANGE_CATEGORIES, w),
+    name: str(o, 'name', w),
+    note: nullableText(o, 'note', w),
+  }),
+};
+
+const reaction: Codec<Reaction> = {
+  key: 'reactions',
+  toJson: (r) => ({ id: r.id, utc: r.at.utc, tz: r.at.tz, meal_id: r.mealId, symptoms: [...r.symptoms], note: r.note }),
+  parse: (o, w) => {
+    const symptoms = enumList(o, 'symptoms', SYMPTOMS, w);
+    if (symptoms.length === 0) bad(`${w}.symptoms`);
+    return {
+      id: str(o, 'id', w),
+      at: { utc: utc(o, w), tz: str(o, 'tz', w) },
+      mealId: str(o, 'meal_id', w),
+      symptoms,
+      note: nullableText(o, 'note', w),
+    };
+  },
+};
+
 export const EXTRA_CODECS: { [K in ExtraKind]: Codec<Records[K][number]> } = {
   nailEntries: nail,
   checkIns: checkIn,
   stoolEntries: stool,
+  treatmentApplications: treatmentApplication,
+  changeEvents: changeEvent,
+  reactions: reaction,
 };
 
 export { EXTRA_KINDS };

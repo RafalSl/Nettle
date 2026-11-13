@@ -16,6 +16,7 @@ describe('sqlite migrations', () => {
       at: { utc: '2026-01-01T08:00:00.000Z', tz: 'UTC' },
       description: 'Synthetic',
       ingredients: ['x'],
+      allergens: [],
       note: null,
     });
     const second = await SqliteRepo.open(db);
@@ -75,6 +76,31 @@ describe('sqlite migrations', () => {
         `INSERT INTO check_in (id, ts_utc, tz, day, wellbeing, bloating, tags_json)
          VALUES ('x', '2026-01-01T00:00:00.000Z', 'UTC', '2026-01-01', 11, 0, '[]')`,
       ),
+    ).rejects.toThrow();
+  });
+
+  it('IN-10 upgrades a version-4 database: existing meals get an empty allergen list', async () => {
+    const db = createNodeSqliteDb();
+    await db.exec('PRAGMA foreign_keys = ON');
+    for (const [i, sql] of MIGRATIONS.slice(0, 4).entries()) {
+      await db.exec(sql);
+      await db.exec(`PRAGMA user_version = ${i + 1}`);
+    }
+    await db.run(`INSERT INTO meal (id, ts_utc, tz, description) VALUES ('m1', '2026-01-01T08:00:00.000Z', 'UTC', 'Synthetic')`);
+    const repo = await SqliteRepo.open(db);
+    expect((await repo.listMeals())[0]?.allergens).toEqual([]);
+    expect(await repo.listRecords('reactions')).toEqual([]);
+  });
+
+  it('IN-12 and IN-13 enforce enums and the meal link in the database itself', async () => {
+    const db = createNodeSqliteDb();
+    await db.exec('PRAGMA foreign_keys = ON');
+    await SqliteRepo.open(db);
+    await expect(
+      db.run(`INSERT INTO change_event (id, ts_utc, tz, action, category, name) VALUES ('x', '2026-01-01T00:00:00.000Z', 'UTC', 'paused', 'diet', 'n')`),
+    ).rejects.toThrow();
+    await expect(
+      db.run(`INSERT INTO reaction (id, ts_utc, tz, meal_id, symptoms_json) VALUES ('x', '2026-01-01T00:00:00.000Z', 'UTC', 'no-meal', '[]')`),
     ).rejects.toThrow();
   });
 

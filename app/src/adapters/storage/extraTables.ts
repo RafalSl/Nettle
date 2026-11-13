@@ -1,4 +1,18 @@
-import type { CheckIn, ExtraKind, NailEntry, NailExtent, NailStage, Records, StoolEntry } from '@/core/model/types';
+import type {
+  ChangeAction,
+  ChangeCategory,
+  ChangeEvent,
+  CheckIn,
+  ExtraKind,
+  NailEntry,
+  NailExtent,
+  NailStage,
+  Reaction,
+  Records,
+  StoolEntry,
+  Symptom,
+  TreatmentApplication,
+} from '@/core/model/types';
 import type { SqlValue } from './sqlDb';
 
 type Row = Record<string, string | number | null>;
@@ -82,8 +96,51 @@ const stool: ExtraTable<StoolEntry> = {
   }),
 };
 
+const treatmentApplication: ExtraTable<TreatmentApplication> = {
+  table: 'treatment_application',
+  columns: ['treatment_id', 'area_ids_json', 'note'],
+  toValues: (a) => [a.treatmentId, JSON.stringify(a.areaIds), a.note],
+  fromRow: (r) => ({
+    id: r.id as string,
+    at: { utc: r.ts_utc as string, tz: r.tz as string },
+    treatmentId: r.treatment_id as string,
+    areaIds: JSON.parse(r.area_ids_json as string) as string[],
+    note: r.note as string | null,
+  }),
+};
+
+const changeEvent: ExtraTable<ChangeEvent> = {
+  table: 'change_event',
+  columns: ['action', 'category', 'name', 'note'],
+  toValues: (e) => [e.action, e.category, e.name, e.note],
+  fromRow: (r) => ({
+    id: r.id as string,
+    at: { utc: r.ts_utc as string, tz: r.tz as string },
+    action: r.action as ChangeAction,
+    category: r.category as ChangeCategory,
+    name: r.name as string,
+    note: r.note as string | null,
+  }),
+};
+
+const reaction: ExtraTable<Reaction> = {
+  table: 'reaction',
+  columns: ['meal_id', 'symptoms_json', 'note'],
+  toValues: (e) => [e.mealId, JSON.stringify(e.symptoms), e.note],
+  fromRow: (r) => ({
+    id: r.id as string,
+    at: { utc: r.ts_utc as string, tz: r.tz as string },
+    mealId: r.meal_id as string,
+    symptoms: JSON.parse(r.symptoms_json as string) as Symptom[],
+    note: r.note as string | null,
+  }),
+};
+
 export const EXTRA_TABLES: { [K in ExtraKind]: ExtraTable<Records[K][number]> } = {
   nailEntries: nail,
   checkIns: checkIn,
   stoolEntries: stool,
+  treatmentApplications: treatmentApplication,
+  changeEvents: changeEvent,
+  reactions: reaction,
 };

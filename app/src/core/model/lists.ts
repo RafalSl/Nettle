@@ -16,4 +16,6 @@ export const PREDEFINED_ITEMS: Record<ListKind, readonly ListItem[]> = {
     'tag-nicotine',
     'tag-joint-symptoms',
   ]),
+  // IN-11: no seeded treatments; the user saves their own.
+  treatments: [],
 };

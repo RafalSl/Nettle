@@ -41,3 +41,10 @@ export const stringList = (o: Obj, k: string, where: string): string[] => {
   const v = o[k];
   return Array.isArray(v) && v.every((x) => typeof x === 'string' && x.length > 0) ? (v as string[]) : bad(`${where}.${k}`);
 };
+export const enumList = <T extends string>(o: Obj, k: string, allowed: readonly T[], where: string): T[] => {
+  const v = o[k];
+  if (!Array.isArray(v) || v.some((x) => typeof x !== 'string' || !(allowed as readonly string[]).includes(x))) {
+    return bad(`${where}.${k}`);
+  }
+  return v as T[];
+};

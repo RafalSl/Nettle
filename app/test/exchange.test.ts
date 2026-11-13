@@ -7,7 +7,7 @@ import { parseDataJson } from '@/core/export/validate';
 import { MemoryRepo } from './fakes/memoryRepo';
 import { MemoryKeyStore } from './fakes/memoryKeyStore';
 import { createNodeSqliteDb } from './helpers/nodeSqliteDb';
-import { makeDeps, syntheticEntry, syntheticCheckIn, syntheticMeal, syntheticNailEntry, syntheticStool } from './helpers/fixtures';
+import { TZ, makeDeps, syntheticEntry, syntheticCheckIn, syntheticMeal, syntheticNailEntry, syntheticStool } from './helpers/fixtures';
 
 const repos: [string, () => Promise<StorageRepository>][] = [
   ['in-memory', async () => new MemoryRepo()],
@@ -33,7 +33,7 @@ async function seeded(make: () => Promise<StorageRepository>) {
   await repo.upsertArea(custom);
   const chin = (await repo.listAreas()).find((a) => a.id === 'area-chin')!;
   await repo.upsertArea({ ...chin, nameOverride: 'Synthetic jaw' }); // SK-2 override must survive the round trip
-  await repo.addMeal(syntheticMeal('m1', '2026-01-10T08:00:00.000Z'));
+  await repo.addMeal({ ...syntheticMeal('m1', '2026-01-10T08:00:00.000Z'), allergens: ['milk', 'gluten'] }); // IN-10 survives the round trip
   await repo.addMeal(syntheticMeal('m2', '2026-01-12T08:00:00.000Z', []));
   await repo.addSkinEntry(syntheticEntry('e1', '2026-01-10T09:00:00.000Z', 'area-intimate'));
   await repo.addSkinEntry(syntheticEntry('e2', '2026-01-12T09:00:00.000Z', 'a-custom'));
@@ -43,6 +43,29 @@ async function seeded(make: () => Promise<StorageRepository>) {
   await repo.addRecord('checkIns', syntheticCheckIn('c1', '2026-01-12T20:00:00.000Z', '2026-01-12', ['tag-travel', 'tag-custom']));
   await repo.addRecord('stoolEntries', syntheticStool('s1', '2026-01-12T07:00:00.000Z'));
   await repo.addRecord('stoolEntries', syntheticStool('s2', '2026-01-12T18:00:00.000Z', 6));
+  await repo.upsertItem('treatments', { id: 'tr1', name: 'Synthetic cream', predefined: false, archived: false, nameOverride: null });
+  await repo.addRecord('treatmentApplications', {
+    id: 'ta1',
+    at: { utc: '2026-01-12T21:00:00.000Z', tz: TZ },
+    treatmentId: 'tr1',
+    areaIds: ['area-chin', 'a-nail'],
+    note: null,
+  });
+  await repo.addRecord('changeEvents', {
+    id: 'ce1',
+    at: { utc: '2026-01-11T00:00:00.000Z', tz: TZ },
+    action: 'started',
+    category: 'product',
+    name: 'Synthetic shampoo',
+    note: null,
+  });
+  await repo.addRecord('reactions', {
+    id: 'r1',
+    at: { utc: '2026-01-12T09:00:00.000Z', tz: TZ },
+    mealId: 'm2',
+    symptoms: ['hives', 'stomach'],
+    note: null,
+  });
   return repo;
 }
 
@@ -53,6 +76,18 @@ const code = async (p: Promise<unknown>) =>
     (e: unknown) => (e instanceof NettleError ? e.code : 'other'),
   );
 
+const RAW_RECORDS = {
+  meals: [],
+  skin_entries: [],
+  nail_entries: [],
+  check_ins: [],
+  stool_entries: [],
+  treatment_applications: [],
+  change_events: [],
+  reactions: [],
+};
+const RAW_SETTINGS = { skin_areas: [], daily_tags: [], treatments: [] };
+
 describe('data.json validation of nail data (SK-10)', () => {
   const stamp = { utc: '2026-01-10T08:00:00.000Z', tz: 'Europe/Warsaw' };
   const file = (records: object, settings?: object) => ({
@@ -61,13 +96,13 @@ describe('data.json validation of nail data (SK-10)', () => {
     ...(settings && { settings }),
   });
   const nailRow = { id: 'n1', utc: stamp.utc, tz: stamp.tz, area_id: 'a', stage: 'white', extent: 'none', note: null };
-  const base = { meals: [], skin_entries: [], check_ins: [], stool_entries: [] };
+  const base = RAW_RECORDS;
 
   it('accepts a nail entry and a nail area', () => {
     const p = parseDataJson(
       file(
         { ...base, nail_entries: [nailRow] },
-        { daily_tags: [], skin_areas: [{ id: 'a', kind: 'nail', name: 'x', predefined: false, archived: false, sensitive_default: false, name_override: null }] },
+        { ...RAW_SETTINGS, skin_areas: [{ id: 'a', kind: 'nail', name: 'x', predefined: false, archived: false, sensitive_default: false, name_override: null }] },
       ),
     );
     expect(p.records?.nailEntries).toHaveLength(1);
@@ -85,9 +120,10 @@ describe('data.json validation of nail data (SK-10)', () => {
     };
     expect(bad(file({ ...base, nail_entries: [{ ...nailRow, stage: 'purple' }] }))).toBe('import_invalid_data');
     expect(bad(file({ ...base, nail_entries: [{ ...nailRow, extent: 'all' }] }))).toBe('import_invalid_data');
-    expect(bad(file(base))).toBe('import_invalid_data');
+    const { nail_entries: _omitted, ...withoutNail } = RAW_RECORDS;
+    expect(bad(file(withoutNail))).toBe('import_invalid_data');
     expect(
-      bad(file(undefined as never, { daily_tags: [], skin_areas: [{ id: 'a', kind: 'toe', name: 'x', predefined: false, archived: false, sensitive_default: false, name_override: null }] })),
+      bad(file(undefined as never, { ...RAW_SETTINGS, skin_areas: [{ id: 'a', kind: 'toe', name: 'x', predefined: false, archived: false, sensitive_default: false, name_override: null }] })),
     ).toBe('import_invalid_data');
   });
 
@@ -106,9 +142,7 @@ describe('data.json validation of check-ins, stool and tags (SK-7, SK-11, IN-6)'
     abdominal_pain: 0, bloating: false, tags: ['tag-travel'], note: null, completed_utc: at.utc, completed_tz: at.tz,
   };
   const stool = { id: 's1', utc: at.utc, tz: at.tz, bristol: 4, note: null };
-  const records = (over: object = {}) => ({
-    meals: [], skin_entries: [], nail_entries: [], check_ins: [checkIn], stool_entries: [stool], ...over,
-  });
+  const records = (over: object = {}) => ({ ...RAW_RECORDS, check_ins: [checkIn], stool_entries: [stool], ...over });
   const file = (r: object, settings?: object) => ({ schema_version: 1, records: r, ...(settings && { settings }) });
   const err = (raw: unknown) => {
     try {
@@ -122,7 +156,7 @@ describe('data.json validation of check-ins, stool and tags (SK-7, SK-11, IN-6)'
   it('accepts a check-in, a stool entry and a tag list', () => {
     const p = parseDataJson(
       file(records(), {
-        skin_areas: [],
+        ...RAW_SETTINGS,
         daily_tags: [{ id: 'tag-x', name: 'x', predefined: false, archived: false, name_override: null }],
       }),
     );
@@ -145,14 +179,74 @@ describe('data.json validation of check-ins, stool and tags (SK-7, SK-11, IN-6)'
     expect(err(file(records({ stool_entries: [{ ...stool, bristol: 0 }] })))).toBe('import_invalid_data');
     expect(err(file(records({ stool_entries: [{ ...stool, bristol: 7.5 }] })))).toBe('import_invalid_data');
     expect(err(file(records({ check_ins: [checkIn, checkIn] })))).toBe('import_invalid_data'); // duplicate id
-    expect(err(file({ meals: [], skin_entries: [], nail_entries: [] }))).toBe('import_invalid_data'); // lists missing
-    expect(err(file(records(), { skin_areas: [] }))).toBe('import_invalid_data'); // daily_tags missing
+    expect(err(file({ meals: [], skin_entries: [], nail_entries: [] }))).toBe('import_invalid_data'); // kinds missing
+    expect(err(file(records(), { skin_areas: [] }))).toBe('import_invalid_data'); // lists missing
   });
 
   it('refuses to apply a check-in that uses a tag that will not exist (import_unknown_item)', async () => {
     const deps = makeDeps(new MemoryRepo());
     const parsed = { payload: parseDataJson(file(records({ check_ins: [{ ...checkIn, tags: ['tag-gone'] }] }))), preview: undefined as never };
     expect(await code(applyImport(deps, parsed, { mode: 'merge', parts: RECORDS }))).toBe('import_unknown_item');
+  });
+});
+
+describe('data.json validation of treatments, events, reactions and allergens (IN-10 to IN-13)', () => {
+  const at = { utc: '2026-01-10T20:00:00.000Z', tz: 'Europe/Warsaw' };
+  const application = { id: 'ta1', utc: at.utc, tz: at.tz, treatment_id: 'tr1', area_ids: ['area-chin'], note: null };
+  const event = { id: 'ce1', utc: at.utc, tz: at.tz, action: 'started', category: 'product', name: 'x', note: null };
+  const reaction = { id: 'r1', utc: at.utc, tz: at.tz, meal_id: 'm1', symptoms: ['hives'], note: null };
+  const meal = { id: 'm1', utc: at.utc, tz: at.tz, description: 'x', ingredients: [], allergens: ['milk'], note: null };
+  const records = (over: object = {}) => ({
+    ...RAW_RECORDS,
+    meals: [meal],
+    treatment_applications: [application],
+    change_events: [event],
+    reactions: [reaction],
+    ...over,
+  });
+  const file = (r: object, settings?: object) => ({ schema_version: 1, records: r, ...(settings && { settings }) });
+  const err = (raw: unknown) => {
+    try {
+      parseDataJson(raw);
+      return 'no error';
+    } catch (e) {
+      return e instanceof NettleError ? e.code : 'other';
+    }
+  };
+
+  it('accepts all of them', () => {
+    const p = parseDataJson(
+      file(records(), {
+        ...RAW_SETTINGS,
+        treatments: [{ id: 'tr1', name: 'x', predefined: false, archived: false, name_override: null }],
+      }),
+    );
+    expect(p.records?.meals[0]?.allergens).toEqual(['milk']);
+    expect(p.records?.treatmentApplications[0]).toMatchObject({ treatmentId: 'tr1', areaIds: ['area-chin'] });
+    expect(p.records?.changeEvents[0]).toMatchObject({ action: 'started', category: 'product' });
+    expect(p.records?.reactions[0]).toMatchObject({ mealId: 'm1', symptoms: ['hives'] });
+    expect(p.settings?.treatments).toHaveLength(1);
+  });
+
+  it('rejects unknown allergens, empty area or symptom lists and unknown enum values', () => {
+    expect(err(file(records({ meals: [{ ...meal, allergens: ['dust'] }] })))).toBe('import_invalid_data');
+    expect(err(file(records({ meals: [{ ...meal, allergens: undefined }] })))).toBe('import_invalid_data');
+    expect(err(file(records({ treatment_applications: [{ ...application, area_ids: [] }] })))).toBe('import_invalid_data');
+    expect(err(file(records({ change_events: [{ ...event, action: 'paused' }] })))).toBe('import_invalid_data');
+    expect(err(file(records({ change_events: [{ ...event, category: 'mood' }] })))).toBe('import_invalid_data');
+    expect(err(file(records({ reactions: [{ ...reaction, symptoms: [] }] })))).toBe('import_invalid_data');
+    expect(err(file(records({ reactions: [{ ...reaction, symptoms: ['sneezing'] }] })))).toBe('import_invalid_data');
+  });
+
+  it('refuses to apply references to a missing meal, treatment or area', async () => {
+    const deps = makeDeps(new MemoryRepo());
+    const apply = (r: object) =>
+      code(applyImport(deps, { payload: parseDataJson(file(r)), preview: undefined as never }, { mode: 'merge', parts: RECORDS }));
+    expect(await apply(records({ meals: [], treatment_applications: [] }))).toBe('import_unknown_meal');
+    expect(await apply(records({ reactions: [] }))).toBe('import_unknown_item'); // treatment tr1 is not known
+    expect(await apply(records({ reactions: [], treatment_applications: [{ ...application, treatment_id: 'x', area_ids: ['nope'] }] }))).toBe(
+      'import_unknown_area',
+    );
   });
 });
 
@@ -165,7 +259,19 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
     const deps = makeDeps(target);
     const parsed = await previewImport(deps, zip);
     expect(parsed.preview.has).toEqual(BOTH);
-    expect(parsed.preview.incoming).toEqual({ meals: 2, skinEntries: 2, nailEntries: 1, checkIns: 1, stoolEntries: 2, skinAreas: 8, dailyTags: 10 });
+    expect(parsed.preview.incoming).toEqual({
+      meals: 2,
+      skinEntries: 2,
+      nailEntries: 1,
+      checkIns: 1,
+      stoolEntries: 2,
+      treatmentApplications: 1,
+      changeEvents: 1,
+      reactions: 1,
+      skinAreas: 8,
+      dailyTags: 10,
+      treatments: 1,
+    });
     await applyImport(deps, parsed, { mode: 'replace', parts: BOTH });
 
     expect(await target.snapshot()).toEqual(await source.snapshot());
@@ -188,8 +294,32 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
     const deps = makeDeps(target);
 
     const parsed = await previewImport(deps, zip);
-    expect(parsed.preview.duplicates).toEqual({ meals: 1, skinEntries: 0, nailEntries: 0, checkIns: 0, stoolEntries: 0, skinAreas: 6, dailyTags: 9 });
-    expect(parsed.preview.newRows).toEqual({ meals: 1, skinEntries: 2, nailEntries: 1, checkIns: 1, stoolEntries: 2, skinAreas: 2, dailyTags: 1 });
+    expect(parsed.preview.duplicates).toEqual({
+      meals: 1,
+      skinEntries: 0,
+      nailEntries: 0,
+      checkIns: 0,
+      stoolEntries: 0,
+      treatmentApplications: 0,
+      changeEvents: 0,
+      reactions: 0,
+      skinAreas: 6,
+      dailyTags: 9,
+      treatments: 0,
+    });
+    expect(parsed.preview.newRows).toEqual({
+      meals: 1,
+      skinEntries: 2,
+      nailEntries: 1,
+      checkIns: 1,
+      stoolEntries: 2,
+      treatmentApplications: 1,
+      changeEvents: 1,
+      reactions: 1,
+      skinAreas: 2,
+      dailyTags: 1,
+      treatments: 1,
+    });
     await applyImport(deps, parsed, { mode: 'merge', parts: BOTH });
     expect((await target.listMeals()).find((m) => m.id === 'm1')?.ingredients).toEqual(['kept']);
     expect(await target.listMeals()).toHaveLength(2);
@@ -204,7 +334,9 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
 
     const target = await make();
     for (const a of (await source.listAreas()).filter((a) => a.id.startsWith('a-'))) await target.upsertArea(a);
-    for (const i of await source.listItems('dailyTags')) await target.upsertItem('dailyTags', i);
+    for (const k of ['dailyTags', 'treatments'] as const) {
+      for (const i of await source.listItems(k)) await target.upsertItem(k, i);
+    }
     const deps = makeDeps(target);
     const parsed = await previewImport(deps, zip);
     expect(parsed.preview.has).toEqual(RECORDS);
@@ -252,7 +384,9 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
     const target = await make();
     await target.addMeal(syntheticMeal('only-here', '2026-01-01T08:00:00.000Z'));
     for (const a of (await source.listAreas()).filter((a) => a.id.startsWith('a-'))) await target.upsertArea(a);
-    for (const i of await source.listItems('dailyTags')) await target.upsertItem('dailyTags', i);
+    for (const k of ['dailyTags', 'treatments'] as const) {
+      for (const i of await source.listItems(k)) await target.upsertItem(k, i);
+    }
     const deps = makeDeps(target);
     await applyImport(deps, await previewImport(deps, zip), { mode: 'replace', parts: RECORDS });
     expect((await target.listMeals()).map((m) => m.id).sort()).toEqual(['m1', 'm2']);
@@ -349,52 +483,6 @@ describe('import validation', () => {
     const d = makeDeps(target);
     await code(previewImport(d, zipOf({ schema_version: 1, records: { meals: [], skin_entries: 5 } })));
     expect(await target.listMeals()).toEqual([]);
-  });
-});
-
-describe('data.json validation of nail data (SK-10)', () => {
-  const stamp = { utc: '2026-01-10T08:00:00.000Z', tz: 'Europe/Warsaw' };
-  const file = (records: object, settings?: object) => ({
-    schema_version: 1,
-    records,
-    ...(settings && { settings }),
-  });
-  const nailRow = { id: 'n1', utc: stamp.utc, tz: stamp.tz, area_id: 'a', stage: 'white', extent: 'none', note: null };
-  const base = { meals: [], skin_entries: [], check_ins: [], stool_entries: [] };
-
-  it('accepts a nail entry and a nail area', () => {
-    const p = parseDataJson(
-      file(
-        { ...base, nail_entries: [nailRow] },
-        { daily_tags: [], skin_areas: [{ id: 'a', kind: 'nail', name: 'x', predefined: false, archived: false, sensitive_default: false, name_override: null }] },
-      ),
-    );
-    expect(p.records?.nailEntries).toHaveLength(1);
-    expect(p.settings?.skinAreas[0]?.kind).toBe('nail');
-  });
-
-  it('rejects a bad stage, a bad extent, a missing nail_entries list and an unknown area kind', () => {
-    const bad = (raw: unknown) => {
-      try {
-        parseDataJson(raw);
-        return 'no error';
-      } catch (e) {
-        return e instanceof NettleError ? e.code : 'other';
-      }
-    };
-    expect(bad(file({ ...base, nail_entries: [{ ...nailRow, stage: 'purple' }] }))).toBe('import_invalid_data');
-    expect(bad(file({ ...base, nail_entries: [{ ...nailRow, extent: 'all' }] }))).toBe('import_invalid_data');
-    expect(bad(file(base))).toBe('import_invalid_data');
-    expect(
-      bad(file(undefined as never, { daily_tags: [], skin_areas: [{ id: 'a', kind: 'toe', name: 'x', predefined: false, archived: false, sensitive_default: false, name_override: null }] })),
-    ).toBe('import_invalid_data');
-  });
-
-  it('refuses to apply a nail entry whose area is unknown (import_unknown_area)', async () => {
-    const target = new MemoryRepo();
-    const deps = makeDeps(target);
-    const parsed = { payload: parseDataJson(file({ ...base, nail_entries: [nailRow] })), preview: undefined as never };
-    expect(await code(applyImport(deps, parsed, { mode: 'merge', parts: RECORDS }))).toBe('import_unknown_area');
   });
 });
 

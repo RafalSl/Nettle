@@ -1,15 +1,17 @@
 import { packBundle, unpackBundle } from '../export/bundle';
 import { toDataJson } from '../export/schema';
 import { NettleError } from '../model/errors';
-import { makeStamp } from '../model/time';
+import { localDaysToRange, makeStamp } from '../model/time';
 import { recordRefs } from '../model/refs';
 import { EXTRA_KINDS, LIST_KINDS, type DateRange, type Parts, type Payload, type Records } from '../model/types';
 import type { CollectionKey, ImportMode } from '../ports/storage';
 import type { Deps } from './deps';
 
 export interface ExportOptions {
-  /** Applies to records only; settings are always exported in full. */
+  /** UTC bounds. Applies to records only; settings are always exported in full. */
   range?: DateRange;
+  /** Alternative to `range`: local calendar days ("YYYY-MM-DD"), converted with the device's current timezone. */
+  days?: { from?: string; to?: string };
   parts?: Parts;
   /** EX-6: when set, the ZIP is AES-256 encrypted. Never stored or logged. */
   password?: string;
@@ -17,7 +19,12 @@ export interface ExportOptions {
 
 /** EX-1: a snapshot of the chosen range as a ZIP with data.json, records, settings or both. */
 export async function exportBundle(deps: Deps, options: ExportOptions = {}): Promise<Uint8Array> {
-  const range = options.range ?? {};
+  let range = options.range ?? {};
+  if (options.days) {
+    const converted = localDaysToRange(options.days.from, options.days.to, deps.clock.timeZone());
+    if (!converted) throw new NettleError('invalid_range');
+    range = converted;
+  }
   const parts = options.parts ?? { records: true, settings: true };
   if (!parts.records && !parts.settings) throw new NettleError('nothing_selected');
   const snapshot = await deps.repo.snapshot(range);

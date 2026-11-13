@@ -75,3 +75,8 @@ Newest entry last. One short entry per working session or meaningful step: what 
 - Migration 5: `meal.allergens_json`, `treatment_application`, `change_event`, `reaction` (reaction has a foreign key to its meal, so replace-records now empties flat record tables before meals). `data.json`: `meals[].allergens`, `records.treatment_applications`, `change_events`, `reactions`, `settings.treatments`, all required.
 - `recordRefs` now returns areas, items per list kind and meals; import refuses dangling references (`import_unknown_meal` added).
 - 161 tests pass with typecheck and lint. No UI yet. Next: fast skin logging and local-day date ranges (SK-3, EX-11 note).
+
+## 2026-11-14: fast skin logging and local-day ranges (SK-3, EX-11 note) (branch feature/fast-skin-logging)
+- `lastSkinScores` returns the area's newest scores for prefill; `repeatSkinEntry` is the "no change" one-call save (no note, `no_previous_entry` if the area has no history). Nail entries have no "no change" yet.
+- `localDaysToRange(from, to, tz)` converts local calendar days to inclusive UTC bounds (start of the first day, last millisecond of the last day), including 23- and 25-hour days at daylight saving switches. `exportBundle` takes `days: { from, to }` as an alternative to UTC `range` and uses the device timezone; bad days or a start after the end give `invalid_range`.
+- 173 tests pass with typecheck and lint. No UI yet. Next: minimal screens and i18n for check-in, nails, treatments and "no change".

@@ -27,6 +27,8 @@ export type ErrorCode =
   | 'import_wrong_password'
   | 'import_too_large'
   | 'password_too_short'
+  | 'invalid_range'
+  | 'no_previous_entry'
   | 'nothing_selected';
 
 export class NettleError extends Error {

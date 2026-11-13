@@ -60,11 +60,46 @@ export interface NailEntry {
   note: string | null;
 }
 
+/** A local calendar day, "YYYY-MM-DD" (SK-7, SK-11). */
+export type LocalDay = string;
+
+/** A 0-10 score, or null when the user left it out. */
+export type OptionalScore = number | null;
+
+/**
+ * SK-7: one daily check-in per local day. `at` is when it is about (editable like every entry) and `day`
+ * its local day in `at.tz`. SK-11: `completedAt` marks the day as fully logged; null while open.
+ */
+export interface CheckIn {
+  id: string;
+  at: Stamp;
+  day: LocalDay;
+  wellbeing: OptionalScore;
+  stress: OptionalScore;
+  sleep: OptionalScore;
+  abdominalPain: OptionalScore;
+  bloating: boolean;
+  /** Ids of daily tags (IN-6) that were "yes" this day. */
+  tags: string[];
+  note: string | null;
+  completedAt: Stamp | null;
+}
+
+/** SK-7: Bristol type 1-7, several per day. */
+export interface StoolEntry {
+  id: string;
+  at: Stamp;
+  bristol: number;
+  note: string | null;
+}
+
 /** What the user logged (EX-1 "records"). */
 export interface Records {
   meals: Meal[];
   skinEntries: SkinEntry[];
   nailEntries: NailEntry[];
+  checkIns: CheckIn[];
+  stoolEntries: StoolEntry[];
 }
 
 /**
@@ -72,12 +107,29 @@ export interface Records {
  * handle them generically; meals and skin entries predate this and have their own methods.
  */
 export type ExtraKind = Exclude<keyof Records, 'meals' | 'skinEntries'>;
-export const EXTRA_KINDS: readonly ExtraKind[] = ['nailEntries'];
+export const EXTRA_KINDS: readonly ExtraKind[] = ['nailEntries', 'checkIns', 'stoolEntries'];
+
+/**
+ * A user-editable list entry: daily tags (IN-6). Predefined items keep a stable id and a localized name,
+ * and renaming one stores `nameOverride`, as for areas (SK-2).
+ */
+export interface ListItem {
+  id: string;
+  name: string;
+  predefined: boolean;
+  archived: boolean;
+  nameOverride: string | null;
+}
 
 /** User configuration (EX-1 "settings"). */
 export interface Settings {
   skinAreas: SkinArea[];
+  dailyTags: ListItem[];
 }
+
+/** Settings collections that are plain lists of ListItem. */
+export type ListKind = Exclude<keyof Settings, 'skinAreas'>;
+export const LIST_KINDS: readonly ListKind[] = ['dailyTags'];
 
 export interface Snapshot extends Records, Settings {}
 

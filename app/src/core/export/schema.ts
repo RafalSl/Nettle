@@ -1,4 +1,4 @@
-import { EXTRA_KINDS, type DateRange, type Parts, type Snapshot } from '../model/types';
+import { EXTRA_KINDS, LIST_KINDS, type DateRange, type Parts, type Snapshot } from '../model/types';
 import { EXTRA_CODECS } from './extras';
 
 /** Bump on any breaking change to data.json (EX-1). */
@@ -42,8 +42,12 @@ export interface DataJson {
   range: { from: string | null; to: string | null };
   /** meals and skin_entries plus one array per flat record kind (see export/extras.ts). */
   records?: { meals: MealJson[]; skin_entries: SkinEntryJson[]; [kind: string]: unknown[] };
-  settings?: { skin_areas: SkinAreaJson[] };
+  /** skin_areas plus one array per list kind (daily_tags, ...). */
+  settings?: { skin_areas: SkinAreaJson[]; [list: string]: unknown[] };
 }
+
+/** Array name inside `settings` for each list kind. */
+export const LIST_KEYS = { dailyTags: 'daily_tags' } as const;
 
 export function toDataJson(
   snap: Snapshot,
@@ -89,6 +93,18 @@ export function toDataJson(
           sensitive_default: a.sensitiveDefault,
           name_override: a.nameOverride,
         })),
+        ...Object.fromEntries(
+          LIST_KINDS.map((k) => [
+            LIST_KEYS[k],
+            snap[k].map((i) => ({
+              id: i.id,
+              name: i.name,
+              predefined: i.predefined,
+              archived: i.archived,
+              name_override: i.nameOverride,
+            })),
+          ]),
+        ),
       },
     }),
   };

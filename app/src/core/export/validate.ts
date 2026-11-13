@@ -1,9 +1,18 @@
 import { NettleError } from '../model/errors';
-import { EXTRA_KINDS, type Meal, type Payload, type Records, type SkinArea, type SkinEntry } from '../model/types';
+import {
+  EXTRA_KINDS,
+  LIST_KINDS,
+  type ListItem,
+  type Meal,
+  type Payload,
+  type Records,
+  type SkinArea,
+  type SkinEntry,
+} from '../model/types';
 import { isScore } from '../usecases/skin';
 import { EXTRA_CODECS } from './extras';
 import { bad, bool, oneOf, isObj, list, nullableText, str, unique, utc, type Obj } from './guards';
-import { SCHEMA_VERSION } from './schema';
+import { LIST_KEYS, SCHEMA_VERSION } from './schema';
 
 const section = (o: Obj, k: string): Obj | null => {
   const v = o[k];
@@ -43,7 +52,22 @@ export function parseDataJson(raw: unknown): Payload {
       };
     });
     unique(skinAreas.map((a) => a.id), 'settings.skin_areas');
-    payload.settings = { skinAreas };
+    const lists = {} as Record<(typeof LIST_KINDS)[number], ListItem[]>;
+    for (const kind of LIST_KINDS) {
+      const key = LIST_KEYS[kind];
+      lists[kind] = list(settings, key).map((o, i) => {
+        const w = `settings.${key}[${i}]`;
+        return {
+          id: str(o, 'id', w),
+          name: str(o, 'name', w),
+          predefined: bool(o, 'predefined', w),
+          archived: bool(o, 'archived', w),
+          nameOverride: nullableText(o, 'name_override', w),
+        };
+      });
+      unique(lists[kind].map((x) => x.id), `settings.${key}`);
+    }
+    payload.settings = { skinAreas, ...lists };
   }
 
   const records = section(raw, 'records');

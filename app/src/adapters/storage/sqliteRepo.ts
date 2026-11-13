@@ -1,8 +1,13 @@
 import { PREDEFINED_AREAS } from '@/core/model/areas';
+import { PREDEFINED_ITEMS } from '@/core/model/lists';
+import { recordRefs } from '@/core/model/refs';
 import {
   EXTRA_KINDS,
+  LIST_KINDS,
   type DateRange,
   type ExtraKind,
+  type ListItem,
+  type ListKind,
   type Meal,
   type Payload,
   type Records,
@@ -71,6 +76,41 @@ export class SqliteRepo implements StorageRepository {
 
   private async seedAreas() {
     for (const a of PREDEFINED_AREAS) await this.insertArea(a, true);
+    for (const kind of LIST_KINDS) for (const i of PREDEFINED_ITEMS[kind]) await this.insertItem(kind, i, true);
+  }
+
+  private async insertItem(kind: ListKind, i: ListItem, ignoreIfExists: boolean) {
+    await this.db.run(
+      `INSERT ${ignoreIfExists ? 'OR IGNORE ' : ''}INTO list_item (kind, id, name, predefined, archived, name_override)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [kind, i.id, i.name, +i.predefined, +i.archived, i.nameOverride],
+    );
+  }
+
+  async upsertItem(kind: ListKind, i: ListItem) {
+    await this.db.run(
+      `INSERT INTO list_item (kind, id, name, predefined, archived, name_override) VALUES (?, ?, ?, ?, ?, ?)
+       ON CONFLICT(kind, id) DO UPDATE SET name = excluded.name, predefined = excluded.predefined,
+         archived = excluded.archived, name_override = excluded.name_override`,
+      [kind, i.id, i.name, +i.predefined, +i.archived, i.nameOverride],
+    );
+  }
+
+  async listItems(kind: ListKind): Promise<ListItem[]> {
+    const rows = await this.db.all<{
+      id: string;
+      name: string;
+      predefined: number;
+      archived: number;
+      name_override: string | null;
+    }>('SELECT * FROM list_item WHERE kind = ? ORDER BY id', [kind]);
+    return rows.map((r) => ({
+      id: r.id,
+      name: r.name,
+      predefined: !!r.predefined,
+      archived: !!r.archived,
+      nameOverride: r.name_override,
+    }));
   }
 
   private async insertArea(a: SkinArea, ignoreIfExists: boolean) {
@@ -137,6 +177,16 @@ export class SqliteRepo implements StorageRepository {
 
   async addRecord<K extends ExtraKind>(kind: K, record: Records[K][number]) {
     await this.insertExtra(kind, record, false);
+  }
+
+  async putRecord<K extends ExtraKind>(kind: K, record: Records[K][number]) {
+    const t = EXTRA_TABLES[kind] as (typeof EXTRA_TABLES)[ExtraKind];
+    const cols = ['id', 'ts_utc', 'tz', ...t.columns];
+    await this.db.run(
+      `INSERT INTO ${t.table} (${cols.join(', ')}) VALUES (${cols.map(() => '?').join(', ')})
+       ON CONFLICT(id) DO UPDATE SET ${cols.slice(1).map((c) => `${c} = excluded.${c}`).join(', ')}`,
+      [record.id, record.at.utc, record.at.tz, ...(t.toValues as (r: typeof record) => SqlValue[])(record)],
+    );
   }
 
   async listRecords<K extends ExtraKind>(kind: K, range?: DateRange): Promise<Records[K]> {
@@ -228,6 +278,7 @@ export class SqliteRepo implements StorageRepository {
       skinAreas: await this.listAreas(),
       skinEntries: await this.listSkinEntries(range),
     } as Snapshot;
+    for (const kind of LIST_KINDS) Object.assign(snap, { [kind]: await this.listItems(kind) });
     for (const kind of EXTRA_KINDS) Object.assign(snap, { [kind]: await this.listRecords(kind, range) });
     return snap;
   }
@@ -241,6 +292,9 @@ export class SqliteRepo implements StorageRepository {
       skinEntries: await ids('skin_entry'),
     } as ExistingIds;
     for (const kind of EXTRA_KINDS) result[kind] = await ids(EXTRA_TABLES[kind].table);
+    for (const kind of LIST_KINDS) {
+      result[kind] = new Set((await this.listItems(kind)).map((i) => i.id));
+    }
     return result;
   }
 
@@ -256,6 +310,12 @@ export class SqliteRepo implements StorageRepository {
           if (mode === 'replace') await this.upsertArea(a);
           else await this.insertArea(a, true);
         }
+        for (const kind of LIST_KINDS) {
+          for (const i of settings[kind]) {
+            if (mode === 'replace') await this.upsertItem(kind, i);
+            else await this.insertItem(kind, i, true);
+          }
+        }
       }
       if (records) {
         for (const m of records.meals) await this.insertMeal(m, true);
@@ -265,15 +325,19 @@ export class SqliteRepo implements StorageRepository {
         }
       }
       if (settings && mode === 'replace') {
-        // Drop user areas the file does not have, unless an entry still uses them. Predefined areas stay.
-        const keep = new Set(settings.skinAreas.map((a) => a.id));
-        const used = await this.db.all<{ area_id: string }>(
-          'SELECT area_id FROM skin_entry UNION SELECT area_id FROM nail_entry',
-        );
-        used.forEach((r) => keep.add(r.area_id));
-        const current = await this.db.all<{ id: string }>('SELECT id FROM skin_area WHERE predefined = 0');
-        for (const { id } of current) {
-          if (!keep.has(id)) await this.db.run('DELETE FROM skin_area WHERE id = ?', [id]);
+        // Drop user areas and items the file does not have, unless a record still uses them. Predefined ones stay.
+        const refs = recordRefs(await this.snapshot());
+        const keepAreas = new Set([...settings.skinAreas.map((a) => a.id), ...refs.areas]);
+        for (const a of await this.listAreas()) {
+          if (!a.predefined && !keepAreas.has(a.id)) await this.db.run('DELETE FROM skin_area WHERE id = ?', [a.id]);
+        }
+        for (const kind of LIST_KINDS) {
+          const keep = new Set([...settings[kind].map((i) => i.id), ...refs.items]);
+          for (const i of await this.listItems(kind)) {
+            if (!i.predefined && !keep.has(i.id)) {
+              await this.db.run('DELETE FROM list_item WHERE kind = ? AND id = ?', [kind, i.id]);
+            }
+          }
         }
       }
       await this.seedAreas();

@@ -20,3 +20,4 @@ These are in the requirements already; the skeleton still behaves the old way.
 
 - **Date range as local days to UTC** (EX-11 note): the core accepts UTC bounds; the UI conversion does not exist yet.
 - **Newest-wins merge with tombstones** (EX-12, Later): needed only once entries are editable or deletable. Adds modified timestamps and a schema version bump at that point.
+- **Requirements v0.3 tracking changes** (IN-5, IN-6, IN-10 to IN-13, SK-3, SK-7, SK-9 to SK-11, LL-2 to LL-4, EX-1, EX-3): nothing implemented yet. Needs new migrations (area `kind`, tables for daily check-ins, tags, treatments, change events, reactions, nail entries, meal allergens, day-complete marks) and new `data.json` sections with validation. `schema_version` stays 1 in development, so exports made before the change will not import afterwards.

@@ -1,4 +1,4 @@
-# Food Allergy & Skin Condition Diary: Requirements v0.2
+# Food Allergy & Skin Condition Diary: Requirements v0.3
 
 Nov 11, 2026 · @Rafal
 
@@ -23,29 +23,35 @@ Every entry has a timestamp (editable, so past meals can be added) and an option
 | IN-2 | Log a packaged product by scanning its barcode; ingredients and allergens fetched from Open Food Facts (Polish codes start with 590). In-store codes (restricted circulation numbers, e.g. many Lidl own-brand items) are ambiguous, so the app warns and asks the user to confirm the match | Must |
 | IN-3 | Log a meal from a photo: the LLM estimates ingredients, the user reviews and edits before saving | Must |
 | IN-4 | Log alcohol (type, amount) | Must |
-| IN-5 | Log medications and supplements (name, dose), including topical treatments | Must |
-| IN-6 | Log other possible triggers: cosmetics and hair products, detergents, new clothing or jewelry, stress, sleep | Should |
+| IN-5 | Log medications and supplements (name, dose). Topical treatments are logged per area (IN-11) | Must |
+| IN-6 | Daily tags: a user-editable list of yes/no tags, toggled in the daily check-in (SK-7). Seeded with illness or infection, antibiotics, shaving, heavy sweating, sauna or pool, sun exposure, travel, nicotine and joint symptoms. New products (cosmetics, detergents, clothing, jewelry) are change events (IN-12); stress and sleep are check-in scores (SK-7) | Must |
 | IN-7 | Reuse earlier entries (recent and favorite meals) to speed up logging | Must |
 | IN-8 | Barcode not found or product data incomplete: fall back to manual ingredient entry | Must |
 | IN-9 | Barcode lookup sits behind a small interface (barcode in; name, ingredients and allergens out), with Open Food Facts as the first adapter, so another source can replace it | Must |
+| IN-10 | Allergen tags on meals: the 14 EU allergens (cereals containing gluten, crustaceans, eggs, fish, peanuts, soybeans, milk, tree nuts, celery, mustard, sesame, sulphites, lupin, molluscs). Suggested from Open Food Facts, the LLM or the ingredient text, and confirmed by the user | Must |
+| IN-11 | Treatments: a saved list of topical treatments; applying one to one or more areas is a single tap and is timestamped | Must |
+| IN-12 | Change events: "started" or "stopped" a product, medication or diet, with a date and a name, shown as markers on the timeline | Should |
+| IN-13 | Immediate reaction: symptoms within about 2 hours of a meal (hives, lip or mouth tingling, swelling, stomach symptoms), linked to that meal with the time of onset. The screen shows advice to seek urgent care for swelling of the face or throat or trouble breathing | Should |
 
-Ingredients from a photo or from a database are suggestions. Nothing from the LLM or a database is saved until the user confirms it.
+Ingredients and allergen tags from a photo or from a database are suggestions. Nothing from the LLM or a database is saved until the user confirms it.
 
 ## Skin and health logging
 
-Skin status is logged per body area, with several separate scores, so the analysis can tell itching from scaling and a flare from a calm day.
+Skin status is logged per body area, with several separate scores, so the analysis can tell itching from scaling and a flare from a calm day. Nails are their own kind of area, and a daily check-in holds everything that is recorded once a day.
 
 | ID | Requirement | Priority |
 | --- | --- | --- |
 | SK-1 | Predefined skin areas: chin, neck, ears (inside), behind the ears, sternum, intimate area | Must |
 | SK-2 | The user can add, rename and archive areas. Predefined areas keep a stable id and show a localized name; renaming one stores a `name_override` that takes precedence until cleared | Must |
-| SK-3 | Per area and entry, separate 0–10 scores for severity, itch, pain, dryness and scaling | Must |
+| SK-3 | Per skin area and entry, separate 0–10 scores for severity, itch, pain, dryness and scaling. A new entry is prefilled with the area's last values, and "no change" saves it in one tap | Must |
 | SK-4 | Dated photos attached to an area entry, several per entry | Must |
 | SK-5 | Each photo has a sensitive flag; areas can be sensitive by default (intimate area is) and the user can override per photo | Must |
 | SK-6 | Flare marker, separate from the scores: the user marks a flare start and end | Must |
-| SK-7 | Overall health entry: general wellbeing score, free-text note, sleep and stress scores, and stool entries (Bristol type 1–7, timestamped, several per day) | Must |
+| SK-7 | Daily check-in, one screen and one record per local day: wellbeing, stress, sleep quality and abdominal pain (each 0–10), bloating (yes/no), daily tags (IN-6) and a free-text note. Stool entries stay separate (Bristol type 1–7, timestamped, several per day) | Must |
 | SK-8 | Timeline view per area showing scores and photos side by side across dates | Should |
-| SK-9 | Daily reminder to log, as a local notification | Should |
+| SK-9 | Reminders as local notifications: a daily one for the check-in, and a weekly one to photograph nails while nail areas exist | Should |
+| SK-10 | Nail areas: every area has a kind, skin or nail. The user adds one nail area per affected nail. A nail entry has a stage (red or dark edge, separation, yellow, white, clear), a rough extent (none, under a quarter, up to half, more than half) and photos (SK-4, SK-5), instead of the five scores | Must |
+| SK-11 | Day complete: closing the daily check-in marks that local day as fully logged for meals and other intake. The mark can be removed | Must |
 
 Photos are stored on the device, in the app's private storage, and never leave it except through an export or an LLM run the user explicitly confirms.
 
@@ -56,9 +62,9 @@ The LLM is the Anthropic API, paid per use through a Console account. A Claude P
 | ID | Requirement | Priority |
 | --- | --- | --- |
 | LL-1 | Photo to ingredients: send a meal photo, get an ingredient estimate back, shown for review (see IN-3) | Must |
-| LL-2 | On-demand pattern analysis over a user-chosen date range, over intake, skin and health data | Must |
-| LL-3 | Analysis windows: look at same day, 24 h, 48 h and 72 h after intake, not only the previous meal | Must |
-| LL-4 | The prompt asks for tentative hypotheses with stated uncertainty and the data behind each one, never conclusions | Must |
+| LL-2 | On-demand pattern analysis over a user-chosen date range, over all record types: intake, allergen tags, treatments, change events, daily check-ins, stool, skin and nail entries, and flares. It asks for the order and lag between flare start, digestive changes and nail changes | Must |
+| LL-3 | Analysis windows: same day, 24 h, 48 h and 72 h after intake, not only the previous meal; plus 7-day and 21-day lookbacks for illness, antibiotics, stress, sleep and change events | Must |
+| LL-4 | The prompt asks for tentative hypotheses with stated uncertainty and the data behind each one, never conclusions. It treats treatments as confounders, counts and discounts days not marked complete (SK-11), and says so when the data cannot answer a question, for example for a food eaten on most days | Must |
 | LL-5 | Before every run, a confirmation screen lists exactly what will be sent: date range, entry counts, and which photos | Must |
 | LL-6 | Photos are excluded from analysis by default; the user opts in per run and selects some or all, sensitive photos included only by explicit choice | Must |
 | LL-7 | Each analysis is stored as its own object: date range, model, run date, prompt version, result. Raw entries are never modified | Must |
@@ -75,9 +81,9 @@ Export is the backup and the way to share data with a doctor. It produces one ZI
 
 | ID | Requirement | Priority |
 | --- | --- | --- |
-| EX-1 | `data.json`: full raw data, with a `schema_version` field, stable entry IDs, and UTC timestamps plus local timezone. It is a snapshot of the chosen range, not the live store. Records (meals, health and skin entries) and settings (skin areas) are separate sections, and the user chooses to export records, settings or both | Must |
+| EX-1 | `data.json`: full raw data, with a `schema_version` field, stable entry IDs, and UTC timestamps plus local timezone. It is a snapshot of the chosen range, not the live store. Records (meals with allergen tags, other intake, treatment applications, change events, reactions, daily check-ins, stool, skin and nail entries, flares) and settings (areas with their kind, the daily tag list, the treatment list) are separate sections, and the user chooses to export records, settings or both | Must |
 | EX-2 | `photos/` folder with predictable file names (for example `2026-11-11_chin_01.jpg`), referenced from `data.json` by relative path | Must |
-| EX-3 | `report.pdf`: readable summary for a doctor with a flare timeline, per-area trends, photo comparisons and the intake log, in a selectable language (English or Polish) | Must |
+| EX-3 | `report.pdf`: readable summary for a doctor with a flare timeline, per-area trends, photo comparisons including a per-nail photo timeline, check-in and digestion trends, treatments, change events and the intake log, in a selectable language (English or Polish) | Must |
 | EX-4 | LLM analyses appear in a separate, clearly labeled section of the PDF as AI-generated, tentative hypotheses | Must |
 | EX-5 | Optional CSV files, one per table, for spreadsheet use | Should |
 | EX-6 | Optional password protection, off by default, entered at export time (twice) and never stored; AES-256 encryption (WinZip AES), not the legacy ZIP scheme; at least 12 characters. Import asks for the password when the file is protected | Must |
@@ -127,7 +133,7 @@ The app serves one user today but is structured so it can later be extended, dis
 | ID | Requirement | Priority |
 | --- | --- | --- |
 | NF-1 | Manual logging and viewing work fully offline; only LLM features and barcode lookups need a network | Must |
-| NF-2 | A new log entry takes under a minute and a few taps | Must |
+| NF-2 | A new log entry takes under a minute and a few taps. The daily check-in takes under a minute, and a skin update with no change is one tap per area | Must |
 | NF-3 | No data loss on app restart, crash or failed LLM call | Must |
 | NF-4 | Timestamps are stored in UTC with the local timezone, so travel and daylight saving do not scramble the timeline | Must |
 | NF-5 | Photos are compressed on save to keep storage use reasonable over months of daily logging | Should |
@@ -163,6 +169,10 @@ No decision blocks v0.1; the open items below are checks to run during developme
 - Export is a must-have: ZIP with raw JSON, photos and a PDF report, optional CSV, optional AES password, per-photo selection.
 - LLM photo selection is separate from export photo selection, with a confirmation screen before each run.
 - Skin areas are predefined plus user-defined, with dated photos and a sensitive flag per photo.
+- Areas have a kind (skin or nail); nails are tracked per affected nail with a stage, an extent and photos.
+- One daily check-in record per day holds wellbeing, stress, sleep, digestion and daily tags; closing it marks the day complete.
+- Skin scores stay 0–10; prefill and "no change" keep logging fast.
+- Medical history and notes about a diagnosis are kept outside this repository.
 - App text and the doctor-facing PDF support English and Polish; English ships first.
 - Bulk delete on user request; data is kept until the user deletes it.
 - Designed for extension: ports and adapters, bring your own key, localization from day one.
@@ -174,6 +184,7 @@ No decision blocks v0.1; the open items below are checks to run during developme
 
 ## Changelog
 
+- **v0.3 (2026-11-13):** tracking widened beyond food. Daily check-in with digestion (SK-7) and a day-complete mark (SK-11); daily tags replace free-form triggers (IN-6); allergen tags (IN-10), treatments per area (IN-11, split from IN-5), change events (IN-12) and immediate reactions (IN-13); nail areas (SK-10); prefill and "no change" for skin scores, which stay 0–10 (SK-3); nail photo reminder (SK-9); analysis covers all record types, adds 7- and 21-day lookbacks and must say when the data cannot answer (LL-2, LL-3, LL-4); export and PDF follow (EX-1, EX-3); NF-2 clarified. Code not yet changed.
 - **v0.2.2 (2026-11-12):** EX-6 minimum password length 12 and double entry; import prompts for the password.
 - **v0.2.1 (2026-11-12):** EX-10 states the replace/merge rules per part.
 - **v0.2 (2026-11-12):** this file is now canonical in the repo (was an exported snapshot). Export/import split into records and settings (EX-1, EX-10); SK-2 gets `name_override` for predefined areas; EX-10 states the 50 MB `data.json` limit; EX-12 (newest-wins merge) added as Later; export date ranges are local days converted to UTC.

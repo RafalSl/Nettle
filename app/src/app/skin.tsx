@@ -5,6 +5,7 @@ import { SCORE_KEYS, type SkinArea, type SkinEntry, type SkinScores } from '@/co
 import { lastSkinScores, listActiveAreas, logSkinEntry, repeatSkinEntry } from '@/core/usecases/skin';
 import { areaLabel, errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
+import { PhotoStrip } from '@/ui/PhotoStrip';
 import { Button, Heading, Hint, Label, Screen, ScoreStepper, TimeField, styles } from '@/ui/components';
 
 const ZERO: SkinScores = { severity: 0, itch: 0, pain: 0, dryness: 0, scaling: 0 };
@@ -117,6 +118,7 @@ export default function SkinScreen() {
             {new Date(e.at.utc).toLocaleString()} · {labelFor(e.areaId)}
           </Text>
           <Hint>{SCORE_KEYS.map((k) => `${t(`skin.scores.${k}`)} ${e.scores[k]}`).join(' · ')}</Hint>
+          <PhotoStrip entryKind="skinEntry" entryId={e.id} />
         </View>
       ))}
     </Screen>

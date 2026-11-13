@@ -5,6 +5,7 @@ import { NAIL_EXTENTS, NAIL_STAGES, type NailEntry, type NailExtent, type NailSt
 import { addArea, listActiveAreas, logNailEntry } from '@/core/usecases/skin';
 import { areaLabel, errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
+import { PhotoStrip } from '@/ui/PhotoStrip';
 import { Button, Chips, Heading, Hint, Label, TimeField, styles } from '@/ui/components';
 
 /** SK-10: one nail area per affected nail; an entry has a stage and a rough extent instead of scores. */
@@ -92,6 +93,7 @@ export function NailSection() {
           <Hint>
             {t(`nail.stages.${e.stage}`)} · {t(`nail.extents.${e.extent}`)}
           </Hint>
+          <PhotoStrip entryKind="nailEntry" entryId={e.id} />
         </View>
       ))}
     </>

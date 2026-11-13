@@ -248,5 +248,16 @@
   "lists": {
     "dailyTags": "Daily tags",
     "treatments": "Treatments"
+  },
+  "photos": {
+    "camera": "Take photo",
+    "library": "Choose photos",
+    "sensitive": "Sensitive: yes",
+    "notSensitive": "Sensitive: no",
+    "remove": "Remove photo",
+    "removeTitle": "Remove this photo?",
+    "removeBody": "It is deleted from this device and cannot be recovered.",
+    "tapToShow": "Sensitive photo. Tap to show.",
+    "none": "No photos"
   }
 }

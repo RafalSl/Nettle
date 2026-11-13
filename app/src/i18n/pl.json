@@ -248,5 +248,16 @@
   "lists": {
     "dailyTags": "Tagi dnia",
     "treatments": "Zabiegi"
+  },
+  "photos": {
+    "camera": "Zrób zdjęcie",
+    "library": "Wybierz zdjęcia",
+    "sensitive": "Wrażliwe: tak",
+    "notSensitive": "Wrażliwe: nie",
+    "remove": "Usuń zdjęcie",
+    "removeTitle": "Usunąć to zdjęcie?",
+    "removeBody": "Zostanie usunięte z tego urządzenia i nie da się go odzyskać.",
+    "tapToShow": "Wrażliwe zdjęcie. Dotknij, aby pokazać.",
+    "none": "Brak zdjęć"
   }
 }

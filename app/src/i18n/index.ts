@@ -26,3 +26,8 @@ export function areaLabel(area: {
 }): string {
   return area.nameOverride ?? (area.predefined ? t(`areas.${area.id}`) : area.name);
 }
+
+/** IN-6 / IN-11: same rule for list items such as daily tags; treatments are always user items. */
+export function itemLabel(item: { id: string; name: string; predefined: boolean; nameOverride: string | null }): string {
+  return item.nameOverride ?? (item.predefined ? t(`tags.${item.id}`) : item.name);
+}

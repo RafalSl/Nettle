@@ -2,7 +2,9 @@
   "tabs": {
     "meal": "Meal",
     "skin": "Skin",
-    "data": "Data"
+    "data": "Data",
+    "today": "Today",
+    "more": "More"
   },
   "common": {
     "save": "Save",
@@ -14,7 +16,13 @@
     "recent": "Recent",
     "increase": "Increase",
     "decrease": "Decrease",
-    "loadingFailed": "The app could not open its local database."
+    "loadingFailed": "The app could not open its local database.",
+    "optional": "not set",
+    "clear": "Clear",
+    "yes": "Yes",
+    "no": "No",
+    "add": "Add",
+    "name": "Name"
   },
   "meal": {
     "title": "Log a meal",
@@ -22,7 +30,10 @@
     "ingredients": "Ingredients",
     "ingredientPlaceholder": "Ingredient",
     "addIngredient": "Add ingredient",
-    "removeIngredient": "Remove ingredient"
+    "removeIngredient": "Remove ingredient",
+    "allergens": "Allergens",
+    "suggestAllergens": "Suggest from ingredients",
+    "allergensHint": "Suggestions are only a guess from the ingredient text. Check them before saving."
   },
   "skin": {
     "title": "Log skin status",
@@ -34,7 +45,10 @@
       "dryness": "Dryness",
       "scaling": "Scaling"
     },
-    "scale": "0 = none, 10 = worst"
+    "scale": "0 = none, 10 = worst",
+    "noChange": "No change",
+    "noChangeHint": "Saves a new entry with the same scores as the last one for this area.",
+    "prefilled": "Scores start from the last entry for this area."
   },
   "areas": {
     "area-chin": "Chin",
@@ -56,11 +70,11 @@
     "replaceConfirmTitle": "Replace all data?",
     "replaceConfirmBody": "The selected data currently in the app will be replaced and cannot be recovered. Export first if you are unsure.",
     "imported": "Import complete",
-    "partRecords": "Records (meals, skin entries)",
-    "partSettings": "Settings (skin areas)",
+    "partRecords": "Records (meals, check-ins, skin and nail entries, ...)",
+    "partSettings": "Settings (areas, tags, treatments)",
     "exportButton": "Export",
-    "previewRecords": "Records: {{meals}} meals, {{entries}} skin entries. Merge would add {{newMeals}} meals and {{newEntries}} entries.",
-    "previewSettings": "Settings: {{areas}} areas. Merge would add {{newAreas}}; existing areas keep your local values.",
+    "previewRecords": "Records: {{meals}} meals, {{entries}} skin entries, {{other}} other records. Merge would add {{newMeals}} meals, {{newEntries}} skin entries and {{newOther}} other records.",
+    "previewSettings": "Settings: {{areas}} areas, {{lists}} tags and treatments. Merge would add {{newAreas}} areas and {{newLists}} list items; existing ones keep your local values.",
     "applyParts": "Apply to",
     "passwordLabel": "Password (optional)",
     "passwordRepeat": "Repeat password",
@@ -87,6 +101,95 @@
     "password_too_short": "Use at least 12 characters for the password.",
     "import_password_required": "This file is password protected. Enter its password.",
     "import_wrong_password": "Wrong password.",
-    "import_too_large": "The data in this file is larger than the app accepts."
+    "import_too_large": "The data in this file is larger than the app accepts.",
+    "wrong_area_kind": "This area is the wrong kind for this entry.",
+    "invalid_nail_value": "Choose a stage and an extent.",
+    "unknown_item": "That item does not exist.",
+    "empty_item_name": "Enter a name.",
+    "invalid_stool_type": "Choose a type from 1 to 7.",
+    "checkin_not_found": "There is no check-in for that day.",
+    "import_unknown_item": "Some entries use a tag or treatment that is not in the app. Import the settings too, or add it first.",
+    "import_unknown_meal": "Some reactions point at a meal that is not in the app.",
+    "unknown_meal": "That meal does not exist.",
+    "invalid_value": "That value is not allowed.",
+    "no_areas_selected": "Choose at least one area.",
+    "reaction_before_meal": "A reaction cannot start before its meal.",
+    "invalid_range": "The date range is not valid.",
+    "no_previous_entry": "There is no earlier entry for this area yet."
+  },
+  "today": {
+    "title": "Daily check-in",
+    "day": "Day",
+    "hint": "Leave a score unset if you do not want to record it.",
+    "wellbeing": "Wellbeing",
+    "stress": "Stress",
+    "sleep": "Sleep quality",
+    "abdominalPain": "Abdominal pain",
+    "bloating": "Bloating",
+    "tags": "Today",
+    "saveClose": "Save and close the day",
+    "dayComplete": "Day closed: everything for this day is logged.",
+    "reopen": "Reopen day",
+    "stoolTitle": "Stool",
+    "stoolHint": "Bristol type 1 (hard lumps) to 7 (watery)",
+    "stoolAdd": "Add stool entry"
+  },
+  "tags": {
+    "tag-illness-or-infection": "Illness or infection",
+    "tag-antibiotics": "Antibiotics",
+    "tag-shaving": "Shaving",
+    "tag-heavy-sweating": "Heavy sweating",
+    "tag-sauna-or-pool": "Sauna or pool",
+    "tag-sun-exposure": "Sun exposure",
+    "tag-travel": "Travel",
+    "tag-nicotine": "Nicotine",
+    "tag-joint-symptoms": "Joint symptoms"
+  },
+  "more": {
+    "nailTitle": "Nails",
+    "nailAreaName": "New nail (for example left thumb)",
+    "nailAddArea": "Add nail",
+    "nailNone": "Add a nail first.",
+    "nailStage": "Stage",
+    "nailExtent": "How much of the nail",
+    "nailSave": "Save nail entry",
+    "treatmentTitle": "Treatments",
+    "treatmentNew": "New treatment (for example cream name)",
+    "treatmentAdd": "Save treatment",
+    "treatmentAreas": "Applied to",
+    "treatmentApply": "Apply now",
+    "treatmentNone": "Save a treatment first.",
+    "applied": "Applied"
+  },
+  "nail": {
+    "stages": {
+      "red_edge": "Red or dark edge",
+      "separation": "Separation",
+      "yellow": "Yellow",
+      "white": "White",
+      "clear": "Clear"
+    },
+    "extents": {
+      "none": "None",
+      "under_quarter": "Under a quarter",
+      "up_to_half": "Up to half",
+      "over_half": "More than half"
+    }
+  },
+  "allergens": {
+    "gluten": "Gluten cereals",
+    "crustaceans": "Crustaceans",
+    "eggs": "Eggs",
+    "fish": "Fish",
+    "peanuts": "Peanuts",
+    "soybeans": "Soybeans",
+    "milk": "Milk",
+    "tree_nuts": "Tree nuts",
+    "celery": "Celery",
+    "mustard": "Mustard",
+    "sesame": "Sesame",
+    "sulphites": "Sulphites",
+    "lupin": "Lupin",
+    "molluscs": "Molluscs"
   }
 }

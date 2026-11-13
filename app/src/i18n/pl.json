@@ -2,7 +2,9 @@
   "tabs": {
     "meal": "Posiłek",
     "skin": "Skóra",
-    "data": "Dane"
+    "data": "Dane",
+    "today": "Dziś",
+    "more": "Więcej"
   },
   "common": {
     "save": "Zapisz",
@@ -14,7 +16,13 @@
     "recent": "Ostatnie",
     "increase": "Zwiększ",
     "decrease": "Zmniejsz",
-    "loadingFailed": "Aplikacja nie mogła otworzyć lokalnej bazy danych."
+    "loadingFailed": "Aplikacja nie mogła otworzyć lokalnej bazy danych.",
+    "optional": "nie ustawiono",
+    "clear": "Wyczyść",
+    "yes": "Tak",
+    "no": "Nie",
+    "add": "Dodaj",
+    "name": "Nazwa"
   },
   "meal": {
     "title": "Dodaj posiłek",
@@ -22,7 +30,10 @@
     "ingredients": "Składniki",
     "ingredientPlaceholder": "Składnik",
     "addIngredient": "Dodaj składnik",
-    "removeIngredient": "Usuń składnik"
+    "removeIngredient": "Usuń składnik",
+    "allergens": "Alergeny",
+    "suggestAllergens": "Zaproponuj ze składników",
+    "allergensHint": "Propozycje to tylko domysł na podstawie tekstu składników. Sprawdź je przed zapisem."
   },
   "skin": {
     "title": "Dodaj stan skóry",
@@ -34,7 +45,10 @@
       "dryness": "Suchość",
       "scaling": "Łuszczenie"
     },
-    "scale": "0 = brak, 10 = najgorzej"
+    "scale": "0 = brak, 10 = najgorzej",
+    "noChange": "Bez zmian",
+    "noChangeHint": "Zapisuje nowy wpis z takimi samymi ocenami jak ostatni dla tego miejsca.",
+    "prefilled": "Oceny zaczynają od ostatniego wpisu dla tego miejsca."
   },
   "areas": {
     "area-chin": "Broda",
@@ -57,10 +71,10 @@
     "replaceConfirmTitle": "Zastąpić wszystkie dane?",
     "replaceConfirmBody": "Wybrane dane w aplikacji zostaną zastąpione bez możliwości odzyskania. Jeśli nie masz pewności, najpierw wyeksportuj dane.",
     "imported": "Import zakończony",
-    "partRecords": "Wpisy (posiłki, wpisy o skórze)",
-    "partSettings": "Ustawienia (obszary skóry)",
-    "previewRecords": "Wpisy: posiłki {{meals}}, wpisy o skórze {{entries}}. Scalenie doda posiłki: {{newMeals}}, wpisy: {{newEntries}}.",
-    "previewSettings": "Ustawienia: obszary {{areas}}. Scalenie doda {{newAreas}}; istniejące obszary zachowają Twoje lokalne wartości.",
+    "partRecords": "Wpisy (posiłki, kontrole, skóra, paznokcie, ...)",
+    "partSettings": "Ustawienia (miejsca, tagi, zabiegi)",
+    "previewRecords": "Wpisy: {{meals}} posiłków, {{entries}} wpisów o skórze, {{other}} innych. Scalanie doda {{newMeals}} posiłków, {{newEntries}} wpisów o skórze i {{newOther}} innych.",
+    "previewSettings": "Ustawienia: {{areas}} miejsc, {{lists}} tagów i zabiegów. Scalanie doda {{newAreas}} miejsc i {{newLists}} pozycji; istniejące zachowają Twoje wartości.",
     "applyParts": "Zastosuj do",
     "passwordLabel": "Hasło (opcjonalnie)",
     "passwordRepeat": "Powtórz hasło",
@@ -87,6 +101,95 @@
     "password_too_short": "Użyj co najmniej 12 znaków w haśle.",
     "import_password_required": "Ten plik jest chroniony hasłem. Podaj hasło.",
     "import_wrong_password": "Nieprawidłowe hasło.",
-    "import_too_large": "Dane w tym pliku są większe, niż aplikacja akceptuje."
+    "import_too_large": "Dane w tym pliku są większe, niż aplikacja akceptuje.",
+    "wrong_area_kind": "To miejsce jest nieodpowiedniego rodzaju dla tego wpisu.",
+    "invalid_nail_value": "Wybierz etap i zakres.",
+    "unknown_item": "Ta pozycja nie istnieje.",
+    "empty_item_name": "Wpisz nazwę.",
+    "invalid_stool_type": "Wybierz typ od 1 do 7.",
+    "checkin_not_found": "Brak kontroli dla tego dnia.",
+    "import_unknown_item": "Niektóre wpisy używają tagu lub zabiegu, którego nie ma w aplikacji. Zaimportuj też ustawienia albo dodaj go najpierw.",
+    "import_unknown_meal": "Niektóre reakcje wskazują posiłek, którego nie ma w aplikacji.",
+    "unknown_meal": "Ten posiłek nie istnieje.",
+    "invalid_value": "Ta wartość jest niedozwolona.",
+    "no_areas_selected": "Wybierz co najmniej jedno miejsce.",
+    "reaction_before_meal": "Reakcja nie może zacząć się przed posiłkiem.",
+    "invalid_range": "Zakres dat jest nieprawidłowy.",
+    "no_previous_entry": "Nie ma jeszcze wcześniejszego wpisu dla tego miejsca."
+  },
+  "today": {
+    "title": "Codzienna kontrola",
+    "day": "Dzień",
+    "hint": "Zostaw ocenę nieustawioną, jeśli nie chcesz jej zapisywać.",
+    "wellbeing": "Samopoczucie",
+    "stress": "Stres",
+    "sleep": "Jakość snu",
+    "abdominalPain": "Ból brzucha",
+    "bloating": "Wzdęcia",
+    "tags": "Dziś",
+    "saveClose": "Zapisz i zamknij dzień",
+    "dayComplete": "Dzień zamknięty: wszystko z tego dnia jest zapisane.",
+    "reopen": "Otwórz dzień ponownie",
+    "stoolTitle": "Stolec",
+    "stoolHint": "Skala Bristolska od 1 (twarde grudki) do 7 (wodnisty)",
+    "stoolAdd": "Dodaj wpis o stolcu"
+  },
+  "tags": {
+    "tag-illness-or-infection": "Choroba lub infekcja",
+    "tag-antibiotics": "Antybiotyki",
+    "tag-shaving": "Golenie",
+    "tag-heavy-sweating": "Silne pocenie się",
+    "tag-sauna-or-pool": "Sauna lub basen",
+    "tag-sun-exposure": "Słońce",
+    "tag-travel": "Podróż",
+    "tag-nicotine": "Nikotyna",
+    "tag-joint-symptoms": "Objawy stawowe"
+  },
+  "more": {
+    "nailTitle": "Paznokcie",
+    "nailAreaName": "Nowy paznokieć (np. lewy kciuk)",
+    "nailAddArea": "Dodaj paznokieć",
+    "nailNone": "Najpierw dodaj paznokieć.",
+    "nailStage": "Etap",
+    "nailExtent": "Jaka część paznokcia",
+    "nailSave": "Zapisz wpis o paznokciu",
+    "treatmentTitle": "Zabiegi",
+    "treatmentNew": "Nowy zabieg (np. nazwa kremu)",
+    "treatmentAdd": "Zapisz zabieg",
+    "treatmentAreas": "Zastosowano na",
+    "treatmentApply": "Zastosuj teraz",
+    "treatmentNone": "Najpierw zapisz zabieg.",
+    "applied": "Zastosowano"
+  },
+  "nail": {
+    "stages": {
+      "red_edge": "Czerwony lub ciemny brzeg",
+      "separation": "Odklejenie",
+      "yellow": "Żółty",
+      "white": "Biały",
+      "clear": "Czysty"
+    },
+    "extents": {
+      "none": "Brak",
+      "under_quarter": "Mniej niż ćwierć",
+      "up_to_half": "Do połowy",
+      "over_half": "Więcej niż połowa"
+    }
+  },
+  "allergens": {
+    "gluten": "Zboża z glutenem",
+    "crustaceans": "Skorupiaki",
+    "eggs": "Jaja",
+    "fish": "Ryby",
+    "peanuts": "Orzeszki ziemne",
+    "soybeans": "Soja",
+    "milk": "Mleko",
+    "tree_nuts": "Orzechy",
+    "celery": "Seler",
+    "mustard": "Gorczyca",
+    "sesame": "Sezam",
+    "sulphites": "Siarczyny",
+    "lupin": "Łubin",
+    "molluscs": "Mięczaki"
   }
 }

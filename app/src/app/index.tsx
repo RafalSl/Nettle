@@ -1,17 +1,19 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, Text, TextInput, View } from 'react-native';
-import type { Meal } from '@/core/model/types';
+import { suggestAllergens } from '@/core/model/allergens';
+import { ALLERGENS, type Allergen, type Meal } from '@/core/model/types';
 import { logMeal } from '@/core/usecases/logMeal';
 import { errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
-import { Button, Heading, Hint, Label, Screen, TimeField, styles } from '@/ui/components';
+import { Button, Chips, Heading, Hint, Label, Screen, TimeField, styles } from '@/ui/components';
 
 /** IN-1: manual meal entry. */
 export default function MealScreen() {
   const { deps } = useServices();
   const [description, setDescription] = useState('');
   const [ingredients, setIngredients] = useState<string[]>(['']);
+  const [allergens, setAllergens] = useState<Set<string>>(new Set());
   const [note, setNote] = useState('');
   const [at, setAt] = useState<Date | null>(null);
   const [recent, setRecent] = useState<Meal[]>([]);
@@ -26,9 +28,10 @@ export default function MealScreen() {
 
   async function save() {
     try {
-      await logMeal(deps, { description, ingredients, note, at: at ?? undefined });
+      await logMeal(deps, { description, ingredients, allergens: [...allergens] as Allergen[], note, at: at ?? undefined });
       setDescription('');
       setIngredients(['']);
+      setAllergens(new Set());
       setNote('');
       setAt(null);
       reload();
@@ -63,6 +66,21 @@ export default function MealScreen() {
         </View>
       ))}
       <Button kind="secondary" title={t('meal.addIngredient')} onPress={() => setIngredients((l) => [...l, ''])} />
+
+      <Label>{t('meal.allergens')}</Label>
+      <Chips
+        items={ALLERGENS.map((a) => ({ id: a, label: t(`allergens.${a}`) }))}
+        selected={allergens}
+        onToggle={(id) =>
+          setAllergens((cur) => {
+            const next = new Set(cur);
+            if (!next.delete(id)) next.add(id);
+            return next;
+          })
+        }
+      />
+      <Button kind="secondary" title={t('meal.suggestAllergens')} onPress={() => setAllergens(new Set(suggestAllergens(ingredients)))} />
+      <Hint>{t('meal.allergensHint')}</Hint>
 
       <TimeField value={at ?? new Date()} onChange={setAt} />
       <Label>{t('common.note')}</Label>

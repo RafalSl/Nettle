@@ -75,6 +75,72 @@ export function ScoreStepper({
   );
 }
 
+/** Like ScoreStepper, but a score can stay unset (shown as a dash) and be cleared. */
+export function OptionalScoreStepper({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number | null;
+  onChange: (v: number | null) => void;
+}) {
+  return (
+    <View style={styles.stepperRow}>
+      <Text style={styles.stepperLabel}>{label}</Text>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`${t('common.decrease')} ${label}`}
+        onPress={() => onChange(value === null ? 0 : Math.max(0, value - 1))}
+        style={styles.stepBtn}>
+        <Text style={styles.stepText}>−</Text>
+      </Pressable>
+      <Text style={styles.stepValue}>{value ?? '–'}</Text>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`${t('common.increase')} ${label}`}
+        onPress={() => onChange(value === null ? 0 : Math.min(10, value + 1))}
+        style={styles.stepBtn}>
+        <Text style={styles.stepText}>+</Text>
+      </Pressable>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`${t('common.clear')} ${label}`}
+        disabled={value === null}
+        onPress={() => onChange(null)}
+        style={[styles.stepBtn, value === null && { opacity: 0.3 }]}>
+        <Text style={styles.stepText}>×</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+/** Tap-to-select chips. `selected` is the set of chosen ids; the caller decides single or multi select. */
+export function Chips({
+  items,
+  selected,
+  onToggle,
+}: {
+  items: { id: string; label: string }[];
+  selected: ReadonlySet<string>;
+  onToggle: (id: string) => void;
+}) {
+  return (
+    <View style={styles.chips}>
+      {items.map((item) => (
+        <Pressable
+          key={item.id}
+          accessibilityRole="button"
+          accessibilityState={{ selected: selected.has(item.id) }}
+          onPress={() => onToggle(item.id)}
+          style={[styles.chip, selected.has(item.id) && styles.chipOn]}>
+          <Text style={{ color: selected.has(item.id) ? '#fff' : '#111' }}>{item.label}</Text>
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+
 /** Editable timestamp so past entries can be added. Native iOS date-time picker, included in Expo Go. */
 export function TimeField({ value, onChange }: { value: Date; onChange: (d: Date) => void }) {
   return (

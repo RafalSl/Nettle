@@ -172,7 +172,24 @@
     "medKindMedication": "Lek",
     "medKindSupplement": "Suplement",
     "medSave": "Zapisz",
-    "logged": "Zapisano"
+    "logged": "Zapisano",
+    "changeTitle": "Rozpoczęto lub zakończono",
+    "changeName": "Nazwa (produkt, lek lub dieta)",
+    "changeSave": "Zapisz zmianę",
+    "changeNote": "Notatka (opcjonalnie)",
+    "reactionTitle": "Reakcja po posiłku",
+    "reactionMeal": "Który posiłek",
+    "reactionNoMeals": "Najpierw zapisz posiłek.",
+    "reactionSymptoms": "Objawy",
+    "reactionOnset": "Początek",
+    "reactionSave": "Zapisz reakcję",
+    "reactionUrgent": "Obrzęk twarzy lub gardła albo trudności w oddychaniu wymagają pilnej pomocy lekarskiej. Zadzwoń po pogotowie. Nie czekaj na tę aplikację.",
+    "listsTitle": "Edytuj listy",
+    "rename": "Zmień nazwę",
+    "archive": "Archiwizuj",
+    "restore": "Przywróć",
+    "listNew": "Nowa nazwa",
+    "archivedList": "Zarchiwizowane"
   },
   "nail": {
     "stages": {
@@ -204,5 +221,26 @@
     "sulphites": "Siarczyny",
     "lupin": "Łubin",
     "molluscs": "Mięczaki"
+  },
+  "change": {
+    "actions": {
+      "started": "Rozpoczęto",
+      "stopped": "Zakończono"
+    },
+    "categories": {
+      "product": "Produkt",
+      "medication": "Lek",
+      "diet": "Dieta"
+    }
+  },
+  "symptoms": {
+    "hives": "Pokrzywka",
+    "mouth_tingling": "Mrowienie ust lub warg",
+    "swelling": "Obrzęk",
+    "stomach": "Objawy żołądkowe"
+  },
+  "lists": {
+    "dailyTags": "Tagi dnia",
+    "treatments": "Zabiegi"
   }
 }

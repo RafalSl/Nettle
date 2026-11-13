@@ -115,7 +115,9 @@
     "no_areas_selected": "Choose at least one area.",
     "reaction_before_meal": "A reaction cannot start before its meal.",
     "invalid_range": "The date range is not valid.",
-    "no_previous_entry": "There is no earlier entry for this area yet."
+    "no_previous_entry": "There is no earlier entry for this area yet.",
+    "invalid_amount": "Enter an amount in whole millilitres, above zero.",
+    "empty_name": "Enter a name."
   },
   "today": {
     "title": "Daily check-in",
@@ -159,7 +161,18 @@
     "treatmentAreas": "Applied to",
     "treatmentApply": "Apply now",
     "treatmentNone": "Save a treatment first.",
-    "applied": "Applied"
+    "applied": "Applied",
+    "alcoholTitle": "Alcohol",
+    "alcoholDrink": "Drink (for example beer)",
+    "alcoholAmount": "Amount in ml",
+    "alcoholSave": "Save drink",
+    "medTitle": "Medications and supplements",
+    "medName": "Name",
+    "medDose": "Dose (for example 1 tablet)",
+    "medKindMedication": "Medication",
+    "medKindSupplement": "Supplement",
+    "medSave": "Save",
+    "logged": "Saved"
   },
   "nail": {
     "stages": {

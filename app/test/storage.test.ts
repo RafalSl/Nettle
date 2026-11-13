@@ -104,6 +104,17 @@ describe('sqlite migrations', () => {
     ).rejects.toThrow();
   });
 
+  it('IN-4 and IN-5 enforce amount and category in the database itself', async () => {
+    const db = createNodeSqliteDb();
+    await SqliteRepo.open(db);
+    await expect(
+      db.run(`INSERT INTO alcohol_entry (id, ts_utc, tz, drink, amount_ml) VALUES ('x', '2026-01-01T00:00:00.000Z', 'UTC', 'beer', 0)`),
+    ).rejects.toThrow();
+    await expect(
+      db.run(`INSERT INTO medication_entry (id, ts_utc, tz, category, name) VALUES ('x', '2026-01-01T00:00:00.000Z', 'UTC', 'herb', 'n')`),
+    ).rejects.toThrow();
+  });
+
   it('SK-3 enforces 0-10 scores in the database itself', async () => {
     const db = createNodeSqliteDb();
     await SqliteRepo.open(db);

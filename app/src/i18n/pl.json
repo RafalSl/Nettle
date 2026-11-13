@@ -115,7 +115,9 @@
     "no_areas_selected": "Wybierz co najmniej jedno miejsce.",
     "reaction_before_meal": "Reakcja nie może zacząć się przed posiłkiem.",
     "invalid_range": "Zakres dat jest nieprawidłowy.",
-    "no_previous_entry": "Nie ma jeszcze wcześniejszego wpisu dla tego miejsca."
+    "no_previous_entry": "Nie ma jeszcze wcześniejszego wpisu dla tego miejsca.",
+    "invalid_amount": "Podaj ilość w pełnych mililitrach, większą od zera.",
+    "empty_name": "Wpisz nazwę."
   },
   "today": {
     "title": "Codzienna kontrola",
@@ -159,7 +161,18 @@
     "treatmentAreas": "Zastosowano na",
     "treatmentApply": "Zastosuj teraz",
     "treatmentNone": "Najpierw zapisz zabieg.",
-    "applied": "Zastosowano"
+    "applied": "Zastosowano",
+    "alcoholTitle": "Alkohol",
+    "alcoholDrink": "Napój (np. piwo)",
+    "alcoholAmount": "Ilość w ml",
+    "alcoholSave": "Zapisz napój",
+    "medTitle": "Leki i suplementy",
+    "medName": "Nazwa",
+    "medDose": "Dawka (np. 1 tabletka)",
+    "medKindMedication": "Lek",
+    "medKindSupplement": "Suplement",
+    "medSave": "Zapisz",
+    "logged": "Zapisano"
   },
   "nail": {
     "stages": {

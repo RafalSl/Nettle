@@ -1,4 +1,7 @@
 import type {
+  AlcoholEntry,
+  MedicationCategory,
+  MedicationEntry,
   ChangeAction,
   ChangeCategory,
   ChangeEvent,
@@ -136,6 +139,33 @@ const reaction: ExtraTable<Reaction> = {
   }),
 };
 
+const alcohol: ExtraTable<AlcoholEntry> = {
+  table: 'alcohol_entry',
+  columns: ['drink', 'amount_ml', 'note'],
+  toValues: (e) => [e.drink, e.amountMl, e.note],
+  fromRow: (r) => ({
+    id: r.id as string,
+    at: { utc: r.ts_utc as string, tz: r.tz as string },
+    drink: r.drink as string,
+    amountMl: r.amount_ml as number,
+    note: r.note as string | null,
+  }),
+};
+
+const medication: ExtraTable<MedicationEntry> = {
+  table: 'medication_entry',
+  columns: ['category', 'name', 'dose', 'note'],
+  toValues: (e) => [e.category, e.name, e.dose, e.note],
+  fromRow: (r) => ({
+    id: r.id as string,
+    at: { utc: r.ts_utc as string, tz: r.tz as string },
+    category: r.category as MedicationCategory,
+    name: r.name as string,
+    dose: r.dose as string | null,
+    note: r.note as string | null,
+  }),
+};
+
 export const EXTRA_TABLES: { [K in ExtraKind]: ExtraTable<Records[K][number]> } = {
   nailEntries: nail,
   checkIns: checkIn,
@@ -143,4 +173,6 @@ export const EXTRA_TABLES: { [K in ExtraKind]: ExtraTable<Records[K][number]> } 
   treatmentApplications: treatmentApplication,
   changeEvents: changeEvent,
   reactions: reaction,
+  alcoholEntries: alcohol,
+  medicationEntries: medication,
 };

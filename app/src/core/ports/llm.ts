@@ -1,37 +1,38 @@
-import type { DateRange, Snapshot } from '../model/types';
-
 export type Language = 'en' | 'pl';
 
-export interface IngredientEstimate {
-  /** Suggestions only: never saved until the user confirms (IN-3). */
-  names: string[];
-  uncertainty: string | null;
+/** An image sent with a request (LL-1, LL-6). */
+export interface LlmImage {
+  mimeType: 'image/jpeg' | 'image/png';
+  data: Uint8Array;
 }
 
-export interface Hypothesis {
+export interface LlmRequest {
+  system: string;
+  user: string;
+  images?: LlmImage[];
+  /** JSON Schema the answer must follow. */
+  schema: Record<string, unknown>;
+  maxTokens: number;
+}
+
+export interface LlmResponse {
+  /** The model's answer as JSON text; the core parses and validates it. */
   text: string;
-  evidence: string[];
-  uncertainty: string;
+  /** The model that actually answered (LL-7 stores it). */
+  model: string;
 }
 
-export interface AnalysisRequest {
-  range: DateRange;
-  data: Snapshot;
-  language: Language;
-  windowsHours: number[];
-}
-
-export interface AnalysisResult {
-  /** Tentative hypotheses only, never conclusions (LL-4). */
-  hypotheses: Hypothesis[];
-}
-
-/** LL-10: provider-agnostic. One adapter per provider; model and key come from settings. */
+/**
+ * LL-10: one provider-neutral interface. Prompts and answer validation live in the core, so a provider adapter
+ * only sends one request and returns the JSON text. Adapters throw NettleError with an `llm_*` code (LL-8).
+ */
 export interface LlmProvider {
-  ingredientsFromPhoto(req: {
-    image: Uint8Array;
-    mimeType: string;
-    language: Language;
-  }): Promise<IngredientEstimate>;
-  analyze(req: AnalysisRequest): Promise<AnalysisResult>;
+  completeJson(req: LlmRequest): Promise<LlmResponse>;
+}
+
+/** LL-9, LL-10: provider, model and key come from settings. */
+export interface LlmConfig {
+  provider: 'anthropic';
+  model: string;
+  apiKey: string;
 }

@@ -9,6 +9,7 @@ import { errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
 import { DEFAULT_PHOTO_SELECTION, type PhotoSelection } from '@/core/export/photoSelection';
 import { PhotoSelectionField } from '@/ui/PhotoSelectionField';
+import { LlmSettingsSection } from '@/ui/LlmSettingsSection';
 import { DeleteSection } from '@/ui/DeleteSection';
 import { Button, Heading, Hint, Label, Screen, styles } from '@/ui/components';
 
@@ -228,6 +229,7 @@ export default function DataScreen() {
           <Button kind="secondary" title={t('common.cancel')} onPress={() => setPending(null)} />
         </>
       )}
+      <LlmSettingsSection />
       <DeleteSection />
     </Screen>
   );

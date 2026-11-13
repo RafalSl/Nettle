@@ -18,6 +18,9 @@ export class MemoryPhotoStore implements PhotoStore {
     }
     return this.put(new TextEncoder().encode(sourceUri));
   }
+  async compress(sourceUri: string) {
+    return new TextEncoder().encode(sourceUri);
+  }
   async saveBytes(bytes: Uint8Array) {
     return this.put(bytes.slice());
   }

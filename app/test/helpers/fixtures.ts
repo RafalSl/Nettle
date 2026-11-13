@@ -1,4 +1,8 @@
+import { FakeLlm } from '../fakes/fakeLlm';
+import { MemoryKeyStore } from '../fakes/memoryKeyStore';
 import { MemoryPhotoStore } from '../fakes/memoryPhotoStore';
+import { MemorySettings } from '../fakes/memorySettings';
+import type { LlmProvider } from '@/core/ports/llm';
 import type { Deps } from '@/core/usecases/deps';
 import type { CheckIn, Meal, NailEntry, SkinEntry, StoolEntry } from '@/core/model/types';
 import type { StorageRepository } from '@/core/ports/storage';
@@ -6,7 +10,7 @@ import type { StorageRepository } from '@/core/ports/storage';
 /** Clearly synthetic data only. */
 export const TZ = 'Europe/Warsaw';
 
-export function makeDeps(repo: StorageRepository, now = '2026-01-15T10:00:00.000Z'): Deps {
+export function makeDeps(repo: StorageRepository, now = '2026-01-15T10:00:00.000Z', llm: LlmProvider = new FakeLlm()): Deps {
   let n = 0;
   return {
     repo,
@@ -14,6 +18,9 @@ export function makeDeps(repo: StorageRepository, now = '2026-01-15T10:00:00.000
     clock: { now: () => new Date(now), timeZone: () => TZ },
     randomBytes: (n) => crypto.getRandomValues(new Uint8Array(n)),
     photos: new MemoryPhotoStore(),
+    keys: new MemoryKeyStore(),
+    settings: new MemorySettings(),
+    llmFor: () => llm,
   };
 }
 

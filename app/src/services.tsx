@@ -3,7 +3,10 @@ import { getCalendars } from 'expo-localization';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { openExpoSqlite } from '@/adapters/storage/expoSqliteDb';
+import { createAnthropicProvider } from '@/adapters/llm/anthropicProvider';
+import { secureStoreKeyStore } from '@/adapters/keystore/secureStoreKeyStore';
 import { SqliteRepo } from '@/adapters/storage/sqliteRepo';
+import { SqliteSettings } from '@/adapters/storage/sqliteSettings';
 import { expoPhotoStore } from '@/adapters/photos/expoPhotoStore';
 import { expoFileShare } from '@/adapters/share/expoFileShare';
 import type { FileShare } from '@/core/ports/platform';
@@ -32,12 +35,16 @@ export function ServicesProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     (async () => {
       try {
-        const repo = await SqliteRepo.open(await openExpoSqlite());
+        const db = await openExpoSqlite();
+        const repo = await SqliteRepo.open(db);
         const deps: Deps = {
           repo,
           ids: randomUUID,
           randomBytes: getRandomBytes,
           photos: expoPhotoStore,
+          keys: secureStoreKeyStore,
+          settings: new SqliteSettings(db),
+          llmFor: createAnthropicProvider,
           clock: { now: () => new Date(), timeZone: () => getCalendars()[0]?.timeZone ?? 'UTC' },
         };
         if (!cancelled) setServices({ deps, fileShare: expoFileShare });

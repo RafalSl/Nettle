@@ -1,3 +1,6 @@
+import type { KeyStore } from '../ports/keystore';
+import type { LlmConfig, LlmProvider } from '../ports/llm';
+import type { SettingsStore } from '../ports/settings';
 import type { Clock, IdGenerator, PhotoStore, RandomBytes } from '../ports/platform';
 import type { StorageRepository } from '../ports/storage';
 
@@ -7,4 +10,10 @@ export interface Deps {
   clock: Clock;
   randomBytes: RandomBytes;
   photos: PhotoStore;
+  /** SE-2, SE-4: the API key store. */
+  keys: KeyStore;
+  /** LL-9: device settings such as the model name. */
+  settings: SettingsStore;
+  /** LL-10: builds the provider for a configuration (one adapter per provider). */
+  llmFor: (config: LlmConfig) => LlmProvider;
 }

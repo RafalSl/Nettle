@@ -3,8 +3,10 @@ import { useCallback, useState } from 'react';
 import { Alert, Text, TextInput, View } from 'react-native';
 import { suggestAllergens } from '@/core/model/allergens';
 import { ALLERGENS, type Allergen, type Meal } from '@/core/model/types';
+import { estimateIngredients } from '@/core/usecases/llm';
 import { logMeal } from '@/core/usecases/logMeal';
-import { errorMessage, t } from '@/i18n';
+import { pickPhotoUris } from '@/adapters/photos/pickPhotos';
+import { currentLanguage, errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
 import { Button, Chips, Heading, Hint, Label, Screen, TimeField, styles } from '@/ui/components';
 
@@ -15,6 +17,7 @@ export default function MealScreen() {
   const [ingredients, setIngredients] = useState<string[]>(['']);
   const [allergens, setAllergens] = useState<Set<string>>(new Set());
   const [note, setNote] = useState('');
+  const [unsure, setUnsure] = useState<string | null>(null);
   const [at, setAt] = useState<Date | null>(null);
   const [recent, setRecent] = useState<Meal[]>([]);
 
@@ -26,12 +29,47 @@ export default function MealScreen() {
   const setIngredient = (i: number, v: string) =>
     setIngredients((list) => list.map((x, j) => (j === i ? v : x)));
 
+  /** IN-3: pick a photo, confirm that it is sent (LL-5), then fill the form with suggestions to review. */
+  function suggestFromPhoto() {
+    const send = async (source: 'camera' | 'library') => {
+      try {
+        const uri = (await pickPhotoUris(source))[0];
+        if (!uri) return;
+        Alert.alert(t('meal.photoConfirmTitle'), t('meal.photoConfirmBody'), [
+          { text: t('common.cancel'), style: 'cancel' },
+          {
+            text: t('meal.photoSend'),
+            onPress: async () => {
+              try {
+                const data = await deps.photos.compress(uri, 1024);
+                const est = await estimateIngredients(deps, { image: { mimeType: 'image/jpeg', data }, language: currentLanguage() });
+                setIngredients(est.names.length > 0 ? est.names : ['']);
+                setAllergens(new Set(suggestAllergens(est.names)));
+                setUnsure(est.uncertainty);
+              } catch (e) {
+                Alert.alert(errorMessage(e));
+              }
+            },
+          },
+        ]);
+      } catch (e) {
+        Alert.alert(errorMessage(e));
+      }
+    };
+    Alert.alert(t('meal.fromPhoto'), undefined, [
+      { text: t('photos.camera'), onPress: () => send('camera') },
+      { text: t('photos.library'), onPress: () => send('library') },
+      { text: t('common.cancel'), style: 'cancel' },
+    ]);
+  }
+
   async function save() {
     try {
       await logMeal(deps, { description, ingredients, allergens: [...allergens] as Allergen[], note, at: at ?? undefined });
       setDescription('');
       setIngredients(['']);
       setAllergens(new Set());
+      setUnsure(null);
       setNote('');
       setAt(null);
       reload();
@@ -46,6 +84,8 @@ export default function MealScreen() {
       <Label>{t('meal.description')}</Label>
       <TextInput style={styles.input} value={description} onChangeText={setDescription} />
 
+      <Button kind="secondary" title={t('meal.fromPhoto')} onPress={suggestFromPhoto} />
+      {unsure !== null && <Hint>{t('meal.suggested')} {t('meal.unsure', { text: unsure })}</Hint>}
       <Label>{t('meal.ingredients')}</Label>
       {ingredients.map((value, i) => (
         <View key={i} style={{ flexDirection: 'row', gap: 8 }}>

@@ -25,6 +25,7 @@ interface MealRow {
   ts_utc: string;
   tz: string;
   description: string;
+  allergens_json: string;
   note: string | null;
 }
 interface AreaRow {
@@ -123,13 +124,10 @@ export class SqliteRepo implements StorageRepository {
 
   private async insertMeal(m: Meal, ignoreIfExists: boolean) {
     const verb = ignoreIfExists ? 'INSERT OR IGNORE' : 'INSERT';
-    await this.db.run(`${verb} INTO meal (id, ts_utc, tz, description, note) VALUES (?, ?, ?, ?, ?)`, [
-      m.id,
-      m.at.utc,
-      m.at.tz,
-      m.description,
-      m.note,
-    ]);
+    await this.db.run(
+      `${verb} INTO meal (id, ts_utc, tz, description, allergens_json, note) VALUES (?, ?, ?, ?, ?, ?)`,
+      [m.id, m.at.utc, m.at.tz, m.description, JSON.stringify(m.allergens), m.note],
+    );
     // Ingredients of a skipped duplicate must not be appended to the existing meal.
     const [row] = await this.db.all<{ n: number }>(
       'SELECT COUNT(*) AS n FROM meal_ingredient WHERE meal_id = ?',
@@ -219,6 +217,7 @@ export class SqliteRepo implements StorageRepository {
       at: { utc: r.ts_utc, tz: r.tz },
       description: r.description,
       ingredients: byMeal.get(r.id) ?? [],
+      allergens: JSON.parse(r.allergens_json) as Meal['allergens'],
       note: r.note,
     }));
   }
@@ -302,8 +301,9 @@ export class SqliteRepo implements StorageRepository {
     const { records, settings } = payload;
     await this.db.transaction(async () => {
       if (records && mode === 'replace') {
-        await this.db.exec('DELETE FROM skin_entry; DELETE FROM meal_ingredient; DELETE FROM meal;');
+        // Reactions point at meals, so every flat record table is emptied before the meals go.
         for (const kind of EXTRA_KINDS) await this.db.exec(`DELETE FROM ${EXTRA_TABLES[kind].table};`);
+        await this.db.exec('DELETE FROM skin_entry; DELETE FROM meal_ingredient; DELETE FROM meal;');
       }
       if (settings) {
         for (const a of settings.skinAreas) {
@@ -332,7 +332,7 @@ export class SqliteRepo implements StorageRepository {
           if (!a.predefined && !keepAreas.has(a.id)) await this.db.run('DELETE FROM skin_area WHERE id = ?', [a.id]);
         }
         for (const kind of LIST_KINDS) {
-          const keep = new Set([...settings[kind].map((i) => i.id), ...refs.items]);
+          const keep = new Set([...settings[kind].map((i) => i.id), ...refs.items[kind]]);
           for (const i of await this.listItems(kind)) {
             if (!i.predefined && !keep.has(i.id)) {
               await this.db.run('DELETE FROM list_item WHERE kind = ? AND id = ?', [kind, i.id]);

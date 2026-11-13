@@ -1,5 +1,5 @@
 import type { StorageRepository } from '@/core/ports/storage';
-import { noExtra, syntheticCheckIn, syntheticEntry, syntheticMeal, syntheticNailEntry, syntheticStool } from '../helpers/fixtures';
+import { noExtra, noItems, syntheticCheckIn, syntheticEntry, syntheticMeal, syntheticNailEntry, syntheticStool } from '../helpers/fixtures';
 
 /** Behaviour every StorageRepository must have; run against the fake and the SQLite adapter. */
 export function storageContract(name: string, make: () => Promise<StorageRepository>) {
@@ -79,7 +79,7 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
       await repo.upsertArea(nailArea);
       await repo.upsertArea({ ...nailArea, id: 'a-nail-unused' });
       await repo.addRecord('nailEntries', syntheticNailEntry('n1', '2026-01-10T08:00:00.000Z'));
-      await repo.importData({ settings: { skinAreas: [], dailyTags: [] } }, 'replace');
+      await repo.importData({ settings: { skinAreas: [], ...noItems } }, 'replace');
       const ids = (await repo.listAreas()).map((a) => a.id);
       expect(ids).toContain('a-nail');
       expect(ids).not.toContain('a-nail-unused');
@@ -114,7 +114,7 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
       await repo.upsertItem('dailyTags', myTag);
       await repo.upsertItem('dailyTags', { ...myTag, id: 'tag-unused' });
       await repo.addRecord('checkIns', syntheticCheckIn('c1', '2026-01-15T20:00:00.000Z', '2026-01-15', ['tag-mine']));
-      await repo.importData({ settings: { skinAreas: [], dailyTags: [] } }, 'replace');
+      await repo.importData({ settings: { skinAreas: [], ...noItems } }, 'replace');
       const ids = (await repo.listItems('dailyTags')).map((t) => t.id);
       expect(ids).toContain('tag-mine');
       expect(ids).not.toContain('tag-unused');
@@ -123,10 +123,54 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
 
     it('EX-10 merge settings keeps local tag values; replace overwrites by id and re-seeds predefined tags', async () => {
       const travel = (await repo.listItems('dailyTags')).find((t) => t.id === 'tag-travel')!;
-      await repo.importData({ settings: { skinAreas: [], dailyTags: [{ ...travel, nameOverride: 'ignored' }] } }, 'merge');
+      await repo.importData({ settings: { skinAreas: [], ...noItems, dailyTags: [{ ...travel, nameOverride: 'ignored' }] } }, 'merge');
       expect((await repo.listItems('dailyTags')).find((t) => t.id === 'tag-travel')?.nameOverride).toBeNull();
-      await repo.importData({ settings: { skinAreas: [], dailyTags: [{ ...travel, nameOverride: 'Trip', archived: true }] } }, 'replace');
+      await repo.importData({ settings: { skinAreas: [], ...noItems, dailyTags: [{ ...travel, nameOverride: 'Trip', archived: true }] } }, 'replace');
       expect((await repo.listItems('dailyTags')).find((t) => t.id === 'tag-travel')).toMatchObject({ nameOverride: 'Trip', archived: true });
+    });
+
+    it('IN-10 stores allergen tags on a meal', async () => {
+      const meal = { ...syntheticMeal('m1', '2026-01-15T08:00:00.000Z'), allergens: ['milk' as const, 'sesame' as const] };
+      await repo.addMeal(meal);
+      expect(await repo.listMeals()).toEqual([meal]);
+    });
+
+    it('IN-11 stores a treatment list and applications with several areas', async () => {
+      await repo.upsertItem('treatments', { id: 'tr1', name: 'Synthetic cream', predefined: false, archived: false, nameOverride: null });
+      expect(await repo.listItems('treatments')).toHaveLength(1);
+      const app = { id: 'ta1', at: { utc: '2026-01-15T07:00:00.000Z', tz: 'Europe/Warsaw' }, treatmentId: 'tr1', areaIds: ['area-chin', 'area-neck'], note: null };
+      await repo.addRecord('treatmentApplications', app);
+      expect(await repo.listRecords('treatmentApplications')).toEqual([app]);
+    });
+
+    it('IN-12 stores change events', async () => {
+      const e = { id: 'ce1', at: { utc: '2026-01-10T00:00:00.000Z', tz: 'UTC' }, action: 'stopped' as const, category: 'diet' as const, name: 'Synthetic diet', note: 'n' };
+      await repo.addRecord('changeEvents', e);
+      expect(await repo.listRecords('changeEvents')).toEqual([e]);
+    });
+
+    it('IN-13 stores a reaction linked to its meal and refuses an unknown meal', async () => {
+      await repo.addMeal(syntheticMeal('m1', '2026-01-15T12:00:00.000Z'));
+      const r = { id: 'r1', at: { utc: '2026-01-15T13:00:00.000Z', tz: 'UTC' }, mealId: 'm1', symptoms: ['hives' as const, 'swelling' as const], note: null };
+      await repo.addRecord('reactions', r);
+      expect(await repo.listRecords('reactions')).toEqual([r]);
+      await expect(repo.addRecord('reactions', { ...r, id: 'r2', mealId: 'nope' })).rejects.toThrow();
+    });
+
+    it('EX-10 replace records wipes reactions together with their meals', async () => {
+      await repo.addMeal(syntheticMeal('m1', '2026-01-15T12:00:00.000Z'));
+      await repo.addRecord('reactions', { id: 'r1', at: { utc: '2026-01-15T13:00:00.000Z', tz: 'UTC' }, mealId: 'm1', symptoms: ['hives'], note: null });
+      await repo.importData({ records: { meals: [syntheticMeal('m9', '2026-02-01T12:00:00.000Z')], skinEntries: [], ...noExtra } }, 'replace');
+      expect(await repo.listRecords('reactions')).toEqual([]);
+      expect((await repo.listMeals()).map((m) => m.id)).toEqual(['m9']);
+    });
+
+    it('EX-10 replace settings keeps a treatment that an application uses', async () => {
+      await repo.upsertItem('treatments', { id: 'tr1', name: 'Synthetic cream', predefined: false, archived: false, nameOverride: null });
+      await repo.upsertItem('treatments', { id: 'tr2', name: 'Unused', predefined: false, archived: false, nameOverride: null });
+      await repo.addRecord('treatmentApplications', { id: 'ta1', at: { utc: '2026-01-15T07:00:00.000Z', tz: 'UTC' }, treatmentId: 'tr1', areaIds: ['area-chin'], note: null });
+      await repo.importData({ settings: { skinAreas: [], ...noItems } }, 'replace');
+      expect((await repo.listItems('treatments')).map((t) => t.id)).toEqual(['tr1']);
     });
 
     it('EX-10 replace records wipes check-ins and stool entries', async () => {
@@ -174,7 +218,7 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
           skinEntries: [syntheticEntry('e1', '2026-01-11T09:00:00.000Z')],
           ...noExtra,
         },
-        settings: { skinAreas: await repo.listAreas(), dailyTags: [] },
+        settings: { skinAreas: await repo.listAreas(), ...noItems },
       };
       await repo.importData(payload, 'merge');
       await repo.importData(payload, 'merge'); // idempotent
@@ -201,7 +245,7 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
       await repo.addMeal(syntheticMeal('keep', '2026-01-01T08:00:00.000Z'));
       const chin = (await repo.listAreas()).find((a) => a.id === 'area-chin')!;
       await repo.importData(
-        { settings: { skinAreas: [{ ...chin, nameOverride: 'Synthetic jaw', archived: true }], dailyTags: [] } },
+        { settings: { skinAreas: [{ ...chin, nameOverride: 'Synthetic jaw', archived: true }], ...noItems } },
         'replace',
       );
       expect((await repo.listMeals()).map((m) => m.id)).toEqual(['keep']);
@@ -215,7 +259,7 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
       await repo.upsertArea(custom);
       await repo.upsertArea({ ...custom, id: 'a-unused', name: 'Synthetic wrist' });
       await repo.addSkinEntry(syntheticEntry('e1', '2026-01-01T09:00:00.000Z', 'a-custom'));
-      await repo.importData({ settings: { skinAreas: [], dailyTags: [] } }, 'replace');
+      await repo.importData({ settings: { skinAreas: [], ...noItems } }, 'replace');
       const ids = (await repo.listAreas()).map((a) => a.id);
       expect(ids).toContain('a-custom'); // still referenced by e1
       expect(ids).not.toContain('a-unused');
@@ -225,7 +269,7 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
 
     it('EX-10 merge settings adds new areas and keeps local versions of existing ones', async () => {
       const chin = (await repo.listAreas()).find((a) => a.id === 'area-chin')!;
-      await repo.importData({ settings: { skinAreas: [{ ...chin, nameOverride: 'ignored' }, custom], dailyTags: [] } }, 'merge');
+      await repo.importData({ settings: { skinAreas: [{ ...chin, nameOverride: 'ignored' }, custom], ...noItems } }, 'merge');
       const areas = await repo.listAreas();
       expect(areas.find((a) => a.id === 'area-chin')?.nameOverride).toBeNull();
       expect(areas.some((a) => a.id === 'a-custom')).toBe(true);

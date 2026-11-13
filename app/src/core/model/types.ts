@@ -4,11 +4,32 @@ export interface Stamp {
   tz: string;
 }
 
+/** IN-10: the 14 EU allergens. */
+export const ALLERGENS = [
+  'gluten',
+  'crustaceans',
+  'eggs',
+  'fish',
+  'peanuts',
+  'soybeans',
+  'milk',
+  'tree_nuts',
+  'celery',
+  'mustard',
+  'sesame',
+  'sulphites',
+  'lupin',
+  'molluscs',
+] as const;
+export type Allergen = (typeof ALLERGENS)[number];
+
 export interface Meal {
   id: string;
   at: Stamp;
   description: string;
   ingredients: string[];
+  /** IN-10: confirmed by the user, never saved straight from a suggestion. */
+  allergens: Allergen[];
   note: string | null;
 }
 
@@ -93,6 +114,44 @@ export interface StoolEntry {
   note: string | null;
 }
 
+/** IN-11: one tap applies a saved treatment to one or more areas. */
+export interface TreatmentApplication {
+  id: string;
+  at: Stamp;
+  treatmentId: string;
+  areaIds: string[];
+  note: string | null;
+}
+
+/** IN-12 */
+export const CHANGE_ACTIONS = ['started', 'stopped'] as const;
+export type ChangeAction = (typeof CHANGE_ACTIONS)[number];
+export const CHANGE_CATEGORIES = ['product', 'medication', 'diet'] as const;
+export type ChangeCategory = (typeof CHANGE_CATEGORIES)[number];
+
+/** IN-12: "started" or "stopped" a product, medication or diet on a date; shown as a marker on the timeline. */
+export interface ChangeEvent {
+  id: string;
+  at: Stamp;
+  action: ChangeAction;
+  category: ChangeCategory;
+  name: string;
+  note: string | null;
+}
+
+/** IN-13 */
+export const SYMPTOMS = ['hives', 'mouth_tingling', 'swelling', 'stomach'] as const;
+export type Symptom = (typeof SYMPTOMS)[number];
+
+/** IN-13: symptoms within about two hours of a meal, linked to it; `at` is the time of onset. */
+export interface Reaction {
+  id: string;
+  at: Stamp;
+  mealId: string;
+  symptoms: Symptom[];
+  note: string | null;
+}
+
 /** What the user logged (EX-1 "records"). */
 export interface Records {
   meals: Meal[];
@@ -100,6 +159,9 @@ export interface Records {
   nailEntries: NailEntry[];
   checkIns: CheckIn[];
   stoolEntries: StoolEntry[];
+  treatmentApplications: TreatmentApplication[];
+  changeEvents: ChangeEvent[];
+  reactions: Reaction[];
 }
 
 /**
@@ -107,7 +169,14 @@ export interface Records {
  * handle them generically; meals and skin entries predate this and have their own methods.
  */
 export type ExtraKind = Exclude<keyof Records, 'meals' | 'skinEntries'>;
-export const EXTRA_KINDS: readonly ExtraKind[] = ['nailEntries', 'checkIns', 'stoolEntries'];
+export const EXTRA_KINDS: readonly ExtraKind[] = [
+  'nailEntries',
+  'checkIns',
+  'stoolEntries',
+  'treatmentApplications',
+  'changeEvents',
+  'reactions',
+];
 
 /**
  * A user-editable list entry: daily tags (IN-6). Predefined items keep a stable id and a localized name,
@@ -125,11 +194,13 @@ export interface ListItem {
 export interface Settings {
   skinAreas: SkinArea[];
   dailyTags: ListItem[];
+  /** IN-11: the saved list of topical treatments. */
+  treatments: ListItem[];
 }
 
 /** Settings collections that are plain lists of ListItem. */
 export type ListKind = Exclude<keyof Settings, 'skinAreas'>;
-export const LIST_KINDS: readonly ListKind[] = ['dailyTags'];
+export const LIST_KINDS: readonly ListKind[] = ['dailyTags', 'treatments'];
 
 export interface Snapshot extends Records, Settings {}
 

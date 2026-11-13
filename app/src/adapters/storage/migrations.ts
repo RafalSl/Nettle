@@ -91,6 +91,39 @@ export const MIGRATIONS: string[] = [
     PRIMARY KEY (kind, id)
   );
   `,
+  // IN-10 to IN-13: allergen tags on meals, treatment applications, change events and reactions.
+  // area_ids_json and symptoms_json hold JSON arrays; a reaction points at its meal.
+  `
+  ALTER TABLE meal ADD COLUMN allergens_json TEXT NOT NULL DEFAULT '[]';
+  CREATE TABLE treatment_application (
+    id TEXT PRIMARY KEY,
+    ts_utc TEXT NOT NULL,
+    tz TEXT NOT NULL,
+    treatment_id TEXT NOT NULL,
+    area_ids_json TEXT NOT NULL,
+    note TEXT
+  );
+  CREATE INDEX treatment_application_ts ON treatment_application (ts_utc);
+  CREATE TABLE change_event (
+    id TEXT PRIMARY KEY,
+    ts_utc TEXT NOT NULL,
+    tz TEXT NOT NULL,
+    action TEXT NOT NULL CHECK (action IN ('started', 'stopped')),
+    category TEXT NOT NULL CHECK (category IN ('product', 'medication', 'diet')),
+    name TEXT NOT NULL,
+    note TEXT
+  );
+  CREATE INDEX change_event_ts ON change_event (ts_utc);
+  CREATE TABLE reaction (
+    id TEXT PRIMARY KEY,
+    ts_utc TEXT NOT NULL,
+    tz TEXT NOT NULL,
+    meal_id TEXT NOT NULL REFERENCES meal (id),
+    symptoms_json TEXT NOT NULL,
+    note TEXT
+  );
+  CREATE INDEX reaction_ts ON reaction (ts_utc);
+  `,
 ];
 
 export async function migrate(db: SqlDb): Promise<void> {

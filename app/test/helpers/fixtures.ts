@@ -20,6 +20,7 @@ export const syntheticMeal = (id: string, utc: string, ingredients = ['Synthetic
   at: { utc, tz: TZ },
   description: `Synthetic breakfast ${id}`,
   ingredients,
+  allergens: [],
   note: null,
 });
 
@@ -41,7 +42,17 @@ export const syntheticNailEntry = (id: string, utc: string, areaId = 'a-nail'): 
 });
 
 /** The flat record kinds (see ExtraKind) with no rows, to complete a Records literal. */
-export const noExtra = { nailEntries: [], checkIns: [], stoolEntries: [] };
+export const noExtra = {
+  nailEntries: [],
+  checkIns: [],
+  stoolEntries: [],
+  treatmentApplications: [],
+  changeEvents: [],
+  reactions: [],
+};
+
+/** The user lists (see ListKind) with no items, to complete a Settings literal. */
+export const noItems = { dailyTags: [], treatments: [] };
 
 export const syntheticCheckIn = (id: string, utc: string, day: string, tags: string[] = []): CheckIn => ({
   id,

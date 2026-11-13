@@ -89,9 +89,14 @@ export class MemoryRepo implements StorageRepository {
       .sort(newestFirst)
       .map(clone) as unknown as Records[K];
   }
-  private checkArea(record: object, areas = this.areas) {
-    const areaId = (record as { areaId?: string }).areaId;
+  /**
+   * Mirrors the foreign keys of the SQL schema: a record's `areaId` and `mealId` must exist. Ids kept inside
+   * JSON lists (tags, treatment areas) have no foreign key in SQL, so the use cases and import check them.
+   */
+  private checkArea(record: object, areas = this.areas, meals = this.meals) {
+    const { areaId, mealId } = record as { areaId?: string; mealId?: string };
     if (areaId !== undefined && !areas.has(areaId)) throw new Error('unknown area');
+    if (mealId !== undefined && !meals.has(mealId)) throw new Error('unknown meal');
   }
   async snapshot(range?: DateRange): Promise<Snapshot> {
     const snap = {
@@ -131,7 +136,7 @@ export class MemoryRepo implements StorageRepository {
     }
     for (const kind of EXTRA_KINDS) {
       for (const r of records?.[kind] ?? []) {
-        this.checkArea(r, areas);
+        this.checkArea(r, areas, meals);
         if (!extra[kind].has(r.id)) extra[kind].set(r.id, clone(r));
       }
     }
@@ -150,7 +155,7 @@ export class MemoryRepo implements StorageRepository {
       const keep = new Set([...settings.skinAreas.map((a) => a.id), ...refs.areas]);
       for (const [id, a] of areas) if (!a.predefined && !keep.has(id)) areas.delete(id);
       for (const kind of LIST_KINDS) {
-        const keepItems = new Set([...settings[kind].map((i) => i.id), ...refs.items]);
+        const keepItems = new Set([...settings[kind].map((i) => i.id), ...refs.items[kind]]);
         for (const [id, i] of items[kind]) if (!i.predefined && !keepItems.has(id)) items[kind].delete(id);
       }
     }

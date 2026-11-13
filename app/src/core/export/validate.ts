@@ -1,5 +1,6 @@
 import { NettleError } from '../model/errors';
 import {
+  ALLERGENS,
   EXTRA_KINDS,
   LIST_KINDS,
   type ListItem,
@@ -11,7 +12,7 @@ import {
 } from '../model/types';
 import { isScore } from '../usecases/skin';
 import { EXTRA_CODECS } from './extras';
-import { bad, bool, oneOf, isObj, list, nullableText, str, unique, utc, type Obj } from './guards';
+import { bad, bool, enumList, oneOf, isObj, list, nullableText, str, unique, utc, type Obj } from './guards';
 import { LIST_KEYS, SCHEMA_VERSION } from './schema';
 
 const section = (o: Obj, k: string): Obj | null => {
@@ -81,6 +82,7 @@ export function parseDataJson(raw: unknown): Payload {
         at: { utc: utc(o, w), tz: str(o, 'tz', w) },
         description: str(o, 'description', w),
         ingredients: ing as string[],
+        allergens: enumList(o, 'allergens', ALLERGENS, w),
         note: nullableText(o, 'note', w),
       };
     });

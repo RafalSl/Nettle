@@ -10,6 +10,7 @@ export interface MealJson {
   tz: string;
   description: string;
   ingredients: string[];
+  allergens: string[];
   note: string | null;
 }
 
@@ -47,7 +48,7 @@ export interface DataJson {
 }
 
 /** Array name inside `settings` for each list kind. */
-export const LIST_KEYS = { dailyTags: 'daily_tags' } as const;
+export const LIST_KEYS = { dailyTags: 'daily_tags', treatments: 'treatments' } as const;
 
 export function toDataJson(
   snap: Snapshot,
@@ -67,6 +68,7 @@ export function toDataJson(
           tz: m.at.tz,
           description: m.description,
           ingredients: [...m.ingredients],
+          allergens: [...m.allergens],
           note: m.note,
         })),
         skin_entries: snap.skinEntries.map((e) => ({

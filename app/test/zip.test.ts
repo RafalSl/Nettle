@@ -19,6 +19,19 @@ const codeOf = (fn: () => unknown) => {
   }
 };
 
+describe('stored entries (EX-2)', () => {
+  const isPhoto = (name: string) => name.startsWith('photos/');
+  const files = { 'a.bin': rb(5000), 'photos/x.jpg': rb(70001) };
+  const names = ['a.bin', 'photos/x.jpg'];
+
+  it.each([undefined, PW])('round-trips stored and deflated entries together (password: %s)', (password) => {
+    const zip = writeZip(files, { password, randomBytes: rb, stored: isPhoto });
+    const out = readZip(zip, { names, maxBytes: 10_000_000, password });
+    for (const n of names) expect(Buffer.compare(Buffer.from(out[n]!), Buffer.from(files[n as keyof typeof files]))).toBe(0);
+    expect(zip.length).toBeGreaterThan(70001 + 5000); // random bytes: no shrinking, and the photo is not deflated
+  });
+});
+
 describe('EX-6 AES-256 ZIP', () => {
   it.each([0, 1, 15, 16, 17, 255, 65536, 70001])('round-trips an entry of %i bytes', (size) => {
     const data = rb(size);
@@ -98,5 +111,18 @@ const sevenZip = ['7z', '7zz'].find((bin) => spawnSync(bin, ['i'], { stdio: 'ign
     expect(a.status).toBe(0);
     const out = readZip(new Uint8Array(readFileSync(join(dir, 'theirs.zip'))), { ...opts, password: PW });
     expect(Buffer.compare(Buffer.from(out['a.bin']!), Buffer.from(data))).toBe(0);
+  });
+
+  it('7-Zip opens an encrypted ZIP that has stored photo entries', () => {
+    const photo = rb(60_001);
+    const zip = writeZip({ 'data.json': strToU8('{}'), 'photos/2026-01-10_chin_01.jpg': photo }, {
+      password: PW,
+      randomBytes: rb,
+      stored: (n) => n.startsWith('photos/'),
+    });
+    writeFileSync(join(dir, 'photos.zip'), zip);
+    const x = spawnSync(sevenZip!, ['x', '-y', `-p${PW}`, `-o${join(dir, 'y')}`, join(dir, 'photos.zip')]);
+    expect(x.status).toBe(0);
+    expect(Buffer.compare(readFileSync(join(dir, 'y', 'photos', '2026-01-10_chin_01.jpg')), Buffer.from(photo))).toBe(0);
   });
 });

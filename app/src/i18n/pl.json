@@ -291,5 +291,16 @@
       "stoolEntries": "wpisy o stolcu: {{n}}",
       "changeEvents": "zmiany: {{n}}"
     }
+  },
+  "exportPhotos": {
+    "title": "Zdjęcia w eksporcie",
+    "hint": "Wrażliwe zdjęcia są pomijane, chyba że zdecydujesz inaczej. Ten sam wybór dotyczy wszystkiego w pliku.",
+    "non_sensitive": "Niewrażliwe",
+    "all": "Wszystkie",
+    "none": "Brak",
+    "filter": "Wybierz",
+    "areas": "Tylko te miejsca (brak wyboru = wszystkie)",
+    "includeSensitive": "Dołącz wrażliwe zdjęcia",
+    "limit": "Tylko zakres dat"
   }
 }

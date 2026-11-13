@@ -291,5 +291,16 @@
       "stoolEntries": "{{n}} stool entries",
       "changeEvents": "{{n}} change events"
     }
+  },
+  "exportPhotos": {
+    "title": "Photos in the export",
+    "hint": "Sensitive photos are left out unless you choose otherwise. The same choice applies to everything in the file.",
+    "non_sensitive": "Not sensitive",
+    "all": "All",
+    "none": "None",
+    "filter": "Choose",
+    "areas": "Only these areas (none selected = all)",
+    "includeSensitive": "Include sensitive photos",
+    "limit": "Only a date range"
   }
 }

@@ -1,12 +1,20 @@
-import type { DateRange, Meal, Payload, SkinArea, SkinEntry, Snapshot } from '../model/types';
+import type {
+  DateRange,
+  ExtraKind,
+  Meal,
+  Payload,
+  Records,
+  Settings,
+  SkinArea,
+  SkinEntry,
+  Snapshot,
+} from '../model/types';
 
 export type ImportMode = 'merge' | 'replace';
 
-export interface ExistingIds {
-  meals: Set<string>;
-  skinAreas: Set<string>;
-  skinEntries: Set<string>;
-}
+/** Every collection that is exported and imported: record kinds and setting kinds. */
+export type CollectionKey = keyof Records | keyof Settings;
+export type ExistingIds = Record<CollectionKey, Set<string>>;
 
 /** Repository port (EX-1, EX-10, portable data). Implemented by SQLite and by an in-memory fake. */
 export interface StorageRepository {
@@ -22,6 +30,10 @@ export interface StorageRepository {
   addSkinEntry(entry: SkinEntry): Promise<void>;
   /** Newest first. */
   listSkinEntries(range?: DateRange): Promise<SkinEntry[]>;
+
+  /** Generic storage for the flat record kinds (see ExtraKind). Newest first. */
+  addRecord<K extends ExtraKind>(kind: K, record: Records[K][number]): Promise<void>;
+  listRecords<K extends ExtraKind>(kind: K, range?: DateRange): Promise<Records[K]>;
 
   /** Entries inside the range plus all areas. */
   snapshot(range?: DateRange): Promise<Snapshot>;

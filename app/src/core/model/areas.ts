@@ -10,6 +10,7 @@ export const PREDEFINED_AREAS: readonly SkinArea[] = [
   ['area-intimate', 'Intimate area', true],
 ].map(([id, name, sensitiveDefault]) => ({
   id: id as string,
+  kind: 'skin' as const,
   name: name as string,
   predefined: true,
   archived: false,

@@ -1,0 +1,34 @@
+import { NettleError } from '../model/errors';
+import { CANONICAL_UTC } from '../model/time';
+
+export type Obj = Record<string, unknown>;
+
+export const bad = (detail: string): never => {
+  throw new NettleError('import_invalid_data', detail);
+};
+export const isObj = (v: unknown): v is Obj => typeof v === 'object' && v !== null && !Array.isArray(v);
+export const str = (o: Obj, k: string, where: string): string =>
+  typeof o[k] === 'string' && (o[k] as string).length > 0 ? (o[k] as string) : bad(`${where}.${k}`);
+export const text = (o: Obj, k: string, where: string): string =>
+  typeof o[k] === 'string' ? (o[k] as string) : bad(`${where}.${k}`);
+export const bool = (o: Obj, k: string, where: string): boolean =>
+  typeof o[k] === 'boolean' ? (o[k] as boolean) : bad(`${where}.${k}`);
+export const nullableText = (o: Obj, k: string, where: string): string | null =>
+  o[k] === null || o[k] === undefined ? null : text(o, k, where);
+export const utc = (o: Obj, where: string): string => {
+  const v = str(o, 'utc', where);
+  return CANONICAL_UTC.test(v) && !Number.isNaN(Date.parse(v)) ? v : bad(`${where}.utc`);
+};
+export const list = (o: Obj, k: string): Obj[] => {
+  const v = o[k];
+  if (!Array.isArray(v)) return bad(k);
+  return v.map((x, i) => (isObj(x) ? x : bad(`${k}[${i}]`)));
+};
+export const unique = (ids: string[], where: string) => {
+  if (new Set(ids).size !== ids.length) bad(`${where} duplicate id`);
+};
+
+export const oneOf = <T extends string>(o: Obj, k: string, allowed: readonly T[], where: string): T =>
+  typeof o[k] === 'string' && (allowed as readonly string[]).includes(o[k] as string)
+    ? (o[k] as T)
+    : bad(`${where}.${k}`);

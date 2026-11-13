@@ -2,8 +2,8 @@ import { packBundle, unpackBundle } from '../export/bundle';
 import { toDataJson } from '../export/schema';
 import { NettleError } from '../model/errors';
 import { makeStamp } from '../model/time';
-import type { DateRange, Parts, Payload } from '../model/types';
-import type { ImportMode } from '../ports/storage';
+import { EXTRA_KINDS, type DateRange, type Parts, type Payload } from '../model/types';
+import type { CollectionKey, ImportMode } from '../ports/storage';
 import type { Deps } from './deps';
 
 export interface ExportOptions {
@@ -23,11 +23,8 @@ export async function exportBundle(deps: Deps, options: ExportOptions = {}): Pro
   return packBundle(toDataJson(snapshot, range, makeStamp(deps.clock), parts), options.password, deps.randomBytes);
 }
 
-export interface PartCounts {
-  meals: number;
-  skinEntries: number;
-  skinAreas: number;
-}
+/** Row counts per collection (zero for a collection the file lacks). */
+export type PartCounts = Record<CollectionKey, number>;
 
 export interface ImportPreview {
   /** Which parts the file contains. */
@@ -49,21 +46,22 @@ export interface ParsedImport {
 export async function previewImport(deps: Deps, zip: Uint8Array, password?: string): Promise<ParsedImport> {
   const payload = unpackBundle(zip, password);
   const existing = await deps.repo.existingIds();
-  const count = (ids: string[], have: Set<string>) => ({
-    total: ids.length,
-    dup: ids.filter((id) => have.has(id)).length,
-  });
-  const m = count(payload.records?.meals.map((x) => x.id) ?? [], existing.meals);
-  const e = count(payload.records?.skinEntries.map((x) => x.id) ?? [], existing.skinEntries);
-  const a = count(payload.settings?.skinAreas.map((x) => x.id) ?? [], existing.skinAreas);
+  const incoming = {} as PartCounts;
+  const duplicates = {} as PartCounts;
+  const newRows = {} as PartCounts;
+  const tally = (key: CollectionKey, ids: string[]) => {
+    incoming[key] = ids.length;
+    duplicates[key] = ids.filter((id) => existing[key].has(id)).length;
+    newRows[key] = ids.length - duplicates[key];
+  };
+  const records = payload.records;
+  tally('meals', records?.meals.map((x) => x.id) ?? []);
+  tally('skinEntries', records?.skinEntries.map((x) => x.id) ?? []);
+  for (const kind of EXTRA_KINDS) tally(kind, records?.[kind].map((x) => x.id) ?? []);
+  tally('skinAreas', payload.settings?.skinAreas.map((x) => x.id) ?? []);
   return {
     payload,
-    preview: {
-      has: { records: !!payload.records, settings: !!payload.settings },
-      incoming: { meals: m.total, skinEntries: e.total, skinAreas: a.total },
-      newRows: { meals: m.total - m.dup, skinEntries: e.total - e.dup, skinAreas: a.total - a.dup },
-      duplicates: { meals: m.dup, skinEntries: e.dup, skinAreas: a.dup },
-    },
+    preview: { has: { records: !!records, settings: !!payload.settings }, incoming, newRows, duplicates },
   };
 }
 
@@ -84,8 +82,9 @@ export async function applyImport(
   if (payload.records) {
     const known = new Set((await deps.repo.existingIds()).skinAreas);
     for (const a of payload.settings?.skinAreas ?? []) known.add(a.id);
-    for (const e of payload.records.skinEntries) {
-      if (!known.has(e.areaId)) throw new NettleError('import_unknown_area', e.areaId);
+    const withAreas = [payload.records.skinEntries, ...EXTRA_KINDS.map((k) => payload.records![k])] as { areaId?: string }[][];
+    for (const e of withAreas.flat()) {
+      if (e.areaId !== undefined && !known.has(e.areaId)) throw new NettleError('import_unknown_area', e.areaId);
     }
   }
   await deps.repo.importData(payload, choice.mode);

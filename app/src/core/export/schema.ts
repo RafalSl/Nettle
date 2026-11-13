@@ -1,4 +1,5 @@
-import type { DateRange, Parts, Snapshot } from '../model/types';
+import { EXTRA_KINDS, type DateRange, type Parts, type Snapshot } from '../model/types';
+import { EXTRA_CODECS } from './extras';
 
 /** Bump on any breaking change to data.json (EX-1). */
 export const SCHEMA_VERSION = 1;
@@ -23,6 +24,7 @@ export interface SkinEntryJson {
 
 export interface SkinAreaJson {
   id: string;
+  kind: 'skin' | 'nail';
   name: string;
   predefined: boolean;
   archived: boolean;
@@ -38,7 +40,8 @@ export interface DataJson {
   schema_version: number;
   exported_at: { utc: string; tz: string };
   range: { from: string | null; to: string | null };
-  records?: { meals: MealJson[]; skin_entries: SkinEntryJson[] };
+  /** meals and skin_entries plus one array per flat record kind (see export/extras.ts). */
+  records?: { meals: MealJson[]; skin_entries: SkinEntryJson[]; [kind: string]: unknown[] };
   settings?: { skin_areas: SkinAreaJson[] };
 }
 
@@ -70,12 +73,16 @@ export function toDataJson(
           scores: { ...e.scores },
           note: e.note,
         })),
+        ...Object.fromEntries(
+          EXTRA_KINDS.map((k) => [EXTRA_CODECS[k].key, snap[k].map((r) => (EXTRA_CODECS[k].toJson as (r: unknown) => unknown)(r))]),
+        ),
       },
     }),
     ...(parts.settings && {
       settings: {
         skin_areas: snap.skinAreas.map((a) => ({
           id: a.id,
+          kind: a.kind,
           name: a.name,
           predefined: a.predefined,
           archived: a.archived,

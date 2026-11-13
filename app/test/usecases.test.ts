@@ -1,9 +1,10 @@
 import { NettleError } from '@/core/model/errors';
 import { logMeal } from '@/core/usecases/logMeal';
 import {
-  addSkinArea,
+  addArea,
   archiveSkinArea,
   listActiveAreas,
+  logNailEntry,
   logSkinEntry,
   renameSkinArea,
   resetSkinAreaName,
@@ -69,7 +70,7 @@ describe('logSkinEntry', () => {
 describe('areas', () => {
   it('SK-2 user can add, rename and archive their own areas', async () => {
     const deps = makeDeps(new MemoryRepo());
-    const a = await addSkinArea(deps, ' Synthetic elbow ');
+    const a = await addArea(deps, ' Synthetic elbow ');
     await renameSkinArea(deps, a.id, 'Synthetic knee');
     expect((await listActiveAreas(deps)).find((x) => x.id === a.id)?.name).toBe('Synthetic knee');
     await archiveSkinArea(deps, a.id);
@@ -89,9 +90,40 @@ describe('areas', () => {
 
   it('SK-2 names must not be empty, and predefined areas can be archived', async () => {
     const deps = makeDeps(new MemoryRepo());
-    expect(await code(addSkinArea(deps, ' '))).toBe('empty_area_name');
+    expect(await code(addArea(deps, ' '))).toBe('empty_area_name');
     expect(await code(renameSkinArea(deps, 'area-chin', ' '))).toBe('empty_area_name');
     await archiveSkinArea(deps, 'area-chin');
     expect((await listActiveAreas(deps)).map((a) => a.id)).not.toContain('area-chin');
+  });
+});
+
+describe('nail areas (SK-10)', () => {
+  it('SK-10 adds a nail area, logs a nail entry and lists areas by kind', async () => {
+    const repo = new MemoryRepo();
+    const deps = makeDeps(repo);
+    const nail = await addArea(deps, ' Synthetic left thumb ', 'nail');
+    expect(nail).toMatchObject({ kind: 'nail', name: 'Synthetic left thumb', predefined: false });
+    const entry = await logNailEntry(deps, { areaId: nail.id, stage: 'yellow', extent: 'up_to_half', note: ' n ' });
+    expect(entry).toMatchObject({ areaId: nail.id, stage: 'yellow', extent: 'up_to_half', note: 'n' });
+    expect(await repo.listRecords('nailEntries')).toEqual([entry]);
+    expect((await listActiveAreas(deps, 'nail')).map((a) => a.id)).toEqual([nail.id]);
+    expect((await listActiveAreas(deps, 'skin')).map((a) => a.id)).not.toContain(nail.id);
+  });
+
+  it('SK-10 keeps kinds apart: scores go to skin areas, stage and extent to nail areas', async () => {
+    const deps = makeDeps(new MemoryRepo());
+    const nail = await addArea(deps, 'Synthetic left thumb', 'nail');
+    expect(await code(logSkinEntry(deps, { areaId: nail.id, scores }))).toBe('wrong_area_kind');
+    expect(await code(logNailEntry(deps, { areaId: 'area-chin', stage: 'clear', extent: 'none' }))).toBe('wrong_area_kind');
+  });
+
+  it('SK-10 rejects an unknown stage, an unknown extent and an archived nail area', async () => {
+    const deps = makeDeps(new MemoryRepo());
+    const nail = await addArea(deps, 'Synthetic left thumb', 'nail');
+    const base = { areaId: nail.id, stage: 'clear', extent: 'none' } as const;
+    expect(await code(logNailEntry(deps, { ...base, stage: 'purple' as never }))).toBe('invalid_nail_value');
+    expect(await code(logNailEntry(deps, { ...base, extent: 'all' as never }))).toBe('invalid_nail_value');
+    await archiveSkinArea(deps, nail.id);
+    expect(await code(logNailEntry(deps, base))).toBe('area_archived');
   });
 });

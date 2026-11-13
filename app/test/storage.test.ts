@@ -36,8 +36,20 @@ describe('sqlite migrations', () => {
     const repo = await SqliteRepo.open(db);
     expect(await repo.listMeals()).toHaveLength(1);
     expect((await repo.listAreas()).find((a) => a.id === 'area-chin')?.nameOverride).toBeNull();
+    expect((await repo.listAreas()).find((a) => a.id === 'area-chin')?.kind).toBe('skin'); // SK-10 default
     const [v] = await db.all<{ user_version: number }>('PRAGMA user_version');
     expect(v?.user_version).toBe(MIGRATIONS.length);
+  });
+
+  it('SK-10 enforces nail stage and extent values in the database itself', async () => {
+    const db = createNodeSqliteDb();
+    await SqliteRepo.open(db);
+    await expect(
+      db.run(
+        `INSERT INTO nail_entry (id, ts_utc, tz, area_id, stage, extent)
+         VALUES ('x', '2026-01-01T00:00:00.000Z', 'UTC', 'area-chin', 'purple', 'none')`,
+      ),
+    ).rejects.toThrow();
   });
 
   it('SK-3 enforces 0-10 scores in the database itself', async () => {

@@ -23,6 +23,8 @@ export interface FileShare {
 export interface PhotoStore {
   /** Compress an image the user picked or took (NF-5) and copy it into private storage. Returns its key. */
   saveFromUri(sourceUri: string): Promise<string>;
+  /** Compress an image to JPEG bytes without storing it, for a one-off upload such as IN-3. */
+  compress(sourceUri: string, maxEdge?: number): Promise<Uint8Array>;
   /** Store already compressed JPEG bytes, for import (EX-10). Returns the key. */
   saveBytes(bytes: Uint8Array): Promise<string>;
   read(file: string): Promise<Uint8Array>;

@@ -161,6 +161,8 @@ export const MIGRATIONS: string[] = [
   CREATE INDEX photo_ts ON photo (ts_utc);
   CREATE INDEX photo_entry ON photo (entry_id);
   `,
+  // LL-9: small device settings (the model name). Not exported; the API key is never stored here.
+  `CREATE TABLE app_setting (key TEXT PRIMARY KEY, value TEXT NOT NULL);`,
 ];
 
 export async function migrate(db: SqlDb): Promise<void> {

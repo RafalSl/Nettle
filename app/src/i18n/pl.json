@@ -33,7 +33,13 @@
     "removeIngredient": "Usuń składnik",
     "allergens": "Alergeny",
     "suggestAllergens": "Zaproponuj ze składników",
-    "allergensHint": "Propozycje to tylko domysł na podstawie tekstu składników. Sprawdź je przed zapisem."
+    "allergensHint": "Propozycje to tylko domysł na podstawie tekstu składników. Sprawdź je przed zapisem.",
+    "fromPhoto": "Zaproponuj składniki ze zdjęcia",
+    "photoConfirmTitle": "Wysłać to zdjęcie do Anthropic?",
+    "photoConfirmBody": "Zdjęcie zostanie wysłane przez internet do Anthropic, aby odgadnąć składniki. Nic z odpowiedzi nie zostanie zapisane, dopóki jej nie sprawdzisz. Kosztuje to niewielką kwotę na Twoim koncie.",
+    "photoSend": "Wyślij zdjęcie",
+    "suggested": "Proponowane składniki. Sprawdź je i popraw przed zapisem.",
+    "unsure": "Niepewne: {{text}}"
   },
   "skin": {
     "title": "Dodaj stan skóry",
@@ -123,7 +129,19 @@
     "import_unknown_entry": "Niektóre zdjęcia należą do wpisu, którego nie ma w aplikacji.",
     "import_missing_photo": "W pliku ZIP brakuje zdjęcia, do którego odwołuje się data.json.",
     "photo_failed": "Nie udało się zapisać zdjęcia. Nic nie zmieniono.",
-    "photo_permission_denied": "Odmówiono dostępu do zdjęć. Możesz go zezwolić w ustawieniach iPhone'a."
+    "photo_permission_denied": "Odmówiono dostępu do zdjęć. Możesz go zezwolić w ustawieniach iPhone'a.",
+    "empty_key": "Najpierw wklej klucz API.",
+    "llm_no_key": "Najpierw dodaj klucz API Anthropic w ustawieniach.",
+    "llm_invalid_key": "Klucz API nie został przyjęty. Sprawdź go lub wpisz nowy.",
+    "llm_rate_limited": "Za dużo zapytań. Spróbuj za minutę.",
+    "llm_network": "Brak połączenia. Nic nie zostało zmienione.",
+    "llm_unavailable": "Usługa jest przeciążona lub nie działa. Spróbuj później. Nic nie zostało zmienione.",
+    "llm_billing": "Konto ma problem z płatnością albo osiągnięto limit wydatków.",
+    "llm_permission": "Ten klucz nie ma dostępu do tego modelu.",
+    "llm_model_not_found": "Nie znaleziono takiego modelu. Sprawdź ustawienie modelu.",
+    "llm_refused": "Model odmówił wykonania tego zapytania.",
+    "llm_bad_response": "Nie udało się odczytać odpowiedzi. Nic nie zapisano.",
+    "llm_failed": "Zapytanie nie powiodło się. Nic nie zapisano."
   },
   "today": {
     "title": "Codzienna kontrola",
@@ -302,5 +320,18 @@
     "areas": "Tylko te miejsca (brak wyboru = wszystkie)",
     "includeSensitive": "Dołącz wrażliwe zdjęcia",
     "limit": "Tylko zakres dat"
+  },
+  "llm": {
+    "title": "Ustawienia AI",
+    "keyHint": "Twój klucz API Anthropic jest przechowywany tylko w Pęku kluczy iPhone'a i nigdy nie jest ponownie pokazywany. Użycie go wysyła potwierdzone przez Ciebie dane do Anthropic i kosztuje na Twoim koncie.",
+    "keySaved": "Klucz jest zapisany.",
+    "keyNone": "Brak zapisanego klucza.",
+    "keyField": "Klucz API",
+    "keySave": "Zapisz klucz",
+    "keyDelete": "Usuń klucz",
+    "modelField": "Nazwa modelu",
+    "modelSave": "Zapisz model",
+    "modelHint": "Zostaw puste, aby użyć domyślnego.",
+    "saved": "Zapisano"
   }
 }

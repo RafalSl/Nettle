@@ -33,7 +33,13 @@
     "removeIngredient": "Remove ingredient",
     "allergens": "Allergens",
     "suggestAllergens": "Suggest from ingredients",
-    "allergensHint": "Suggestions are only a guess from the ingredient text. Check them before saving."
+    "allergensHint": "Suggestions are only a guess from the ingredient text. Check them before saving.",
+    "fromPhoto": "Suggest ingredients from a photo",
+    "photoConfirmTitle": "Send this photo to Anthropic?",
+    "photoConfirmBody": "The photo is sent over the internet to Anthropic to guess the ingredients. Nothing is saved from the answer until you review it. It costs a small amount on your account.",
+    "photoSend": "Send photo",
+    "suggested": "Suggested ingredients. Check and edit them before saving.",
+    "unsure": "Unsure about: {{text}}"
   },
   "skin": {
     "title": "Log skin status",
@@ -123,7 +129,19 @@
     "import_unknown_entry": "Some photos belong to an entry that is not in the app.",
     "import_missing_photo": "The ZIP is missing a photo that data.json refers to.",
     "photo_failed": "The photo could not be saved. Nothing was changed.",
-    "photo_permission_denied": "Photo access was refused. You can allow it in the iPhone settings."
+    "photo_permission_denied": "Photo access was refused. You can allow it in the iPhone settings.",
+    "empty_key": "Paste your API key first.",
+    "llm_no_key": "Add your Anthropic API key in Settings first.",
+    "llm_invalid_key": "The API key was not accepted. Check it or enter a new one.",
+    "llm_rate_limited": "Too many requests right now. Try again in a minute.",
+    "llm_network": "No connection. Nothing was changed.",
+    "llm_unavailable": "The service is busy or down. Try again later. Nothing was changed.",
+    "llm_billing": "The account has a billing problem or its spend limit was reached.",
+    "llm_permission": "This key is not allowed to use that model.",
+    "llm_model_not_found": "That model name was not found. Check the model setting.",
+    "llm_refused": "The model declined this request.",
+    "llm_bad_response": "The answer could not be read. Nothing was saved.",
+    "llm_failed": "The request failed. Nothing was saved."
   },
   "today": {
     "title": "Daily check-in",
@@ -302,5 +320,18 @@
     "areas": "Only these areas (none selected = all)",
     "includeSensitive": "Include sensitive photos",
     "limit": "Only a date range"
+  },
+  "llm": {
+    "title": "AI settings",
+    "keyHint": "Your Anthropic API key is stored only in the iPhone Keychain and is never shown again. Using it sends the data you confirm to Anthropic and costs money on your account.",
+    "keySaved": "A key is saved.",
+    "keyNone": "No key saved.",
+    "keyField": "API key",
+    "keySave": "Save key",
+    "keyDelete": "Delete key",
+    "modelField": "Model name",
+    "modelSave": "Save model",
+    "modelHint": "Leave empty to use the default.",
+    "saved": "Saved"
   }
 }

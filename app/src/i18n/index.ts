@@ -31,3 +31,8 @@ export function areaLabel(area: {
 export function itemLabel(item: { id: string; name: string; predefined: boolean; nameOverride: string | null }): string {
   return item.nameOverride ?? (item.predefined ? t(`tags.${item.id}`) : item.name);
 }
+
+/** LL-11: the language LLM answers should use; follows the app language. */
+export function currentLanguage(): 'en' | 'pl' {
+  return i18n.locale.startsWith('pl') ? 'pl' : 'en';
+}

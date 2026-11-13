@@ -22,21 +22,27 @@ async function writeNew(bytes: Uint8Array): Promise<string> {
   return name;
 }
 
+/** Re-encodes an image as JPEG with its long edge at most `maxEdge`. Re-encoding drops the original EXIF metadata, location included. */
+async function compressToBytes(sourceUri: string, maxEdge: number): Promise<Uint8Array> {
+  const loaded = await ImageManipulator.manipulate(sourceUri).renderAsync();
+  let context = ImageManipulator.manipulate(loaded);
+  if (Math.max(loaded.width, loaded.height) > maxEdge) {
+    context = context.resize(loaded.width >= loaded.height ? { width: maxEdge } : { height: maxEdge });
+  }
+  const out = await (await context.renderAsync()).saveAsync({ format: SaveFormat.JPEG, compress: JPEG_QUALITY });
+  const temp = new File(out.uri);
+  try {
+    return await temp.bytes();
+  } finally {
+    if (temp.exists) temp.delete();
+  }
+}
+
 export const expoPhotoStore: PhotoStore = {
+  compress: (sourceUri, maxEdge = MAX_EDGE) => compressToBytes(sourceUri, maxEdge),
+
   async saveFromUri(sourceUri) {
-    // Re-encoding through the manipulator also drops the original EXIF metadata, location included.
-    const loaded = await ImageManipulator.manipulate(sourceUri).renderAsync();
-    let context = ImageManipulator.manipulate(loaded);
-    if (Math.max(loaded.width, loaded.height) > MAX_EDGE) {
-      context = context.resize(loaded.width >= loaded.height ? { width: MAX_EDGE } : { height: MAX_EDGE });
-    }
-    const out = await (await context.renderAsync()).saveAsync({ format: SaveFormat.JPEG, compress: JPEG_QUALITY });
-    const temp = new File(out.uri);
-    try {
-      return await writeNew(await temp.bytes());
-    } finally {
-      if (temp.exists) temp.delete();
-    }
+    return writeNew(await compressToBytes(sourceUri, MAX_EDGE));
   },
 
   saveBytes: writeNew,

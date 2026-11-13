@@ -1,7 +1,9 @@
 import en from '@/i18n/en.json';
 import pl from '@/i18n/pl.json';
 import { PREDEFINED_AREAS } from '@/core/model/areas';
-import type { ErrorCode } from '@/core/model/errors';
+import { ERROR_CODES } from '@/core/model/errors';
+import { PREDEFINED_ITEMS } from '@/core/model/lists';
+import { ALLERGENS, LIST_KINDS, NAIL_EXTENTS, NAIL_STAGES } from '@/core/model/types';
 
 const keys = (o: object, prefix = ''): string[] =>
   Object.entries(o).flatMap(([k, v]) =>
@@ -18,12 +20,16 @@ describe('i18n (NF-6)', () => {
   });
 
   it('every error code has a translation', () => {
-    const codes: ErrorCode[] = [
-      'empty_description', 'invalid_score', 'unknown_area', 'area_archived', 'empty_area_name',
-      'import_corrupt_zip', 'import_missing_data', 'import_invalid_json',
-      'import_unsupported_version', 'import_invalid_data', 'import_unknown_area', 'nothing_selected',
-      'import_password_required', 'import_wrong_password', 'import_too_large', 'password_too_short',
-    ];
-    for (const c of codes) expect(en.errors).toHaveProperty([c]);
+    for (const c of ERROR_CODES) expect(en.errors).toHaveProperty([c]);
+  });
+
+  it('every predefined daily tag has a translation (IN-6)', () => {
+    for (const k of LIST_KINDS) for (const i of PREDEFINED_ITEMS[k]) expect(en.tags).toHaveProperty([i.id]);
+  });
+
+  it('every allergen, nail stage and nail extent has a translation (IN-10, SK-10)', () => {
+    for (const a of ALLERGENS) expect(en.allergens).toHaveProperty([a]);
+    for (const s of NAIL_STAGES) expect(en.nail.stages).toHaveProperty([s]);
+    for (const x of NAIL_EXTENTS) expect(en.nail.extents).toHaveProperty([x]);
   });
 });

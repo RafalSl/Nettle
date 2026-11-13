@@ -7,7 +7,9 @@ export default function RootLayout() {
     <ServicesProvider>
       <Tabs>
         <Tabs.Screen name="index" options={{ title: t('tabs.meal') }} />
+        <Tabs.Screen name="today" options={{ title: t('tabs.today') }} />
         <Tabs.Screen name="skin" options={{ title: t('tabs.skin') }} />
+        <Tabs.Screen name="more" options={{ title: t('tabs.more') }} />
         <Tabs.Screen name="data" options={{ title: t('tabs.data') }} />
       </Tabs>
     </ServicesProvider>

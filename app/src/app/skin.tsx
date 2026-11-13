@@ -1,8 +1,8 @@
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Alert, Pressable, Text, TextInput, View } from 'react-native';
 import { SCORE_KEYS, type SkinArea, type SkinEntry, type SkinScores } from '@/core/model/types';
-import { listActiveAreas, logSkinEntry } from '@/core/usecases/skin';
+import { lastSkinScores, listActiveAreas, logSkinEntry, repeatSkinEntry } from '@/core/usecases/skin';
 import { areaLabel, errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
 import { Button, Heading, Hint, Label, Screen, ScoreStepper, TimeField, styles } from '@/ui/components';
@@ -18,9 +18,10 @@ export default function SkinScreen() {
   const [scores, setScores] = useState<SkinScores>(ZERO);
   const [note, setNote] = useState('');
   const [at, setAt] = useState<Date | null>(null);
+  const [hasLast, setHasLast] = useState(false);
 
   const reload = useCallback(() => {
-    listActiveAreas(deps).then((a) => {
+    listActiveAreas(deps, 'skin').then((a) => {
       setAreas(a);
       setAreaId((cur) => (cur && a.some((x) => x.id === cur) ? cur : (a[0]?.id ?? null)));
     });
@@ -28,12 +29,36 @@ export default function SkinScreen() {
   }, [deps]);
   useFocusEffect(reload);
 
+  /** SK-3: start from the area's last scores so a small change is a tap or two. */
+  const prefill = useCallback(
+    (id: string) =>
+      lastSkinScores(deps, id).then((last) => {
+        setHasLast(!!last);
+        setScores(last ?? ZERO);
+      }),
+    [deps],
+  );
+  useEffect(() => {
+    if (areaId) prefill(areaId);
+  }, [areaId, prefill]);
+
   async function save() {
     try {
       if (!areaId) return;
       await logSkinEntry(deps, { areaId, scores, note, at: at ?? undefined });
-      setScores(ZERO);
       setNote('');
+      setAt(null);
+      reload();
+      prefill(areaId);
+    } catch (e) {
+      Alert.alert(errorMessage(e));
+    }
+  }
+
+  async function noChange() {
+    try {
+      if (!areaId) return;
+      await repeatSkinEntry(deps, areaId, at ?? undefined);
       setAt(null);
       reload();
     } catch (e) {
@@ -62,6 +87,13 @@ export default function SkinScreen() {
         ))}
       </View>
 
+      {hasLast && (
+        <>
+          <Button kind="secondary" title={t('skin.noChange')} onPress={noChange} />
+          <Hint>{t('skin.noChangeHint')}</Hint>
+          <Hint>{t('skin.prefilled')}</Hint>
+        </>
+      )}
       <Hint>{t('skin.scale')}</Hint>
       {SCORE_KEYS.map((k) => (
         <ScoreStepper

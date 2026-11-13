@@ -3,6 +3,7 @@ import { Alert, Switch, Text, TextInput, View } from 'react-native';
 import { NettleError } from '@/core/model/errors';
 import type { Parts } from '@/core/model/types';
 import type { ImportMode } from '@/core/ports/storage';
+import { EXTRA_KINDS, LIST_KINDS } from '@/core/model/types';
 import { applyImport, exportBundle, previewImport, type ParsedImport } from '@/core/usecases/exchange';
 import { errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
@@ -24,6 +25,9 @@ function PartSwitch({
     </View>
   );
 }
+
+/** Total of some collections in a row-count map. */
+const sumOf = (counts: Record<string, number>, keys: readonly string[]) => keys.reduce((n, k) => n + (counts[k] ?? 0), 0);
 
 /** EX-1 export and EX-10 import (preview, choose parts, then merge or replace). */
 export default function DataScreen() {
@@ -178,14 +182,21 @@ export default function DataScreen() {
               {t('data.previewRecords', {
                 meals: p.incoming.meals,
                 entries: p.incoming.skinEntries,
+                other: sumOf(p.incoming, EXTRA_KINDS),
                 newMeals: p.newRows.meals,
                 newEntries: p.newRows.skinEntries,
+                newOther: sumOf(p.newRows, EXTRA_KINDS),
               })}
             </Hint>
           )}
           {p.has.settings && (
             <Hint>
-              {t('data.previewSettings', { areas: p.incoming.skinAreas, newAreas: p.newRows.skinAreas })}
+              {t('data.previewSettings', {
+                areas: p.incoming.skinAreas,
+                lists: sumOf(p.incoming, LIST_KINDS),
+                newAreas: p.newRows.skinAreas,
+                newLists: sumOf(p.newRows, LIST_KINDS),
+              })}
             </Hint>
           )}
           <Label>{t('data.applyParts')}</Label>

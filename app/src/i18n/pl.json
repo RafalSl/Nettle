@@ -259,5 +259,37 @@
     "removeBody": "Zostanie usunięte z tego urządzenia i nie da się go odzyskać.",
     "tapToShow": "Wrażliwe zdjęcie. Dotknij, aby pokazać.",
     "none": "Brak zdjęć"
+  },
+  "delete": {
+    "title": "Usuń dane",
+    "hint": "Usuwa wpisy z tego urządzenia. Miejsca, tagi i zabiegi zostają. Tego nie da się cofnąć, więc w razie wątpliwości najpierw wyeksportuj.",
+    "groups": {
+      "food": "Jedzenie i przyjmowane substancje (posiłki, reakcje, alkohol, leki)",
+      "skin": "Skóra i paznokcie (wpisy, zdjęcia, zastosowane zabiegi)",
+      "health": "Codzienne kontrole, stolec i zmiany"
+    },
+    "limit": "Tylko zakres dat",
+    "from": "Od",
+    "to": "Do",
+    "button": "Sprawdź, co zostanie usunięte",
+    "confirmTitle": "Usunąć te wpisy?",
+    "confirmBody": "Zostanie trwale usunięte:\n{{lines}}\n\nTego nie da się cofnąć.",
+    "exportFirst": "Najpierw eksportuj",
+    "confirm": "Usuń",
+    "done": "Usunięto",
+    "nothing": "Nic nie pasuje.",
+    "line": {
+      "meals": "posiłki: {{n}}",
+      "reactions": "reakcje: {{n}}",
+      "alcoholEntries": "wpisy o alkoholu: {{n}}",
+      "medicationEntries": "wpisy o lekach: {{n}}",
+      "skinEntries": "wpisy o skórze: {{n}}",
+      "nailEntries": "wpisy o paznokciach: {{n}}",
+      "photos": "zdjęcia: {{n}}",
+      "treatmentApplications": "zastosowane zabiegi: {{n}}",
+      "checkIns": "codzienne kontrole: {{n}}",
+      "stoolEntries": "wpisy o stolcu: {{n}}",
+      "changeEvents": "zmiany: {{n}}"
+    }
   }
 }

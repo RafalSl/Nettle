@@ -1,5 +1,6 @@
 import { SqliteRepo } from '@/adapters/storage/sqliteRepo';
 import { NettleError } from '@/core/model/errors';
+import { DELETE_GROUPS } from '@/core/model/deleteGroups';
 import { planDeletion } from '@/core/model/deletion';
 import { RECORD_KINDS } from '@/core/model/types';
 import type { StorageRepository } from '@/core/ports/storage';
@@ -97,5 +98,12 @@ describe.each(repos)('bulk delete (%s)', (_name, make) => {
     expect(await code(deleteData(makeDeps(repo), { kinds: [] }))).toBe('nothing_selected');
     expect(await code(previewDelete(makeDeps(repo), { kinds: [] }))).toBe('nothing_selected');
     expect(await repo.listMeals()).toHaveLength(2);
+  });
+});
+
+describe('delete groups (SE-9)', () => {
+  it('SE-9 the groups cover every record kind exactly once', () => {
+    const all = Object.values(DELETE_GROUPS).flat().sort();
+    expect(all).toEqual([...RECORD_KINDS].sort());
   });
 });

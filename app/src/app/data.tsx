@@ -7,6 +7,7 @@ import { EXTRA_KINDS, LIST_KINDS } from '@/core/model/types';
 import { applyImport, exportBundle, previewImport, type ParsedImport } from '@/core/usecases/exchange';
 import { errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
+import { DeleteSection } from '@/ui/DeleteSection';
 import { Button, Heading, Hint, Label, Screen, styles } from '@/ui/components';
 
 function PartSwitch({
@@ -223,6 +224,7 @@ export default function DataScreen() {
           <Button kind="secondary" title={t('common.cancel')} onPress={() => setPending(null)} />
         </>
       )}
+      <DeleteSection />
     </Screen>
   );
 }

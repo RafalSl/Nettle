@@ -3,7 +3,7 @@ import pl from '@/i18n/pl.json';
 import { PREDEFINED_AREAS } from '@/core/model/areas';
 import { ERROR_CODES } from '@/core/model/errors';
 import { PREDEFINED_ITEMS } from '@/core/model/lists';
-import { ALLERGENS, CHANGE_ACTIONS, CHANGE_CATEGORIES, LIST_KINDS, NAIL_EXTENTS, NAIL_STAGES, SYMPTOMS } from '@/core/model/types';
+import { ALLERGENS, CHANGE_ACTIONS, CHANGE_CATEGORIES, LIST_KINDS, RECORD_KINDS, NAIL_EXTENTS, NAIL_STAGES, SYMPTOMS } from '@/core/model/types';
 
 const keys = (o: object, prefix = ''): string[] =>
   Object.entries(o).flatMap(([k, v]) =>
@@ -38,5 +38,9 @@ describe('i18n (NF-6)', () => {
     for (const x of CHANGE_ACTIONS) expect(en.change.actions).toHaveProperty([x]);
     for (const x of CHANGE_CATEGORIES) expect(en.change.categories).toHaveProperty([x]);
     for (const k of LIST_KINDS) expect(en.lists).toHaveProperty([k]);
+  });
+
+  it('every record kind has a delete line (SE-9)', () => {
+    for (const k of RECORD_KINDS) expect(en.delete.line).toHaveProperty([k]);
   });
 });

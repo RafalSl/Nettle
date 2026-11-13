@@ -259,5 +259,37 @@
     "removeBody": "It is deleted from this device and cannot be recovered.",
     "tapToShow": "Sensitive photo. Tap to show.",
     "none": "No photos"
+  },
+  "delete": {
+    "title": "Delete data",
+    "hint": "Removes entries from this device. Areas, tags and treatments stay. This cannot be undone, so export first if you are unsure.",
+    "groups": {
+      "food": "Food and intake (meals, reactions, alcohol, medications)",
+      "skin": "Skin and nails (entries, photos, treatments applied)",
+      "health": "Daily check-ins, stool and changes"
+    },
+    "limit": "Only a date range",
+    "from": "From",
+    "to": "To",
+    "button": "Review what will be deleted",
+    "confirmTitle": "Delete these entries?",
+    "confirmBody": "This will permanently delete:\n{{lines}}\n\nThis cannot be undone.",
+    "exportFirst": "Export first",
+    "confirm": "Delete",
+    "done": "Deleted",
+    "nothing": "Nothing matches.",
+    "line": {
+      "meals": "{{n}} meals",
+      "reactions": "{{n}} reactions",
+      "alcoholEntries": "{{n}} alcohol entries",
+      "medicationEntries": "{{n}} medication entries",
+      "skinEntries": "{{n}} skin entries",
+      "nailEntries": "{{n}} nail entries",
+      "photos": "{{n}} photos",
+      "treatmentApplications": "{{n}} treatment applications",
+      "checkIns": "{{n}} check-ins",
+      "stoolEntries": "{{n}} stool entries",
+      "changeEvents": "{{n}} change events"
+    }
   }
 }

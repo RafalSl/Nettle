@@ -2,7 +2,8 @@ import { packBundle, unpackBundle } from '../export/bundle';
 import { toDataJson } from '../export/schema';
 import { NettleError } from '../model/errors';
 import { makeStamp } from '../model/time';
-import { EXTRA_KINDS, type DateRange, type Parts, type Payload } from '../model/types';
+import { recordRefs } from '../model/refs';
+import { EXTRA_KINDS, LIST_KINDS, type DateRange, type Parts, type Payload, type Records } from '../model/types';
 import type { CollectionKey, ImportMode } from '../ports/storage';
 import type { Deps } from './deps';
 
@@ -59,6 +60,7 @@ export async function previewImport(deps: Deps, zip: Uint8Array, password?: stri
   tally('skinEntries', records?.skinEntries.map((x) => x.id) ?? []);
   for (const kind of EXTRA_KINDS) tally(kind, records?.[kind].map((x) => x.id) ?? []);
   tally('skinAreas', payload.settings?.skinAreas.map((x) => x.id) ?? []);
+  for (const kind of LIST_KINDS) tally(kind, payload.settings?.[kind].map((x) => x.id) ?? []);
   return {
     payload,
     preview: { has: { records: !!records, settings: !!payload.settings }, incoming, newRows, duplicates },
@@ -80,12 +82,15 @@ export async function applyImport(
   if (!payload.records && !payload.settings) throw new NettleError('nothing_selected');
 
   if (payload.records) {
-    const known = new Set((await deps.repo.existingIds()).skinAreas);
-    for (const a of payload.settings?.skinAreas ?? []) known.add(a.id);
-    const withAreas = [payload.records.skinEntries, ...EXTRA_KINDS.map((k) => payload.records![k])] as { areaId?: string }[][];
-    for (const e of withAreas.flat()) {
-      if (e.areaId !== undefined && !known.has(e.areaId)) throw new NettleError('import_unknown_area', e.areaId);
-    }
+    // Imported records must not point at areas or list items that will not exist.
+    const existing = await deps.repo.existingIds();
+    const areas = new Set([...existing.skinAreas, ...(payload.settings?.skinAreas ?? []).map((a) => a.id)]);
+    const items = new Set([
+      ...LIST_KINDS.flatMap((k) => [...existing[k], ...(payload.settings?.[k] ?? []).map((i) => i.id)]),
+    ]);
+    const refs = recordRefs(payload.records as Records);
+    for (const id of refs.areas) if (!areas.has(id)) throw new NettleError('import_unknown_area', id);
+    for (const id of refs.items) if (!items.has(id)) throw new NettleError('import_unknown_item', id);
   }
   await deps.repo.importData(payload, choice.mode);
 }

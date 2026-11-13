@@ -1,8 +1,13 @@
 import { PREDEFINED_AREAS } from '@/core/model/areas';
+import { PREDEFINED_ITEMS } from '@/core/model/lists';
+import { recordRefs } from '@/core/model/refs';
 import {
   EXTRA_KINDS,
+  LIST_KINDS,
   type DateRange,
   type ExtraKind,
+  type ListItem,
+  type ListKind,
   type Meal,
   type Payload,
   type Records,
@@ -31,8 +36,21 @@ export class MemoryRepo implements StorageRepository {
     this.seed();
   }
 
-  private seed() {
+  private items = Object.fromEntries(LIST_KINDS.map((k) => [k, new Map<string, ListItem>()])) as Record<
+    ListKind,
+    Map<string, ListItem>
+  >;
+
+  private seed(items = this.items) {
     for (const a of PREDEFINED_AREAS) if (!this.areas.has(a.id)) this.areas.set(a.id, clone(a));
+    for (const k of LIST_KINDS) for (const i of PREDEFINED_ITEMS[k]) if (!items[k].has(i.id)) items[k].set(i.id, clone(i));
+  }
+
+  async upsertItem(kind: ListKind, item: ListItem) {
+    this.items[kind].set(item.id, clone(item));
+  }
+  async listItems(kind: ListKind) {
+    return [...this.items[kind].values()].sort((a, b) => a.id.localeCompare(b.id)).map(clone);
   }
 
   async addMeal(meal: Meal) {
@@ -61,6 +79,10 @@ export class MemoryRepo implements StorageRepository {
     this.checkArea(record);
     this.extra[kind].set(record.id, clone(record));
   }
+  async putRecord<K extends ExtraKind>(kind: K, record: Records[K][number]) {
+    this.checkArea(record);
+    this.extra[kind].set(record.id, clone(record));
+  }
   async listRecords<K extends ExtraKind>(kind: K, range?: DateRange): Promise<Records[K]> {
     return [...this.extra[kind].values()]
       .filter((r) => inRange(r.at.utc, range))
@@ -77,6 +99,7 @@ export class MemoryRepo implements StorageRepository {
       skinAreas: await this.listAreas(),
       skinEntries: await this.listSkinEntries(range),
     } as Snapshot;
+    for (const kind of LIST_KINDS) Object.assign(snap, { [kind]: await this.listItems(kind) });
     for (const kind of EXTRA_KINDS) Object.assign(snap, { [kind]: await this.listRecords(kind, range) });
     return snap;
   }
@@ -87,6 +110,7 @@ export class MemoryRepo implements StorageRepository {
       skinEntries: new Set(this.entries.keys()),
     } as ExistingIds;
     for (const kind of EXTRA_KINDS) result[kind] = new Set(this.extra[kind].keys());
+    for (const kind of LIST_KINDS) result[kind] = new Set(this.items[kind].keys());
     return result;
   }
   async importData({ records, settings }: Payload, mode: ImportMode) {
@@ -111,17 +135,30 @@ export class MemoryRepo implements StorageRepository {
         if (!extra[kind].has(r.id)) extra[kind].set(r.id, clone(r));
       }
     }
+    const items = Object.fromEntries(LIST_KINDS.map((k) => [k, new Map(this.items[k])])) as typeof this.items;
+    for (const kind of LIST_KINDS) {
+      for (const i of settings?.[kind] ?? []) {
+        if (mode === 'replace' || !items[kind].has(i.id)) items[kind].set(i.id, clone(i));
+      }
+    }
     if (settings && mode === 'replace') {
-      const usedAreas = [...entries.values(), ...EXTRA_KINDS.flatMap((k) => [...extra[k].values()])].map(
-        (e) => (e as { areaId?: string }).areaId,
-      );
-      const keep = new Set([...settings.skinAreas.map((a) => a.id), ...usedAreas]);
+      const refs = recordRefs({
+        meals: [],
+        skinEntries: [...entries.values()],
+        ...Object.fromEntries(EXTRA_KINDS.map((k) => [k, [...extra[k].values()]])),
+      } as unknown as Records);
+      const keep = new Set([...settings.skinAreas.map((a) => a.id), ...refs.areas]);
       for (const [id, a] of areas) if (!a.predefined && !keep.has(id)) areas.delete(id);
+      for (const kind of LIST_KINDS) {
+        const keepItems = new Set([...settings[kind].map((i) => i.id), ...refs.items]);
+        for (const [id, i] of items[kind]) if (!i.predefined && !keepItems.has(id)) items[kind].delete(id);
+      }
     }
     this.meals = meals;
     this.areas = areas;
     this.entries = entries;
     this.extra = extra;
+    this.items = items;
     this.seed();
   }
 }

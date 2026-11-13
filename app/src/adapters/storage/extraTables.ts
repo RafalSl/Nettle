@@ -1,4 +1,4 @@
-import type { ExtraKind, NailEntry, NailExtent, NailStage, Records } from '@/core/model/types';
+import type { CheckIn, ExtraKind, NailEntry, NailExtent, NailStage, Records, StoolEntry } from '@/core/model/types';
 import type { SqlValue } from './sqlDb';
 
 type Row = Record<string, string | number | null>;
@@ -29,6 +29,61 @@ const nail: ExtraTable<NailEntry> = {
   }),
 };
 
+const checkIn: ExtraTable<CheckIn> = {
+  table: 'check_in',
+  columns: [
+    'day',
+    'wellbeing',
+    'stress',
+    'sleep',
+    'abdominal_pain',
+    'bloating',
+    'tags_json',
+    'note',
+    'completed_utc',
+    'completed_tz',
+  ],
+  toValues: (c) => [
+    c.day,
+    c.wellbeing,
+    c.stress,
+    c.sleep,
+    c.abdominalPain,
+    +c.bloating,
+    JSON.stringify(c.tags),
+    c.note,
+    c.completedAt?.utc ?? null,
+    c.completedAt?.tz ?? null,
+  ],
+  fromRow: (r) => ({
+    id: r.id as string,
+    at: { utc: r.ts_utc as string, tz: r.tz as string },
+    day: r.day as string,
+    wellbeing: r.wellbeing as number | null,
+    stress: r.stress as number | null,
+    sleep: r.sleep as number | null,
+    abdominalPain: r.abdominal_pain as number | null,
+    bloating: !!r.bloating,
+    tags: JSON.parse(r.tags_json as string) as string[],
+    note: r.note as string | null,
+    completedAt: r.completed_utc ? { utc: r.completed_utc as string, tz: r.completed_tz as string } : null,
+  }),
+};
+
+const stool: ExtraTable<StoolEntry> = {
+  table: 'stool_entry',
+  columns: ['bristol', 'note'],
+  toValues: (e) => [e.bristol, e.note],
+  fromRow: (r) => ({
+    id: r.id as string,
+    at: { utc: r.ts_utc as string, tz: r.tz as string },
+    bristol: r.bristol as number,
+    note: r.note as string | null,
+  }),
+};
+
 export const EXTRA_TABLES: { [K in ExtraKind]: ExtraTable<Records[K][number]> } = {
   nailEntries: nail,
+  checkIns: checkIn,
+  stoolEntries: stool,
 };

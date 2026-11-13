@@ -1,6 +1,8 @@
 import type {
   DateRange,
   ExtraKind,
+  ListItem,
+  ListKind,
   Meal,
   Payload,
   Records,
@@ -31,8 +33,15 @@ export interface StorageRepository {
   /** Newest first. */
   listSkinEntries(range?: DateRange): Promise<SkinEntry[]>;
 
+  /** Insert or update by id. */
+  upsertItem(kind: ListKind, item: ListItem): Promise<void>;
+  /** All items of a list, including archived, ordered by id. */
+  listItems(kind: ListKind): Promise<ListItem[]>;
+
   /** Generic storage for the flat record kinds (see ExtraKind). Newest first. */
   addRecord<K extends ExtraKind>(kind: K, record: Records[K][number]): Promise<void>;
+  /** Insert or replace by id, for records that change after they are created (the daily check-in). */
+  putRecord<K extends ExtraKind>(kind: K, record: Records[K][number]): Promise<void>;
   listRecords<K extends ExtraKind>(kind: K, range?: DateRange): Promise<Records[K]>;
 
   /** Entries inside the range plus all areas. */
@@ -42,8 +51,8 @@ export interface StorageRepository {
    * Atomic; only the parts present in the payload are touched (EX-10).
    * merge: insert rows whose id is not present, skip the rest.
    * replace records: delete all meals and skin entries, insert the payload's.
-   * replace settings: overwrite areas by id, delete user areas that are neither in the payload
-   * nor used by a remaining entry, keep predefined areas.
+   * replace settings: overwrite areas and list items by id, delete user areas and items that are neither
+   * in the payload nor used by a remaining record, keep predefined ones.
    */
   importData(payload: Payload, mode: ImportMode): Promise<void>;
 }

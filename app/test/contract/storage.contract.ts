@@ -1,5 +1,5 @@
 import type { StorageRepository } from '@/core/ports/storage';
-import { syntheticEntry, syntheticMeal, syntheticNailEntry } from '../helpers/fixtures';
+import { noExtra, syntheticCheckIn, syntheticEntry, syntheticMeal, syntheticNailEntry, syntheticStool } from '../helpers/fixtures';
 
 /** Behaviour every StorageRepository must have; run against the fake and the SQLite adapter. */
 export function storageContract(name: string, make: () => Promise<StorageRepository>) {
@@ -79,12 +79,62 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
       await repo.upsertArea(nailArea);
       await repo.upsertArea({ ...nailArea, id: 'a-nail-unused' });
       await repo.addRecord('nailEntries', syntheticNailEntry('n1', '2026-01-10T08:00:00.000Z'));
-      await repo.importData({ settings: { skinAreas: [] } }, 'replace');
+      await repo.importData({ settings: { skinAreas: [], dailyTags: [] } }, 'replace');
       const ids = (await repo.listAreas()).map((a) => a.id);
       expect(ids).toContain('a-nail');
       expect(ids).not.toContain('a-nail-unused');
-      await repo.importData({ records: { meals: [], skinEntries: [], nailEntries: [] } }, 'replace');
+      await repo.importData({ records: { meals: [], skinEntries: [], ...noExtra } }, 'replace');
       expect(await repo.listRecords('nailEntries')).toEqual([]);
+    });
+
+    const myTag = { id: 'tag-mine', name: 'Synthetic tag', predefined: false, archived: false, nameOverride: null };
+
+    it('IN-6 seeds nine predefined daily tags and stores user tags', async () => {
+      const seeded = await repo.listItems('dailyTags');
+      expect(seeded).toHaveLength(9);
+      expect(seeded.every((t) => t.predefined)).toBe(true);
+      await repo.upsertItem('dailyTags', myTag);
+      await repo.upsertItem('dailyTags', { ...myTag, name: 'Renamed', archived: true });
+      expect((await repo.listItems('dailyTags')).find((t) => t.id === 'tag-mine')).toEqual({ ...myTag, name: 'Renamed', archived: true });
+    });
+
+    it('SK-7 stores a check-in with optional scores, tags and a completion stamp, and replaces it by id', async () => {
+      const c = syntheticCheckIn('c1', '2026-01-15T20:00:00.000Z', '2026-01-15', ['tag-travel']);
+      await repo.addRecord('checkIns', c);
+      expect(await repo.listRecords('checkIns')).toEqual([c]);
+      await expect(repo.addRecord('checkIns', c)).rejects.toThrow();
+      const open = { ...c, stress: 9, tags: [], completedAt: null };
+      await repo.putRecord('checkIns', open);
+      expect(await repo.listRecords('checkIns')).toEqual([open]);
+      await repo.putRecord('checkIns', syntheticCheckIn('c2', '2026-01-16T20:00:00.000Z', '2026-01-16'));
+      expect((await repo.listRecords('checkIns')).map((x) => x.id)).toEqual(['c2', 'c1']);
+    });
+
+    it('EX-10 replace settings keeps a user tag that a check-in uses and drops an unused one', async () => {
+      await repo.upsertItem('dailyTags', myTag);
+      await repo.upsertItem('dailyTags', { ...myTag, id: 'tag-unused' });
+      await repo.addRecord('checkIns', syntheticCheckIn('c1', '2026-01-15T20:00:00.000Z', '2026-01-15', ['tag-mine']));
+      await repo.importData({ settings: { skinAreas: [], dailyTags: [] } }, 'replace');
+      const ids = (await repo.listItems('dailyTags')).map((t) => t.id);
+      expect(ids).toContain('tag-mine');
+      expect(ids).not.toContain('tag-unused');
+      expect(ids).toHaveLength(10); // nine predefined always stay
+    });
+
+    it('EX-10 merge settings keeps local tag values; replace overwrites by id and re-seeds predefined tags', async () => {
+      const travel = (await repo.listItems('dailyTags')).find((t) => t.id === 'tag-travel')!;
+      await repo.importData({ settings: { skinAreas: [], dailyTags: [{ ...travel, nameOverride: 'ignored' }] } }, 'merge');
+      expect((await repo.listItems('dailyTags')).find((t) => t.id === 'tag-travel')?.nameOverride).toBeNull();
+      await repo.importData({ settings: { skinAreas: [], dailyTags: [{ ...travel, nameOverride: 'Trip', archived: true }] } }, 'replace');
+      expect((await repo.listItems('dailyTags')).find((t) => t.id === 'tag-travel')).toMatchObject({ nameOverride: 'Trip', archived: true });
+    });
+
+    it('EX-10 replace records wipes check-ins and stool entries', async () => {
+      await repo.addRecord('checkIns', syntheticCheckIn('c1', '2026-01-15T20:00:00.000Z', '2026-01-15'));
+      await repo.addRecord('stoolEntries', syntheticStool('s1', '2026-01-15T07:00:00.000Z'));
+      await repo.importData({ records: { meals: [], skinEntries: [], ...noExtra } }, 'replace');
+      expect(await repo.listRecords('checkIns')).toEqual([]);
+      expect(await repo.listRecords('stoolEntries')).toEqual([]);
     });
 
     it('SK-2 upsert adds, renames and archives areas', async () => {
@@ -122,9 +172,9 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
             syntheticMeal('m2', '2026-01-11T08:00:00.000Z'),
           ],
           skinEntries: [syntheticEntry('e1', '2026-01-11T09:00:00.000Z')],
-          nailEntries: [],
+          ...noExtra,
         },
-        settings: { skinAreas: await repo.listAreas() },
+        settings: { skinAreas: await repo.listAreas(), dailyTags: [] },
       };
       await repo.importData(payload, 'merge');
       await repo.importData(payload, 'merge'); // idempotent
@@ -139,7 +189,7 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
       await repo.addMeal(syntheticMeal('old', '2026-01-01T08:00:00.000Z'));
       await repo.addSkinEntry(syntheticEntry('old-e', '2026-01-01T09:00:00.000Z', 'a-custom'));
       await repo.importData(
-        { records: { meals: [syntheticMeal('new', '2026-01-02T08:00:00.000Z')], skinEntries: [], nailEntries: [] } },
+        { records: { meals: [syntheticMeal('new', '2026-01-02T08:00:00.000Z')], skinEntries: [], ...noExtra } },
         'replace',
       );
       expect((await repo.listMeals()).map((m) => m.id)).toEqual(['new']);
@@ -151,7 +201,7 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
       await repo.addMeal(syntheticMeal('keep', '2026-01-01T08:00:00.000Z'));
       const chin = (await repo.listAreas()).find((a) => a.id === 'area-chin')!;
       await repo.importData(
-        { settings: { skinAreas: [{ ...chin, nameOverride: 'Synthetic jaw', archived: true }] } },
+        { settings: { skinAreas: [{ ...chin, nameOverride: 'Synthetic jaw', archived: true }], dailyTags: [] } },
         'replace',
       );
       expect((await repo.listMeals()).map((m) => m.id)).toEqual(['keep']);
@@ -165,7 +215,7 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
       await repo.upsertArea(custom);
       await repo.upsertArea({ ...custom, id: 'a-unused', name: 'Synthetic wrist' });
       await repo.addSkinEntry(syntheticEntry('e1', '2026-01-01T09:00:00.000Z', 'a-custom'));
-      await repo.importData({ settings: { skinAreas: [] } }, 'replace');
+      await repo.importData({ settings: { skinAreas: [], dailyTags: [] } }, 'replace');
       const ids = (await repo.listAreas()).map((a) => a.id);
       expect(ids).toContain('a-custom'); // still referenced by e1
       expect(ids).not.toContain('a-unused');
@@ -175,7 +225,7 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
 
     it('EX-10 merge settings adds new areas and keeps local versions of existing ones', async () => {
       const chin = (await repo.listAreas()).find((a) => a.id === 'area-chin')!;
-      await repo.importData({ settings: { skinAreas: [{ ...chin, nameOverride: 'ignored' }, custom] } }, 'merge');
+      await repo.importData({ settings: { skinAreas: [{ ...chin, nameOverride: 'ignored' }, custom], dailyTags: [] } }, 'merge');
       const areas = await repo.listAreas();
       expect(areas.find((a) => a.id === 'area-chin')?.nameOverride).toBeNull();
       expect(areas.some((a) => a.id === 'a-custom')).toBe(true);
@@ -187,7 +237,7 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
         records: {
           meals: [syntheticMeal('new', '2026-01-02T08:00:00.000Z')],
           skinEntries: [syntheticEntry('bad', '2026-01-02T09:00:00.000Z', 'missing-area')],
-          nailEntries: [],
+          ...noExtra,
         },
       };
       await expect(repo.importData(broken, 'replace')).rejects.toThrow();

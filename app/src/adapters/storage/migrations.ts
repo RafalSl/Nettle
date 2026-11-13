@@ -54,6 +54,43 @@ export const MIGRATIONS: string[] = [
   );
   CREATE INDEX nail_entry_ts ON nail_entry (ts_utc);
   `,
+  // SK-7, SK-11, IN-6: daily check-in, stool entries and the list of daily tags. tags_json holds tag ids.
+  `
+  CREATE TABLE check_in (
+    id TEXT PRIMARY KEY,
+    ts_utc TEXT NOT NULL,
+    tz TEXT NOT NULL,
+    day TEXT NOT NULL,
+    wellbeing INTEGER CHECK (wellbeing IS NULL OR wellbeing BETWEEN 0 AND 10),
+    stress INTEGER CHECK (stress IS NULL OR stress BETWEEN 0 AND 10),
+    sleep INTEGER CHECK (sleep IS NULL OR sleep BETWEEN 0 AND 10),
+    abdominal_pain INTEGER CHECK (abdominal_pain IS NULL OR abdominal_pain BETWEEN 0 AND 10),
+    bloating INTEGER NOT NULL CHECK (bloating IN (0, 1)),
+    tags_json TEXT NOT NULL,
+    note TEXT,
+    completed_utc TEXT,
+    completed_tz TEXT
+  );
+  CREATE INDEX check_in_ts ON check_in (ts_utc);
+  CREATE INDEX check_in_day ON check_in (day);
+  CREATE TABLE stool_entry (
+    id TEXT PRIMARY KEY,
+    ts_utc TEXT NOT NULL,
+    tz TEXT NOT NULL,
+    bristol INTEGER NOT NULL CHECK (bristol BETWEEN 1 AND 7),
+    note TEXT
+  );
+  CREATE INDEX stool_entry_ts ON stool_entry (ts_utc);
+  CREATE TABLE list_item (
+    kind TEXT NOT NULL,
+    id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    predefined INTEGER NOT NULL,
+    archived INTEGER NOT NULL DEFAULT 0,
+    name_override TEXT,
+    PRIMARY KEY (kind, id)
+  );
+  `,
 ];
 
 export async function migrate(db: SqlDb): Promise<void> {

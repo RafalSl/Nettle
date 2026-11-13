@@ -1,5 +1,5 @@
 import type { Deps } from '@/core/usecases/deps';
-import type { Meal, NailEntry, SkinEntry } from '@/core/model/types';
+import type { CheckIn, Meal, NailEntry, SkinEntry, StoolEntry } from '@/core/model/types';
 import type { StorageRepository } from '@/core/ports/storage';
 
 /** Clearly synthetic data only. */
@@ -38,4 +38,28 @@ export const syntheticNailEntry = (id: string, utc: string, areaId = 'a-nail'): 
   stage: 'separation',
   extent: 'under_quarter',
   note: 'synthetic note',
+});
+
+/** The flat record kinds (see ExtraKind) with no rows, to complete a Records literal. */
+export const noExtra = { nailEntries: [], checkIns: [], stoolEntries: [] };
+
+export const syntheticCheckIn = (id: string, utc: string, day: string, tags: string[] = []): CheckIn => ({
+  id,
+  at: { utc, tz: TZ },
+  day,
+  wellbeing: 6,
+  stress: null,
+  sleep: 4,
+  abdominalPain: 0,
+  bloating: true,
+  tags,
+  note: 'synthetic note',
+  completedAt: { utc, tz: TZ },
+});
+
+export const syntheticStool = (id: string, utc: string, bristol = 4): StoolEntry => ({
+  id,
+  at: { utc, tz: TZ },
+  bristol,
+  note: null,
 });

@@ -52,6 +52,32 @@ describe('sqlite migrations', () => {
     ).rejects.toThrow();
   });
 
+  it('SK-7 upgrades a version-3 database and seeds the daily tags', async () => {
+    const db = createNodeSqliteDb();
+    await db.exec('PRAGMA foreign_keys = ON');
+    for (const [i, sql] of MIGRATIONS.slice(0, 3).entries()) {
+      await db.exec(sql);
+      await db.exec(`PRAGMA user_version = ${i + 1}`);
+    }
+    const repo = await SqliteRepo.open(db);
+    expect(await repo.listItems('dailyTags')).toHaveLength(9);
+    expect(await repo.listRecords('checkIns')).toEqual([]);
+  });
+
+  it('SK-7 enforces Bristol 1-7 and check-in score ranges in the database itself', async () => {
+    const db = createNodeSqliteDb();
+    await SqliteRepo.open(db);
+    await expect(
+      db.run(`INSERT INTO stool_entry (id, ts_utc, tz, bristol) VALUES ('x', '2026-01-01T00:00:00.000Z', 'UTC', 8)`),
+    ).rejects.toThrow();
+    await expect(
+      db.run(
+        `INSERT INTO check_in (id, ts_utc, tz, day, wellbeing, bloating, tags_json)
+         VALUES ('x', '2026-01-01T00:00:00.000Z', 'UTC', '2026-01-01', 11, 0, '[]')`,
+      ),
+    ).rejects.toThrow();
+  });
+
   it('SK-3 enforces 0-10 scores in the database itself', async () => {
     const db = createNodeSqliteDb();
     await SqliteRepo.open(db);

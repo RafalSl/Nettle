@@ -7,6 +7,9 @@ import { EXTRA_KINDS, LIST_KINDS } from '@/core/model/types';
 import { applyImport, exportBundle, previewImport, type ParsedImport } from '@/core/usecases/exchange';
 import { errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
+import { DEFAULT_PHOTO_SELECTION, type PhotoSelection } from '@/core/export/photoSelection';
+import { PhotoSelectionField } from '@/ui/PhotoSelectionField';
+import { DeleteSection } from '@/ui/DeleteSection';
 import { Button, Heading, Hint, Label, Screen, styles } from '@/ui/components';
 
 function PartSwitch({
@@ -33,6 +36,7 @@ const sumOf = (counts: Record<string, number>, keys: readonly string[]) => keys.
 export default function DataScreen() {
   const { deps, fileShare } = useServices();
   const [exportParts, setExportParts] = useState<Parts>({ records: true, settings: true });
+  const [photoSelection, setPhotoSelection] = useState<PhotoSelection>(DEFAULT_PHOTO_SELECTION);
   const [pending, setPending] = useState<ParsedImport | null>(null);
   const [importParts, setImportParts] = useState<Parts>({ records: true, settings: true });
   // Passwords live only in component state and are cleared after use; they are never stored or logged.
@@ -48,7 +52,7 @@ export default function DataScreen() {
         return;
       }
       const stamp = deps.clock.now().toISOString().slice(0, 10);
-      const bytes = await exportBundle(deps, { parts: exportParts, password: password || undefined });
+      const bytes = await exportBundle(deps, { parts: exportParts, password: password || undefined, photos: photoSelection });
       await fileShare.saveAndShare(`nettle-export-${stamp}.zip`, bytes, 'application/zip');
       setPassword('');
       setRepeat('');
@@ -118,6 +122,7 @@ export default function DataScreen() {
         value={exportParts.settings}
         onChange={(settings) => setExportParts((s) => ({ ...s, settings }))}
       />
+      <PhotoSelectionField onChange={setPhotoSelection} />
       <Label>{t('data.passwordLabel')}</Label>
       <TextInput
         style={styles.input}
@@ -223,6 +228,7 @@ export default function DataScreen() {
           <Button kind="secondary" title={t('common.cancel')} onPress={() => setPending(null)} />
         </>
       )}
+      <DeleteSection />
     </Screen>
   );
 }

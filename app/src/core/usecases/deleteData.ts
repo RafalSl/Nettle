@@ -5,20 +5,27 @@ import type { Deps } from './deps';
 
 async function plan(deps: Deps, selection: DeleteSelection) {
   if (selection.kinds.length === 0) throw new NettleError('nothing_selected');
-  return planDeletion(await deps.repo.snapshot(), selection);
+  const records = await deps.repo.snapshot();
+  return { records, plan: planDeletion(records, selection) };
 }
 
 /** SE-9: how many rows of each kind a deletion would remove, for the confirmation screen. Changes nothing. */
 export async function previewDelete(deps: Deps, selection: DeleteSelection): Promise<Record<RecordKind, number>> {
-  return countPlan(await plan(deps, selection));
+  return countPlan((await plan(deps, selection)).plan);
 }
 
 /**
- * SE-9: delete the selected records. The caller shows the preview, offers an export first and asks for
- * confirmation; this function does not ask. Returns what was removed. Settings (areas, lists) stay.
+ * SE-9: delete the selected records and the files of their photos. The caller shows the preview, offers an
+ * export first and asks for confirmation; this function does not ask. Returns what was removed. Settings
+ * (areas, lists) stay. The records go first, so a failure while removing a file leaves no record pointing at
+ * a missing file.
  */
 export async function deleteData(deps: Deps, selection: DeleteSelection): Promise<Record<RecordKind, number>> {
-  const p = await plan(deps, selection);
+  const { records, plan: p } = await plan(deps, selection);
   await deps.repo.deleteRecords(p);
+  const doomed = new Set(p.photos);
+  for (const photo of records.photos) {
+    if (doomed.has(photo.id)) await deps.photos.remove(photo.file);
+  }
   return countPlan(p);
 }

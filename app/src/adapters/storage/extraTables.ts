@@ -1,5 +1,7 @@
 import type {
   AlcoholEntry,
+  Photo,
+  PhotoEntryKind,
   MedicationCategory,
   MedicationEntry,
   ChangeAction,
@@ -166,6 +168,20 @@ const medication: ExtraTable<MedicationEntry> = {
   }),
 };
 
+const photo: ExtraTable<Photo> = {
+  table: 'photo',
+  columns: ['entry_kind', 'entry_id', 'sensitive', 'file'],
+  toValues: (p) => [p.entryKind, p.entryId, +p.sensitive, p.file],
+  fromRow: (r) => ({
+    id: r.id as string,
+    at: { utc: r.ts_utc as string, tz: r.tz as string },
+    entryKind: r.entry_kind as PhotoEntryKind,
+    entryId: r.entry_id as string,
+    sensitive: !!r.sensitive,
+    file: r.file as string,
+  }),
+};
+
 export const EXTRA_TABLES: { [K in ExtraKind]: ExtraTable<Records[K][number]> } = {
   nailEntries: nail,
   checkIns: checkIn,
@@ -175,4 +191,5 @@ export const EXTRA_TABLES: { [K in ExtraKind]: ExtraTable<Records[K][number]> } 
   reactions: reaction,
   alcoholEntries: alcohol,
   medicationEntries: medication,
+  photos: photo,
 };

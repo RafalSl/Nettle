@@ -15,3 +15,19 @@ export interface FileShare {
   /** null when the user cancels. */
   pickFile(): Promise<Uint8Array | null>;
 }
+
+/**
+ * SK-4, NF-5, SE-7: photos in the app's private storage. Photos never leave it except through an export or a
+ * confirmed LLM run. Keys are opaque file names.
+ */
+export interface PhotoStore {
+  /** Compress an image the user picked or took (NF-5) and copy it into private storage. Returns its key. */
+  saveFromUri(sourceUri: string): Promise<string>;
+  /** Store already compressed JPEG bytes, for import (EX-10). Returns the key. */
+  saveBytes(bytes: Uint8Array): Promise<string>;
+  read(file: string): Promise<Uint8Array>;
+  /** Missing files are ignored. */
+  remove(file: string): Promise<void>;
+  /** A URI the UI can show. */
+  uri(file: string): string;
+}

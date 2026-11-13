@@ -1,4 +1,5 @@
 import { packBundle, unpackBundle } from '../export/bundle';
+import { DEFAULT_PHOTO_SELECTION, planPhotoNames, selectPhotos, type PhotoSelection } from '../export/photoSelection';
 import { toDataJson } from '../export/schema';
 import { NettleError } from '../model/errors';
 import { localDaysToRange, makeStamp } from '../model/time';
@@ -15,6 +16,8 @@ export interface ExportOptions {
   parts?: Parts;
   /** EX-6: when set, the ZIP is AES-256 encrypted. Never stored or logged. */
   password?: string;
+  /** EX-7: which photos to include; the default leaves out sensitive ones. Photos belong to records, so they need `parts.records`. */
+  photos?: PhotoSelection;
 }
 
 /** EX-1: a snapshot of the chosen range as a ZIP with data.json, records, settings or both. */
@@ -28,7 +31,29 @@ export async function exportBundle(deps: Deps, options: ExportOptions = {}): Pro
   const parts = options.parts ?? { records: true, settings: true };
   if (!parts.records && !parts.settings) throw new NettleError('nothing_selected');
   const snapshot = await deps.repo.snapshot(range);
-  return packBundle(toDataJson(snapshot, range, makeStamp(deps.clock), parts), options.password, deps.randomBytes);
+
+  // EX-2, EX-7: a photo is exported when its entry is in the range and the photo selection includes it.
+  const files: Record<string, Uint8Array> = {};
+  snapshot.photos = [];
+  if (parts.records) {
+    const inRange = new Set([...snapshot.skinEntries, ...snapshot.nailEntries].map((e) => e.id));
+    const candidates = (await deps.repo.listRecords('photos')).filter((p) => inRange.has(p.entryId));
+    const areaByEntry = new Map([...snapshot.skinEntries, ...snapshot.nailEntries].map((e) => [e.id, e.areaId]));
+    const chosen = selectPhotos(candidates, options.photos ?? DEFAULT_PHOTO_SELECTION, (p) => areaByEntry.get(p.entryId));
+    const areas = new Map(snapshot.skinAreas.map((a) => [a.id, a]));
+    const names = planPhotoNames(chosen, (p) => areas.get(areaByEntry.get(p.entryId) ?? ''));
+    for (const p of chosen) {
+      const path = names.get(p.id)!;
+      files[path] = await deps.photos.read(p.file);
+      snapshot.photos.push({ ...p, file: path });
+    }
+  }
+  return packBundle(
+    toDataJson(snapshot, range, makeStamp(deps.clock), parts),
+    files,
+    options.password,
+    deps.randomBytes,
+  );
 }
 
 /** Row counts per collection (zero for a collection the file lacks). */
@@ -48,11 +73,13 @@ export interface ImportPreview {
 export interface ParsedImport {
   payload: Payload;
   preview: ImportPreview;
+  /** Reads a photo from the opened ZIP by its path in data.json. Needed when the file has photos. */
+  readPhoto?: (path: string) => Uint8Array | undefined;
 }
 
 /** EX-10: validate (including schema_version) and count before anything is applied. */
 export async function previewImport(deps: Deps, zip: Uint8Array, password?: string): Promise<ParsedImport> {
-  const payload = unpackBundle(zip, password);
+  const { payload, readPhoto } = unpackBundle(zip, password);
   const existing = await deps.repo.existingIds();
   const incoming = {} as PartCounts;
   const duplicates = {} as PartCounts;
@@ -70,6 +97,7 @@ export async function previewImport(deps: Deps, zip: Uint8Array, password?: stri
   for (const kind of LIST_KINDS) tally(kind, payload.settings?.[kind].map((x) => x.id) ?? []);
   return {
     payload,
+    readPhoto,
     preview: { has: { records: !!records, settings: !!payload.settings }, incoming, newRows, duplicates },
   };
 }
@@ -92,7 +120,10 @@ export async function applyImport(
     // Imported records must not point at areas or list items that will not exist.
     const existing = await deps.repo.existingIds();
     const areas = new Set([...existing.skinAreas, ...(payload.settings?.skinAreas ?? []).map((a) => a.id)]);
-    const meals = new Set([...existing.meals, ...payload.records.meals.map((m) => m.id)]);
+    // Replacing records wipes the current meals and entries first, so only the file's own count there.
+    const replacing = choice.mode === 'replace';
+    const kept = <T extends string>(have: Set<T>) => (replacing ? new Set<T>() : have);
+    const meals = new Set([...kept(existing.meals), ...payload.records.meals.map((m) => m.id)]);
     const refs = recordRefs(payload.records as Records);
     for (const id of refs.areas) if (!areas.has(id)) throw new NettleError('import_unknown_area', id);
     for (const kind of LIST_KINDS) {
@@ -100,6 +131,38 @@ export async function applyImport(
       for (const id of refs.items[kind]) if (!known.has(id)) throw new NettleError('import_unknown_item', id);
     }
     for (const id of refs.meals) if (!meals.has(id)) throw new NettleError('import_unknown_meal', id);
+    const skin = new Set([...kept(existing.skinEntries), ...payload.records.skinEntries.map((e) => e.id)]);
+    const nails = new Set([...kept(existing.nailEntries), ...payload.records.nailEntries.map((e) => e.id)]);
+    for (const id of refs.skinEntries) if (!skin.has(id)) throw new NettleError('import_unknown_entry', id);
+    for (const id of refs.nailEntries) if (!nails.has(id)) throw new NettleError('import_unknown_entry', id);
   }
-  await deps.repo.importData(payload, choice.mode);
+
+  // Photos: copy their bytes into private storage first (NF-3: any failure removes what was copied and
+  // leaves the diary untouched), then write the records with the new store keys.
+  const saved: string[] = [];
+  let oldFiles: string[] = [];
+  try {
+    if (payload.records) {
+      const have = (await deps.repo.existingIds()).photos;
+      const keys = new Map<string, string>();
+      for (const photo of payload.records.photos) {
+        if (choice.mode === 'merge' && have.has(photo.id)) continue; // a duplicate is skipped, so is its file
+        const bytes = parsed.readPhoto?.(photo.file);
+        if (!bytes) throw new NettleError('import_missing_photo', photo.file);
+        const key = await deps.photos.saveBytes(bytes);
+        saved.push(key);
+        keys.set(photo.id, key);
+      }
+      payload.records = {
+        ...payload.records,
+        photos: payload.records.photos.map((p) => (keys.has(p.id) ? { ...p, file: keys.get(p.id)! } : p)),
+      };
+      if (choice.mode === 'replace') oldFiles = (await deps.repo.listRecords('photos')).map((p) => p.file);
+    }
+    await deps.repo.importData(payload, choice.mode);
+  } catch (e) {
+    for (const key of saved) await deps.photos.remove(key);
+    throw e;
+  }
+  for (const file of oldFiles) await deps.photos.remove(file);
 }

@@ -23,7 +23,14 @@
       "expo-sqlite",
       "expo-secure-store",
       "expo-sharing",
-      "expo-localization"
+      "expo-localization",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Nettle reads photos you choose to attach to your skin and nail entries. They stay on this device.",
+          "cameraPermission": "Nettle uses the camera to photograph skin and nails for your diary. Photos stay on this device."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

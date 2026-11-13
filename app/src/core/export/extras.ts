@@ -2,6 +2,7 @@ import {
   CHANGE_ACTIONS,
   MEDICATION_CATEGORIES,
   type AlcoholEntry,
+  type Photo,
   type MedicationEntry,
   CHANGE_CATEGORIES,
   EXTRA_KINDS,
@@ -184,6 +185,38 @@ const medication: Codec<MedicationEntry> = {
   }),
 };
 
+/**
+ * SK-4: in data.json `file` is the photo's path inside the ZIP (EX-2); the export code rewrites it from the
+ * store key before writing and the import code turns it back into a store key after reading the bytes.
+ */
+/** Only plain names inside photos/ are accepted, so a crafted file cannot point outside the ZIP. */
+const PHOTO_PATH = /^photos\/[A-Za-z0-9._-]+$/;
+const photoPath = (o: Obj, w: string): string => {
+  const v = str(o, 'file', w);
+  return PHOTO_PATH.test(v) && !v.includes('..') ? v : bad(`${w}.file`);
+};
+
+const photo: Codec<Photo> = {
+  key: 'photos',
+  toJson: (p) => ({
+    id: p.id,
+    utc: p.at.utc,
+    tz: p.at.tz,
+    entry_kind: p.entryKind,
+    entry_id: p.entryId,
+    sensitive: p.sensitive,
+    file: p.file,
+  }),
+  parse: (o, w) => ({
+    id: str(o, 'id', w),
+    at: { utc: utc(o, w), tz: str(o, 'tz', w) },
+    entryKind: oneOf(o, 'entry_kind', ['skinEntry', 'nailEntry'] as const, w),
+    entryId: str(o, 'entry_id', w),
+    sensitive: bool(o, 'sensitive', w),
+    file: photoPath(o, w),
+  }),
+};
+
 export const EXTRA_CODECS: { [K in ExtraKind]: Codec<Records[K][number]> } = {
   nailEntries: nail,
   checkIns: checkIn,
@@ -193,6 +226,7 @@ export const EXTRA_CODECS: { [K in ExtraKind]: Codec<Records[K][number]> } = {
   reactions: reaction,
   alcoholEntries: alcohol,
   medicationEntries: medication,
+  photos: photo,
 };
 
 export { EXTRA_KINDS };

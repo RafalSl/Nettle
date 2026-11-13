@@ -60,11 +60,17 @@ export interface WriteOptions {
   /** When set, every entry is AES-256 encrypted. */
   password?: string;
   randomBytes?: RandomBytes;
+  /** Names for which compression is skipped (already compressed data such as JPEG photos). */
+  stored?: (name: string) => boolean;
 }
 
 export function writeZip(files: Record<string, Uint8Array>, opts: WriteOptions = {}): Uint8Array {
-  const { password, randomBytes } = opts;
-  if (password === undefined) return zipSync(files);
+  const { password, randomBytes, stored } = opts;
+  if (password === undefined) {
+    return zipSync(
+      Object.fromEntries(Object.entries(files).map(([name, data]) => [name, [data, { level: stored?.(name) ? 0 : 6 }]])) as never,
+    );
+  }
   if (password.length < MIN_PASSWORD_LENGTH) throw new NettleError('password_too_short');
   if (!randomBytes) throw new Error('randomBytes is required for encrypted ZIPs');
 
@@ -81,14 +87,15 @@ export function writeZip(files: Record<string, Uint8Array>, opts: WriteOptions =
   for (const name of names) {
     const plain = files[name]!;
     const nameBytes = strToU8(name);
-    const body = deflateSync(plain);
+    const isStored = stored?.(name) ?? false;
+    const body = isStored ? plain : deflateSync(plain);
     const salt = randomBytes(SALT_LEN);
     const { encKey, macKey, verifier } = deriveKeys(password, salt);
     const cipher = ctrXor(encKey, body);
     const mac = hmac(sha1, macKey, cipher).subarray(0, 10);
     const payloadLen = SALT_LEN + 2 + cipher.length + 10;
-    // 0x9901: AE-2, vendor "AE", AES-256, real compression method (deflate).
-    const extra = new Uint8Array([0x01, 0x99, 7, 0, 2, 0, 0x41, 0x45, 3, 8, 0]);
+    // 0x9901: AE-2, vendor "AE", AES-256, real compression method (deflate, or stored).
+    const extra = new Uint8Array([0x01, 0x99, 7, 0, 2, 0, 0x41, 0x45, 3, isStored ? 0 : 8, 0]);
 
     const lh = view(30);
     lh.setUint32(0, 0x04034b50, true);

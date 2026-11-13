@@ -4,7 +4,7 @@ Undecided items only. Decisions go into `docs/requirements.md` (canonical, edite
 
 ## Open
 
-1. **AES export (EX-6): speed on the phone is unmeasured.** Implemented in pure JS and verified against 7-Zip (see `docs/spikes/aes-zip.md`), but Hermes speed for photo-sized exports is unknown. Text-only exports are fine. Measure when photos (SK-4) land, or earlier if an encrypted export of a few MB feels slow.
+1. **AES export (EX-6): speed on the phone is unmeasured.** Implemented in pure JS and verified against 7-Zip (see `docs/spikes/aes-zip.md`). Photos are now exported (stored, not deflated, so only AES and the MAC cost time); V8 does about 26 MiB/s, Hermes is unmeasured. Measure with a real export of 30 or more photos, encrypted, on the phone.
 2. **Polish strings: review at the end of the project.** First draft lives in `app/src/i18n/pl.json` (English in `en.json`).
 3. **Unused template dependencies: prune when moving to a standalone build** (reanimated, gesture-handler, expo-image, expo-glass-effect, `@expo/ui`, ...). No effect in Expo Go.
 
@@ -13,10 +13,6 @@ Undecided items only. Decisions go into `docs/requirements.md` (canonical, edite
 ## Accepted
 
 - **`expo-sqlite` wrapper stays untested in code.** Storage logic is tested through the `SqlDb` seam on Node's built-in `node:sqlite`; the ~20-line wrapper `app/src/adapters/storage/expoSqliteDb.ts` is verified on a phone only.
-
-## Built in core, screen missing
-
-- **Bulk delete (SE-9):** `previewDelete` and `deleteData` work by record kind and date range (a deleted meal takes its reactions along; settings stay). Missing: the screen with the confirmation text (what will be removed, cannot be undone), the export-first offer, and photos once SK-4 exists.
 
 ## Decided, code partly changed
 
@@ -31,3 +27,11 @@ These are in the requirements already; what remains is listed per item.
 - **Newest-wins merge with tombstones** (EX-12, Later): needed only once entries are editable or deletable. The daily check-in is already updated in place, and a merge cannot tell which version is newer; adds modified timestamps and a schema version bump at that point.
 - **One check-in per day is kept by the use case only.** There is no database constraint, so a merge from another phone could add a second check-in for the same day; the newest is shown. Revisit with EX-12.
 - **`schema_version` stays 1 in development.** Exports made before v0.3 (before the new required sections) will not import.
+
+## Photos: to verify on the phone
+
+- **Backup exclusion (SE-7):** photos live in the app's document folder, which iOS backs up. Expo Go gives no way to mark files as excluded from backup; revisit in the standalone build (`isExcludedFromBackup` through a config plugin or native code).
+- **EXIF:** the stored JPEG is re-encoded by `expo-image-manipulator`, which should drop EXIF and location. Not verified; check one photo taken with location on.
+- **Picker behaviour:** `expo-image-picker` permission prompts and multi-select in Expo Go; the permission texts in `app.json` apply to the standalone build only.
+- **Memory:** import and export read photos one at a time, but the whole ZIP is held in memory (about the sum of the photos). Fine for months of daily photos; watch it on a large archive.
+- **Single-photo export selection** (EX-7): the screen offers all, none, not sensitive, or a filter by area and date; picking individual photos has no screen yet (the core supports it).

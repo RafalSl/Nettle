@@ -117,7 +117,13 @@
     "invalid_range": "The date range is not valid.",
     "no_previous_entry": "There is no earlier entry for this area yet.",
     "invalid_amount": "Enter an amount in whole millilitres, above zero.",
-    "empty_name": "Enter a name."
+    "empty_name": "Enter a name.",
+    "unknown_entry": "That entry does not exist.",
+    "unknown_photo": "That photo does not exist.",
+    "import_unknown_entry": "Some photos belong to an entry that is not in the app.",
+    "import_missing_photo": "The ZIP is missing a photo that data.json refers to.",
+    "photo_failed": "The photo could not be saved. Nothing was changed.",
+    "photo_permission_denied": "Photo access was refused. You can allow it in the iPhone settings."
   },
   "today": {
     "title": "Daily check-in",
@@ -242,5 +248,59 @@
   "lists": {
     "dailyTags": "Daily tags",
     "treatments": "Treatments"
+  },
+  "photos": {
+    "camera": "Take photo",
+    "library": "Choose photos",
+    "sensitive": "Sensitive: yes",
+    "notSensitive": "Sensitive: no",
+    "remove": "Remove photo",
+    "removeTitle": "Remove this photo?",
+    "removeBody": "It is deleted from this device and cannot be recovered.",
+    "tapToShow": "Sensitive photo. Tap to show.",
+    "none": "No photos"
+  },
+  "delete": {
+    "title": "Delete data",
+    "hint": "Removes entries from this device. Areas, tags and treatments stay. This cannot be undone, so export first if you are unsure.",
+    "groups": {
+      "food": "Food and intake (meals, reactions, alcohol, medications)",
+      "skin": "Skin and nails (entries, photos, treatments applied)",
+      "health": "Daily check-ins, stool and changes"
+    },
+    "limit": "Only a date range",
+    "from": "From",
+    "to": "To",
+    "button": "Review what will be deleted",
+    "confirmTitle": "Delete these entries?",
+    "confirmBody": "This will permanently delete:\n{{lines}}\n\nThis cannot be undone.",
+    "exportFirst": "Export first",
+    "confirm": "Delete",
+    "done": "Deleted",
+    "nothing": "Nothing matches.",
+    "line": {
+      "meals": "{{n}} meals",
+      "reactions": "{{n}} reactions",
+      "alcoholEntries": "{{n}} alcohol entries",
+      "medicationEntries": "{{n}} medication entries",
+      "skinEntries": "{{n}} skin entries",
+      "nailEntries": "{{n}} nail entries",
+      "photos": "{{n}} photos",
+      "treatmentApplications": "{{n}} treatment applications",
+      "checkIns": "{{n}} check-ins",
+      "stoolEntries": "{{n}} stool entries",
+      "changeEvents": "{{n}} change events"
+    }
+  },
+  "exportPhotos": {
+    "title": "Photos in the export",
+    "hint": "Sensitive photos are left out unless you choose otherwise. The same choice applies to everything in the file.",
+    "non_sensitive": "Not sensitive",
+    "all": "All",
+    "none": "None",
+    "filter": "Choose",
+    "areas": "Only these areas (none selected = all)",
+    "includeSensitive": "Include sensitive photos",
+    "limit": "Only a date range"
   }
 }

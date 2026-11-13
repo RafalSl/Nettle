@@ -117,7 +117,13 @@
     "invalid_range": "Zakres dat jest nieprawidłowy.",
     "no_previous_entry": "Nie ma jeszcze wcześniejszego wpisu dla tego miejsca.",
     "invalid_amount": "Podaj ilość w pełnych mililitrach, większą od zera.",
-    "empty_name": "Wpisz nazwę."
+    "empty_name": "Wpisz nazwę.",
+    "unknown_entry": "Ten wpis nie istnieje.",
+    "unknown_photo": "To zdjęcie nie istnieje.",
+    "import_unknown_entry": "Niektóre zdjęcia należą do wpisu, którego nie ma w aplikacji.",
+    "import_missing_photo": "W pliku ZIP brakuje zdjęcia, do którego odwołuje się data.json.",
+    "photo_failed": "Nie udało się zapisać zdjęcia. Nic nie zmieniono.",
+    "photo_permission_denied": "Odmówiono dostępu do zdjęć. Możesz go zezwolić w ustawieniach iPhone'a."
   },
   "today": {
     "title": "Codzienna kontrola",
@@ -242,5 +248,59 @@
   "lists": {
     "dailyTags": "Tagi dnia",
     "treatments": "Zabiegi"
+  },
+  "photos": {
+    "camera": "Zrób zdjęcie",
+    "library": "Wybierz zdjęcia",
+    "sensitive": "Wrażliwe: tak",
+    "notSensitive": "Wrażliwe: nie",
+    "remove": "Usuń zdjęcie",
+    "removeTitle": "Usunąć to zdjęcie?",
+    "removeBody": "Zostanie usunięte z tego urządzenia i nie da się go odzyskać.",
+    "tapToShow": "Wrażliwe zdjęcie. Dotknij, aby pokazać.",
+    "none": "Brak zdjęć"
+  },
+  "delete": {
+    "title": "Usuń dane",
+    "hint": "Usuwa wpisy z tego urządzenia. Miejsca, tagi i zabiegi zostają. Tego nie da się cofnąć, więc w razie wątpliwości najpierw wyeksportuj.",
+    "groups": {
+      "food": "Jedzenie i przyjmowane substancje (posiłki, reakcje, alkohol, leki)",
+      "skin": "Skóra i paznokcie (wpisy, zdjęcia, zastosowane zabiegi)",
+      "health": "Codzienne kontrole, stolec i zmiany"
+    },
+    "limit": "Tylko zakres dat",
+    "from": "Od",
+    "to": "Do",
+    "button": "Sprawdź, co zostanie usunięte",
+    "confirmTitle": "Usunąć te wpisy?",
+    "confirmBody": "Zostanie trwale usunięte:\n{{lines}}\n\nTego nie da się cofnąć.",
+    "exportFirst": "Najpierw eksportuj",
+    "confirm": "Usuń",
+    "done": "Usunięto",
+    "nothing": "Nic nie pasuje.",
+    "line": {
+      "meals": "posiłki: {{n}}",
+      "reactions": "reakcje: {{n}}",
+      "alcoholEntries": "wpisy o alkoholu: {{n}}",
+      "medicationEntries": "wpisy o lekach: {{n}}",
+      "skinEntries": "wpisy o skórze: {{n}}",
+      "nailEntries": "wpisy o paznokciach: {{n}}",
+      "photos": "zdjęcia: {{n}}",
+      "treatmentApplications": "zastosowane zabiegi: {{n}}",
+      "checkIns": "codzienne kontrole: {{n}}",
+      "stoolEntries": "wpisy o stolcu: {{n}}",
+      "changeEvents": "zmiany: {{n}}"
+    }
+  },
+  "exportPhotos": {
+    "title": "Zdjęcia w eksporcie",
+    "hint": "Wrażliwe zdjęcia są pomijane, chyba że zdecydujesz inaczej. Ten sam wybór dotyczy wszystkiego w pliku.",
+    "non_sensitive": "Niewrażliwe",
+    "all": "Wszystkie",
+    "none": "Brak",
+    "filter": "Wybierz",
+    "areas": "Tylko te miejsca (brak wyboru = wszystkie)",
+    "includeSensitive": "Dołącz wrażliwe zdjęcia",
+    "limit": "Tylko zakres dat"
   }
 }

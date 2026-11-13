@@ -115,6 +115,18 @@ describe('sqlite migrations', () => {
     ).rejects.toThrow();
   });
 
+  it('SK-4 stores photo records and keeps each file name unique', async () => {
+    const db = createNodeSqliteDb();
+    const repo = await SqliteRepo.open(db);
+    const photo = { id: 'p1', at: { utc: '2026-01-01T00:00:00.000Z', tz: 'UTC' }, entryKind: 'skinEntry' as const, entryId: 'e1', sensitive: true, file: 'a.jpg' };
+    await repo.addRecord('photos', photo);
+    expect(await repo.listRecords('photos')).toEqual([photo]);
+    await expect(repo.addRecord('photos', { ...photo, id: 'p2' })).rejects.toThrow(); // same file
+    await expect(
+      db.run(`INSERT INTO photo (id, ts_utc, tz, entry_kind, entry_id, sensitive, file) VALUES ('x', '2026-01-01T00:00:00.000Z', 'UTC', 'meal', 'e', 0, 'b.jpg')`),
+    ).rejects.toThrow();
+  });
+
   it('SK-3 enforces 0-10 scores in the database itself', async () => {
     const db = createNodeSqliteDb();
     await SqliteRepo.open(db);

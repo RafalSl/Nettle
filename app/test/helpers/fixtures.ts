@@ -1,3 +1,4 @@
+import { MemoryPhotoStore } from '../fakes/memoryPhotoStore';
 import type { Deps } from '@/core/usecases/deps';
 import type { CheckIn, Meal, NailEntry, SkinEntry, StoolEntry } from '@/core/model/types';
 import type { StorageRepository } from '@/core/ports/storage';
@@ -12,6 +13,7 @@ export function makeDeps(repo: StorageRepository, now = '2026-01-15T10:00:00.000
     ids: () => `id-${++n}`,
     clock: { now: () => new Date(now), timeZone: () => TZ },
     randomBytes: (n) => crypto.getRandomValues(new Uint8Array(n)),
+    photos: new MemoryPhotoStore(),
   };
 }
 
@@ -51,6 +53,7 @@ export const noExtra = {
   reactions: [],
   alcoholEntries: [],
   medicationEntries: [],
+  photos: [],
 };
 
 /** The user lists (see ListKind) with no items, to complete a Settings literal. */

@@ -175,6 +175,23 @@ export interface MedicationEntry {
   note: string | null;
 }
 
+/** SK-4: photos attach to a skin entry or a nail entry. */
+export type PhotoEntryKind = 'skinEntry' | 'nailEntry';
+
+/**
+ * SK-4, SK-5: a dated photo of one entry. `file` is the key in the photo store (a file in the app's private
+ * storage); in an export it is the path inside the ZIP instead. `sensitive` is set per photo and starts
+ * from the area's default.
+ */
+export interface Photo {
+  id: string;
+  at: Stamp;
+  entryKind: PhotoEntryKind;
+  entryId: string;
+  sensitive: boolean;
+  file: string;
+}
+
 /** What the user logged (EX-1 "records"). */
 export interface Records {
   meals: Meal[];
@@ -187,6 +204,7 @@ export interface Records {
   reactions: Reaction[];
   alcoholEntries: AlcoholEntry[];
   medicationEntries: MedicationEntry[];
+  photos: Photo[];
 }
 
 /** Every record collection, in the order they are listed in `Records`. */
@@ -206,6 +224,7 @@ export const EXTRA_KINDS: readonly ExtraKind[] = [
   'reactions',
   'alcoholEntries',
   'medicationEntries',
+  'photos',
 ];
 
 /**

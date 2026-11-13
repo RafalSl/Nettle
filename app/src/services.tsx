@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { ActivityIndicator, Text, View } from 'react-native';
 import { openExpoSqlite } from '@/adapters/storage/expoSqliteDb';
 import { SqliteRepo } from '@/adapters/storage/sqliteRepo';
+import { expoPhotoStore } from '@/adapters/photos/expoPhotoStore';
 import { expoFileShare } from '@/adapters/share/expoFileShare';
 import type { FileShare } from '@/core/ports/platform';
 import type { Deps } from '@/core/usecases/deps';
@@ -36,6 +37,7 @@ export function ServicesProvider({ children }: { children: ReactNode }) {
           repo,
           ids: randomUUID,
           randomBytes: getRandomBytes,
+          photos: expoPhotoStore,
           clock: { now: () => new Date(), timeZone: () => getCalendars()[0]?.timeZone ?? 'UTC' },
         };
         if (!cancelled) setServices({ deps, fileShare: expoFileShare });

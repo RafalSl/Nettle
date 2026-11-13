@@ -89,6 +89,7 @@ const RAW_RECORDS = {
   reactions: [],
   alcohol_entries: [],
   medication_entries: [],
+  photos: [],
 };
 const RAW_SETTINGS = { skin_areas: [], daily_tags: [], treatments: [] };
 
@@ -295,6 +296,7 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
       reactions: 1,
       alcoholEntries: 1,
       medicationEntries: 1,
+      photos: 0,
       skinAreas: 8,
       dailyTags: 10,
       treatments: 1,
@@ -332,6 +334,7 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
       reactions: 0,
       alcoholEntries: 0,
       medicationEntries: 0,
+      photos: 0,
       skinAreas: 6,
       dailyTags: 9,
       treatments: 0,
@@ -347,6 +350,7 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
       reactions: 1,
       alcoholEntries: 1,
       medicationEntries: 1,
+      photos: 0,
       skinAreas: 2,
       dailyTags: 1,
       treatments: 1,

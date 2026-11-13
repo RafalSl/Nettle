@@ -146,6 +146,21 @@ export const MIGRATIONS: string[] = [
   );
   CREATE INDEX medication_entry_ts ON medication_entry (ts_utc);
   `,
+  // SK-4, SK-5: photo records. entry_id points at a skin_entry or a nail_entry, depending on entry_kind, so
+  // there is no foreign key; the use cases and import check it and deletion removes photos with their entry.
+  `
+  CREATE TABLE photo (
+    id TEXT PRIMARY KEY,
+    ts_utc TEXT NOT NULL,
+    tz TEXT NOT NULL,
+    entry_kind TEXT NOT NULL CHECK (entry_kind IN ('skinEntry', 'nailEntry')),
+    entry_id TEXT NOT NULL,
+    sensitive INTEGER NOT NULL CHECK (sensitive IN (0, 1)),
+    file TEXT NOT NULL UNIQUE
+  );
+  CREATE INDEX photo_ts ON photo (ts_utc);
+  CREATE INDEX photo_entry ON photo (entry_id);
+  `,
 ];
 
 export async function migrate(db: SqlDb): Promise<void> {

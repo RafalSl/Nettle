@@ -11,8 +11,9 @@ export type DeletePlan = Record<RecordKind, string[]>;
 const inRange = (utc: string, r?: DateRange) => (!r?.from || utc >= r.from) && (!r?.to || utc <= r.to);
 
 /**
- * SE-9: which record ids a selection removes. A reaction cannot outlive its meal, so deleting a meal also
- * deletes the reactions linked to it, even when they fall outside the range or `reactions` is not selected.
+ * SE-9: which record ids a selection removes. A reaction cannot outlive its meal and a photo cannot outlive
+ * its entry, so deleting a meal also deletes its reactions and deleting a skin or nail entry also deletes its
+ * photos, even when they fall outside the range or their kind is not selected.
  */
 export function planDeletion(records: Records, selection: DeleteSelection): DeletePlan {
   const plan = Object.fromEntries(RECORD_KINDS.map((k) => [k, [] as string[]])) as DeletePlan;
@@ -25,6 +26,13 @@ export function planDeletion(records: Records, selection: DeleteSelection): Dele
   const reactions = new Set(plan.reactions);
   for (const r of records.reactions) if (meals.has(r.mealId)) reactions.add(r.id);
   plan.reactions = [...reactions];
+  const skin = new Set(plan.skinEntries);
+  const nails = new Set(plan.nailEntries);
+  const photos = new Set(plan.photos);
+  for (const p of records.photos) {
+    if ((p.entryKind === 'skinEntry' ? skin : nails).has(p.entryId)) photos.add(p.id);
+  }
+  plan.photos = [...photos];
   return plan;
 }
 

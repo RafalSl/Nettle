@@ -1,4 +1,4 @@
-import type { Clock, IdGenerator, RandomBytes } from '../ports/platform';
+import type { Clock, IdGenerator, PhotoStore, RandomBytes } from '../ports/platform';
 import type { StorageRepository } from '../ports/storage';
 
 export interface Deps {
@@ -6,4 +6,5 @@ export interface Deps {
   ids: IdGenerator;
   clock: Clock;
   randomBytes: RandomBytes;
+  photos: PhotoStore;
 }

@@ -117,7 +117,13 @@
     "invalid_range": "Zakres dat jest nieprawidłowy.",
     "no_previous_entry": "Nie ma jeszcze wcześniejszego wpisu dla tego miejsca.",
     "invalid_amount": "Podaj ilość w pełnych mililitrach, większą od zera.",
-    "empty_name": "Wpisz nazwę."
+    "empty_name": "Wpisz nazwę.",
+    "unknown_entry": "Ten wpis nie istnieje.",
+    "unknown_photo": "To zdjęcie nie istnieje.",
+    "import_unknown_entry": "Niektóre zdjęcia należą do wpisu, którego nie ma w aplikacji.",
+    "import_missing_photo": "W pliku ZIP brakuje zdjęcia, do którego odwołuje się data.json.",
+    "photo_failed": "Nie udało się zapisać zdjęcia. Nic nie zmieniono.",
+    "photo_permission_denied": "Odmówiono dostępu do zdjęć. Możesz go zezwolić w ustawieniach iPhone'a."
   },
   "today": {
     "title": "Codzienna kontrola",

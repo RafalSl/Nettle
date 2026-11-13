@@ -117,7 +117,13 @@
     "invalid_range": "The date range is not valid.",
     "no_previous_entry": "There is no earlier entry for this area yet.",
     "invalid_amount": "Enter an amount in whole millilitres, above zero.",
-    "empty_name": "Enter a name."
+    "empty_name": "Enter a name.",
+    "unknown_entry": "That entry does not exist.",
+    "unknown_photo": "That photo does not exist.",
+    "import_unknown_entry": "Some photos belong to an entry that is not in the app.",
+    "import_missing_photo": "The ZIP is missing a photo that data.json refers to.",
+    "photo_failed": "The photo could not be saved. Nothing was changed.",
+    "photo_permission_denied": "Photo access was refused. You can allow it in the iPhone settings."
   },
   "today": {
     "title": "Daily check-in",

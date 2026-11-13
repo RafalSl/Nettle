@@ -100,6 +100,10 @@ export async function applyImport(
       for (const id of refs.items[kind]) if (!known.has(id)) throw new NettleError('import_unknown_item', id);
     }
     for (const id of refs.meals) if (!meals.has(id)) throw new NettleError('import_unknown_meal', id);
+    const skin = new Set([...existing.skinEntries, ...payload.records.skinEntries.map((e) => e.id)]);
+    const nails = new Set([...existing.nailEntries, ...payload.records.nailEntries.map((e) => e.id)]);
+    for (const id of refs.skinEntries) if (!skin.has(id)) throw new NettleError('import_unknown_entry', id);
+    for (const id of refs.nailEntries) if (!nails.has(id)) throw new NettleError('import_unknown_entry', id);
   }
   await deps.repo.importData(payload, choice.mode);
 }

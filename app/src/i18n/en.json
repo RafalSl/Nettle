@@ -172,7 +172,24 @@
     "medKindMedication": "Medication",
     "medKindSupplement": "Supplement",
     "medSave": "Save",
-    "logged": "Saved"
+    "logged": "Saved",
+    "changeTitle": "Started or stopped",
+    "changeName": "Name (product, medication or diet)",
+    "changeSave": "Save change",
+    "changeNote": "Note (optional)",
+    "reactionTitle": "Reaction after a meal",
+    "reactionMeal": "Which meal",
+    "reactionNoMeals": "Log a meal first.",
+    "reactionSymptoms": "Symptoms",
+    "reactionOnset": "Onset",
+    "reactionSave": "Save reaction",
+    "reactionUrgent": "Swelling of the face or throat, or trouble breathing, needs urgent medical care. Call emergency services. Do not wait for this app.",
+    "listsTitle": "Edit lists",
+    "rename": "Rename",
+    "archive": "Archive",
+    "restore": "Restore",
+    "listNew": "New name",
+    "archivedList": "Archived"
   },
   "nail": {
     "stages": {
@@ -204,5 +221,26 @@
     "sulphites": "Sulphites",
     "lupin": "Lupin",
     "molluscs": "Molluscs"
+  },
+  "change": {
+    "actions": {
+      "started": "Started",
+      "stopped": "Stopped"
+    },
+    "categories": {
+      "product": "Product",
+      "medication": "Medication",
+      "diet": "Diet"
+    }
+  },
+  "symptoms": {
+    "hives": "Hives",
+    "mouth_tingling": "Lip or mouth tingling",
+    "swelling": "Swelling",
+    "stomach": "Stomach symptoms"
+  },
+  "lists": {
+    "dailyTags": "Daily tags",
+    "treatments": "Treatments"
   }
 }

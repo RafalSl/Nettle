@@ -3,7 +3,7 @@ import pl from '@/i18n/pl.json';
 import { PREDEFINED_AREAS } from '@/core/model/areas';
 import { ERROR_CODES } from '@/core/model/errors';
 import { PREDEFINED_ITEMS } from '@/core/model/lists';
-import { ALLERGENS, LIST_KINDS, NAIL_EXTENTS, NAIL_STAGES } from '@/core/model/types';
+import { ALLERGENS, CHANGE_ACTIONS, CHANGE_CATEGORIES, LIST_KINDS, NAIL_EXTENTS, NAIL_STAGES, SYMPTOMS } from '@/core/model/types';
 
 const keys = (o: object, prefix = ''): string[] =>
   Object.entries(o).flatMap(([k, v]) =>
@@ -31,5 +31,12 @@ describe('i18n (NF-6)', () => {
     for (const a of ALLERGENS) expect(en.allergens).toHaveProperty([a]);
     for (const s of NAIL_STAGES) expect(en.nail.stages).toHaveProperty([s]);
     for (const x of NAIL_EXTENTS) expect(en.nail.extents).toHaveProperty([x]);
+  });
+
+  it('every symptom, change action, change category and list has a translation (IN-12, IN-13)', () => {
+    for (const x of SYMPTOMS) expect(en.symptoms).toHaveProperty([x]);
+    for (const x of CHANGE_ACTIONS) expect(en.change.actions).toHaveProperty([x]);
+    for (const x of CHANGE_CATEGORIES) expect(en.change.categories).toHaveProperty([x]);
+    for (const k of LIST_KINDS) expect(en.lists).toHaveProperty([k]);
   });
 });

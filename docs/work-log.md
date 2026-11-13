@@ -96,3 +96,7 @@ Newest entry last. One short entry per working session or meaningful step: what 
 ## 2026-11-14: alcohol and medications (IN-4, IN-5) (branch feature/alcohol-medications)
 - Two more flat record kinds: `AlcoholEntry` (drink type and whole millilitres, > 0) and `MedicationEntry` (medication or supplement, name, optional free-text dose). Migration 6, JSON `records.alcohol_entries` and `records.medication_entries` (required), use cases `logAlcohol`, `logMedication`, short forms at the top of the More tab with an editable time.
 - Decision: alcohol amount is millilitres of the drink, not units of pure alcohol; the analysis can derive units later if the strength is known. 179 tests pass; not tried on the phone.
+
+## 2026-11-14: change event, reaction and list screens (IN-12, IN-13, IN-6, IN-11) (branch feature/events-reactions-screens)
+- More tab now has: started/stopped (product, medication, diet) with a date, reaction after a meal (pick one of the last five meals, symptoms, onset time) with the urgent-care advice always shown above the form, and add/rename/archive/restore for daily tags and treatments. English and Polish strings; the i18n test also covers symptoms, change values and list names.
+- 180 tests pass, iOS bundle builds; not tried on the phone. The urgent-care wording is my draft and should be read once by you.

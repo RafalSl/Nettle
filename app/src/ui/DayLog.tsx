@@ -25,6 +25,7 @@ export function DayLog({
   onChanged,
   limit,
   onShowAll,
+  highlight,
 }: {
   rows: LogRow[];
   ctx: { areas: SkinArea[]; treatments: ListItem[] };
@@ -32,6 +33,8 @@ export function DayLog({
   onChanged: () => void;
   limit?: number;
   onShowAll?: () => void;
+  /** Ids of entries to tint for a moment (UX-2: the row that was just added). */
+  highlight?: ReadonlySet<string>;
 }) {
   const { deps } = useServices();
   const router = useRouter();
@@ -72,8 +75,9 @@ export function DayLog({
             key={`${row.kind}-${row.id}`}
             accessibilityRole="button"
             accessibilityLabel={`${time} ${title}`}
+            accessibilityHint={highlight?.has(row.id) ? t('day.newEntry') : undefined}
             onPress={() => void onRow(row)}
-            style={({ pressed }) => [{ paddingVertical: 8 }, pressed && { opacity: 0.6 }]}>
+            style={({ pressed }) => [{ paddingVertical: 8 }, highlight?.has(row.id) && { backgroundColor: '#3b82f622', borderRadius: 8, paddingHorizontal: 6 }, pressed && { opacity: 0.6 }]}>
             <Text style={styles.rowText}>{`${time}  ${title}`}</Text>
             {detail ? <Hint>{detail}</Hint> : null}
           </Pressable>

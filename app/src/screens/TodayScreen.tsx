@@ -16,6 +16,9 @@ import { useServices } from '@/services';
 import { DayLog, TODAY_LOG_LIMIT } from '@/ui/DayLog';
 import { Button, Heading, Label, Screen, styles } from '@/ui/components';
 
+/** UX-2: how long a new row stays highlighted. */
+export const HIGHLIGHT_MS = 3000;
+
 /** IN-11: a shortcut chip is disabled this long after a tap so a double tap cannot log twice. */
 const SHORTCUT_LOCK_MS = 3000;
 
@@ -47,6 +50,9 @@ export default function TodayScreen() {
   const [flares, setFlares] = useState<string[]>([]);
   const [backup, setBackup] = useState<{ due: boolean; days: number | null }>({ due: false, days: null });
   const [stoolOpen, setStoolOpen] = useState(false);
+  const [highlight, setHighlight] = useState<Set<string>>(new Set());
+  const seenIds = useRef<{ day: string; ids: Set<string>; loaded: boolean }>({ day: '', ids: new Set(), loaded: false });
+  const highlightTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const [picking, setPicking] = useState(false);
   const [layout, setLayout] = useState(defaultPreferences().quickActions);
   const [editing, setEditing] = useState(false);
@@ -62,7 +68,20 @@ export default function TodayScreen() {
 
   const load = useCallback(() => {
     (async () => {
-      setRows(await dayLog(deps, day));
+      const next = await dayLog(deps, day);
+      // UX-2: an entry that appeared since the last look (a form just saved it) is highlighted for a moment.
+      // The first load of a day highlights nothing.
+      const seen = seenIds.current;
+      if (seen.day === day && seen.loaded) {
+        const fresh = next.filter((r) => !seen.ids.has(r.id)).map((r) => r.id);
+        if (fresh.length > 0) {
+          setHighlight(new Set(fresh));
+          clearTimeout(highlightTimer.current);
+          highlightTimer.current = setTimeout(() => setHighlight(new Set()), HIGHLIGHT_MS);
+        }
+      }
+      seenIds.current = { day, ids: new Set(next.map((r) => r.id)), loaded: true };
+      setRows(next);
       setCtx({ areas: await deps.repo.listAreas(), treatments: await deps.repo.listItems('treatments') });
       setStatus(await dayStatus(deps, day));
       setShortcuts(await treatmentShortcuts(deps));
@@ -72,7 +91,10 @@ export default function TodayScreen() {
     })().catch((e) => Alert.alert(errorMessage(e)));
   }, [deps, day]);
   useFocusEffect(load);
-  useEffect(() => () => timers.current.forEach(clearTimeout), []);
+  useEffect(() => () => {
+    timers.current.forEach(clearTimeout);
+    clearTimeout(highlightTimer.current);
+  }, []);
 
   async function run(action: () => Promise<unknown>) {
     try {
@@ -246,7 +268,7 @@ export default function TodayScreen() {
         </Card>
       )}
 
-      <DayLog rows={rows} ctx={ctx} onChanged={load} limit={TODAY_LOG_LIMIT} onShowAll={() => router.navigate({ pathname: '/review/day', params: { day } })} />
+      <DayLog rows={rows} ctx={ctx} onChanged={load} limit={TODAY_LOG_LIMIT} highlight={highlight} onShowAll={() => router.navigate({ pathname: '/review/day', params: { day } })} />
     </Screen>
   );
 }

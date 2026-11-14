@@ -997,6 +997,21 @@ describe('Review (UX-1, EX-14)', () => {
     expect(hasText(tree, 'Synthetic old meal')).toBe(false);
   });
 
+  it('UX-2 an entry that appears after the first look is highlighted for a moment; the first look highlights nothing', async () => {
+    const deps = nowDeps();
+    await logMeal(deps, { description: 'Synthetic earlier meal', ingredients: [], at: new Date(Date.now() - 3600_000) });
+    const { tree } = await mount(() => require('@/app/(tabs)/today/index'), deps);
+    await flush();
+    const marked = () => tree.root.findAll((n) => n.props.accessibilityHint === en.day.newEntry && typeof n.props.onPress === 'function');
+    expect(hasText(tree, 'Synthetic earlier meal')).toBe(true);
+    expect(marked()).toHaveLength(0);
+    await press(tree, en.day.stool);
+    await press(tree, en.day.stoolType.replace('{{n}}', '4'));
+    await flush();
+    expect(marked()).toHaveLength(1);
+    expect(marked()[0]!.props.accessibilityLabel).toContain(en.log.stool.replace('{{n}}', '4'));
+  });
+
   it('UX-2 Today opens the day given in the route parameter', async () => {
     const deps = nowDeps();
     await logMeal(deps, { description: 'Synthetic old meal', ingredients: [], at: new Date('2026-01-10T08:00:00.000Z') });

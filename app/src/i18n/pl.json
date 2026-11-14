@@ -706,6 +706,7 @@
     "flareEnd": "Koniec rzutu"
   },
   "day": {
+    "newEntry": "Nowy wpis",
     "jump": "Przejdź do daty",
     "previous": "Poprzedni dzień",
     "next": "Następny dzień",

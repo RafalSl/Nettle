@@ -706,6 +706,7 @@
     "flareEnd": "Flare ended"
   },
   "day": {
+    "newEntry": "New entry",
     "jump": "Jump to a date",
     "previous": "Previous day",
     "next": "Next day",

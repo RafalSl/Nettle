@@ -167,3 +167,7 @@ Newest entry last. One short entry per working session or meaningful step: what 
 - **Done:** a timed-out Anthropic request (client timeout, 504 or `timeout_error`) is never retried; connection errors and 408, 409, 429 and 5xx other than 504 are retried at most twice, with a pause that Cancel can interrupt. The analysis screen shows elapsed time and a Cancel button; a cancel stores nothing and shows a note, not an error. The analysis and meal-photo confirmations say Anthropic bills the call separately and a Claude subscription does not cover it (English and Polish). New error codes `llm_cancelled` and `llm_timeout`. Tests for each case; typecheck, lint and 353 tests pass.
 - **Still open under LL-12:** inline photo estimate with Cancel, keep-awake, running card in Review, interrupted state with retry (see open-questions).
 - **Requirements text:** LL-12 now lists the exact retried statuses.
+
+## 2026-11-14: tidy open-questions (branch feature/tidy-open-questions)
+- **Done:** rewrote `docs/open-questions.md` into four parts (open, accepted limits, decided and not built, phone checklist). Removed the duplicated "Accepted" and "Decided" sections, dropped items that are built (reminders, photos, PDF sections, LLM prompt changes) and grouped the remaining work by area. Items are no longer numbered, so older work-log mentions of "item 1" or "item 5" mean the AES speed and merge-keeps-settings entries.
+- **Next:** phone check, then the remaining work in that file.

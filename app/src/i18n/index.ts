@@ -1,6 +1,7 @@
 import { getLocales } from 'expo-localization';
 import { I18n } from 'i18n-js';
 import { NettleError } from '@/core/model/errors';
+import type { ReminderTexts } from '@/core/usecases/reminders';
 import en from './en.json';
 import pl from './pl.json';
 
@@ -50,3 +51,12 @@ export const itemLabelIn = (
   language: 'en' | 'pl',
   item: { id: string; name: string; predefined: boolean; nameOverride: string | null },
 ): string => item.nameOverride ?? (item.predefined ? tIn(language, `tags.${item.id}`) : item.name);
+
+/** SK-9: reminder texts in the app language. They never contain diary data. */
+export function reminderTexts(): ReminderTexts {
+  return {
+    checkIn: { title: t('reminders.text.checkInTitle'), body: t('reminders.text.checkInBody') },
+    nails: { title: t('reminders.text.nailsTitle'), body: t('reminders.text.nailsBody') },
+    backup: { title: t('reminders.text.backupTitle'), body: t('reminders.text.backupBody') },
+  };
+}

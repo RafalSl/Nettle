@@ -16,6 +16,36 @@ Undecided items only. Decisions go into `docs/requirements.md` (canonical, edite
 
 ## Decided, code partly changed
 
+- **Requirements v0.3 and later: what remains.**
+  - Barcode (IN-2, IN-8, IN-9): not started. Needs the Open Food Facts adapter and a scan screen (`expo-camera` or `expo-barcode-scanner`, check Expo Go).
+  - Recent and favorite meals (IN-7): not started.
+  - Timeline per area with photos side by side (SK-8): not started.
+  - Reminders (SK-9) are built; the nail reminder follows nail areas and the weekday numbering is iOS (1 = Sunday).
+  - App lock with Face ID (SE-8): not started (`expo-local-authentication`).
+  - Single-photo export selection and a per-photo LLM selection are core only; the screens offer all, none, non-sensitive and an area and date filter.
+  - "No change" for nail entries, and for all areas at once.
+  - Allergen suggestions from Open Food Facts or the LLM (only the ingredient-text helper exists).
+  - Export "since last export" (EX-11) and a date range picker for the export (core `days` option exists).
+  - Newest-wins merge (EX-12, Later): the daily check-in and photos' sensitive flag are edited in place, and merge cannot tell which version is newer.
+- **One check-in per day is kept by the use case only.** A merge from another phone could add a second one for the same day; the newest is shown. Revisit with EX-12.
+- **`schema_version` stays 1 in development.** Exports made before the current sections will not import.
+- **Anthropic refusal fallback:** not used (needs the beta request shape); a refusal shows a message. Revisit once a real call has worked.
+
+## To verify on the phone (nothing below has run on a device)
+
+- Start-up after the fix; the new tabs; migrations 3 to 12 on the existing database (first launch).
+- Photos: camera and library permission prompts, thumbnails, blur on sensitive photos, EXIF removal, backup exclusion (SE-7: not possible in Expo Go).
+- Export with photos, CSV and PDF: that `expo-print` paginates a long report, renders the inline SVG and images, A4 size; the speed of an AES export with many photos (item 1).
+- AI: a real key and one real analysis and photo-to-ingredients call; check the cost and the answer language (English and Polish).
+- Reminders: permission prompt, a daily reminder at a time a minute away, the weekly and monthly ones by changing the day.
+- Date pickers (check-in day, export photo filter, analysis range), the delete confirmation and "Export first".
+
+## Accepted
+
+- **`expo-sqlite` wrapper stays untested in code.** Storage logic is tested through the `SqlDb` seam on Node's built-in `node:sqlite`; the ~20-line wrapper `app/src/adapters/storage/expoSqliteDb.ts` is verified on a phone only.
+
+## Decided, code partly changed
+
 These are in the requirements already; what remains is listed per item.
 
 - **Requirements v0.3 tracking changes.** Done in core, storage and `data.json` (schema, validation, round trips): IN-6, IN-10 to IN-13, SK-3, SK-7, SK-10, SK-11, EX-1 (records and settings), IN-11. Screens exist for the daily check-in with tags and day complete, stool, nails, treatments, "no change" and allergen chips. Still open:

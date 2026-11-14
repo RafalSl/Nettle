@@ -150,7 +150,8 @@
     "analysis_no_data": "There is nothing logged in that date range.",
     "too_many_photos": "Too many photos for one run. Choose fewer.",
     "flare_already_started": "A flare is already marked as started for this area.",
-    "flare_not_started": "No flare is marked as started for this area."
+    "flare_not_started": "No flare is marked as started for this area.",
+    "notifications_denied": "Notifications are turned off for this app. Allow them in the iPhone settings to get reminders."
   },
   "today": {
     "title": "Daily check-in",
@@ -459,5 +460,32 @@
     "reportLanguage": "Report language",
     "english": "English",
     "polish": "Polish"
+  },
+  "reminders": {
+    "title": "Reminders",
+    "hint": "Reminders are notifications on this phone only. They never contain your entries.",
+    "checkIn": "Daily check-in",
+    "nails": "Weekly nail photo (only while you track nails)",
+    "backup": "Monthly export reminder",
+    "time": "Time",
+    "weekday": "Day of the week",
+    "dayOfMonth": "Day of the month",
+    "weekdays": {
+      "1": "Sun",
+      "2": "Mon",
+      "3": "Tue",
+      "4": "Wed",
+      "5": "Thu",
+      "6": "Fri",
+      "7": "Sat"
+    },
+    "text": {
+      "checkInTitle": "Daily check-in",
+      "checkInBody": "Take a minute to log today.",
+      "nailsTitle": "Nail photos",
+      "nailsBody": "Time to photograph your nails and log how they look.",
+      "backupTitle": "Back up your diary",
+      "backupBody": "Export your diary from the Data tab and keep the file safe."
+    }
   }
 }

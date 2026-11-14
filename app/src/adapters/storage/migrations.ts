@@ -191,6 +191,15 @@ export const MIGRATIONS: string[] = [
   );
   CREATE INDEX flare_marker_ts ON flare_marker (ts_utc);
   `,
+  // EX-13: tombstones of single deleted entries (EN-1). Bulk delete (SE-9) leaves none.
+  `
+  CREATE TABLE tombstone (
+    id TEXT PRIMARY KEY,
+    kind TEXT NOT NULL,
+    deleted_utc TEXT NOT NULL,
+    deleted_tz TEXT NOT NULL
+  );
+  `,
 ];
 
 export async function migrate(db: SqlDb): Promise<void> {

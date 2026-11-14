@@ -271,6 +271,16 @@ export interface Records {
 export type RecordKind = keyof Records;
 
 /**
+ * EX-13: what is left when one entry is deleted (EN-1): its id, its kind and when it was deleted, nothing else.
+ * Kept apart from `Records` so bulk delete (SE-9), which leaves none, and the record codecs are unaffected.
+ */
+export interface Tombstone {
+  id: string;
+  kind: RecordKind;
+  deletedAt: Stamp;
+}
+
+/**
  * Record collections that are flat, dated rows with an `id` and an `at` stamp. Storage, import and export
  * handle them generically; meals and skin entries predate this and have their own methods.
  */

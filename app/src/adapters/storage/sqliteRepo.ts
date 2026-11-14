@@ -15,6 +15,8 @@ import {
   type SkinArea,
   type SkinEntry,
   type Snapshot,
+  type Stamp,
+  type Tombstone,
 } from '@/core/model/types';
 import type { ExistingIds, ImportMode, StorageRepository } from '@/core/ports/storage';
 import { EXTRA_TABLES } from './extraTables';
@@ -272,21 +274,104 @@ export class SqliteRepo implements StorageRepository {
     }));
   }
 
-  async deleteRecords(ids: Partial<Record<RecordKind, string[]>>) {
-    // Reactions point at meals, so flat record tables go first, meals last (their ingredients cascade).
-    const steps: [string, string[] | undefined][] = [
-      ...EXTRA_KINDS.map((k): [string, string[] | undefined] => [EXTRA_TABLES[k].table, ids[k]]),
-      ['skin_entry', ids.skinEntries],
-      ['meal', ids.meals],
-    ];
+  async putMeal(meal: Meal) {
     await this.db.transaction(async () => {
-      for (const [table, list] of steps) {
-        for (let i = 0; i < (list?.length ?? 0); i += 500) {
-          const chunk = list!.slice(i, i + 500);
-          await this.db.run(`DELETE FROM ${table} WHERE id IN (${chunk.map(() => '?').join(', ')})`, chunk);
-        }
+      const [row] = await this.db.all<{ n: number }>('SELECT COUNT(*) AS n FROM meal WHERE id = ?', [meal.id]);
+      if (!row?.n) throw new Error('unknown meal');
+      await this.db.run(
+        'UPDATE meal SET ts_utc = ?, tz = ?, description = ?, allergens_json = ?, note = ? WHERE id = ?',
+        [meal.at.utc, meal.at.tz, meal.description, JSON.stringify(meal.allergens), meal.note, meal.id],
+      );
+      await this.db.run('DELETE FROM meal_ingredient WHERE meal_id = ?', [meal.id]);
+      for (const [i, name] of meal.ingredients.entries()) {
+        await this.db.run('INSERT INTO meal_ingredient (meal_id, position, name) VALUES (?, ?, ?)', [
+          meal.id,
+          i,
+          name,
+        ]);
       }
     });
+  }
+
+  async putSkinEntry(e: SkinEntry) {
+    await this.db.transaction(async () => {
+      const [row] = await this.db.all<{ n: number }>('SELECT COUNT(*) AS n FROM skin_entry WHERE id = ?', [e.id]);
+      if (!row?.n) throw new Error('unknown entry');
+      await this.db.run(
+        `UPDATE skin_entry SET ts_utc = ?, tz = ?, area_id = ?, severity = ?, itch = ?, pain = ?, dryness = ?,
+           scaling = ?, note = ? WHERE id = ?`,
+        [
+          e.at.utc,
+          e.at.tz,
+          e.areaId,
+          e.scores.severity,
+          e.scores.itch,
+          e.scores.pain,
+          e.scores.dryness,
+          e.scores.scaling,
+          e.note,
+          e.id,
+        ],
+      );
+    });
+  }
+
+  /** Table and kind of every record collection, in delete order. */
+  private deleteSteps(): [RecordKind, string][] {
+    // Reactions point at meals, so flat record tables go first, meals last (their ingredients cascade).
+    return [
+      ...EXTRA_KINDS.map((k): [RecordKind, string] => [k, EXTRA_TABLES[k].table]),
+      ['skinEntries', 'skin_entry'],
+      ['meals', 'meal'],
+    ];
+  }
+
+  private async deleteIn(ids: Partial<Record<RecordKind, string[]>>) {
+    for (const [kind, table] of this.deleteSteps()) {
+      const list = ids[kind];
+      for (let i = 0; i < (list?.length ?? 0); i += 500) {
+        const chunk = list!.slice(i, i + 500);
+        await this.db.run(`DELETE FROM ${table} WHERE id IN (${chunk.map(() => '?').join(', ')})`, chunk);
+      }
+    }
+  }
+
+  async deleteRecords(ids: Partial<Record<RecordKind, string[]>>) {
+    await this.db.transaction(() => this.deleteIn(ids));
+  }
+
+  async deleteWithTombstones(ids: Partial<Record<RecordKind, string[]>>, at: Stamp) {
+    await this.db.transaction(async () => {
+      // Only ids that exist get a tombstone, so a repeated delete changes nothing.
+      for (const [kind, table] of this.deleteSteps()) {
+        const list = ids[kind] ?? [];
+        for (let i = 0; i < list.length; i += 500) {
+          const chunk = list.slice(i, i + 500);
+          const found = await this.db.all<{ id: string }>(
+            `SELECT id FROM ${table} WHERE id IN (${chunk.map(() => '?').join(', ')})`,
+            chunk,
+          );
+          for (const { id } of found) {
+            await this.db.run(
+              'INSERT OR REPLACE INTO tombstone (id, kind, deleted_utc, deleted_tz) VALUES (?, ?, ?, ?)',
+              [id, kind, at.utc, at.tz],
+            );
+          }
+        }
+      }
+      await this.deleteIn(ids);
+    });
+  }
+
+  async listTombstones(): Promise<Tombstone[]> {
+    const rows = await this.db.all<{ id: string; kind: string; deleted_utc: string; deleted_tz: string }>(
+      'SELECT * FROM tombstone ORDER BY deleted_utc, id',
+    );
+    return rows.map((r) => ({
+      id: r.id,
+      kind: r.kind as RecordKind,
+      deletedAt: { utc: r.deleted_utc, tz: r.deleted_tz },
+    }));
   }
 
   async snapshot(range?: DateRange): Promise<Snapshot> {

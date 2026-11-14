@@ -15,6 +15,8 @@ import {
   type SkinArea,
   type SkinEntry,
   type Snapshot,
+  type Stamp,
+  type Tombstone,
 } from '@/core/model/types';
 import type { ExistingIds, ImportMode, StorageRepository } from '@/core/ports/storage';
 
@@ -28,6 +30,7 @@ export class MemoryRepo implements StorageRepository {
   private meals = new Map<string, Meal>();
   private areas = new Map<string, SkinArea>();
   private entries = new Map<string, SkinEntry>();
+  private tombstones = new Map<string, Tombstone>();
   private extra = Object.fromEntries(EXTRA_KINDS.map((k) => [k, new Map<string, Records[ExtraKind][number]>()])) as Record<
     ExtraKind,
     Map<string, Records[ExtraKind][number]>
@@ -99,10 +102,32 @@ export class MemoryRepo implements StorageRepository {
     if (areaId !== undefined && !areas.has(areaId)) throw new Error('unknown area');
     if (mealId !== undefined && !meals.has(mealId)) throw new Error('unknown meal');
   }
+  async putMeal(meal: Meal) {
+    if (!this.meals.has(meal.id)) throw new Error('unknown meal');
+    this.meals.set(meal.id, clone(meal));
+  }
+  async putSkinEntry(entry: SkinEntry) {
+    if (!this.entries.has(entry.id)) throw new Error('unknown entry');
+    if (!this.areas.has(entry.areaId)) throw new Error('unknown area');
+    this.entries.set(entry.id, clone(entry));
+  }
   async deleteRecords(ids: Partial<Record<RecordKind, string[]>>) {
     for (const id of ids.meals ?? []) this.meals.delete(id);
     for (const id of ids.skinEntries ?? []) this.entries.delete(id);
     for (const kind of EXTRA_KINDS) for (const id of ids[kind] ?? []) this.extra[kind].delete(id);
+  }
+  async deleteWithTombstones(ids: Partial<Record<RecordKind, string[]>>, at: Stamp) {
+    const has = (kind: RecordKind, id: string) =>
+      kind === 'meals' ? this.meals.has(id) : kind === 'skinEntries' ? this.entries.has(id) : this.extra[kind].has(id);
+    for (const [kind, list] of Object.entries(ids) as [RecordKind, string[]][]) {
+      for (const id of list) if (has(kind, id)) this.tombstones.set(id, { id, kind, deletedAt: clone(at) });
+    }
+    await this.deleteRecords(ids);
+  }
+  async listTombstones(): Promise<Tombstone[]> {
+    return [...this.tombstones.values()]
+      .sort((a, b) => a.deletedAt.utc.localeCompare(b.deletedAt.utc) || a.id.localeCompare(b.id))
+      .map(clone);
   }
 
   async snapshot(range?: DateRange): Promise<Snapshot> {

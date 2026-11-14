@@ -11,6 +11,8 @@ import type {
   SkinArea,
   SkinEntry,
   Snapshot,
+  Stamp,
+  Tombstone,
 } from '../model/types';
 
 export type ImportMode = 'merge' | 'replace';
@@ -45,8 +47,20 @@ export interface StorageRepository {
   putRecord<K extends ExtraKind>(kind: K, record: Records[K][number]): Promise<void>;
   listRecords<K extends ExtraKind>(kind: K, range?: DateRange): Promise<Records[K]>;
 
-  /** SE-9: atomically delete the given records by id (unknown ids are ignored). Areas and lists are untouched. */
+  /** EN-1: replace a meal (and its ingredients) that already exists. Unknown id: throws. */
+  putMeal(meal: Meal): Promise<void>;
+  /** EN-1: replace a skin entry that already exists. Unknown id: throws. */
+  putSkinEntry(entry: SkinEntry): Promise<void>;
+
+  /** SE-9: atomically delete the given records by id (unknown ids are ignored). Areas and lists are untouched. Leaves no tombstones. */
   deleteRecords(ids: Partial<Record<RecordKind, string[]>>): Promise<void>;
+  /**
+   * EN-1, EX-13: atomically delete the given records and store a tombstone for each id that existed
+   * (unknown ids are ignored). `at` is the deletion time.
+   */
+  deleteWithTombstones(ids: Partial<Record<RecordKind, string[]>>, at: Stamp): Promise<void>;
+  /** All tombstones, oldest deletion first. */
+  listTombstones(): Promise<Tombstone[]>;
 
   /** Entries inside the range plus all areas. */
   snapshot(range?: DateRange): Promise<Snapshot>;

@@ -18,7 +18,7 @@ import type {
   ChangeEvent,
 } from '../model/types';
 import type { StorageRepository } from '../ports/storage';
-import { logStool, validCheckInTags, type CheckInInput } from './checkin';
+import { logStool, scoresFor, validCheckInTags, type CheckInInput } from './checkin';
 import type { Deps } from './deps';
 import { applyTreatment, logChangeEvent, logReaction, type ApplyTreatmentInput, type ChangeEventInput, type ReactionInput } from './events';
 import { afterEdit, sameIngredients } from '../model/source';
@@ -163,10 +163,7 @@ export async function editCheckIn(deps: Deps, id: string, input: CheckInInput): 
     id,
     at,
     day,
-    wellbeing: input.wellbeing ?? null,
-    stress: input.stress ?? null,
-    sleep: input.sleep ?? null,
-    abdominalPain: input.abdominalPain ?? null,
+    ...(await scoresFor(deps, input, orig)),
     bloating: input.bloating ?? false,
     tags,
     note: input.note?.trim() || null,

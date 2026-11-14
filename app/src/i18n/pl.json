@@ -591,6 +591,21 @@
       "backupBody": "Wyeksportuj dziennik z zakładki Dane i przechowaj plik w bezpiecznym miejscu."
     }
   },
+  "settings": {
+    "scoresTitle": "Oceny w codziennym podsumowaniu",
+    "scoresHint": "Wyłączona ocena nie jest pytana w podsumowaniu dnia i nie jest zapisywana. Zapisane wartości zostają.",
+    "skinAreas": "Miejsca na skórze",
+    "nailAreas": "Paznokcie",
+    "skinAreaName": "Nowe miejsce lub nowa nazwa wybranego",
+    "nailAreaName": "Nowy paznokieć lub nowa nazwa wybranego",
+    "defaultName": "Nazwa domyślna",
+    "favHint": "Ulubione są na początku podpowiedzi. Dotknij, żeby usunąć.",
+    "favNone": "Brak ulubionych. Oznacz gwiazdką posiłek, napój lub lek przy zapisie.",
+    "favMeals": "Posiłki",
+    "favDrinks": "Napoje",
+    "favMedications": "Leki i suplementy",
+    "favRemove": "Usuń z ulubionych: {{name}}"
+  },
   "nav": {
     "flare": "Rzut",
     "settings": "Ustawienia",
@@ -603,6 +618,8 @@
     "nails": "Paznokcie",
     "reaction": "Reakcja",
     "change": "Start lub stop",
+    "areas": "Miejsca na skórze i paznokcie",
+    "favorites": "Ulubione",
     "logging": "Wpisy",
     "reminders": "Przypomnienia",
     "ai": "Analiza AI",

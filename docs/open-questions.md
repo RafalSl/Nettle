@@ -42,6 +42,7 @@ Requirements and flows are in `docs/requirements.md`, `docs/ux-design.md` and `d
 - Known names (IN-3): `Preferences.suggestions.knownNames` (off by default, in the Suggestions settings); `knownIngredientNames` collects the distinct names from meals and drinks, most used first (up to 150); the meal photo prompt (`ingredients-2`) prefers them, and the confirmation says how many go with the photo. The label scan never uses them.
 - Flares (SK-6, UX-2): More lists "Flare start or end" (`form/flare`, `FlareSection`): pick a skin area, the kind follows the area (start when none is open, end when one is), time and note, Save. The Skin form no longer has flare buttons.
 - Favorite stars (IN-14): the drink and medication forms have a Favorite / Remove favorite button; a drink favorite keeps its amount, alcohol switch, ingredients, tags, barcode and source.
+- Settings screens (SK-2, SK-7, IN-14, UX-6): "Skin and nail areas" (add, rename with override and "Default name", archive, restore), "Favorites" (list and remove), and "Daily check-in scores" in Logging (four switches in `Preferences.checkInScores`, exported with the settings). A switched-off score is not shown in the check-in forms and not recorded: saving keeps what the day already had.
 - Skin and health: unique area names (SK-2), no change for nails and all areas (SK-3), empty-day confirmation (SK-11), reminder taps (SK-9), "Same as yesterday" (SK-7).
 - LLM: elapsed time, Cancel, billing notice, no retry of a timeout, the run in `AnalysisRunner` (survives leaving the screen, interrupted state with retry, keep-awake).
 - Security: app lock (SE-8) with `expo-local-authentication`.
@@ -50,9 +51,9 @@ Requirements and flows are in `docs/requirements.md`, `docs/ux-design.md` and `d
 
 **Not built**
 - *Create forms.* Done: every create form is on `FormModal` (Cancel and Save in the header, Save disabled with what is missing, Discard Changes sheet, a past-day default through the `day` route parameter). Skin and nail entries get their photos from the entry's edit form (the "recent" lists they hung off are gone). The reminder-tap guard (`unsavedForm`) covers them.
-- *Check-in (SK-7).* Built: "Same as yesterday" and a separate "Mark day complete" switch; stool has its own full form behind "Earlier…". Not built: the Settings screen that switches check-in scores off.
+- *Check-in (SK-7).* Built: "Same as yesterday" and a separate "Mark day complete" switch; stool has its own full form behind "Earlier…".
 - *No change buttons (SK-3).* Built on the Skin form (all areas) and the nail form (one nail); the Skin form's single-area button existed.
-- *Settings.* Missing groups and screens: skin and nail areas (rename, archive; only the nail form adds areas), Favorites, the photo options of Privacy and photos, About. Delete data, Replace and bulk delete still use `Alert` and do not offer an export first.
+- *Settings.* Missing groups and screens: the photo options of Privacy and photos, About. Delete data, Replace and bulk delete still use `Alert` and do not offer an export first.
 - *Today.* The highlighted new row, the date jump, the "Earlier…" stool form (it opens the check-in), the first-run empty states beyond text.
 - *Intake details.* Ingredient chips with autocomplete, LLM allergen suggestions, favorites for scanned products, a Polish ingredient text from the database.
 - *Export and import.* A free date range picker for the report and the custom export, "export first" before Replace and Delete data, newest-wins merge (EX-12, Later: needs modified timestamps and a schema bump).

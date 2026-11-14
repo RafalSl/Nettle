@@ -591,6 +591,21 @@
       "backupBody": "Export your diary from the Data tab and keep the file safe."
     }
   },
+  "settings": {
+    "scoresTitle": "Daily check-in scores",
+    "scoresHint": "A score that is off is not asked in the check-in and not recorded. Values already saved stay.",
+    "skinAreas": "Skin areas",
+    "nailAreas": "Nail areas",
+    "skinAreaName": "New or new name of the selected skin area",
+    "nailAreaName": "New or new name of the selected nail",
+    "defaultName": "Default name",
+    "favHint": "Favorites come first in the suggestions. Tap one to remove it.",
+    "favNone": "No favorites yet. Star a meal, drink or medication when you log it.",
+    "favMeals": "Meals",
+    "favDrinks": "Drinks",
+    "favMedications": "Medications and supplements",
+    "favRemove": "Remove favorite {{name}}"
+  },
   "nav": {
     "flare": "Flare",
     "settings": "Settings",
@@ -603,6 +618,8 @@
     "nails": "Nails",
     "reaction": "Reaction",
     "change": "Start or stop",
+    "areas": "Skin and nail areas",
+    "favorites": "Favorites",
     "logging": "Logging",
     "reminders": "Reminders",
     "ai": "AI analysis",

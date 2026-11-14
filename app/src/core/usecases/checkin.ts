@@ -36,6 +36,16 @@ export async function getCheckIn(deps: Deps, day: LocalDay): Promise<CheckIn | n
   return all[0] ?? null; // listRecords is newest first
 }
 
+/**
+ * SK-7: the four scores of a record. A score switched off in Settings is not asked and not recorded, so it keeps
+ * whatever the day's earlier check-in already had (nothing is lost by switching it off).
+ */
+export async function scoresFor(deps: Deps, input: CheckInInput, previous: CheckIn | null): Promise<Pick<CheckIn, 'wellbeing' | 'stress' | 'sleep' | 'abdominalPain'>> {
+  const on = (await deps.repo.getPreferences())?.checkInScores;
+  const pick = (key: (typeof SCORES)[number]): OptionalScore => (on && !on[key] ? (previous?.[key] ?? null) : (input[key] ?? null));
+  return { wellbeing: pick('wellbeing'), stress: pick('stress'), sleep: pick('sleep'), abdominalPain: pick('abdominalPain') };
+}
+
 /** Checks the scores and tag ids of a check-in input and returns the distinct tag ids. */
 export async function validCheckInTags(deps: Deps, input: CheckInInput): Promise<string[]> {
   for (const key of SCORES) {
@@ -66,10 +76,7 @@ export async function saveCheckIn(deps: Deps, input: CheckInInput): Promise<Chec
     id: existing?.id ?? deps.ids(),
     at,
     day,
-    wellbeing: input.wellbeing ?? null,
-    stress: input.stress ?? null,
-    sleep: input.sleep ?? null,
-    abdominalPain: input.abdominalPain ?? null,
+    ...(await scoresFor(deps, input, existing)),
     bloating: input.bloating ?? false,
     tags,
     note: input.note?.trim() || null,

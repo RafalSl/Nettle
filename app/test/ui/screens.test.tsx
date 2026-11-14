@@ -81,6 +81,9 @@ const screens: [string, () => { default: React.ComponentType }][] = [
   ['settings suggestions', () => require('@/app/(tabs)/today/settings/suggestions')],
   ['settings reminders', () => require('@/app/(tabs)/today/settings/reminders')],
   ['settings ai', () => require('@/app/(tabs)/today/settings/ai')],
+  ['settings areas', () => require('@/app/(tabs)/today/settings/areas')],
+  ['settings favorites', () => require('@/app/(tabs)/today/settings/favorites')],
+  ['form flare', () => require('@/app/form/flare')],
   ['settings privacy', () => require('@/app/(tabs)/today/settings/privacy')],
   ['settings data', () => require('@/app/(tabs)/today/settings/data')],
   ['review', () => require('@/app/(tabs)/review/index')],
@@ -312,6 +315,72 @@ describe('screen flows (NF-2, NF-3)', () => {
     expect(await deps.keys.get('anthropic_api_key')).toBe('sk-synthetic-secret');
     expect(hasText(tree, 'sk-synthetic-secret')).toBe(false);
     expect(hasText(tree, en.llm.keySaved)).toBe(true);
+  });
+
+  it('SK-2, SK-10 Settings adds, renames, resets and archives areas, and restores an archived one', async () => {
+    const deps = nowDeps();
+    const { tree } = await mount(() => require('@/app/(tabs)/today/settings/areas'), deps);
+    await flush();
+    await type(tree, en.settings.skinAreaName, 'Synthetic elbow');
+    await press(tree, en.common.add);
+    await flush();
+    expect((await deps.repo.listAreas()).some((a) => a.name === 'Synthetic elbow' && a.kind === 'skin')).toBe(true);
+    await press(tree, 'Synthetic elbow');
+    await type(tree, en.settings.skinAreaName, 'Synthetic wrist');
+    await press(tree, en.more.rename);
+    await flush();
+    expect((await deps.repo.listAreas()).some((a) => a.name === 'Synthetic wrist')).toBe(true);
+    await press(tree, 'Synthetic wrist');
+    await press(tree, en.more.archive);
+    await flush();
+    expect((await deps.repo.listAreas()).find((a) => a.name === 'Synthetic wrist')!.archived).toBe(true);
+    await press(tree, 'Synthetic wrist'); // the archived chip restores it
+    await flush();
+    expect((await deps.repo.listAreas()).find((a) => a.name === 'Synthetic wrist')!.archived).toBe(false);
+    // a predefined area gets an override that "Default name" clears
+    await press(tree, 'Synthetic wrist');
+    await press(tree, 'Behind the ears');
+    await type(tree, en.settings.skinAreaName, 'Synthetic ears');
+    await press(tree, en.more.rename);
+    await flush();
+    expect((await deps.repo.listAreas()).find((a) => a.id === 'area-behind-ears')!.nameOverride).toBe('Synthetic ears');
+    await press(tree, 'Synthetic ears');
+    await press(tree, en.settings.defaultName);
+    await flush();
+    expect((await deps.repo.listAreas()).find((a) => a.id === 'area-behind-ears')!.nameOverride).toBeNull();
+  });
+
+  it('IN-14, UX-6 Settings lists the favorites and removes one with a tap', async () => {
+    const deps = nowDeps();
+    await toggleFavoriteMeal(deps, { description: 'Synthetic rice', ingredients: [], allergens: [], barcode: null, source: { kind: 'typed', edited: false, llm: null } });
+    await toggleFavoriteDrink(deps, { name: 'Synthetic tea', amountMl: 200, alcohol: false, ingredients: [], allergens: [], barcode: null, source: { kind: 'typed', edited: false, llm: null } });
+    const { tree } = await mount(() => require('@/app/(tabs)/today/settings/favorites'), deps);
+    await flush();
+    expect(hasText(tree, '★ Synthetic rice')).toBe(true);
+    expect(hasText(tree, '★ Synthetic tea 200 ml')).toBe(true);
+    await press(tree, en.settings.favRemove.replace('{{name}}', 'Synthetic rice'));
+    await flush();
+    expect(hasText(tree, '★ Synthetic rice')).toBe(false);
+    expect((await deps.repo.getPreferences())!.favorites.meals).toEqual([]);
+    expect((await deps.repo.getPreferences())!.favorites.drinks).toHaveLength(1);
+  });
+
+  it('SK-7 a check-in score switched off in Settings is not asked and not recorded, and what was saved stays', async () => {
+    const deps = nowDeps();
+    await saveCheckIn(deps, { stress: 7, wellbeing: 4 });
+    const settings = await mount(() => require('@/app/(tabs)/today/settings/logging'), deps);
+    await flush();
+    await act(async () => {
+      settings.tree.root.findAll((n) => n.props.accessibilityLabel === en.today.stress && typeof n.props.onValueChange === 'function')[0]!.props.onValueChange(false);
+    });
+    await flush();
+    expect((await deps.repo.getPreferences())!.checkInScores.stress).toBe(false);
+    const form = await mount(() => require('@/app/form/checkin'), deps);
+    await flush();
+    expect(hasText(form.tree, en.today.wellbeing)).toBe(true);
+    expect(hasText(form.tree, en.today.stress)).toBe(false);
+    const saved = await saveCheckIn(deps, { stress: 2, wellbeing: 5 }); // the caller passes a value for the switched-off score
+    expect(saved).toMatchObject({ stress: 7, wellbeing: 5 });
   });
 
   it('LL-9 the AI settings list a model choice per action, defaulting to the first offered model', async () => {

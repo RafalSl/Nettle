@@ -27,6 +27,11 @@ export interface FavoriteMedication {
   dose: string | null;
 }
 
+/** SK-7: the four daily scores of the check-in; each can be switched off in Settings. */
+export const CHECKIN_SCORES = ['wellbeing', 'stress', 'sleep', 'abdominalPain'] as const;
+export type CheckInScore = (typeof CHECKIN_SCORES)[number];
+export type CheckInScoreSettings = Record<CheckInScore, boolean>;
+
 export const WINDOW_DAYS = [7, 14, 30, 60] as const;
 export type WindowDays = (typeof WINDOW_DAYS)[number];
 
@@ -54,6 +59,8 @@ export interface Preferences {
   quickActions: QuickActionLayout;
   /** NF-7: the hour a diary day starts at, 0 to 6 (default midnight). */
   dayStartHour: number;
+  /** SK-7: a score that is off is not asked and not recorded. All on by default. */
+  checkInScores: CheckInScoreSettings;
 }
 
 export const MAX_SUGGESTION_ROWS = 20;
@@ -63,6 +70,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
   suggestions: { rows: 5, windowDays: 30, saveOnTap: false, knownNames: false },
   quickActions: { order: [...QUICK_ACTIONS], hidden: [] },
   dayStartHour: 0,
+  checkInScores: { wellbeing: true, stress: true, sleep: true, abdominalPain: true },
 };
 
 /** A fresh copy of the defaults, so callers can change it freely. */

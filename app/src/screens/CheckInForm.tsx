@@ -10,6 +10,7 @@ import { errorMessage, itemLabel, t } from '@/i18n';
 import { useServices } from '@/services';
 import { chooseAction } from '@/ui/actionSheet';
 import { FormModal, useForm } from '@/ui/FormModal';
+import { useCheckInScores } from '@/ui/useCheckInScores';
 import { Button, Chips, Hint, Label, OptionalScoreStepper, TimeField, styles } from '@/ui/components';
 
 interface Fields {
@@ -35,6 +36,7 @@ export default function CheckInForm() {
   const [at, setAt] = useState<Date | null>(() =>
     typeof dayParam === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dayParam) ? atOnDay(dayParam, deps.clock.now(), deps.clock.timeZone(), deps.dayStart.get()) : null,
   );
+  const scoresOn = useCheckInScores(); // SK-7: a score switched off in Settings is not asked
   const [fields, setFields] = useState<Fields>(EMPTY);
   const [tagList, setTagList] = useState<ListItem[]>([]);
   const [complete, setComplete] = useState(false);
@@ -94,10 +96,9 @@ export default function CheckInForm() {
       <TimeField value={at ?? deps.clock.now()} onChange={(d) => (f.touch(), setAt(d))} />
       <Button kind="secondary" title={t('today.sameAsYesterday')} onPress={() => void sameAsYesterday()} />
       <Hint>{t('today.hint')}</Hint>
-      <OptionalScoreStepper label={t('today.wellbeing')} value={fields.wellbeing} onChange={(v) => set('wellbeing', v)} />
-      <OptionalScoreStepper label={t('today.stress')} value={fields.stress} onChange={(v) => set('stress', v)} />
-      <OptionalScoreStepper label={t('today.sleep')} value={fields.sleep} onChange={(v) => set('sleep', v)} />
-      <OptionalScoreStepper label={t('today.abdominalPain')} value={fields.abdominalPain} onChange={(v) => set('abdominalPain', v)} />
+      {(['wellbeing', 'stress', 'sleep', 'abdominalPain'] as const).filter((k) => scoresOn[k]).map((k) => (
+        <OptionalScoreStepper key={k} label={t(`today.${k}`)} value={fields[k]} onChange={(v) => set(k, v)} />
+      ))}
       <View style={styles.timeRow}>
         <Label>{t('today.bloating')}</Label>
         <Switch value={fields.bloating} onValueChange={(v) => set('bloating', v)} accessibilityLabel={t('today.bloating')} />

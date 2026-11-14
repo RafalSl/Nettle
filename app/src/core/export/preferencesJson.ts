@@ -15,6 +15,12 @@ export function preferencesToJson(p: Preferences): Obj {
     suggestions: { rows: p.suggestions.rows, window_days: p.suggestions.windowDays, save_on_tap: p.suggestions.saveOnTap, known_names: p.suggestions.knownNames },
     quick_actions: { order: [...p.quickActions.order], hidden: [...p.quickActions.hidden] },
     day_start_hour: p.dayStartHour,
+    check_in_scores: {
+      wellbeing: p.checkInScores.wellbeing,
+      stress: p.checkInScores.stress,
+      sleep: p.checkInScores.sleep,
+      abdominal_pain: p.checkInScores.abdominalPain,
+    },
   };
 }
 
@@ -60,6 +66,7 @@ export function parsePreferences(o: Obj, where = 'settings.preferences'): Prefer
   if (typeof rows !== 'number' || !Number.isInteger(rows) || rows < 1 || rows > MAX_SUGGESTION_ROWS) bad(`${where}.suggestions.rows`);
   if (!(WINDOW_DAYS as readonly unknown[]).includes(windowDays)) bad(`${where}.suggestions.window_days`);
 
+  const scores = obj(o, 'check_in_scores', where);
   const qa = obj(o, 'quick_actions', where);
   const order = quickList(qa, 'order', `${where}.quick_actions`);
   const hidden = quickList(qa, 'hidden', `${where}.quick_actions`);
@@ -68,5 +75,11 @@ export function parsePreferences(o: Obj, where = 'settings.preferences'): Prefer
     suggestions: { rows: rows as number, windowDays: windowDays as (typeof WINDOW_DAYS)[number], saveOnTap: bool(sg, 'save_on_tap', `${where}.suggestions`), knownNames: bool(sg, 'known_names', `${where}.suggestions`) },
     quickActions: { order, hidden },
     dayStartHour: isDayStartHour(o.day_start_hour) ? o.day_start_hour : bad(`${where}.day_start_hour`),
+    checkInScores: {
+      wellbeing: bool(scores, 'wellbeing', `${where}.check_in_scores`),
+      stress: bool(scores, 'stress', `${where}.check_in_scores`),
+      sleep: bool(scores, 'sleep', `${where}.check_in_scores`),
+      abdominalPain: bool(scores, 'abdominal_pain', `${where}.check_in_scores`),
+    },
   };
 }

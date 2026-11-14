@@ -356,8 +356,8 @@ describe('screen flows (NF-2, NF-3)', () => {
 
   it('IN-14, UX-6 Settings lists the favorites and removes one with a tap', async () => {
     const deps = nowDeps();
-    await toggleFavoriteMeal(deps, { description: 'Synthetic rice', ingredients: [], allergens: [], barcode: null, source: { kind: 'typed', edited: false, llm: null } });
-    await toggleFavoriteDrink(deps, { name: 'Synthetic tea', amountMl: 200, alcohol: false, ingredients: [], allergens: [], barcode: null, source: { kind: 'typed', edited: false, llm: null } });
+    await toggleFavoriteMeal(deps, { description: 'Synthetic rice', ingredients: [], allergens: [], barcode: null, source: { kind: 'typed', edited: false, llm: null, aiTags: false } });
+    await toggleFavoriteDrink(deps, { name: 'Synthetic tea', amountMl: 200, alcohol: false, ingredients: [], allergens: [], barcode: null, source: { kind: 'typed', edited: false, llm: null, aiTags: false } });
     const { tree } = await mount(() => require('@/app/(tabs)/today/settings/favorites'), deps);
     await flush();
     expect(hasText(tree, '★ Synthetic rice')).toBe(true);
@@ -1181,7 +1181,7 @@ describe('Meal form (IN-1, IN-7, IN-10, IN-14, UX-3)', () => {
     for (const [i, name] of ['Synthetic eggs', 'Synthetic rice', 'Synthetic ricotta'].entries()) {
       await logMeal(deps, { description: name, ingredients: [], at: new Date(Date.now() - (i + 1) * 3600_000) });
     }
-    await toggleFavoriteMeal(deps, { description: 'Synthetic rice', ingredients: [], allergens: [], barcode: null, source: { kind: 'typed', edited: false, llm: null } });
+    await toggleFavoriteMeal(deps, { description: 'Synthetic rice', ingredients: [], allergens: [], barcode: null, source: { kind: 'typed', edited: false, llm: null, aiTags: false } });
     const { tree } = await mount(meal, deps);
     await flush();
     const labels = () => [...new Set(tree.root.findAll((n) => n.props.accessibilityRole === 'button' && typeof n.props.accessibilityLabel === 'string' && n.props.accessibilityLabel.startsWith('Synthetic')).map((n) => n.props.accessibilityLabel as string))];
@@ -1343,7 +1343,7 @@ describe('Alcohol and medication suggestions (IN-14, UX-5)', () => {
   it('IN-14 favorites come first, even without history', async () => {
     const deps = nowDeps();
     await logDrink(deps, { name: 'Synthetic beer', amountMl: 500, at: at(10) });
-    await toggleFavoriteDrink(deps, { name: 'Synthetic wine', amountMl: 150, alcohol: true, ingredients: [], allergens: [], barcode: null, source: { kind: 'typed', edited: false, llm: null } });
+    await toggleFavoriteDrink(deps, { name: 'Synthetic wine', amountMl: 150, alcohol: true, ingredients: [], allergens: [], barcode: null, source: { kind: 'typed', edited: false, llm: null, aiTags: false } });
     const { tree } = await mount(alcohol, deps);
     await flush();
     const labels = [...new Set(tree.root.findAll((n) => n.props.accessibilityRole === 'button' && /ml$/.test(n.props.accessibilityLabel ?? '')).map((n) => n.props.accessibilityLabel as string))];
@@ -1709,7 +1709,7 @@ describe('Inline photo estimate (IN-3, LL-12, IN-10)', () => {
     });
     await flush();
     const saved = (await deps.repo.listMeals())[0]!;
-    expect(saved).toMatchObject({ ingredients: ['mleko (3,2%)', 'cukier'], allergens: ['milk', 'peanuts'], source: { kind: 'label_scan', edited: false, llm: { model: 'fake-model', promptVersion: 'label-1' } } });
+    expect(saved).toMatchObject({ ingredients: ['mleko (3,2%)', 'cukier'], allergens: ['milk', 'peanuts'], source: { kind: 'label_scan', edited: false, llm: { model: 'fake-model', promptVersion: 'label-1' }, aiTags: true } });
   });
 
   it('IN-15, LL-12 cancelling the label scan, or dismissing its answer, deletes the temporary photo and stores nothing', async () => {
@@ -1873,7 +1873,7 @@ describe('Barcode in the meal form (IN-2, IN-8, IN-9, IN-10)', () => {
     expect(milk()).toBe(true);
     await header();
     await flush();
-    expect(await deps.repo.listMeals()).toMatchObject([{ description: 'Synthetic yoghurt', ingredients: ['milk', 'cultures'], allergens: ['milk'], barcode: '5900000000008', source: { kind: 'open_food_facts', edited: false, llm: null } }]);
+    expect(await deps.repo.listMeals()).toMatchObject([{ description: 'Synthetic yoghurt', ingredients: ['milk', 'cultures'], allergens: ['milk'], barcode: '5900000000008', source: { kind: 'open_food_facts', edited: false, llm: null, aiTags: false } }]);
   });
 
   it('IN-2 a Polish translation from the database is shown with a warning to check it against the pack', async () => {
@@ -1894,7 +1894,7 @@ describe('Barcode in the meal form (IN-2, IN-8, IN-9, IN-10)', () => {
     await type(tree, en.meal.ingredientPlaceholder, 'oat milk');
     await header();
     await flush();
-    expect((await deps.repo.listMeals())[0]!.source).toEqual({ kind: 'open_food_facts', edited: true, llm: null });
+    expect((await deps.repo.listMeals())[0]!.source).toEqual({ kind: 'open_food_facts', edited: true, llm: null, aiTags: false });
   });
 
   it('IN-2 a code the diary already knows is filled from history without asking the database', async () => {

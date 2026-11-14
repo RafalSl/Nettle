@@ -21,6 +21,7 @@ import {
 } from '@/core/model/types';
 import type { ExistingIds, ImportMode, ImportTombstones, StorageRepository } from '@/core/ports/storage';
 import { EXTRA_TABLES } from './extraTables';
+import { normalizeSource } from '@/core/model/source';
 import { migrate } from './migrations';
 import type { SqlDb, SqlValue } from './sqlDb';
 
@@ -225,7 +226,7 @@ export class SqliteRepo implements StorageRepository {
       ingredients: byMeal.get(r.id) ?? [],
       allergens: JSON.parse(r.allergens_json) as Meal['allergens'],
       barcode: r.barcode,
-      source: JSON.parse(r.source_json) as Meal['source'],
+      source: normalizeSource(JSON.parse(r.source_json)),
       note: r.note,
     }));
   }

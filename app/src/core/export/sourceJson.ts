@@ -7,6 +7,7 @@ export const sourceToJson = (s: IngredientSource): Obj => ({
   kind: s.kind,
   edited: s.edited,
   llm: s.llm ? { model: s.llm.model, at: s.llm.at, prompt_version: s.llm.promptVersion } : null,
+  ai_tags: s.aiTags,
 });
 
 /** Parses `o.source` (required) and checks that the LLM details exist exactly for the LLM sources. */
@@ -25,7 +26,8 @@ export function parseSource(o: Obj, where: string): IngredientSource {
     llm = { model: str(s.llm, 'model', `${w}.llm`), at, promptVersion: str(s.llm, 'prompt_version', `${w}.llm`) };
   } else if (s.llm !== null && s.llm !== undefined) return bad(`${w}.llm`);
   if (kind === 'typed' && edited) return bad(`${w}.edited`);
-  return { kind, edited, llm };
+  const aiTags = s.ai_tags === undefined ? false : bool(s, 'ai_tags', w);
+  return { kind, edited, llm, aiTags };
 }
 
 /** The barcode of an entry: digits only, or null. */

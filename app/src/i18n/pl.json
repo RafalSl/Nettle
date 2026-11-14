@@ -558,7 +558,7 @@
     "summaryEdited": "poprawione przez osobę po napisaniu",
     "aiMark": "AI",
     "aiMarkEdited": "AI, poprawione",
-    "aiMarkLegend": "[AI]: składniki odczytał model AI ze zdjęcia, a osoba sprawdziła je i potwierdziła przed zapisem. [AI, poprawione]: osoba zmieniła je później.",
+    "aiMarkLegend": "[AI] przy składnikach: odczytał je model AI ze zdjęcia, a osoba sprawdziła je i potwierdziła przed zapisem. [AI, poprawione]: osoba zmieniła je później. [AI] przy alergenach: tagi zasugerował model AI, a osoba je zaznaczyła.",
     "reactions": "Reakcje po posiłkach",
     "onset": "Początek",
     "symptoms": "Objawy",

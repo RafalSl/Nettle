@@ -18,9 +18,14 @@ export interface IngredientSource {
   edited: boolean;
   /** Only for the two LLM sources (`label_scan`, `photo_estimate`). */
   llm: LlmProvenance | null;
+  /** The allergen tags were selected from an AI suggestion (label scan or allergen suggestion), whatever the ingredients' source. */
+  aiTags: boolean;
 }
 
-export const typedSource = (): IngredientSource => ({ kind: 'typed', edited: false, llm: null });
+export const typedSource = (): IngredientSource => ({ kind: 'typed', edited: false, llm: null, aiTags: false });
+
+/** A saved source from before `aiTags` existed has none. */
+export const normalizeSource = (s: Omit<IngredientSource, 'aiTags'> & { aiTags?: boolean }): IngredientSource => ({ ...s, aiTags: s.aiTags === true });
 
 /** The label scan and the photo estimate are AI-derived (EX-4 marks them). */
 export const isAiSource = (s: IngredientSource): boolean => s.kind === 'label_scan' || s.kind === 'photo_estimate';

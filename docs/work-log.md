@@ -325,3 +325,6 @@ Newest entry last. One short entry per working session or meaningful step: what 
 
 ## 2026-11-14: allergen suggestion cache (branch feature/allergen-cache)
 - **Done:** IN-10. The allergen prompt (`allergens-2`) answers per ingredient; each answer is saved on the phone (not exported, cleared with the AI data) so a name is asked once. The confirmation lists only the names that will be sent. 636 tests pass.
+
+## 2026-11-14: AI marks in exports (branch feature/ai-marks)
+- **Done:** IN-16, EX-4, EX-5, LL-4. Allergen tags chosen from an AI suggestion are marked (`aiTags` on the source); data.json, the meals and drinks CSV, the PDF and the analysis input all say what is AI-derived. 638 tests pass.

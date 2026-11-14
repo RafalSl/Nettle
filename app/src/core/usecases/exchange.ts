@@ -1,6 +1,6 @@
 import { packBundle, unpackBundle } from '../export/bundle';
 import { strToU8 } from 'fflate';
-import { csvPath, toCsv } from '../export/csv';
+import { csvPath, flattenSource, toCsv } from '../export/csv';
 import { buildReportHtml, type ReportInput } from '../export/report';
 import { bytesToBase64 } from '../util/base64';
 import { DEFAULT_PHOTO_SELECTION, planPhotoNames, selectPhotos, type PhotoSelection } from '../export/photoSelection';
@@ -79,7 +79,7 @@ export async function exportBundle(deps: Deps, options: ExportOptions = {}): Pro
   if (options.csv) {
     for (const section of [data.records, data.settings]) {
       for (const [name, rows] of Object.entries(section ?? {})) {
-        if (Array.isArray(rows)) files[csvPath(name)] = strToU8(toCsv(rows as Record<string, never>[]));
+        if (Array.isArray(rows)) files[csvPath(name)] = strToU8(toCsv(name === 'meals' || name === 'drinks' ? (rows as Record<string, unknown>[]).map(flattenSource) : (rows as Record<string, never>[])));
       }
     }
   }

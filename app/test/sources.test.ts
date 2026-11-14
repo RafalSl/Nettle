@@ -7,14 +7,14 @@ import { MemoryRepo } from './fakes/memoryRepo';
 import { makeDeps } from './helpers/fixtures';
 
 const llm = { model: 'synthetic-model', at: '2026-01-01T00:00:00.000Z', promptVersion: 'ingredients-2' };
-const photo = { kind: 'photo_estimate' as const, edited: false, llm };
+const photo = { kind: 'photo_estimate' as const, edited: false, llm, aiTags: false };
 
 describe('source of ingredients (IN-16)', () => {
   it('IN-16 a new entry is typed unless it says otherwise, and a source must be consistent', async () => {
     const deps = makeDeps(new MemoryRepo());
     expect((await logMeal(deps, { description: 'Synthetic', ingredients: [] })).source).toEqual(typedSource());
     const bad = (s: object) => logMeal(deps, { description: 'x', ingredients: [], source: s as never });
-    for (const s of [{ kind: 'photo_estimate', edited: false, llm: null }, { kind: 'typed', edited: false, llm }, { kind: 'typed', edited: true, llm: null }, { kind: 'gps', edited: false, llm: null }]) {
+    for (const s of [{ kind: 'photo_estimate', edited: false, llm: null, aiTags: false }, { kind: 'typed', edited: false, llm }, { kind: 'typed', edited: true, llm: null, aiTags: false }, { kind: 'gps', edited: false, llm: null, aiTags: false }]) {
       await expect(bad(s)).rejects.toBeInstanceOf(NettleError);
     }
   });
@@ -29,14 +29,14 @@ describe('source of ingredients (IN-16)', () => {
     expect(changed.source).toEqual({ ...photo, edited: true });
     const typed = await logMeal(deps, { description: 'Typed', ingredients: ['a'] });
     expect((await editMeal(deps, typed.id, { description: 'Typed', ingredients: ['b'] })).source).toEqual(typedSource());
-    const drink = await logDrink(deps, { name: 'Synthetic tea', amountMl: 200, allergens: [], source: { kind: 'open_food_facts', edited: false, llm: null }, barcode: '5900000000008' });
-    expect((await editDrink(deps, drink.id, { name: 'Synthetic tea', amountMl: 200, allergens: ['milk'] })).source).toEqual({ kind: 'open_food_facts', edited: true, llm: null });
+    const drink = await logDrink(deps, { name: 'Synthetic tea', amountMl: 200, allergens: [], source: { kind: 'open_food_facts', edited: false, llm: null, aiTags: false }, barcode: '5900000000008' });
+    expect((await editDrink(deps, drink.id, { name: 'Synthetic tea', amountMl: 200, allergens: ['milk'] })).source).toEqual({ kind: 'open_food_facts', edited: true, llm: null, aiTags: false });
   });
 
   it('IN-16 helpers: tag order does not matter, ingredient order does', () => {
     expect(sameIngredients({ ingredients: ['a', 'b'], allergens: ['milk', 'eggs'] }, { ingredients: ['a', 'b'], allergens: ['eggs', 'milk'] })).toBe(true);
     expect(sameIngredients({ ingredients: ['a', 'b'], allergens: [] }, { ingredients: ['b', 'a'], allergens: [] })).toBe(false);
     expect(afterEdit(typedSource(), true)).toEqual(typedSource());
-    expect(() => assertSource({ kind: 'label_scan', edited: false, llm })).not.toThrow();
+    expect(() => assertSource({ kind: 'label_scan', edited: false, llm, aiTags: false })).not.toThrow();
   });
 });

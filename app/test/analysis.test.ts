@@ -73,12 +73,16 @@ describe('buildAnalysisInput (LL-2, LL-3, LL-4)', () => {
     const deps = makeDeps(repo);
     const llm = { model: 'm', at: '2026-01-10T00:00:00.000Z', promptVersion: 'p' };
     const at = new Date('2026-01-12T10:00:00Z');
-    await logMeal(deps, { description: 'Synthetic a', ingredients: ['x'], source: { kind: 'photo_estimate', edited: true, llm }, at });
+    await logMeal(deps, { description: 'Synthetic a', ingredients: ['x'], source: { kind: 'photo_estimate', edited: true, llm, aiTags: false }, at });
     await logMeal(deps, { description: 'Synthetic b', ingredients: ['y'], at });
     const data = JSON.parse(buildAnalysisInput(await repo.snapshot(), '2026-01-10', '2026-01-14').json);
     const meals = data.days.flatMap((d: { meals?: { description: string }[] }) => d.meals ?? []);
     expect(meals.find((m: { description: string }) => m.description === 'Synthetic a').ingredients_source).toBe('photo_estimate (edited by the user)');
     expect(meals.find((m: { description: string }) => m.description === 'Synthetic b').ingredients_source).toBeUndefined();
+    const tagged = await logMeal(deps, { description: 'Synthetic c', ingredients: ['z'], source: { kind: 'typed', edited: false, llm: null, aiTags: true }, at });
+    expect(tagged.source.aiTags).toBe(true);
+    const again = JSON.parse(buildAnalysisInput(await repo.snapshot(), '2026-01-10', '2026-01-14').json).days.flatMap((d: { meals?: { description: string }[] }) => d.meals ?? []);
+    expect(again.find((m: { description: string }) => m.description === 'Synthetic c').allergens_source).toContain('ai_suggestion');
   });
 
   it('LL-2 builds a timeline by local day with local times, areas, treatments and reactions by name', async () => {

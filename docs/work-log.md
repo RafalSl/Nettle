@@ -322,3 +322,6 @@ Newest entry last. One short entry per working session or meaningful step: what 
 ## 2026-11-14: Polish ingredient text (branch feature/polish-ingredients)
 - **Done:** IN-2. Open Food Facts lookups prefer `ingredients_text_pl`; a translation (product not entered in Polish) carries a warning on the meal and drink forms. 633 tests pass.
 - **Next:** cache of AI allergen suggestions.
+
+## 2026-11-14: allergen suggestion cache (branch feature/allergen-cache)
+- **Done:** IN-10. The allergen prompt (`allergens-2`) answers per ingredient; each answer is saved on the phone (not exported, cleared with the AI data) so a name is asked once. The confirmation lists only the names that will be sent. 636 tests pass.

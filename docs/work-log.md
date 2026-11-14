@@ -332,3 +332,6 @@ Newest entry last. One short entry per working session or meaningful step: what 
 ## 2026-11-14: photo options and About (branch feature/settings-photos-about)
 - **Done:** SK-5, UX-6. Per-area "sensitive by default" switch, a photos paragraph in Privacy, and an About screen. 640 tests pass.
 - **Next:** highlighted new row and the "Earlier…" stool form on Today.
+
+## 2026-11-14: highlighted new row (branch feature/new-row-highlight)
+- **Done:** UX-2. New rows on Today are tinted for 3 seconds. The "Earlier…" stool form was already built; the open-questions note was stale and is fixed. 641 tests pass.

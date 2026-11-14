@@ -7,8 +7,8 @@ import { EXTRA_KINDS, LIST_KINDS } from '@/core/model/types';
 import { markExported, presetOptions } from '@/core/usecases/backup';
 import { applyImport, exportBundle, previewImport, type ExportOptions, type ParsedImport } from '@/core/usecases/exchange';
 import { areaLabelIn, currentLanguage, errorMessage, itemLabelIn, t, tIn } from '@/i18n';
-import { chooseAction } from '@/ui/actionSheet';
 import { useServices } from '@/services';
+import { confirmWithExport, exportEverything } from '@/ui/exportFirst';
 import { DEFAULT_PHOTO_SELECTION, type PhotoSelection } from '@/core/export/photoSelection';
 import { PhotoSelectionField } from '@/ui/PhotoSelectionField';
 import { DeleteSection } from '@/ui/DeleteSection';
@@ -128,12 +128,14 @@ export default function DataScreen() {
 
   /** UX-9: replacing is destructive, so it asks in an action sheet with Cancel last. */
   async function confirmReplace() {
-    const choice = await chooseAction({
+    const go = await confirmWithExport({
       title: t('data.replaceConfirmTitle'),
       message: t('data.replaceConfirmBody'),
-      actions: [{ label: t('data.replace'), destructive: true }],
+      action: t('data.replace'),
+      exportNow: () => exportEverything(deps, fileShare),
+      onExportError: (e) => Alert.alert(errorMessage(e)),
     });
-    if (choice === 0) await apply('replace');
+    if (go) await apply('replace');
   }
 
   const p = pending?.preview;

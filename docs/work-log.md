@@ -304,6 +304,10 @@ Newest entry last. One short entry per working session or meaningful step: what 
 - **Next:** Settings screens (areas, favorites, check-in scores).
 
 ## 2026-11-14: settings screens (branch feature/settings-screens)
-- **Done:** SK-2, SK-7, IN-14, UX-6. Settings gained "Skin and nail areas", "Favorites" and, in Logging, the four check-in score switches (`Preferences.checkInScores`, required in `data.json`). `scoresFor` keeps the stored value of a switched-off score, so nothing is lost. 628 tests pass.
+- **Done:** SK-2, SK-7, IN-14, UX-6. Settings gained "Skin and nail areas", "Favorites" and, in Logging, the four check-in score switches (`Preferences.checkInScores`, required in `data.json`). `scoresFor` keeps the stored value of a switched-off score, so nothing is lost. 622 tests pass.
 - **Left in Settings:** the photo options of Privacy and photos, and About.
 - **Next:** "export first" before Replace and Delete data.
+
+## 2026-11-14: export first before Replace and Delete data (branch feature/export-first)
+- **Done:** UX-6, UX-9, SE-9, EX-10. Replace and Delete data are action sheets with "Export first" (a full backup through the share sheet, then the sheet asks again); Delete data asks a second time. 625 tests pass.
+- **Next:** Today date jump.

@@ -5,9 +5,10 @@ import { DELETE_GROUPS, DELETE_GROUP_IDS, type DeleteGroup } from '@/core/model/
 import { localDay, localDaysToRange } from '@/core/model/time';
 import type { RecordKind } from '@/core/model/types';
 import { deleteData, previewDelete } from '@/core/usecases/deleteData';
-import { exportBundle } from '@/core/usecases/exchange';
 import { errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
+import { confirmDestructive } from '@/ui/actionSheet';
+import { confirmWithExport, exportEverything } from '@/ui/exportFirst';
 import { Button, Chips, Heading, Hint, Label, styles } from '@/ui/components';
 
 /** SE-9: delete by entry type and date range, with a confirmation that lists the counts and offers an export first. */
@@ -36,33 +37,19 @@ export function DeleteSection() {
         Alert.alert(t('delete.nothing'));
         return;
       }
-      Alert.alert(t('delete.confirmTitle'), t('delete.confirmBody', { lines: lines.join('\n') }), [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('delete.exportFirst'),
-          onPress: async () => {
-            try {
-              const stamp = deps.clock.now().toISOString().slice(0, 10);
-              await fileShare.saveAndShare(`nettle-export-${stamp}.zip`, await exportBundle(deps), 'application/zip');
-            } catch (e) {
-              Alert.alert(errorMessage(e));
-            }
-          },
-        },
-        {
-          text: t('delete.confirm'),
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteData(deps, sel);
-              setGroups(new Set());
-              Alert.alert(t('delete.done'));
-            } catch (e) {
-              Alert.alert(errorMessage(e));
-            }
-          },
-        },
-      ]);
+      // SE-9, UX-6: an action sheet that lists the counts and offers an export first, then a second confirmation.
+      const go = await confirmWithExport({
+        title: t('delete.confirmTitle'),
+        message: t('delete.confirmBody', { lines: lines.join('\n') }),
+        action: t('delete.confirm'),
+        exportNow: () => exportEverything(deps, fileShare),
+        onExportError: (e) => Alert.alert(errorMessage(e)),
+      });
+      if (!go) return;
+      if (!(await confirmDestructive({ title: t('delete.secondTitle'), message: t('delete.secondBody'), action: t('delete.secondConfirm') }))) return;
+      await deleteData(deps, sel);
+      setGroups(new Set());
+      Alert.alert(t('delete.done'));
     } catch (e) {
       Alert.alert(errorMessage(e));
     }

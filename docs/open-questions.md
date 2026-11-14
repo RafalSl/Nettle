@@ -55,7 +55,7 @@ Requirements and flows are in `docs/requirements.md`, `docs/ux-design.md` and `d
 - Newest-wins merge (EX-12, Later): needs modified timestamps and a schema version bump. Today the daily check-in and a photo's sensitive flag are edited in place, and a merge cannot tell which version is newer.
 
 **Security**
-- App lock with Face ID (SE-8): `expo-local-authentication`.
+- App lock (SE-8) is built (`AppLock` in the core, `expo-local-authentication`, the cover in the root layout, a switch under Settings, Privacy): off by default; when on it locks at a cold start and after a minute in the background, covers the app while it is not in the foreground, waits for the unlock before a reminder tap, and needs the prompt to switch it on or off. Not run on a phone, and Face ID itself does not work in Expo Go (the system asks for the passcode there); it needs a standalone build. The "Privacy and photos" group has only the lock so far.
 
 ## To verify on the phone
 

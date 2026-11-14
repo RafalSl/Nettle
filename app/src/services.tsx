@@ -10,6 +10,8 @@ import { SqliteSettings } from '@/adapters/storage/sqliteSettings';
 import { expoPhotoStore } from '@/adapters/photos/expoPhotoStore';
 import { expoNotifier } from '@/adapters/notifications/expoNotifier';
 import { openFoodFacts } from '@/adapters/barcode/openFoodFacts';
+import { expoAuthenticator } from '@/adapters/auth/expoAuthenticator';
+import { AppLock } from '@/core/usecases/appLock';
 import { expoFileShare } from '@/adapters/share/expoFileShare';
 import { expoPdfRenderer } from '@/adapters/share/expoPdfRenderer';
 import type { FileShare } from '@/core/ports/platform';
@@ -22,6 +24,8 @@ export interface Services {
   fileShare: FileShare;
   /** LL-12: the analysis run lives here, not in a screen, so it survives leaving the screen. */
   analysisRunner: AnalysisRunner;
+  /** SE-8: the app lock; locked from the first frame after a cold start when it is on. */
+  appLock: AppLock;
 }
 
 const Ctx = createContext<Services | null>(null);
@@ -51,12 +55,15 @@ export function ServicesProvider({ children }: { children: ReactNode }) {
           pdf: expoPdfRenderer,
           notifier: expoNotifier,
           barcode: openFoodFacts,
+          auth: expoAuthenticator,
           keys: secureStoreKeyStore,
           settings: new SqliteSettings(db),
           llmFor: createAnthropicProvider,
           clock: { now: () => new Date(), timeZone: () => getCalendars()[0]?.timeZone ?? 'UTC' },
         };
-        if (!cancelled) setServices({ deps, fileShare: expoFileShare, analysisRunner: new AnalysisRunner(deps) });
+        const appLock = new AppLock(deps);
+        await appLock.init(); // before any content is shown, so a cold start never flashes the diary
+        if (!cancelled) setServices({ deps, fileShare: expoFileShare, analysisRunner: new AnalysisRunner(deps), appLock });
       } catch {
         // Deliberately no error details: they could include user data.
         if (!cancelled) setFailed(true);

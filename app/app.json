@@ -24,6 +24,12 @@
       "expo-secure-store",
       "expo-sharing",
       [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Nettle uses Face ID to keep your diary locked. Nothing leaves this device."
+        }
+      ],
+      [
         "expo-camera",
         {
           "cameraPermission": "Nettle uses the camera to photograph skin, nails and meals and to scan product barcodes. Photos stay on this device."

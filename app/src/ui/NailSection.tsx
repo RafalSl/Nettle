@@ -3,7 +3,8 @@ import { useCallback, useState } from 'react';
 import { Alert, Text, TextInput, View } from 'react-native';
 import { NAIL_EXTENTS, NAIL_STAGES, type NailEntry, type NailExtent, type NailStage, type SkinArea } from '@/core/model/types';
 import { addArea, listActiveAreas, logNailEntry } from '@/core/usecases/skin';
-import { areaLabel, errorMessage, t } from '@/i18n';
+import { applyReminders } from '@/core/usecases/reminders';
+import { areaLabel, errorMessage, reminderTexts, t } from '@/i18n';
 import { useServices } from '@/services';
 import { PhotoStrip } from '@/ui/PhotoStrip';
 import { Button, Chips, Heading, Hint, Label, TimeField, styles } from '@/ui/components';
@@ -34,6 +35,7 @@ export function NailSection() {
       setNewName('');
       setAreaId(area.id);
       reload();
+      await applyReminders(deps, reminderTexts()); // the weekly nail reminder exists only while nail areas exist
     } catch (e) {
       Alert.alert(errorMessage(e));
     }

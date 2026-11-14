@@ -1,10 +1,22 @@
 import { Tabs } from 'expo-router';
-import { ServicesProvider } from '@/services';
-import { t } from '@/i18n';
+import { useEffect } from 'react';
+import { applyReminders } from '@/core/usecases/reminders';
+import { reminderTexts, t } from '@/i18n';
+import { ServicesProvider, useServices } from '@/services';
+
+/** SK-9: after start-up, make the scheduled reminders match the settings, the nail areas and the app language. */
+function ReminderSync() {
+  const { deps } = useServices();
+  useEffect(() => {
+    applyReminders(deps, reminderTexts()).catch(() => undefined); // reminders are a convenience; never block the app
+  }, [deps]);
+  return null;
+}
 
 export default function RootLayout() {
   return (
     <ServicesProvider>
+      <ReminderSync />
       <Tabs>
         <Tabs.Screen name="index" options={{ title: t('tabs.meal') }} />
         <Tabs.Screen name="today" options={{ title: t('tabs.today') }} />

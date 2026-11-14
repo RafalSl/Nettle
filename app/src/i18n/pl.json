@@ -150,7 +150,8 @@
     "analysis_no_data": "W tym zakresie dat nic nie zapisano.",
     "too_many_photos": "Za dużo zdjęć na jedno uruchomienie. Wybierz mniej.",
     "flare_already_started": "Dla tego miejsca zaznaczono już początek rzutu.",
-    "flare_not_started": "Dla tego miejsca nie zaznaczono początku rzutu."
+    "flare_not_started": "Dla tego miejsca nie zaznaczono początku rzutu.",
+    "notifications_denied": "Powiadomienia są wyłączone dla tej aplikacji. Zezwól na nie w ustawieniach iPhone'a, aby dostawać przypomnienia."
   },
   "today": {
     "title": "Codzienna kontrola",
@@ -459,5 +460,32 @@
     "reportLanguage": "Język raportu",
     "english": "Angielski",
     "polish": "Polski"
+  },
+  "reminders": {
+    "title": "Przypomnienia",
+    "hint": "Przypomnienia to powiadomienia tylko na tym telefonie. Nigdy nie zawierają Twoich wpisów.",
+    "checkIn": "Codzienna kontrola",
+    "nails": "Cotygodniowe zdjęcie paznokci (tylko gdy śledzisz paznokcie)",
+    "backup": "Miesięczne przypomnienie o eksporcie",
+    "time": "Godzina",
+    "weekday": "Dzień tygodnia",
+    "dayOfMonth": "Dzień miesiąca",
+    "weekdays": {
+      "1": "Nd",
+      "2": "Pn",
+      "3": "Wt",
+      "4": "Śr",
+      "5": "Cz",
+      "6": "Pt",
+      "7": "So"
+    },
+    "text": {
+      "checkInTitle": "Codzienna kontrola",
+      "checkInBody": "Poświęć minutę na zapis z dzisiaj.",
+      "nailsTitle": "Zdjęcia paznokci",
+      "nailsBody": "Czas sfotografować paznokcie i zapisać, jak wyglądają.",
+      "backupTitle": "Kopia dziennika",
+      "backupBody": "Wyeksportuj dziennik z zakładki Dane i przechowaj plik w bezpiecznym miejscu."
+    }
   }
 }

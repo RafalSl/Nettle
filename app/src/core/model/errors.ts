@@ -53,6 +53,7 @@ export const ERROR_CODES = [
   'too_many_photos',
   'flare_already_started',
   'flare_not_started',
+  'notifications_denied',
   'empty_name',
   'no_previous_entry',
   'nothing_selected',

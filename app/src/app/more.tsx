@@ -1,6 +1,7 @@
 import { IntakeSection } from '@/ui/IntakeSection';
 import { ChangeEventSection, ReactionSection } from '@/ui/EventSections';
 import { ListSection } from '@/ui/ListSection';
+import { RemindersSection } from '@/ui/RemindersSection';
 import { NailSection } from '@/ui/NailSection';
 import { TreatmentSection } from '@/ui/TreatmentSection';
 import { Screen } from '@/ui/components';
@@ -16,6 +17,7 @@ export default function MoreScreen() {
       <ReactionSection />
       <ListSection kind="dailyTags" />
       <ListSection kind="treatments" />
+      <RemindersSection />
     </Screen>
   );
 }

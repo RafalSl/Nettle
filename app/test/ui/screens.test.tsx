@@ -277,4 +277,21 @@ describe('screen flows (NF-2, NF-3)', () => {
     expect(alert.mock.calls.some((c) => c[0] === en.errors.llm_rate_limited)).toBe(true);
     expect(await deps.repo.listRecords('analyses')).toEqual([]);
   });
+
+  it('SK-9 the reminders section saves a daily reminder, and a refused permission leaves the switch off', async () => {
+    const deps = nowDeps();
+    const { tree } = await mount(() => require('@/app/more'), deps);
+    await toggle(tree, en.reminders.checkIn);
+    await flush();
+    expect((deps.notifier as unknown as { scheduled: { id: string }[] }).scheduled.map((s) => s.id)).toEqual(['checkin']);
+    expect(tree.root.findAll((n) => n.props.accessibilityLabel === en.reminders.checkIn && n.props.value === true).length).toBeGreaterThan(0);
+
+    const refused = nowDeps();
+    (refused.notifier as unknown as { granted: boolean }).granted = false;
+    const second = await mount(() => require('@/app/more'), refused);
+    await toggle(second.tree, en.reminders.backup);
+    await flush();
+    expect(alert.mock.calls.some((c) => c[0] === en.errors.notifications_denied)).toBe(true);
+    expect(second.tree.root.findAll((n) => n.props.accessibilityLabel === en.reminders.backup && n.props.value === true)).toHaveLength(0);
+  });
 });

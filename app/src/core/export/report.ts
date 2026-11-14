@@ -185,14 +185,15 @@ export function buildReportHtml(input: ReportInput): string {
 
   // Intake log (IN-1, IN-4, IN-10, IN-13)
   const meals = byTime(r.meals);
+  const tagsWithMark = (text: string, s: IngredientSource) => (s.aiTags && text ? `${text} [${tx('report.aiMark')}]` : text);
   const withMark = (text: string, s: IngredientSource) => (isAiSource(s) ? `${text} [${tx(s.edited ? 'report.aiMarkEdited' : 'report.aiMark')}]` : text);
   if (meals.length > 0 || r.drinks.length > 0) {
     out.push(`<h2>${esc(tx('report.intake'))}</h2>`);
-    out.push(table([tx('report.date'), tx('report.meal'), tx('report.ingredients'), tx('report.allergens')], meals.map((m) => [when(m.at), m.description, withMark(m.ingredients.join(', '), m.source), m.allergens.map((a) => tx(`allergens.${a}`)).join(', ')])));
-    out.push(table([tx('report.date'), tx('report.drink'), 'ml', tx('report.alcohol'), tx('report.ingredients'), tx('report.allergens')], byTime(r.drinks).map((a) => [when(a.at), a.name, a.amountMl, a.alcohol ? '✓' : '', withMark(a.ingredients.join(', '), a.source), a.allergens.map((x) => tx(`allergens.${x}`)).join(', ')])));
+    out.push(table([tx('report.date'), tx('report.meal'), tx('report.ingredients'), tx('report.allergens')], meals.map((m) => [when(m.at), m.description, withMark(m.ingredients.join(', '), m.source), tagsWithMark(m.allergens.map((a) => tx(`allergens.${a}`)).join(', '), m.source)])));
+    out.push(table([tx('report.date'), tx('report.drink'), 'ml', tx('report.alcohol'), tx('report.ingredients'), tx('report.allergens')], byTime(r.drinks).map((a) => [when(a.at), a.name, a.amountMl, a.alcohol ? '✓' : '', withMark(a.ingredients.join(', '), a.source), tagsWithMark(a.allergens.map((x) => tx(`allergens.${x}`)).join(', '), a.source)])));
   }
-  // EX-4: intake whose ingredients an AI model read gets a mark, and the legend says what it means.
-  if ([...meals, ...r.drinks].some((e) => isAiSource(e.source))) out.push(`<p class="note">${esc(tx('report.aiMarkLegend'))}</p>`);
+  // EX-4: intake whose ingredients an AI model read, or whose allergen tags came from an AI suggestion, gets a mark, and the legend says what it means.
+  if ([...meals, ...r.drinks].some((e) => isAiSource(e.source) || e.source.aiTags)) out.push(`<p class="note">${esc(tx('report.aiMarkLegend'))}</p>`);
   const reactions = byTime(r.reactions);
   if (reactions.length > 0) {
     const mealById = new Map(r.meals.map((m) => [m.id, m]));

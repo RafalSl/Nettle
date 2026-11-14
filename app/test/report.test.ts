@@ -207,6 +207,38 @@ describe('export with CSV and PDF report (EX-3, EX-4, EX-5, EX-8)', () => {
     expect(html([meal('d', { kind: 'typed', edited: false, llm: null })])).not.toContain('[report.aiMarkLegend]');
   });
 
+  it('EX-4 AI-suggested allergen tags are marked even when the ingredients were typed', () => {
+    const at = { utc: '2026-01-10T12:00:00.000Z', tz: 'Europe/Warsaw' };
+    const meal = (id: string, aiTags: boolean) => ({ id, at, description: `Synthetic ${id}`, ingredients: [`rice-${id}`], allergens: ['milk'], barcode: null, source: { kind: 'typed', edited: false, llm: null, aiTags }, note: null });
+    const html = (meals: object[]) =>
+      buildReportHtml({
+        ...reportOptions('en'),
+        records: { ...Object.fromEntries(['skinEntries', 'nailEntries', 'checkIns', 'stoolEntries', 'treatmentApplications', 'changeEvents', 'reactions', 'drinks', 'medicationEntries', 'photos', 'analyses', 'reportSummaries', 'flareMarkers'].map((k) => [k, []])), meals } as never,
+        skinAreas: [], dailyTags: [], treatments: [], photos: new Map(), range: { from: null, to: null }, exportedAt: { utc: '2026-01-20T10:00:00.000Z', tz: 'Europe/Warsaw' },
+      });
+    const out = html([meal('a', true), meal('b', false)]);
+    expect(out).toContain('[allergens.milk] [[report.aiMark]]');
+    expect(out).toContain('[report.aiMarkLegend]');
+    expect(out.match(/\[allergens\.milk\] \[\[report\.aiMark\]\]/g)).toHaveLength(1);
+    expect(html([meal('b', false)])).not.toContain('[report.aiMarkLegend]');
+  });
+
+  it('EX-5, EX-4 the meals and drinks CSV has plain columns that say what is AI-derived', async () => {
+    const { deps } = await (async () => ({ deps: makeDeps(new MemoryRepo()) }))();
+    const llm = { model: 'm', at: '2026-01-10T00:00:00.000Z', promptVersion: 'p' };
+    await logMeal(deps, { description: 'Synthetic scanned', ingredients: ['rice'], source: { kind: 'label_scan', edited: true, llm, aiTags: true } });
+    await logMeal(deps, { description: 'Synthetic typed', ingredients: ['oats'] });
+    const files = unzipSync(await exportBundle(deps, { csv: true, parts: { records: true, settings: false } }));
+    const rows = strFromU8(files['csv/meals.csv']!).trim().split('\r\n');
+    const header = rows[0]!.split(',');
+    const col = (r: string, name: string) => r.split(',')[header.indexOf(name)];
+    expect(header).not.toContain('source');
+    const scanned = rows.find((r) => r.includes('Synthetic scanned'))!;
+    const typed = rows.find((r) => r.includes('Synthetic typed'))!;
+    expect([col(scanned, 'ingredients_source'), col(scanned, 'ingredients_ai'), col(scanned, 'ingredients_edited'), col(scanned, 'allergens_ai'), col(scanned, 'ai_model')]).toEqual(['label_scan', 'yes', 'yes', 'yes', 'm']);
+    expect([col(typed, 'ingredients_source'), col(typed, 'ingredients_ai'), col(typed, 'allergens_ai')]).toEqual(['typed', 'no', 'no']);
+  });
+
   it('EX-3 an empty diary still produces a valid page with a title and the disclaimer', () => {
     const html = buildReportHtml({
       ...reportOptions('pl'),

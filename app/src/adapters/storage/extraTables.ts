@@ -24,6 +24,7 @@ import type {
   Symptom,
   TreatmentApplication,
 } from '@/core/model/types';
+import { normalizeSource } from '@/core/model/source';
 import type { SqlValue } from './sqlDb';
 
 type Row = Record<string, string | number | null>;
@@ -160,7 +161,7 @@ const drink: ExtraTable<Drink> = {
     ingredients: JSON.parse(r.ingredients_json as string) as string[],
     allergens: JSON.parse(r.allergens_json as string) as Allergen[],
     barcode: r.barcode as string | null,
-    source: JSON.parse(r.source_json as string) as Drink['source'],
+    source: normalizeSource(JSON.parse(r.source_json as string)),
     note: r.note as string | null,
   }),
 };

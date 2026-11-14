@@ -558,7 +558,7 @@
     "summaryEdited": "edited by the person after it was written",
     "aiMark": "AI",
     "aiMarkEdited": "AI, edited",
-    "aiMarkLegend": "[AI]: the ingredients were read by an AI model from a photo, and the person reviewed and confirmed them before saving. [AI, edited]: the person changed them afterwards.",
+    "aiMarkLegend": "[AI] after the ingredients: they were read by an AI model from a photo, and the person reviewed and confirmed them before saving. [AI, edited]: the person changed them afterwards. [AI] after the allergens: the tags were suggested by an AI model and selected by the person.",
     "reactions": "Reactions after meals",
     "onset": "Onset",
     "symptoms": "Symptoms",

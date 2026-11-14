@@ -4,7 +4,10 @@ import type { Allergen, ListItem, Records, SkinArea } from '../model/types';
 
 /** LL-3: how far before the analysed period illness, antibiotics, stress, sleep and change events are looked up. */
 /** LL-4, IN-16: where an ingredient list came from; typed lists say nothing. Photo estimates are rough. */
-const sourceOf = (s: IngredientSource) => (s.kind === 'typed' ? {} : { ingredients_source: s.kind + (s.edited ? ' (edited by the user)' : '') });
+const sourceOf = (s: IngredientSource) => ({
+  ...(s.kind === 'typed' ? {} : { ingredients_source: s.kind + (s.edited ? ' (edited by the user)' : '') }),
+  ...(s.aiTags ? { allergens_source: 'ai_suggestion (confirmed by the user)' } : {}),
+});
 
 export const LOOKBACK_DAYS = 21;
 

@@ -76,7 +76,7 @@ export function DrinkSection() {
           setScanNote(t('meal.scanFromHistory', { date: localDay(h.at, deps.clock.timeZone(), deps.dayStart.get()) }));
         } else if (p) {
           // IN-16: the database is the source; its tags stay unselected until the user selects them (IN-10).
-          setDraft({ ...base, name: p.name, amount: draft.amount, alcohol: draft.alcohol, ingredients: joinIngredients(p.ingredients), source: { kind: 'open_food_facts', edited: false, llm: null }, filled: { ingredients: p.ingredients, allergens: p.allergens } });
+          setDraft({ ...base, name: p.name, amount: draft.amount, alcohol: draft.alcohol, ingredients: joinIngredients(p.ingredients), source: { kind: 'open_food_facts', edited: false, llm: null, aiTags: false }, filled: { ingredients: p.ingredients, allergens: p.allergens } });
           setScanNote(found.incomplete ? t('meal.scanIncomplete') : p.translated ? t('meal.scanFromDbTranslated') : t('meal.scanFromDb'));
         } else {
           setDraft({ ...base, name: draft.name, amount: draft.amount, alcohol: draft.alcohol });
@@ -102,9 +102,11 @@ export function DrinkSection() {
   const run = useIngredientRun();
   const [pendingTags, setPendingTags] = useState<Allergen[]>([]);
   const [pendingHint, setPendingHint] = useState('meal.labelTagsHint');
+  const [pendingAi, setPendingAi] = useState(false);
   const allergenAi = useAllergenAi((tags, note) => {
     setPendingTags(tags);
     setPendingHint('meal.aiAllergensHint');
+    setPendingAi(true);
     setScanNote([tags.length === 0 ? t('meal.aiAllergensNone') : '', note ?? ''].filter(Boolean).join(' ') || null);
   });
   function addRun(names: string[], r: Extract<Run, { status: 'ready' }>) {
@@ -115,10 +117,11 @@ export function DrinkSection() {
     setDraft({
       ...draft,
       ingredients: joinIngredients(merged),
-      ...(typed ? { source: { kind: SOURCE_OF[r.kind], edited: false, llm: r.provenance }, filled: { ingredients: merged, allergens: r.label ? tags : [...draft.allergens] } } : {}),
+      ...(typed ? { source: { kind: SOURCE_OF[r.kind], edited: false, llm: r.provenance, aiTags: false }, filled: { ingredients: merged, allergens: r.label ? tags : [...draft.allergens] } } : {}),
     });
     setPendingTags(tags);
     setPendingHint('meal.labelTagsHint');
+    setPendingAi(true); // label tags are AI-read
     run.dismiss();
   }
 
@@ -162,7 +165,7 @@ export function DrinkSection() {
       {pendingTags.length > 0 && draft.allergens.size < pendingTags.length && (
         <>
           <Hint>{t(pendingHint, { list: pendingTags.map((a) => t(`allergens.${a}`)).join(', ') })}</Hint>
-          <Button kind="secondary" title={t('meal.scanSelectTags')} onPress={() => setDraft({ ...draft, allergens: new Set([...draft.allergens, ...pendingTags]) })} />
+          <Button kind="secondary" title={t('meal.scanSelectTags')} onPress={() => setDraft({ ...draft, allergens: new Set([...draft.allergens, ...pendingTags]), ...(pendingAi ? { source: { ...draft.source, aiTags: true } } : {}) })} />
         </>
       )}
       <DrinkFields draft={draft} onChange={setDraft} />

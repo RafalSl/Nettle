@@ -24,3 +24,24 @@ export function toCsv(rows: readonly Record<string, Cell>[]): string {
 
 /** File name for a section of data.json, such as `csv/skin_entries.csv`. */
 export const csvPath = (section: string) => `csv/${section}.csv`;
+
+/**
+ * EX-4, IN-16: a meal or drink row for a spreadsheet. The nested `source` becomes plain columns, so AI-derived
+ * ingredients and tags can be filtered: `ingredients_ai` and `allergens_ai` say yes or no.
+ */
+export function flattenSource(row: Record<string, unknown>): Record<string, Cell> {
+  const { source, ...rest } = row;
+  if (typeof source !== 'object' || source === null) return rest as Record<string, Cell>;
+  const s = source as { kind?: string; edited?: boolean; llm?: { model?: string; at?: string; prompt_version?: string } | null; ai_tags?: boolean };
+  const ai = s.kind === 'label_scan' || s.kind === 'photo_estimate';
+  return {
+    ...(rest as Record<string, Cell>),
+    ingredients_source: s.kind ?? 'typed',
+    ingredients_ai: ai ? 'yes' : 'no',
+    ingredients_edited: s.edited ? 'yes' : 'no',
+    allergens_ai: s.ai_tags ? 'yes' : 'no',
+    ai_model: s.llm?.model ?? '',
+    ai_at: s.llm?.at ?? '',
+    ai_prompt_version: s.llm?.prompt_version ?? '',
+  };
+}

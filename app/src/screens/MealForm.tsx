@@ -58,7 +58,7 @@ export default function MealScreen() {
   const [code, setCode] = useState('');
   const [looking, setLooking] = useState(false);
   // IN-2, IN-10: what a barcode lookup said, and the allergen tags it only suggests.
-  const [fromCode, setFromCode] = useState<{ note: string; tags: Allergen[]; hintKey?: string } | null>(null);
+  const [fromCode, setFromCode] = useState<{ note: string; tags: Allergen[]; hintKey?: string; ai?: boolean } | null>(null);
   const [meals, setMeals] = useState<ReturnType<typeof mealHistory>>([]);
   const [prefs, setPrefs] = useState<Preferences>(defaultPreferences());
   const [description, setDescription] = useState('');
@@ -68,7 +68,7 @@ export default function MealScreen() {
   const ingredientRun = useIngredientRun();
   // IN-10: the AI's allergen suggestion lands as a hint with a select button; nothing is selected by itself.
   const allergenAi = useAllergenAi((tags, note) =>
-    setFromCode({ note: [tags.length === 0 ? t('meal.aiAllergensNone') : '', note ?? ''].filter(Boolean).join(' '), tags, hintKey: 'meal.aiAllergensHint' }),
+    setFromCode({ note: [tags.length === 0 ? t('meal.aiAllergensNone') : '', note ?? ''].filter(Boolean).join(' '), tags, hintKey: 'meal.aiAllergensHint', ai: true }),
   );
   const [at, setAt] = useState<Date | null>(null);
   const [edited, setEdited] = useState(false);
@@ -141,7 +141,7 @@ export default function MealScreen() {
           ingredients: p?.ingredients ?? [],
           allergens: [],
           barcode: found.barcode,
-          source: p ? { kind: 'open_food_facts', edited: false, llm: null } : typedSource(),
+          source: p ? { kind: 'open_food_facts', edited: false, llm: null, aiTags: false } : typedSource(),
           sourceAllergens: p?.allergens ?? [],
         });
         setFromCode({ note: !p ? t('meal.scanNotFound') : found.incomplete ? t('meal.scanIncomplete') : p.translated ? t('meal.scanFromDbTranslated') : t('meal.scanFromDb'), tags: p?.allergens ?? [] });
@@ -190,11 +190,11 @@ export default function MealScreen() {
     if (origin.source.kind === 'typed') {
       setOrigin({
         barcode: origin.barcode,
-        source: { kind: SOURCE_OF[r.kind], edited: false, llm: r.provenance },
+        source: { kind: SOURCE_OF[r.kind], edited: false, llm: r.provenance, aiTags: false },
         filled: { ingredients: next.map((i) => i.trim()).filter(Boolean), allergens: r.label ? tags : [...allergens] },
       });
     }
-    if (tags.length > 0) setFromCode({ note: t('meal.labelTagsHint', { list: tags.map((a) => t(`allergens.${a}`)).join(', ') }), tags });
+    if (tags.length > 0) setFromCode({ note: t('meal.labelTagsHint', { list: tags.map((a) => t(`allergens.${a}`)).join(', ') }), tags, ai: true });
     ingredientRun.dismiss();
   }
 
@@ -290,7 +290,11 @@ export default function MealScreen() {
           {fromCode && fromCode.tags.some((a) => !allergens.has(a)) && (
             <>
               <Hint>{t(fromCode.hintKey ?? 'meal.scanTagsHint', { list: fromCode.tags.map((a) => t(`allergens.${a}`)).join(', ') })}</Hint>
-              <Button kind="secondary" title={t('meal.scanSelectTags')} onPress={() => touch(setAllergens)(new Set([...allergens, ...fromCode.tags]))} />
+              <Button kind="secondary" title={t('meal.scanSelectTags')} onPress={() => {
+                  touch(setAllergens)(new Set([...allergens, ...fromCode.tags]));
+                  // IN-16, EX-4: tags taken from an AI suggestion are marked as such in the entry and the exports.
+                  if (fromCode.ai) setOrigin((o) => ({ ...o, source: { ...o.source, aiTags: true } }));
+                }} />
             </>
           )}
           <AllergenAiControls hook={allergenAi} ingredients={ingredients} />

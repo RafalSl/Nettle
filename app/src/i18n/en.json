@@ -60,7 +60,25 @@
     "estimateAddPicked": "Add selected",
     "estimateDismiss": "Dismiss",
     "estimateRetry": "Try again",
-    "estimateFailed": "Nothing was added."
+    "estimateFailed": "Nothing was added.",
+    "scan": "Scan a barcode",
+    "scanTitle": "Point the camera at the barcode",
+    "scanCancel": "Back",
+    "scanPermission": "Barcode scanning needs the camera.",
+    "scanAllow": "Allow the camera",
+    "scanSettings": "Open settings",
+    "scanOrType": "Or type the code",
+    "scanCode": "Barcode digits",
+    "scanLookup": "Look up",
+    "scanLooking": "Looking up the product…",
+    "scanNotFound": "This product is not in the database. Enter it by hand.",
+    "scanIncomplete": "The database has no ingredients for this product. Add them by hand.",
+    "scanInStoreTitle": "In-store code",
+    "scanInStoreBody": "This number is used by shops for their own products, so the same code can mean different products. Is the match right?",
+    "scanUse": "Use it",
+    "scanFromDb": "Filled from Open Food Facts. Check it before saving.",
+    "scanTagsHint": "The database lists these allergens: {{list}}. They are not selected until you select them.",
+    "scanSelectTags": "Select the listed allergens"
   },
   "skin": {
     "title": "Log skin status",
@@ -186,7 +204,9 @@
     "meal_after_reaction": "A meal cannot be moved after its reaction.",
     "duplicate_area_name": "An area with this name already exists.",
     "day_has_no_meals": "No meals are logged for this day. Confirm to close it anyway.",
-    "notifications_denied": "Notifications are turned off for this app. Allow them in the iPhone settings to get reminders."
+    "notifications_denied": "Notifications are turned off for this app. Allow them in the iPhone settings to get reminders.",
+    "invalid_barcode": "This is not a valid barcode. Check the digits.",
+    "barcode_lookup_failed": "The product database could not be reached. Enter the product by hand."
   },
   "today": {
     "title": "Daily check-in",

@@ -60,6 +60,8 @@ export const ERROR_CODES = [
   'checkin_day_taken',
   'meal_after_reaction',
   'duplicate_area_name',
+  'invalid_barcode',
+  'barcode_lookup_failed',
   'day_has_no_meals',
   'notifications_denied',
   'empty_name',

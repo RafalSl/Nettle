@@ -27,11 +27,8 @@ export async function getCheckIn(deps: Deps, day: LocalDay): Promise<CheckIn | n
   return all[0] ?? null; // listRecords is newest first
 }
 
-/**
- * SK-7, SK-11: creates or updates the single check-in of the local day. The input is the full state of the
- * screen, so omitted scores become "not recorded", bloating false and tags empty.
- */
-export async function saveCheckIn(deps: Deps, input: CheckInInput): Promise<CheckIn> {
+/** Checks the scores and tag ids of a check-in input and returns the distinct tag ids. */
+export async function validCheckInTags(deps: Deps, input: CheckInInput): Promise<string[]> {
   for (const key of SCORES) {
     const v = input[key] ?? null;
     if (v !== null && !isScore(v)) throw new NettleError('invalid_score', key);
@@ -39,6 +36,15 @@ export async function saveCheckIn(deps: Deps, input: CheckInInput): Promise<Chec
   const tags = [...new Set(input.tags ?? [])];
   const known = new Set((await deps.repo.listItems('dailyTags')).map((t) => t.id));
   for (const id of tags) if (!known.has(id)) throw new NettleError('unknown_item', id);
+  return tags;
+}
+
+/**
+ * SK-7, SK-11: creates or updates the single check-in of the local day. The input is the full state of the
+ * screen, so omitted scores become "not recorded", bloating false and tags empty.
+ */
+export async function saveCheckIn(deps: Deps, input: CheckInInput): Promise<CheckIn> {
+  const tags = await validCheckInTags(deps, input);
 
   const probe = makeStamp(deps.clock, input.at);
   const existing = await getCheckIn(deps, localDay(probe.utc, probe.tz));

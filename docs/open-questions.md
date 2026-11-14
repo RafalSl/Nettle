@@ -40,7 +40,7 @@ Requirements and flows are in `docs/requirements.md`, `docs/ux-design.md` and `d
 - Two tabs (Today, Review), Settings behind a gear icon, modal forms, action sheets.
 
 **Editing and deleting (EN-1, EX-13)**
-- Edit and delete one entry with cascades and edit rules; needs a `tombstones` table, a `tombstones` section in `data.json` and merge rules. `schema_version` stays 1.
+- Core, storage, `data.json` and merge are built (`core/usecases/entries.ts`, migration 11, the `tombstones` section of `records`). Not built: the screens (tap a log row, Edit or Delete, action sheet from `previewEntryDelete`) and the import switch in the UI. `schema_version` stays 1 while prototyping, so exports made before the `tombstones` section do not import.
 
 **LLM (LL-5, LL-12, IN-3)**
 - The meal photo estimate is not inline and editable yet and has no Cancel button (the cancel signal already reaches `estimateIngredients`).
@@ -50,7 +50,7 @@ Requirements and flows are in `docs/requirements.md`, `docs/ux-design.md` and `d
 **Export and import**
 - Date range picker for the export and "since last export" (EX-11). The core converts local days to UTC (`localDaysToRange`, `exportBundle({ days })`); the Data screen still exports everything.
 - PDF report language should default to the app language (EX-3); the Data screen still starts on English (`reportLanguage`).
-- Import switch to restore entries skipped because of a tombstone (EX-10); EX-14 Full backup preset.
+- Import switch to restore entries skipped because of a tombstone (EX-10): the core is built (`applyImport(..., { restoreTombstoned })`, `preview.tombstones`), the Data screen has no switch yet. EX-14 Full backup preset.
 - Single-photo selection screens for export (EX-7) and for LLM runs; the core supports both, the screens offer all, none, non-sensitive and an area and date filter.
 - Newest-wins merge (EX-12, Later): needs modified timestamps and a schema version bump. Today the daily check-in and a photo's sensitive flag are edited in place, and a merge cannot tell which version is newer.
 

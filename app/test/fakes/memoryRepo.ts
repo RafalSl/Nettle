@@ -15,8 +15,10 @@ import {
   type SkinArea,
   type SkinEntry,
   type Snapshot,
+  type Stamp,
+  type Tombstone,
 } from '@/core/model/types';
-import type { ExistingIds, ImportMode, StorageRepository } from '@/core/ports/storage';
+import type { ExistingIds, ImportMode, ImportTombstones, StorageRepository } from '@/core/ports/storage';
 
 const inRange = (utc: string, r?: DateRange) =>
   (!r?.from || utc >= r.from) && (!r?.to || utc <= r.to);
@@ -28,6 +30,7 @@ export class MemoryRepo implements StorageRepository {
   private meals = new Map<string, Meal>();
   private areas = new Map<string, SkinArea>();
   private entries = new Map<string, SkinEntry>();
+  private tombstones = new Map<string, Tombstone>();
   private extra = Object.fromEntries(EXTRA_KINDS.map((k) => [k, new Map<string, Records[ExtraKind][number]>()])) as Record<
     ExtraKind,
     Map<string, Records[ExtraKind][number]>
@@ -99,10 +102,32 @@ export class MemoryRepo implements StorageRepository {
     if (areaId !== undefined && !areas.has(areaId)) throw new Error('unknown area');
     if (mealId !== undefined && !meals.has(mealId)) throw new Error('unknown meal');
   }
+  async putMeal(meal: Meal) {
+    if (!this.meals.has(meal.id)) throw new Error('unknown meal');
+    this.meals.set(meal.id, clone(meal));
+  }
+  async putSkinEntry(entry: SkinEntry) {
+    if (!this.entries.has(entry.id)) throw new Error('unknown entry');
+    if (!this.areas.has(entry.areaId)) throw new Error('unknown area');
+    this.entries.set(entry.id, clone(entry));
+  }
   async deleteRecords(ids: Partial<Record<RecordKind, string[]>>) {
     for (const id of ids.meals ?? []) this.meals.delete(id);
     for (const id of ids.skinEntries ?? []) this.entries.delete(id);
     for (const kind of EXTRA_KINDS) for (const id of ids[kind] ?? []) this.extra[kind].delete(id);
+  }
+  async deleteWithTombstones(ids: Partial<Record<RecordKind, string[]>>, at: Stamp) {
+    const has = (kind: RecordKind, id: string) =>
+      kind === 'meals' ? this.meals.has(id) : kind === 'skinEntries' ? this.entries.has(id) : this.extra[kind].has(id);
+    for (const [kind, list] of Object.entries(ids) as [RecordKind, string[]][]) {
+      for (const id of list) if (has(kind, id)) this.tombstones.set(id, { id, kind, deletedAt: clone(at) });
+    }
+    await this.deleteRecords(ids);
+  }
+  async listTombstones(): Promise<Tombstone[]> {
+    return [...this.tombstones.values()]
+      .sort((a, b) => a.deletedAt.utc.localeCompare(b.deletedAt.utc) || a.id.localeCompare(b.id))
+      .map(clone);
   }
 
   async snapshot(range?: DateRange): Promise<Snapshot> {
@@ -125,14 +150,20 @@ export class MemoryRepo implements StorageRepository {
     for (const kind of LIST_KINDS) result[kind] = new Set(this.items[kind].keys());
     return result;
   }
-  async importData({ records, settings }: Payload, mode: ImportMode) {
+  async importData({ records, settings }: Payload, mode: ImportMode, tombstones: ImportTombstones = {}) {
     // Work on copies so a failure leaves the store untouched (atomic).
     const meals = new Map(records && mode === 'replace' ? [] : this.meals);
     const entries = new Map(records && mode === 'replace' ? [] : this.entries);
+    const tombs = new Map(records && mode === 'replace' ? [] : this.tombstones);
     const areas = new Map(this.areas);
     const extra = Object.fromEntries(
       EXTRA_KINDS.map((k) => [k, new Map(records && mode === 'replace' ? [] : this.extra[k])]),
     ) as typeof this.extra;
+    for (const id of tombstones.remove?.meals ?? []) meals.delete(id);
+    for (const id of tombstones.remove?.skinEntries ?? []) entries.delete(id);
+    for (const kind of EXTRA_KINDS) for (const id of tombstones.remove?.[kind] ?? []) extra[kind].delete(id);
+    for (const id of tombstones.forget ?? []) tombs.delete(id);
+    for (const t of tombstones.store ?? []) if (!tombs.has(t.id)) tombs.set(t.id, clone(t));
     for (const a of settings?.skinAreas ?? []) {
       if (mode === 'replace' || !areas.has(a.id)) areas.set(a.id, clone(a));
     }
@@ -169,6 +200,7 @@ export class MemoryRepo implements StorageRepository {
     this.meals = meals;
     this.areas = areas;
     this.entries = entries;
+    this.tombstones = tombs;
     this.extra = extra;
     this.items = items;
     this.seed();

@@ -288,6 +288,65 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
       expect((await repo.listMeals()).map((m) => m.id)).toEqual(['keep']);
     });
 
+    it('EN-1 putMeal replaces description, time, tags and ingredients in order, keeping the id', async () => {
+      await repo.addMeal(syntheticMeal('m1', '2026-01-15T08:00:00.000Z', ['a', 'b', 'c']));
+      const edited = {
+        ...syntheticMeal('m1', '2026-01-15T09:30:00.000Z', ['z', 'a']),
+        description: 'Synthetic edited meal',
+        allergens: ['milk' as const],
+        note: 'edited',
+      };
+      await repo.putMeal(edited);
+      expect(await repo.listMeals()).toEqual([edited]);
+    });
+
+    it('EN-1 putMeal and putSkinEntry refuse an id that does not exist', async () => {
+      await expect(repo.putMeal(syntheticMeal('nope', '2026-01-15T08:00:00.000Z'))).rejects.toThrow();
+      await expect(repo.putSkinEntry(syntheticEntry('nope', '2026-01-15T08:00:00.000Z'))).rejects.toThrow();
+    });
+
+    it('EN-1 putSkinEntry replaces scores, area and time, and refuses an unknown area', async () => {
+      await repo.addSkinEntry(syntheticEntry('e1', '2026-01-15T08:00:00.000Z', 'area-neck'));
+      const edited = {
+        ...syntheticEntry('e1', '2026-01-15T10:00:00.000Z', 'area-chin'),
+        scores: { severity: 1, itch: 2, pain: 3, dryness: 4, scaling: 5 },
+        note: 'edited',
+      };
+      await repo.putSkinEntry(edited);
+      expect(await repo.listSkinEntries()).toEqual([edited]);
+      await expect(repo.putSkinEntry({ ...edited, areaId: 'nope' })).rejects.toThrow();
+      expect(await repo.listSkinEntries()).toEqual([edited]);
+    });
+
+    const at = { utc: '2026-03-01T12:00:00.000Z', tz: 'Europe/Warsaw' };
+
+    it('EX-13 deleteWithTombstones removes the records and stores id, kind and time of each', async () => {
+      await repo.addMeal(syntheticMeal('m1', '2026-01-15T08:00:00.000Z'));
+      await repo.addSkinEntry(syntheticEntry('e1', '2026-01-15T08:00:00.000Z'));
+      await repo.addRecord('stoolEntries', syntheticStool('s1', '2026-01-15T09:00:00.000Z'));
+      await repo.deleteWithTombstones({ meals: ['m1'], stoolEntries: ['s1'] }, at);
+      expect(await repo.listMeals()).toEqual([]);
+      expect(await repo.listRecords('stoolEntries')).toEqual([]);
+      expect((await repo.listSkinEntries()).map((e) => e.id)).toEqual(['e1']);
+      expect(await repo.listTombstones()).toEqual([
+        { id: 'm1', kind: 'meals', deletedAt: at },
+        { id: 's1', kind: 'stoolEntries', deletedAt: at },
+      ]);
+    });
+
+    it('EX-13 ids that do not exist get no tombstone, and deleting twice stores one', async () => {
+      await repo.addMeal(syntheticMeal('m1', '2026-01-15T08:00:00.000Z'));
+      await repo.deleteWithTombstones({ meals: ['m1', 'ghost'] }, at);
+      await repo.deleteWithTombstones({ meals: ['m1'] }, { ...at, utc: '2026-03-02T12:00:00.000Z' });
+      expect(await repo.listTombstones()).toEqual([{ id: 'm1', kind: 'meals', deletedAt: at }]);
+    });
+
+    it('SE-9, EX-13 bulk delete leaves no tombstones', async () => {
+      await repo.addMeal(syntheticMeal('m1', '2026-01-15T08:00:00.000Z'));
+      await repo.deleteRecords({ meals: ['m1'] });
+      expect(await repo.listTombstones()).toEqual([]);
+    });
+
     it('EX-1 snapshot filters entries by range but always includes all areas', async () => {
       await repo.addMeal(syntheticMeal('m1', '2026-01-01T08:00:00.000Z'));
       await repo.addMeal(syntheticMeal('m2', '2026-02-01T08:00:00.000Z'));

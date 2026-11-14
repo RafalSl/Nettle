@@ -5,11 +5,22 @@ import { buildReportHtml, type ReportInput } from '../export/report';
 import { bytesToBase64 } from '../util/base64';
 import { DEFAULT_PHOTO_SELECTION, planPhotoNames, selectPhotos, type PhotoSelection } from '../export/photoSelection';
 import { toDataJson } from '../export/schema';
+import { planEntryDeletion } from '../model/deletion';
 import { NettleError } from '../model/errors';
 import { localDaysToRange, makeStamp } from '../model/time';
 import { recordRefs } from '../model/refs';
-import { EXTRA_KINDS, LIST_KINDS, RECORD_KINDS, type DateRange, type Parts, type Payload, type Records } from '../model/types';
-import type { CollectionKey, ImportMode } from '../ports/storage';
+import {
+  EXTRA_KINDS,
+  LIST_KINDS,
+  RECORD_KINDS,
+  type DateRange,
+  type Parts,
+  type Payload,
+  type RecordKind,
+  type Records,
+  type Tombstone,
+} from '../model/types';
+import type { CollectionKey, ImportMode, ImportTombstones } from '../ports/storage';
 import type { Deps } from './deps';
 
 export interface ExportOptions {
@@ -59,7 +70,7 @@ export async function exportBundle(deps: Deps, options: ExportOptions = {}): Pro
       snapshot.photos.push({ ...p, file: path });
     }
   }
-  const data = toDataJson(snapshot, range, makeStamp(deps.clock), parts);
+  const data = toDataJson(snapshot, range, makeStamp(deps.clock), parts, await deps.repo.listTombstones());
 
   if (options.csv) {
     for (const section of [data.records, data.settings]) {
@@ -109,6 +120,12 @@ export interface ImportPreview {
   newRows: PartCounts;
   /** Rows merge would skip as duplicates. */
   duplicates: PartCounts;
+  /**
+   * EX-10, EX-13: what tombstones do on a merge. `skipped`: entries of the file that merge leaves out because
+   * this phone or the file has a tombstone for them (the restore switch brings back the ones that only this
+   * phone has a tombstone for). `removesLocal`: entries on this phone that tombstones of the file delete.
+   */
+  tombstones: { skipped: number; restorable: number; removesLocal: number };
 }
 
 export interface ParsedImport {
@@ -136,10 +153,99 @@ export async function previewImport(deps: Deps, zip: Uint8Array, password?: stri
   for (const kind of EXTRA_KINDS) tally(kind, records?.[kind].map((x) => x.id) ?? []);
   tally('skinAreas', payload.settings?.skinAreas.map((x) => x.id) ?? []);
   for (const kind of LIST_KINDS) tally(kind, payload.settings?.[kind].map((x) => x.id) ?? []);
+  const plan = await planTombstones(deps, payload, 'merge', false);
+  const restored = await planTombstones(deps, payload, 'merge', true);
   return {
     payload,
     readPhoto,
-    preview: { has: { records: !!records, settings: !!payload.settings }, incoming, newRows, duplicates },
+    preview: {
+      has: { records: !!records, settings: !!payload.settings },
+      incoming,
+      newRows,
+      duplicates,
+      tombstones: {
+        skipped: plan.skipped,
+        restorable: plan.skipped - restored.skipped,
+        removesLocal: plan.removesLocal,
+      },
+    },
+  };
+}
+
+interface TombstonePlan {
+  /** The records to insert: the file's records without the skipped ones (merge), or all of them (replace). */
+  records?: Records;
+  extra: ImportTombstones;
+  /** File entries left out because of a tombstone. */
+  skipped: number;
+  removesLocal: number;
+  /** Photo files of local photos that the file's tombstones delete. */
+  removedFiles: string[];
+}
+
+/**
+ * EX-10, EX-13: how the file's tombstones and this phone's tombstones change an import. Replace takes the file
+ * as it is, tombstones included. Merge never restores an id that has a tombstone (the file's or this phone's,
+ * unless `restore` is on and only this phone has it), deletes local entries the file has tombstones for, and
+ * also leaves out entries whose parent is left out (a reaction of a skipped meal, a photo of a skipped entry).
+ */
+async function planTombstones(deps: Deps, payload: Payload, mode: ImportMode, restore: boolean): Promise<TombstonePlan> {
+  const incoming = payload.tombstones ?? [];
+  const empty = { skipped: 0, removesLocal: 0, removedFiles: [] as string[] };
+  if (!payload.records) return { ...empty, extra: {} };
+  if (mode === 'replace') return { ...empty, records: payload.records, extra: { store: incoming } };
+
+  const local = new Set((await deps.repo.listTombstones()).map((t) => t.id));
+  const fromFile = new Set(incoming.map((t) => t.id));
+  const blocked = (id: string) => fromFile.has(id) || (local.has(id) && !restore);
+  const src = payload.records;
+  const dropped = new Set<string>();
+  const out = { ...src } as Records;
+  const keep = <T extends { id: string }>(rows: T[], extraDrop: (r: T) => boolean = () => false) =>
+    rows.filter((r) => {
+      const drop = blocked(r.id) || extraDrop(r);
+      if (drop) dropped.add(r.id);
+      return !drop;
+    });
+  out.meals = keep(src.meals);
+  out.skinEntries = keep(src.skinEntries);
+  out.nailEntries = keep(src.nailEntries);
+  for (const kind of EXTRA_KINDS) {
+    if (kind === 'nailEntries') continue;
+    const drop =
+      kind === 'reactions'
+        ? (r: { mealId?: string }) => blocked(r.mealId ?? '')
+        : kind === 'photos'
+          ? (r: { entryId?: string }) => blocked(r.entryId ?? '')
+          : () => false;
+    Object.assign(out, { [kind]: keep(src[kind] as { id: string }[], drop as never) });
+  }
+  // Entries on this phone that the file's tombstones delete, with what goes with them.
+  const snap = await deps.repo.snapshot();
+  const remove = Object.fromEntries(RECORD_KINDS.map((k) => [k, new Set<string>()])) as Record<RecordKind, Set<string>>;
+  const cascaded: Tombstone[] = [];
+  for (const t of incoming) {
+    const p = planEntryDeletion(snap, t.kind, t.id);
+    for (const k of RECORD_KINDS) {
+      for (const id of p[k]) {
+        remove[k].add(id);
+        if (id !== t.id) cascaded.push({ id, kind: k, deletedAt: t.deletedAt });
+      }
+    }
+  }
+  const removeIds = Object.fromEntries(RECORD_KINDS.map((k) => [k, [...remove[k]]])) as Record<RecordKind, string[]>;
+  const photoDoomed = new Set(removeIds.photos);
+  const kept = new Set(RECORD_KINDS.flatMap((k) => (out[k] as { id: string }[]).map((r) => r.id)));
+  return {
+    records: out,
+    skipped: dropped.size,
+    removesLocal: RECORD_KINDS.reduce((n, k) => n + removeIds[k].length, 0),
+    removedFiles: snap.photos.filter((p) => photoDoomed.has(p.id)).map((p) => p.file),
+    extra: {
+      remove: removeIds,
+      forget: restore ? [...local].filter((id) => kept.has(id)) : [],
+      store: [...incoming, ...cascaded],
+    },
   };
 }
 
@@ -150,12 +256,15 @@ export async function previewImport(deps: Deps, zip: Uint8Array, password?: stri
 export async function applyImport(
   deps: Deps,
   parsed: ParsedImport,
-  choice: { mode: ImportMode; parts: Parts },
+  choice: { mode: ImportMode; parts: Parts; /** EX-10: bring back entries this phone has a tombstone for. */ restoreTombstoned?: boolean },
 ): Promise<void> {
   const payload: Payload = {};
   if (choice.parts.records && parsed.payload.records) payload.records = parsed.payload.records;
   if (choice.parts.settings && parsed.payload.settings) payload.settings = parsed.payload.settings;
   if (!payload.records && !payload.settings) throw new NettleError('nothing_selected');
+  // EX-13: leave out what a tombstone forbids and work out what the tombstones delete.
+  const plan = await planTombstones(deps, { ...parsed.payload, records: payload.records }, choice.mode, !!choice.restoreTombstoned);
+  if (payload.records) payload.records = plan.records;
 
   if (payload.records) {
     // Imported records must not point at areas or list items that will not exist.
@@ -200,10 +309,10 @@ export async function applyImport(
       };
       if (choice.mode === 'replace') oldFiles = (await deps.repo.listRecords('photos')).map((p) => p.file);
     }
-    await deps.repo.importData(payload, choice.mode);
+    await deps.repo.importData(payload, choice.mode, plan.extra);
   } catch (e) {
     for (const key of saved) await deps.photos.remove(key);
     throw e;
   }
-  for (const file of oldFiles) await deps.photos.remove(file);
+  for (const file of [...oldFiles, ...plan.removedFiles]) await deps.photos.remove(file);
 }

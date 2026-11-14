@@ -11,9 +11,23 @@ import type {
   SkinArea,
   SkinEntry,
   Snapshot,
+  Stamp,
+  Tombstone,
 } from '../model/types';
 
 export type ImportMode = 'merge' | 'replace';
+
+/**
+ * EX-13: what an import does besides inserting records, worked out by the core so both adapters stay simple.
+ * Applied in this order inside the same transaction: `remove` the local records, `forget` (delete) local
+ * tombstones, replace wipes all tombstones and records, insert the payload, then `store` tombstones
+ * (ids that already have one keep it).
+ */
+export interface ImportTombstones {
+  remove?: Partial<Record<RecordKind, string[]>>;
+  forget?: string[];
+  store?: Tombstone[];
+}
 
 /** Every collection that is exported and imported: record kinds and setting kinds. */
 export type CollectionKey = keyof Records | keyof Settings;
@@ -45,8 +59,20 @@ export interface StorageRepository {
   putRecord<K extends ExtraKind>(kind: K, record: Records[K][number]): Promise<void>;
   listRecords<K extends ExtraKind>(kind: K, range?: DateRange): Promise<Records[K]>;
 
-  /** SE-9: atomically delete the given records by id (unknown ids are ignored). Areas and lists are untouched. */
+  /** EN-1: replace a meal (and its ingredients) that already exists. Unknown id: throws. */
+  putMeal(meal: Meal): Promise<void>;
+  /** EN-1: replace a skin entry that already exists. Unknown id: throws. */
+  putSkinEntry(entry: SkinEntry): Promise<void>;
+
+  /** SE-9: atomically delete the given records by id (unknown ids are ignored). Areas and lists are untouched. Leaves no tombstones. */
   deleteRecords(ids: Partial<Record<RecordKind, string[]>>): Promise<void>;
+  /**
+   * EN-1, EX-13: atomically delete the given records and store a tombstone for each id that existed
+   * (unknown ids are ignored). `at` is the deletion time.
+   */
+  deleteWithTombstones(ids: Partial<Record<RecordKind, string[]>>, at: Stamp): Promise<void>;
+  /** All tombstones, oldest deletion first. */
+  listTombstones(): Promise<Tombstone[]>;
 
   /** Entries inside the range plus all areas. */
   snapshot(range?: DateRange): Promise<Snapshot>;
@@ -57,6 +83,7 @@ export interface StorageRepository {
    * replace records: delete all meals and skin entries, insert the payload's.
    * replace settings: overwrite areas and list items by id, delete user areas and items that are neither
    * in the payload nor used by a remaining record, keep predefined ones.
+   * Tombstones (EX-13): see ImportTombstones. Replace records also wipes all local tombstones.
    */
-  importData(payload: Payload, mode: ImportMode): Promise<void>;
+  importData(payload: Payload, mode: ImportMode, tombstones?: ImportTombstones): Promise<void>;
 }

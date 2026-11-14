@@ -1,6 +1,6 @@
-import { INGREDIENTS_PROMPT_VERSION, LABEL_PROMPT_VERSION, MAX_KNOWN_NAMES, ingredientsPrompt, labelPrompt } from '../llm/prompts';
+import { allergenPrompt, INGREDIENTS_PROMPT_VERSION, LABEL_PROMPT_VERSION, MAX_KNOWN_NAMES, ingredientsPrompt, labelPrompt } from '../llm/prompts';
 import type { LlmProvenance } from '../model/source';
-import { parseIngredientEstimate, parseLabelScan, type IngredientEstimate, type LabelScan } from '../llm/parse';
+import { parseAllergenSuggestion, parseIngredientEstimate, parseLabelScan, type AllergenSuggestion, type IngredientEstimate, type LabelScan } from '../llm/parse';
 import { NettleError } from '../model/errors';
 import { ALLERGENS } from '../model/types';
 import { LLM_ACTIONS, type LlmAction } from '../llm/actions';
@@ -101,4 +101,23 @@ export async function knownIngredientNames(deps: Deps): Promise<string[]> {
     }
   }
   return [...counts.values()].sort((a, b) => b.n - a.n || a.name.localeCompare(b.name)).slice(0, MAX_KNOWN_NAMES).map((c) => c.name);
+}
+
+/** Most ingredient names one allergen request sends. */
+export const MAX_ALLERGEN_INGREDIENTS = 80;
+
+/**
+ * IN-10, LL-5: ask the model which EU allergens an ingredient list contains. Text only. The caller must have shown
+ * the confirmation that names the ingredients; the result only suggests tags, nothing is selected or saved here.
+ */
+export async function suggestAllergensWithAi(
+  deps: Deps,
+  input: { ingredients: readonly string[]; language: Language; signal?: AbortSignal },
+): Promise<AllergenSuggestion> {
+  const ingredients = [...new Set(input.ingredients.map((i) => i.trim()).filter(Boolean))].slice(0, MAX_ALLERGEN_INGREDIENTS);
+  if (ingredients.length === 0) throw new NettleError('no_ingredients');
+  const { provider } = await currentProvider(deps, 'allergen_suggest');
+  const prompt = allergenPrompt(input.language, ALLERGENS, ingredients);
+  const response = await provider.completeJson({ ...prompt, ...(input.signal ? { signal: input.signal } : {}) });
+  return parseAllergenSuggestion(response.text);
 }

@@ -36,6 +36,22 @@ export function parseSummary(text: string): string {
   return o.summary.trim();
 }
 
+export interface AllergenSuggestion {
+  /** Suggestions only: unselected until the user selects them (IN-10). */
+  allergens: Allergen[];
+  note: string | null;
+}
+
+/** IN-10: unknown ids are dropped and duplicates merged; anything else unexpected is `llm_bad_response`. */
+export function parseAllergenSuggestion(text: string): AllergenSuggestion {
+  const o = parseJson(text);
+  if (!isObj(o) || !Array.isArray(o.allergens) || o.allergens.some((x) => typeof x !== 'string')) throw new NettleError('llm_bad_response');
+  const note = o.note;
+  if (note !== null && note !== undefined && typeof note !== 'string') throw new NettleError('llm_bad_response');
+  const allergens = [...new Set((o.allergens as string[]).map((s) => s.trim()))].filter((s): s is Allergen => (ALLERGENS as readonly string[]).includes(s));
+  return { allergens, note: typeof note === 'string' && note.trim() ? note.trim() : null };
+}
+
 export interface LabelScan {
   /** As printed, in the label's language. Suggestions only: never saved until the user confirms (IN-15). */
   ingredients: string[];

@@ -53,6 +53,7 @@ export const ERROR_CODES = [
   'analysis_too_large',
   'analysis_no_data',
   'summary_empty',
+  'no_ingredients',
   'summary_mismatch',
   'too_many_photos',
   'flare_already_started',

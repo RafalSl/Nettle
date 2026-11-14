@@ -31,6 +31,14 @@
     "allergens": "Allergens",
     "suggestAllergens": "Suggest from ingredients",
     "allergensHint": "Suggestions are only a guess from the ingredient text. Check them before saving.",
+    "aiAllergens": "Suggest allergens with AI",
+    "aiAllergensConfirmTitle": "Send the ingredients to Anthropic?",
+    "aiAllergensConfirmBody": "These ingredient names (text only, no photo) are sent over the internet to Anthropic to suggest which allergens they contain. Nothing is selected or saved from the answer until you select it. Anthropic bills this separately to your API account (a small amount); a Claude subscription does not cover it.",
+    "aiAllergensSend": "Send",
+    "aiAllergensRunning": "Asking the model about the ingredients. You can keep entering the meal.",
+    "aiAllergensFailed": "Nothing was selected.",
+    "aiAllergensHint": "The AI suggests these allergens: {{list}}. They are not selected until you select them.",
+    "aiAllergensNone": "The AI found no allergens in these ingredients. Check the list yourself.",
     "fromPhoto": "Suggest ingredients from a photo",
     "fromLabel": "Read the ingredient label",
     "labelConfirmTitle": "Send this label photo to Anthropic?",
@@ -207,6 +215,7 @@
     "llm_failed": "The request failed. Nothing was saved.",
     "analysis_too_large": "That date range is too large to send. Choose a shorter range.",
     "analysis_no_data": "There is nothing logged in that date range.",
+    "no_ingredients": "Add at least one ingredient first.",
     "summary_empty": "The summary is empty. Write something or discard it.",
     "summary_mismatch": "That summary was made for another period or language. Make a new one.",
     "too_many_photos": "Too many photos for one run. Choose fewer.",
@@ -437,7 +446,8 @@
       "label_scan": "Label scan",
       "meal_photo": "Meal photo",
       "analysis": "AI analysis",
-      "report_summary": "Report summary"
+      "report_summary": "Report summary",
+      "allergen_suggest": "Allergen suggestions"
     },
     "saved": "Saved"
   },

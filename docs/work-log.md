@@ -315,3 +315,6 @@ Newest entry last. One short entry per working session or meaningful step: what 
 ## 2026-11-14: Today date jump (branch feature/today-date-jump)
 - **Done:** UX-2. Pressing the day heading on Today opens an inline date picker (future days not selectable); the test mock of the picker now records its props so tests can drive it. 626 tests pass.
 - **Left (not built):** the photo options of Privacy and photos, About, the highlighted new row on Today, the "Earlier…" stool form, ingredient chips with autocomplete, LLM allergen suggestions, favorites for scanned products, a free date range picker for the report and the custom export, side-by-side photo comparison and trend charts (Review), newest-wins merge (EX-12), the accessibility pass (UX-8), Polish string review, pruning unused template dependencies. Everything since the IA, and all of v0.5, is untested on a phone.
+
+## 2026-11-14: AI allergen suggestion (branch feature/allergen-suggestion)
+- **Done:** IN-10, LL-5, LL-9. New LLM action `allergen_suggest` with its own model setting; a button on the meal and drink forms sends the ingredient names (text only) after a confirmation that lists them, and the answer only suggests tags. 632 tests pass.

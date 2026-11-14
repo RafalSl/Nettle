@@ -38,6 +38,14 @@
     "labelRead": "Na etykiecie: {{text}}",
     "labelNote": "Uwaga: {{text}}",
     "labelTagsHint": "Etykieta wymienia te alergeny lub ślady: {{list}}. Nie są zaznaczone, dopóki ich nie zaznaczysz.",
+    "aiAllergens": "Zaproponuj alergeny z AI",
+    "aiAllergensConfirmTitle": "Wysłać składniki do Anthropic?",
+    "aiAllergensConfirmBody": "Te nazwy składników (tylko tekst, bez zdjęcia) są wysyłane przez internet do Anthropic, żeby podpowiedzieć, jakie zawierają alergeny. Nic z odpowiedzi nie zostanie zaznaczone ani zapisane, dopóki sam tego nie zaznaczysz. Anthropic nalicza to osobno na Twoim koncie API (niewielka kwota); subskrypcja Claude tego nie obejmuje.",
+    "aiAllergensSend": "Wyślij",
+    "aiAllergensRunning": "Pytam model o składniki. Możesz dalej wpisywać posiłek.",
+    "aiAllergensFailed": "Nic nie zaznaczono.",
+    "aiAllergensHint": "AI podpowiada te alergeny: {{list}}. Nie są zaznaczone, dopóki ich nie zaznaczysz.",
+    "aiAllergensNone": "AI nie znalazło alergenów w tych składnikach. Sprawdź listę samodzielnie.",
     "fromPhoto": "Zaproponuj składniki ze zdjęcia",
     "photoConfirmTitle": "Wysłać to zdjęcie do Anthropic?",
     "photoConfirmBody": "Zdjęcie zostanie wysłane przez internet do Anthropic, aby odgadnąć składniki. Nic z odpowiedzi nie zostanie zapisane, dopóki jej nie sprawdzisz. Anthropic rozlicza to osobno na Twoim koncie API (niewielka kwota); subskrypcja Claude tego nie obejmuje.",
@@ -207,6 +215,7 @@
     "llm_failed": "Zapytanie nie powiodło się. Nic nie zapisano.",
     "analysis_too_large": "Ten zakres dat jest za duży do wysłania. Wybierz krótszy.",
     "analysis_no_data": "W tym zakresie dat nic nie zapisano.",
+    "no_ingredients": "Najpierw dodaj przynajmniej jeden składnik.",
     "summary_empty": "Podsumowanie jest puste. Napisz coś albo je odrzuć.",
     "summary_mismatch": "To podsumowanie powstało dla innego okresu lub języka. Utwórz nowe.",
     "too_many_photos": "Za dużo zdjęć na jedno uruchomienie. Wybierz mniej.",
@@ -437,7 +446,8 @@
       "label_scan": "Skan etykiety",
       "meal_photo": "Zdjęcie posiłku",
       "analysis": "Analiza AI",
-      "report_summary": "Podsumowanie raportu"
+      "report_summary": "Podsumowanie raportu",
+      "allergen_suggest": "Podpowiedzi alergenów"
     },
     "saved": "Zapisano"
   },

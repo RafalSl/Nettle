@@ -16,6 +16,7 @@ import { useServices } from '@/services';
 import { confirmDestructive } from '@/ui/actionSheet';
 import { BarcodeScanner } from '@/ui/BarcodeScanner';
 import { FormModal } from '@/ui/FormModal';
+import { AllergenAiControls, useAllergenAi } from '@/ui/useAllergenAi';
 import { IngredientRunPanel, SOURCE_OF, useIngredientRun, type Run } from '@/ui/useIngredientRun';
 import { Button, Chips, Hint, Label, TimeField, styles } from '@/ui/components';
 
@@ -57,7 +58,7 @@ export default function MealScreen() {
   const [code, setCode] = useState('');
   const [looking, setLooking] = useState(false);
   // IN-2, IN-10: what a barcode lookup said, and the allergen tags it only suggests.
-  const [fromCode, setFromCode] = useState<{ note: string; tags: Allergen[] } | null>(null);
+  const [fromCode, setFromCode] = useState<{ note: string; tags: Allergen[]; hintKey?: string } | null>(null);
   const [meals, setMeals] = useState<ReturnType<typeof mealHistory>>([]);
   const [prefs, setPrefs] = useState<Preferences>(defaultPreferences());
   const [description, setDescription] = useState('');
@@ -65,6 +66,10 @@ export default function MealScreen() {
   const [allergens, setAllergens] = useState<Set<string>>(new Set());
   const [note, setNote] = useState('');
   const ingredientRun = useIngredientRun();
+  // IN-10: the AI's allergen suggestion lands as a hint with a select button; nothing is selected by itself.
+  const allergenAi = useAllergenAi((tags, note) =>
+    setFromCode({ note: [tags.length === 0 ? t('meal.aiAllergensNone') : '', note ?? ''].filter(Boolean).join(' '), tags, hintKey: 'meal.aiAllergensHint' }),
+  );
   const [at, setAt] = useState<Date | null>(null);
   const [edited, setEdited] = useState(false);
   const [origin, setOrigin] = useState<Origin>(typedOrigin());
@@ -284,10 +289,11 @@ export default function MealScreen() {
           />
           {fromCode && fromCode.tags.some((a) => !allergens.has(a)) && (
             <>
-              <Hint>{t('meal.scanTagsHint', { list: fromCode.tags.map((a) => t(`allergens.${a}`)).join(', ') })}</Hint>
+              <Hint>{t(fromCode.hintKey ?? 'meal.scanTagsHint', { list: fromCode.tags.map((a) => t(`allergens.${a}`)).join(', ') })}</Hint>
               <Button kind="secondary" title={t('meal.scanSelectTags')} onPress={() => touch(setAllergens)(new Set([...allergens, ...fromCode.tags]))} />
             </>
           )}
+          <AllergenAiControls hook={allergenAi} ingredients={ingredients} />
           <Button kind="secondary" title={t('meal.suggestAllergens')} onPress={() => touch(setAllergens)(new Set(suggestAllergens(ingredients)))} />
           <Hint>{t('meal.allergensHint')}</Hint>
 

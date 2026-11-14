@@ -16,6 +16,7 @@ import { FormModal, useField, useForm } from '@/ui/FormModal';
 import { DrinkFields, draftFromDrink, drinkInput, drinkMissing, emptyDrinkDraft, type DrinkDraft } from '@/ui/DrinkFields';
 import { useFormTime } from '@/ui/useFormTime';
 import { BarcodeScanner } from '@/ui/BarcodeScanner';
+import { AllergenAiControls, useAllergenAi } from '@/ui/useAllergenAi';
 import { IngredientRunPanel, SOURCE_OF, useIngredientRun, type Run } from '@/ui/useIngredientRun';
 import { Button, Chips, Hint, Label, TimeField, styles } from '@/ui/components';
 
@@ -100,6 +101,12 @@ export function DrinkSection() {
   // IN-3, IN-15: a label scan or photo estimate adds names to the list; its tags stay unselected (IN-10).
   const run = useIngredientRun();
   const [pendingTags, setPendingTags] = useState<Allergen[]>([]);
+  const [pendingHint, setPendingHint] = useState('meal.labelTagsHint');
+  const allergenAi = useAllergenAi((tags, note) => {
+    setPendingTags(tags);
+    setPendingHint('meal.aiAllergensHint');
+    setScanNote([tags.length === 0 ? t('meal.aiAllergensNone') : '', note ?? ''].filter(Boolean).join(' ') || null);
+  });
   function addRun(names: string[], r: Extract<Run, { status: 'ready' }>) {
     const current = splitIngredients(draft.ingredients);
     const merged = addIngredients(current, names).filter(Boolean);
@@ -111,6 +118,7 @@ export function DrinkSection() {
       ...(typed ? { source: { kind: SOURCE_OF[r.kind], edited: false, llm: r.provenance }, filled: { ingredients: merged, allergens: r.label ? tags : [...draft.allergens] } } : {}),
     });
     setPendingTags(tags);
+    setPendingHint('meal.labelTagsHint');
     run.dismiss();
   }
 
@@ -153,11 +161,12 @@ export function DrinkSection() {
       {scanNote && <Hint>{scanNote}</Hint>}
       {pendingTags.length > 0 && draft.allergens.size < pendingTags.length && (
         <>
-          <Hint>{t('meal.labelTagsHint', { list: pendingTags.map((a) => t(`allergens.${a}`)).join(', ') })}</Hint>
+          <Hint>{t(pendingHint, { list: pendingTags.map((a) => t(`allergens.${a}`)).join(', ') })}</Hint>
           <Button kind="secondary" title={t('meal.scanSelectTags')} onPress={() => setDraft({ ...draft, allergens: new Set([...draft.allergens, ...pendingTags]) })} />
         </>
       )}
       <DrinkFields draft={draft} onChange={setDraft} />
+      <AllergenAiControls hook={allergenAi} ingredients={splitIngredients(draft.ingredients)} />
       {/* IN-14: a star keeps a snapshot of the drink (amount, alcohol switch, ingredients, tags) as a favorite. */}
       <Button
         kind="secondary"

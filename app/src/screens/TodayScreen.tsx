@@ -1,3 +1,4 @@
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Pressable, Text, View } from 'react-native';
@@ -46,6 +47,7 @@ export default function TodayScreen() {
   const [flares, setFlares] = useState<string[]>([]);
   const [backup, setBackup] = useState<{ due: boolean; days: number | null }>({ due: false, days: null });
   const [stoolOpen, setStoolOpen] = useState(false);
+  const [picking, setPicking] = useState(false);
   const [layout, setLayout] = useState(defaultPreferences().quickActions);
   const [editing, setEditing] = useState(false);
   const [locked, setLocked] = useState<Set<string>>(new Set());
@@ -114,11 +116,27 @@ export default function TodayScreen() {
         <Pressable accessibilityRole="button" accessibilityLabel={t('day.previous')} onPress={() => moveDay(-1)} hitSlop={12}>
           <Text style={styles.heading}>‹</Text>
         </Pressable>
-        <Heading>{isToday ? `${t('day.today')}, ${day}` : day}</Heading>
+        <Pressable accessibilityRole="button" accessibilityLabel={t('day.jump')} onPress={() => setPicking((p) => !p)} hitSlop={8}>
+          <Heading>{isToday ? `${t('day.today')}, ${day}` : day}</Heading>
+        </Pressable>
         <Pressable accessibilityRole="button" accessibilityLabel={t('day.next')} onPress={() => moveDay(1)} hitSlop={12} disabled={isToday}>
           <Text style={[styles.heading, isToday && { opacity: 0.3 }]}>›</Text>
         </Pressable>
       </View>
+      {picking && (
+        // UX-2: jump to any past day; a picked date is a calendar day, and a day in the future is never chosen.
+        <DateTimePicker
+          mode="date"
+          display="inline"
+          value={new Date(`${day}T12:00:00`)}
+          maximumDate={now}
+          onValueChange={(_e, d) => {
+            const picked = localDay(d.toISOString(), deps.clock.timeZone());
+            setChosen(picked >= today ? null : picked);
+            setPicking(false);
+          }}
+        />
+      )}
       {!isToday && <Button kind="secondary" title={t('day.today')} onPress={() => setChosen(null)} />}
 
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>

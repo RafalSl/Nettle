@@ -311,3 +311,7 @@ Newest entry last. One short entry per working session or meaningful step: what 
 ## 2026-11-14: export first before Replace and Delete data (branch feature/export-first)
 - **Done:** UX-6, UX-9, SE-9, EX-10. Replace and Delete data are action sheets with "Export first" (a full backup through the share sheet, then the sheet asks again); Delete data asks a second time. 625 tests pass.
 - **Next:** Today date jump.
+
+## 2026-11-14: Today date jump (branch feature/today-date-jump)
+- **Done:** UX-2. Pressing the day heading on Today opens an inline date picker (future days not selectable); the test mock of the picker now records its props so tests can drive it. 626 tests pass.
+- **Left (not built):** the photo options of Privacy and photos, About, the highlighted new row on Today, the "Earlier…" stool form, ingredient chips with autocomplete, LLM allergen suggestions, favorites for scanned products, a free date range picker for the report and the custom export, side-by-side photo comparison and trend charts (Review), newest-wins merge (EX-12), the accessibility pass (UX-8), Polish string review, pruning unused template dependencies. Everything since the IA, and all of v0.5, is untested on a phone.

@@ -55,7 +55,10 @@
     "scale": "0 = brak, 10 = najgorzej",
     "noChange": "Bez zmian",
     "noChangeHint": "Zapisuje nowy wpis z takimi samymi ocenami jak ostatni dla tego miejsca.",
-    "prefilled": "Oceny zaczynają od ostatniego wpisu dla tego miejsca."
+    "prefilled": "Oceny zaczynają od ostatniego wpisu dla tego miejsca.",
+    "flareStart": "Początek rzutu",
+    "flareEnd": "Koniec rzutu",
+    "flareOpen": "W tym miejscu trwa rzut."
   },
   "areas": {
     "area-chin": "Broda",
@@ -145,7 +148,9 @@
     "llm_failed": "Zapytanie nie powiodło się. Nic nie zapisano.",
     "analysis_too_large": "Ten zakres dat jest za duży do wysłania. Wybierz krótszy.",
     "analysis_no_data": "W tym zakresie dat nic nie zapisano.",
-    "too_many_photos": "Za dużo zdjęć na jedno uruchomienie. Wybierz mniej."
+    "too_many_photos": "Za dużo zdjęć na jedno uruchomienie. Wybierz mniej.",
+    "flare_already_started": "Dla tego miejsca zaznaczono już początek rzutu.",
+    "flare_not_started": "Dla tego miejsca nie zaznaczono początku rzutu."
   },
   "today": {
     "title": "Codzienna kontrola",
@@ -313,7 +318,8 @@
       "checkIns": "codzienne kontrole: {{n}}",
       "stoolEntries": "wpisy o stolcu: {{n}}",
       "changeEvents": "zmiany: {{n}}",
-      "analyses": "analizy AI: {{n}}"
+      "analyses": "analizy AI: {{n}}",
+      "flareMarkers": "znaczniki rzutów: {{n}}"
     }
   },
   "exportPhotos": {

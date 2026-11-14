@@ -91,6 +91,7 @@ const RAW_RECORDS = {
   medication_entries: [],
   photos: [],
   analyses: [],
+  flare_markers: [],
 };
 const RAW_SETTINGS = { skin_areas: [], daily_tags: [], treatments: [] };
 
@@ -299,6 +300,7 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
       medicationEntries: 1,
       photos: 0,
       analyses: 0,
+      flareMarkers: 0,
       skinAreas: 8,
       dailyTags: 10,
       treatments: 1,
@@ -338,6 +340,7 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
       medicationEntries: 0,
       photos: 0,
       analyses: 0,
+      flareMarkers: 0,
       skinAreas: 6,
       dailyTags: 9,
       treatments: 0,
@@ -355,6 +358,7 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
       medicationEntries: 1,
       photos: 0,
       analyses: 0,
+      flareMarkers: 0,
       skinAreas: 2,
       dailyTags: 1,
       treatments: 1,

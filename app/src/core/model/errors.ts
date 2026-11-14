@@ -51,6 +51,8 @@ export const ERROR_CODES = [
   'analysis_too_large',
   'analysis_no_data',
   'too_many_photos',
+  'flare_already_started',
+  'flare_not_started',
   'empty_name',
   'no_previous_entry',
   'nothing_selected',

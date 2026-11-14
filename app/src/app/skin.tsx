@@ -2,6 +2,7 @@ import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Pressable, Text, TextInput, View } from 'react-native';
 import { SCORE_KEYS, type SkinArea, type SkinEntry, type SkinScores } from '@/core/model/types';
+import { markFlare, openFlareAreas } from '@/core/usecases/flares';
 import { lastSkinScores, listActiveAreas, logSkinEntry, repeatSkinEntry } from '@/core/usecases/skin';
 import { areaLabel, errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
@@ -20,6 +21,7 @@ export default function SkinScreen() {
   const [note, setNote] = useState('');
   const [at, setAt] = useState<Date | null>(null);
   const [hasLast, setHasLast] = useState(false);
+  const [flareOpen, setFlareOpen] = useState<Set<string>>(new Set());
 
   const reload = useCallback(() => {
     listActiveAreas(deps, 'skin').then((a) => {
@@ -27,6 +29,7 @@ export default function SkinScreen() {
       setAreaId((cur) => (cur && a.some((x) => x.id === cur) ? cur : (a[0]?.id ?? null)));
     });
     deps.repo.listSkinEntries().then((e) => setRecent(e.slice(0, 5)));
+    openFlareAreas(deps).then(setFlareOpen);
   }, [deps]);
   useFocusEffect(reload);
 
@@ -51,6 +54,16 @@ export default function SkinScreen() {
       setAt(null);
       reload();
       prefill(areaId);
+    } catch (e) {
+      Alert.alert(errorMessage(e));
+    }
+  }
+
+  async function flare(kind: 'start' | 'end') {
+    try {
+      if (!areaId) return;
+      await markFlare(deps, { areaId, kind, at: at ?? undefined });
+      reload();
     } catch (e) {
       Alert.alert(errorMessage(e));
     }
@@ -94,6 +107,14 @@ export default function SkinScreen() {
           <Hint>{t('skin.noChangeHint')}</Hint>
           <Hint>{t('skin.prefilled')}</Hint>
         </>
+      )}
+      {areaId && flareOpen.has(areaId) ? (
+        <>
+          <Hint>{t('skin.flareOpen')}</Hint>
+          <Button kind="secondary" title={t('skin.flareEnd')} onPress={() => flare('end')} />
+        </>
+      ) : (
+        <Button kind="secondary" title={t('skin.flareStart')} onPress={() => flare('start')} />
       )}
       <Hint>{t('skin.scale')}</Hint>
       {SCORE_KEYS.map((k) => (

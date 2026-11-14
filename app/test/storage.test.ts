@@ -127,6 +127,18 @@ describe('sqlite migrations', () => {
     ).rejects.toThrow();
   });
 
+  it('SK-6 stores flare markers and enforces kind and area in the database', async () => {
+    const db = createNodeSqliteDb();
+    const repo = await SqliteRepo.open(db);
+    const marker = { id: 'f1', at: { utc: '2026-01-01T00:00:00.000Z', tz: 'UTC' }, areaId: 'area-chin', kind: 'start' as const, note: null };
+    await repo.addRecord('flareMarkers', marker);
+    expect(await repo.listRecords('flareMarkers')).toEqual([marker]);
+    await expect(repo.addRecord('flareMarkers', { ...marker, id: 'f2', areaId: 'nope' })).rejects.toThrow();
+    await expect(
+      db.run(`INSERT INTO flare_marker (id, ts_utc, tz, area_id, kind) VALUES ('x', '2026-01-01T00:00:00.000Z', 'UTC', 'area-chin', 'pause')`),
+    ).rejects.toThrow();
+  });
+
   it('SK-3 enforces 0-10 scores in the database itself', async () => {
     const db = createNodeSqliteDb();
     await SqliteRepo.open(db);

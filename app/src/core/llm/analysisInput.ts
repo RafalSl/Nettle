@@ -114,6 +114,9 @@ export function buildAnalysisInput(src: AnalysisSource, dayFrom: string, dayTo: 
   for (const e of src.nailEntries) {
     add('nailEntries', dayOf(e.at), 'nails', { time: time(e.at.utc, e.at.tz), nail: areaName.get(e.areaId) ?? e.areaId, stage: e.stage, extent: e.extent });
   }
+  for (const f of src.flareMarkers) {
+    add('flareMarkers', dayOf(f.at), 'flares', { time: time(f.at.utc, f.at.tz), area: areaName.get(f.areaId) ?? f.areaId, marker: f.kind });
+  }
   for (const r of src.reactions) {
     const meal = mealById.get(r.mealId);
     add('reactions', dayOf(r.at), 'reactions', { onset: time(r.at.utc, r.at.tz), meal: meal ? `${localDateTime(meal.at.utc, meal.at.tz)} ${meal.description}` : null, symptoms: r.symptoms });

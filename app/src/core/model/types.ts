@@ -237,6 +237,19 @@ export interface Analysis {
   result: AnalysisResult;
 }
 
+/** SK-6 */
+export const FLARE_KINDS = ['start', 'end'] as const;
+export type FlareKind = (typeof FLARE_KINDS)[number];
+
+/** SK-6: a flare marker for one area, separate from the scores. A start without a later end is an open flare. */
+export interface FlareMarker {
+  id: string;
+  at: Stamp;
+  areaId: string;
+  kind: FlareKind;
+  note: string | null;
+}
+
 /** What the user logged (EX-1 "records"). */
 export interface Records {
   meals: Meal[];
@@ -251,6 +264,7 @@ export interface Records {
   medicationEntries: MedicationEntry[];
   photos: Photo[];
   analyses: Analysis[];
+  flareMarkers: FlareMarker[];
 }
 
 /** Every record collection, in the order they are listed in `Records`. */
@@ -272,6 +286,7 @@ export const EXTRA_KINDS: readonly ExtraKind[] = [
   'medicationEntries',
   'photos',
   'analyses',
+  'flareMarkers',
 ];
 
 /**

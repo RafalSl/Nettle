@@ -179,6 +179,18 @@ export const MIGRATIONS: string[] = [
   );
   CREATE INDEX analysis_ts ON analysis (ts_utc);
   `,
+  // SK-6: flare start and end markers per area.
+  `
+  CREATE TABLE flare_marker (
+    id TEXT PRIMARY KEY,
+    ts_utc TEXT NOT NULL,
+    tz TEXT NOT NULL,
+    area_id TEXT NOT NULL REFERENCES skin_area (id),
+    kind TEXT NOT NULL CHECK (kind IN ('start', 'end')),
+    note TEXT
+  );
+  CREATE INDEX flare_marker_ts ON flare_marker (ts_utc);
+  `,
 ];
 
 export async function migrate(db: SqlDb): Promise<void> {

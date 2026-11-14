@@ -21,7 +21,7 @@ export function DeleteSection() {
   const tz = deps.clock.timeZone();
   const selection = () => ({
     kinds: [...groups].flatMap((g) => DELETE_GROUPS[g as DeleteGroup] as readonly RecordKind[]),
-    range: limit ? (localDaysToRange(localDay(from.toISOString(), tz), localDay(to.toISOString(), tz), tz) ?? undefined) : undefined,
+    range: limit ? (localDaysToRange(localDay(from.toISOString(), tz), localDay(to.toISOString(), tz), tz, deps.dayStart.get()) ?? undefined) : undefined,
   });
 
   async function review() {

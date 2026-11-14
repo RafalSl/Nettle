@@ -81,7 +81,7 @@ export default function MealScreen() {
   const now = deps.clock.now();
   const tz = deps.clock.timeZone();
   // UX-2: a new entry for a past day gets the current clock time on that day.
-  const defaultAt = typeof day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(day) ? atOnDay(day, now, tz) : now;
+  const defaultAt = typeof day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(day) ? atOnDay(day, now, tz, deps.dayStart.get()) : now;
 
   const suggestions: Suggestion<MealDraft>[] = rankSuggestions(
     meals.map((h) => ({ ...h, payload: { description: h.payload.description, ingredients: h.payload.ingredients, allergens: h.payload.allergens, barcode: h.payload.barcode, source: h.payload.source } })),
@@ -95,7 +95,7 @@ export default function MealScreen() {
     if (s.favorite) parts.push(t('meal.hintFavorite'));
     if (s.count >= 2) parts.push(t('meal.hintCount', { n: s.count }));
     if (s.lastAt) {
-      const days = Math.round((Date.parse(localDay(now.toISOString(), tz)) - Date.parse(localDay(s.lastAt, tz))) / DAY_MS);
+      const days = Math.round((Date.parse(localDay(now.toISOString(), tz, deps.dayStart.get())) - Date.parse(localDay(s.lastAt, tz, deps.dayStart.get()))) / DAY_MS);
       parts.push(days <= 0 ? t('meal.hintToday') : days === 1 ? t('meal.hintYesterday') : t('meal.hintDays', { n: days }));
     }
     return parts.join(' · ');
@@ -126,7 +126,7 @@ export default function MealScreen() {
         if (h) {
           // IN-2: a barcode the diary knows fills the review from its latest use, tags pre-selected (confirmed).
           review({ description: h.name, ingredients: h.ingredients, allergens: h.allergens, barcode: found.barcode, source: h.source });
-          setDateHint(t('meal.scanFromHistory', { date: localDay(h.at, deps.clock.timeZone()) }));
+          setDateHint(t('meal.scanFromHistory', { date: localDay(h.at, deps.clock.timeZone(), deps.dayStart.get()) }));
           return;
         }
         const p = found.product;

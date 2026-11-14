@@ -1,3 +1,4 @@
+import type { DayStart } from '../model/dayStart';
 import type { Authenticator } from '../ports/auth';
 import type { BarcodeSource } from '../ports/barcode';
 import type { KeyStore } from '../ports/keystore';
@@ -25,6 +26,8 @@ export interface Deps {
   auth: Authenticator;
   /** IN-9: barcode in, product out. */
   barcode: BarcodeSource;
+  /** NF-7: the hour a diary day starts at. */
+  dayStart: DayStart;
   /** LL-10: builds the provider for a configuration (one adapter per provider). */
   llmFor: (config: LlmConfig) => LlmProvider;
   /** LL-9, LL-10: the models the provider adapter offers for the per-action setting. */

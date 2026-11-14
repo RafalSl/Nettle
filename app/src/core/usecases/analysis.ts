@@ -46,7 +46,7 @@ export async function prepareAnalysis(deps: Deps, sel: AnalysisSelection): Promi
   if (photoIds.length > MAX_ANALYSIS_PHOTOS) throw new NettleError('too_many_photos');
 
   const snap = await deps.repo.snapshot();
-  const built = buildAnalysisInput(snap, sel.dayFrom, sel.dayTo);
+  const built = buildAnalysisInput(snap, sel.dayFrom, sel.dayTo, deps.dayStart.get());
   if (built.periodRecords === 0) throw new NettleError('analysis_no_data');
 
   const areas = new Map(snap.skinAreas.map((a) => [a.id, a.nameOverride ?? a.name]));

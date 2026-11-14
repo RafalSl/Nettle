@@ -22,17 +22,18 @@ export type LogKind = (typeof LOG_KINDS)[number];
 export type LogRow = { [K in LogKind]: { kind: K; id: string; at: Stamp; record: Records[K][number] } }[LogKind];
 
 /** Local calendar days are the entry's own (NF-4), so a day is looked up with one day of slack either side. */
-function slack(day: LocalDay, tz: string): DateRange {
-  return localDaysToRange(addDays(day, -1) ?? day, addDays(day, 1) ?? day, tz) ?? {};
+function slack(day: LocalDay, tz: string, startHour: number): DateRange {
+  return localDaysToRange(addDays(day, -1) ?? day, addDays(day, 1) ?? day, tz, startHour) ?? {};
 }
 
 /** UX-2: everything logged on one local day, oldest first, each row carrying its record for editing and deleting (EN-1). */
 export async function dayLog(deps: Deps, day: LocalDay): Promise<LogRow[]> {
-  const snap = await deps.repo.snapshot(slack(day, deps.clock.timeZone()));
+  const start = deps.dayStart.get();
+  const snap = await deps.repo.snapshot(slack(day, deps.clock.timeZone(), start));
   const rows: LogRow[] = [];
   for (const kind of LOG_KINDS) {
     for (const record of snap[kind] as { id: string; at: Stamp }[]) {
-      if (localDay(record.at.utc, record.at.tz) === day) rows.push({ kind, id: record.id, at: record.at, record } as LogRow);
+      if (localDay(record.at.utc, record.at.tz, start) === day) rows.push({ kind, id: record.id, at: record.at, record } as LogRow);
     }
   }
   return rows.sort((a, b) => a.at.utc.localeCompare(b.at.utc) || a.id.localeCompare(b.id));
@@ -102,10 +103,11 @@ export interface DaySummary {
 /** UX-1: the days that have entries, newest first, for the Review list. Each day is the entry's own local day (NF-4). */
 export async function daysWithEntries(deps: Deps, limit = 60): Promise<DaySummary[]> {
   const snap = await deps.repo.snapshot();
+  const start = deps.dayStart.get();
   const days = new Map<LocalDay, DaySummary>();
   for (const kind of LOG_KINDS) {
     for (const r of snap[kind] as { at: Stamp; completedAt?: Stamp | null }[]) {
-      const day = localDay(r.at.utc, r.at.tz);
+      const day = localDay(r.at.utc, r.at.tz, start);
       const cur = days.get(day) ?? { day, entries: 0, complete: false };
       cur.entries++;
       if (kind === 'checkIns' && r.completedAt) cur.complete = true;

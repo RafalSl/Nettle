@@ -13,7 +13,7 @@ export function useFormTime(touch: () => void) {
   const { day } = useLocalSearchParams<{ day?: string }>();
   const forDay = typeof day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(day) ? day : null;
   const now = deps.clock.now();
-  const initial = forDay ? atOnDay(forDay, now, deps.clock.timeZone()) : now;
+  const initial = forDay ? atOnDay(forDay, now, deps.clock.timeZone(), deps.dayStart.get()) : now;
   const [picked, setPicked] = useField<Date | null>(null, touch);
   return { value: picked ?? initial, set: setPicked, atForSave: picked ?? (forDay ? initial : undefined) };
 }

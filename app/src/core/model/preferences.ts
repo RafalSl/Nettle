@@ -50,6 +50,8 @@ export interface Preferences {
   favorites: { meals: FavoriteMeal[]; drinks: FavoriteDrink[]; medications: FavoriteMedication[] };
   suggestions: SuggestionSettings;
   quickActions: QuickActionLayout;
+  /** NF-7: the hour a diary day starts at, 0 to 6 (default midnight). */
+  dayStartHour: number;
 }
 
 export const MAX_SUGGESTION_ROWS = 20;
@@ -58,6 +60,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
   favorites: { meals: [], drinks: [], medications: [] },
   suggestions: { rows: 5, windowDays: 30, saveOnTap: false },
   quickActions: { order: [...QUICK_ACTIONS], hidden: [] },
+  dayStartHour: 0,
 };
 
 /** A fresh copy of the defaults, so callers can change it freely. */

@@ -26,7 +26,7 @@ const SCORES = ['wellbeing', 'stress', 'sleep', 'abdominalPain'] as const;
 /** SK-11: closing a day with no meals asks first, because the analysis discounts incomplete days (LL-4). */
 async function assertDayHasMeals(deps: Deps, day: LocalDay, confirmed?: boolean): Promise<void> {
   if (confirmed) return;
-  const any = (await deps.repo.listMeals()).some((m) => localDay(m.at.utc, m.at.tz) === day);
+  const any = (await deps.repo.listMeals()).some((m) => localDay(m.at.utc, m.at.tz, deps.dayStart.get()) === day);
   if (!any) throw new NettleError('day_has_no_meals', day);
 }
 
@@ -56,9 +56,9 @@ export async function saveCheckIn(deps: Deps, input: CheckInInput): Promise<Chec
   const tags = await validCheckInTags(deps, input);
 
   const probe = makeStamp(deps.clock, input.at);
-  const existing = await getCheckIn(deps, localDay(probe.utc, probe.tz));
+  const existing = await getCheckIn(deps, localDay(probe.utc, probe.tz, deps.dayStart.get()));
   const at = input.at || !existing ? probe : existing.at;
-  const day = localDay(at.utc, at.tz);
+  const day = localDay(at.utc, at.tz, deps.dayStart.get());
   if (input.complete && !existing?.completedAt) await assertDayHasMeals(deps, day, input.confirmEmptyDay);
   const completedAt =
     input.complete === undefined ? (existing?.completedAt ?? null) : input.complete ? (existing?.completedAt ?? makeStamp(deps.clock)) : null;

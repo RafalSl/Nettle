@@ -72,7 +72,7 @@ export function DrinkSection() {
         if (h) {
           // IN-2: the diary knows this code: its confirmed ingredients and tags (pre-selected) fill the form.
           setDraft({ ...draftFromDrink({ ...h, amountMl: 0, alcohol: false, barcode: found.barcode }), name: h.name, amount: draft.amount, alcohol: draft.alcohol });
-          setScanNote(t('meal.scanFromHistory', { date: localDay(h.at, deps.clock.timeZone()) }));
+          setScanNote(t('meal.scanFromHistory', { date: localDay(h.at, deps.clock.timeZone(), deps.dayStart.get()) }));
         } else if (p) {
           // IN-16: the database is the source; its tags stay unselected until the user selects them (IN-10).
           setDraft({ ...base, name: p.name, amount: draft.amount, alcohol: draft.alcohol, ingredients: joinIngredients(p.ingredients), source: { kind: 'open_food_facts', edited: false, llm: null }, filled: { ingredients: p.ingredients, allergens: p.allergens } });

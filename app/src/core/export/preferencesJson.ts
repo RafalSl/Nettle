@@ -1,3 +1,4 @@
+import { isDayStartHour } from '../model/dayStart';
 import { QUICK_ACTIONS, MAX_SUGGESTION_ROWS, WINDOW_DAYS, type Preferences, type QuickAction } from '../model/preferences';
 import { ALLERGENS, MEDICATION_CATEGORIES } from '../model/types';
 import { parseBarcode, parseSource, sourceToJson } from './sourceJson';
@@ -13,6 +14,7 @@ export function preferencesToJson(p: Preferences): Obj {
     },
     suggestions: { rows: p.suggestions.rows, window_days: p.suggestions.windowDays, save_on_tap: p.suggestions.saveOnTap },
     quick_actions: { order: [...p.quickActions.order], hidden: [...p.quickActions.hidden] },
+    day_start_hour: p.dayStartHour,
   };
 }
 
@@ -65,5 +67,6 @@ export function parsePreferences(o: Obj, where = 'settings.preferences'): Prefer
     favorites: { meals, drinks, medications },
     suggestions: { rows: rows as number, windowDays: windowDays as (typeof WINDOW_DAYS)[number], saveOnTap: bool(sg, 'save_on_tap', `${where}.suggestions`) },
     quickActions: { order, hidden },
+    dayStartHour: isDayStartHour(o.day_start_hour) ? o.day_start_hour : bad(`${where}.day_start_hour`),
   };
 }

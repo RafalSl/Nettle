@@ -280,3 +280,8 @@ Newest entry last. One short entry per working session or meaningful step: what 
 - **Done:** IN-15, LL-13, LL-12, LL-5, IN-16. A label prompt (text as printed in the label's language, unreadable parts in `note`, the 14 allergen ids for declared allergens and "may contain" traces) and parser; `scanLabel` uses the `label_scan` model setting. The estimate machinery of the meal form moved into `useIngredientRun` and is shared with the drink form. The temporary photo is deleted through the new `PhotoStore.discardTemp`. Found on the way: the one-line ingredient fields split on every comma, which broke "mleko (3,2%)"; they now split outside brackets and between digits (also fixes the meal edit form). 590 tests pass.
 - **To verify on the phone:** a real label photo in Polish, the 30 second Cancel, and that the cache file is gone afterwards.
 - **Next:** day start (NF-7) and the Today log cap (UX-2).
+
+## 2026-11-14: day start and Today log cap (branch feature/day-start)
+- **Done:** NF-7, UX-2. `Preferences.dayStartHour` (0 to 6, exported with the settings), `DayStart` in `Deps`, and a start hour on `localDay`, `localDaysToRange` and `atOnDay`; all grouping sites use it. Logging settings has "Day starts at". `DayLog` is shared by Today (newest 8, "Show all (n)") and the new `review/day` screen; the Review days list opens that screen. 600 tests pass.
+- **Trade-off:** the setting is not versioned per entry, so changing it regroups the diary (as the requirement says); a saved check-in keeps its stored day.
+- **Next:** report summary (LL-14, EX-3).

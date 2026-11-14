@@ -1,21 +1,19 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Pressable, Text, View } from 'react-native';
-import { addDays, atOnDay, localDateTime, localDay } from '@/core/model/time';
+import { addDays, atOnDay, localDay } from '@/core/model/time';
 import type { ListItem, SkinArea } from '@/core/model/types';
 import { backupCardDue, daysSinceExport } from '@/core/usecases/backup';
 import { logStool, setDayComplete } from '@/core/usecases/checkin';
 import { dayLog, dayStatus, treatmentShortcuts, type DayStatus, type LogRow, type TreatmentShortcut } from '@/core/usecases/dayLog';
-import { deleteEntry, previewEntryDelete } from '@/core/usecases/entries';
 import { applyTreatment } from '@/core/usecases/events';
 import { markFlare, openFlareAreas } from '@/core/usecases/flares';
 import { defaultPreferences, type QuickAction } from '@/core/model/preferences';
 import { getPreferences, moveQuickAction, setQuickActionHidden, visibleQuickActions } from '@/core/usecases/preferences';
 import { areaLabel, errorMessage, itemLabel, t } from '@/i18n';
 import { useServices } from '@/services';
-import { chooseAction } from '@/ui/actionSheet';
-import { describeRow } from '@/ui/logRow';
-import { Button, Heading, Hint, Label, Screen, styles } from '@/ui/components';
+import { DayLog, TODAY_LOG_LIMIT } from '@/ui/DayLog';
+import { Button, Heading, Label, Screen, styles } from '@/ui/components';
 
 /** IN-11: a shortcut chip is disabled this long after a tap so a double tap cannot log twice. */
 const SHORTCUT_LOCK_MS = 3000;
@@ -55,10 +53,10 @@ export default function TodayScreen() {
 
   // After midnight an unchosen day moves on by itself: `today` is read again on every render and focus.
   const now = deps.clock.now();
-  const today = localDay(now.toISOString(), deps.clock.timeZone());
+  const today = localDay(now.toISOString(), deps.clock.timeZone(), deps.dayStart.get());
   const day = chosen && chosen < today ? chosen : today; // a chosen day is never in the future
   const isToday = day === today;
-  const atNow = () => atOnDay(day, deps.clock.now(), deps.clock.timeZone());
+  const atNow = () => atOnDay(day, deps.clock.now(), deps.clock.timeZone(), deps.dayStart.get());
 
   const load = useCallback(() => {
     (async () => {
@@ -109,26 +107,6 @@ export default function TodayScreen() {
     const a = ctx.areas.find((x) => x.id === id);
     return a ? areaLabel(a) : id;
   };
-
-  async function onRow(row: LogRow) {
-    try {
-      const also = await previewEntryDelete(deps, row.kind, row.id);
-      const list = Object.entries(also)
-        .map(([kind, n]) => `${n} ${t(`log.kinds.${kind}`)}`)
-        .join(', ');
-      const { title } = describeRow(row, ctx);
-      // EN-1, UX-9: Edit or Delete in one sheet; the delete names what goes with the entry.
-      const choice = await chooseAction({
-        title,
-        message: list ? t('log.also', { list }) : undefined,
-        actions: [{ label: t('log.editAction') }, { label: t('log.deleteAction'), destructive: true }],
-      });
-      if (choice === 0) router.push({ pathname: '/form/edit', params: { kind: row.kind, id: row.id } });
-      else if (choice === 1) await run(() => deleteEntry(deps, row.kind, row.id));
-    } catch (e) {
-      Alert.alert(errorMessage(e));
-    }
-  }
 
   return (
     <Screen>
@@ -250,24 +228,7 @@ export default function TodayScreen() {
         </Card>
       )}
 
-      {/* The core lists the day oldest first; the log shows the newest entry on top, so a new one is in view. */}
-      <Heading>{t('day.logTitle')}</Heading>
-      {rows.length === 0 && <Hint>{t('day.empty')}</Hint>}
-      {[...rows].reverse().map((row) => {
-        const { title, detail } = describeRow(row, ctx);
-        const time = localDateTime(row.at.utc, row.at.tz).slice(11);
-        return (
-          <Pressable
-            key={`${row.kind}-${row.id}`}
-            accessibilityRole="button"
-            accessibilityLabel={`${time} ${title}`}
-            onPress={() => void onRow(row)}
-            style={({ pressed }) => [{ paddingVertical: 8 }, pressed && { opacity: 0.6 }]}>
-            <Text style={styles.rowText}>{`${time}  ${title}`}</Text>
-            {detail ? <Hint>{detail}</Hint> : null}
-          </Pressable>
-        );
-      })}
+      <DayLog rows={rows} ctx={ctx} onChanged={load} limit={TODAY_LOG_LIMIT} onShowAll={() => router.navigate({ pathname: '/review/day', params: { day } })} />
     </Screen>
   );
 }

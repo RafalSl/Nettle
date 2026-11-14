@@ -1,5 +1,5 @@
 import { isAiSource, type IngredientSource } from '../model/source';
-import { localDateTime } from '../model/time';
+import { localDateTime, localDay } from '../model/time';
 import type { Analysis, ListItem, Records, SkinArea } from '../model/types';
 import type { Language } from '../ports/llm';
 
@@ -21,12 +21,13 @@ export interface ReportInput {
   photos: Map<string, string>;
   range: { from: string | null; to: string | null };
   exportedAt: { utc: string; tz: string };
+  /** NF-7: the diary day starts at this hour (default midnight). */
+  dayStartHour?: number;
 }
 
 const esc = (s: unknown) =>
   String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 const when = (at: { utc: string; tz: string }) => localDateTime(at.utc, at.tz);
-const dayOf = (at: { utc: string; tz: string }) => when(at).slice(0, 10);
 
 const CSS = `
 body{font-family:-apple-system,Helvetica,Arial,sans-serif;font-size:11px;color:#111;margin:0}
@@ -60,6 +61,7 @@ function sparkline(values: number[]): string {
  */
 export function buildReportHtml(input: ReportInput): string {
   const { text: tx, records: r } = input;
+  const dayOf = (at: { utc: string; tz: string }) => localDay(at.utc, at.tz, input.dayStartHour ?? 0);
   const areaById = new Map(input.skinAreas.map((a) => [a.id, a]));
   const area = (id: string) => (areaById.has(id) ? input.areaName(areaById.get(id)!) : id);
   const tags = new Map(input.dailyTags.map((t) => [t.id, input.itemName(t)]));

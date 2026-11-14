@@ -33,12 +33,12 @@ export default function CheckInForm() {
   const { day: dayParam } = useLocalSearchParams<{ day?: string }>();
   // SK-9: a tap on a late reminder opens the check-in of the day it was delivered, not of today.
   const [at, setAt] = useState<Date | null>(() =>
-    typeof dayParam === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dayParam) ? atOnDay(dayParam, deps.clock.now(), deps.clock.timeZone()) : null,
+    typeof dayParam === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dayParam) ? atOnDay(dayParam, deps.clock.now(), deps.clock.timeZone(), deps.dayStart.get()) : null,
   );
   const [fields, setFields] = useState<Fields>(EMPTY);
   const [tagList, setTagList] = useState<ListItem[]>([]);
   const [complete, setComplete] = useState(false);
-  const day = localDay((at ?? deps.clock.now()).toISOString(), deps.clock.timeZone());
+  const day = localDay((at ?? deps.clock.now()).toISOString(), deps.clock.timeZone(), deps.dayStart.get());
 
   const load = useCallback(() => {
     (async () => {

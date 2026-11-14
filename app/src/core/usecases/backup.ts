@@ -35,7 +35,7 @@ export async function backupCardDue(deps: Deps): Promise<boolean> {
 /** EX-11: the local calendar days since the last export, ready for `ExportOptions.days`; null before the first export. */
 export async function sinceLastExport(deps: Deps): Promise<{ from: string } | null> {
   const last = await getLastExport(deps);
-  return last === null ? null : { from: localDay(last, deps.clock.timeZone()) };
+  return last === null ? null : { from: localDay(last, deps.clock.timeZone(), deps.dayStart.get()) };
 }
 
 /**
@@ -69,7 +69,7 @@ export interface ReportPreview {
 
 /** EX-14: what a Doctor report for these local days would hold, so the screen can show counts before sharing. */
 export async function reportPreview(deps: Deps, days: { from?: string; to?: string }): Promise<ReportPreview> {
-  const range = localDaysToRange(days.from, days.to, deps.clock.timeZone());
+  const range = localDaysToRange(days.from, days.to, deps.clock.timeZone(), deps.dayStart.get());
   if (!range) throw new NettleError('invalid_range');
   const snap = await deps.repo.snapshot(range);
   const entries = LOG_KINDS.reduce((n, k) => n + snap[k].length, 0);

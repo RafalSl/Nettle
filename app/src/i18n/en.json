@@ -600,6 +600,7 @@
     "gear": "Settings",
     "report": "Doctor report",
     "suggestions": "Suggestions",
+    "day": "Day",
     "timeline": "Timeline",
     "privacy": "Privacy",
     "drink": "Drink",
@@ -659,6 +660,10 @@
     "stoolEarlier": "Earlier…",
     "shortcuts": "One-tap treatments",
     "applied": "Applied",
+    "showAll": "Show all ({{n}})",
+    "openOnToday": "Open this day on Today",
+    "dayStart": "Day starts at",
+    "dayStartHint": "A day runs from this hour to the same hour the next day, so a drink at 00:30 can belong to the evening before. Set it once: changing it regroups the whole diary, while the time of each entry stays as it was.",
     "logTitle": "Log"
   },
   "source": {

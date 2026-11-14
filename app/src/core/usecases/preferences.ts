@@ -1,3 +1,4 @@
+import { isDayStartHour } from '../model/dayStart';
 import { NettleError } from '../model/errors';
 import {
   defaultPreferences,
@@ -21,7 +22,19 @@ async function change(deps: Deps, edit: (p: Preferences) => void): Promise<Prefe
   const prefs = await getPreferences(deps);
   edit(prefs);
   await deps.repo.setPreferences(prefs);
+  deps.dayStart.set(prefs.dayStartHour);
   return prefs;
+}
+
+/** NF-7: "Day starts at", a whole hour from 00:00 to 06:00. Changing it regroups the whole diary (the time of an entry never changes). */
+export async function setDayStartHour(deps: Deps, hour: number): Promise<number> {
+  if (!isDayStartHour(hour)) throw new NettleError('invalid_value', 'dayStartHour');
+  return (await change(deps, (p) => void (p.dayStartHour = hour))).dayStartHour;
+}
+
+/** NF-7: re-reads the stored setting after something replaced the preferences (an import). */
+export async function reloadDayStart(deps: Deps): Promise<void> {
+  deps.dayStart.set((await getPreferences(deps)).dayStartHour);
 }
 
 /** IN-14: rows 1 to 20, a window of 7, 14, 30 or 60 days, and "save on tap" (drinks and medication only). */

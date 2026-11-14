@@ -3,6 +3,7 @@ import { getCalendars } from 'expo-localization';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { openExpoSqlite } from '@/adapters/storage/expoSqliteDb';
+import { DayStart } from '@/core/model/dayStart';
 import { ANTHROPIC_MODELS, createAnthropicProvider } from '@/adapters/llm/anthropicProvider';
 import { secureStoreKeyStore } from '@/adapters/keystore/secureStoreKeyStore';
 import { SqliteRepo } from '@/adapters/storage/sqliteRepo';
@@ -58,6 +59,7 @@ export function ServicesProvider({ children }: { children: ReactNode }) {
           auth: expoAuthenticator,
           keys: secureStoreKeyStore,
           settings: new SqliteSettings(db),
+          dayStart: new DayStart((await repo.getPreferences())?.dayStartHour ?? 0),
           llmFor: createAnthropicProvider,
           llmModels: ANTHROPIC_MODELS,
           clock: { now: () => new Date(), timeZone: () => getCalendars()[0]?.timeZone ?? 'UTC' },

@@ -24,7 +24,7 @@ Undecided items only. Decisions go into `docs/requirements.md` (canonical, edite
   - Navigation and screens (UX-1 to UX-9): not started. Two tabs (Today, Review), Settings behind a gear icon, modal forms, action sheets.
   - PDF report language default (EX-3): the Data screen still starts on English (`reportLanguage`); change it to the app language.
   - Import switch to restore entries skipped because of a tombstone (EX-10): not started.
-  - LL-12 and LL-5: the adapter retries a timed-out attempt and has no cancel signal; the analysis screen has no elapsed time or Cancel, no running card in Review, no billing notice. The meal photo estimate is not inline and editable yet (IN-3).
+  - LL-12 and LL-5, still open: the meal photo estimate is not inline and editable yet (IN-3) and has no Cancel button (the cancel signal already reaches `estimateIngredients`); no keep-awake during an analysis; no running card in Review; no interrupted state with a one-tap retry. Done: a timeout is never retried, the analysis screen shows elapsed time and Cancel (a cancel stores nothing), and both LLM confirmations carry the billing notice.
   - IN-7 choose and review phases; SK-9 tap targets and the handled-notification marker; EX-14 Full backup preset; SK-2 unique area names (new error code); SK-11 empty-day confirmation; EN-1 cascades and edit rules: all not started. Flows in `docs/user-flows.md`.
   - Edit and delete one entry (EN-1) and tombstones (EX-13): not started. Needs a `tombstones` table, a `tombstones` section in `data.json` and merge rules; `schema_version` stays 1.
   - Timeline per area with photos side by side (SK-8): not started.

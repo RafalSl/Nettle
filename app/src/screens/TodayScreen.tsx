@@ -9,6 +9,8 @@ import { dayLog, dayStatus, treatmentShortcuts, type DayStatus, type LogRow, typ
 import { deleteEntry, previewEntryDelete } from '@/core/usecases/entries';
 import { applyTreatment } from '@/core/usecases/events';
 import { markFlare, openFlareAreas } from '@/core/usecases/flares';
+import { defaultPreferences, type QuickAction } from '@/core/model/preferences';
+import { getPreferences, moveQuickAction, setQuickActionHidden, visibleQuickActions } from '@/core/usecases/preferences';
 import { areaLabel, errorMessage, itemLabel, t } from '@/i18n';
 import { useServices } from '@/services';
 import { chooseAction } from '@/ui/actionSheet';
@@ -46,6 +48,8 @@ export default function TodayScreen() {
   const [flares, setFlares] = useState<string[]>([]);
   const [backup, setBackup] = useState<{ due: boolean; days: number | null }>({ due: false, days: null });
   const [stoolOpen, setStoolOpen] = useState(false);
+  const [layout, setLayout] = useState(defaultPreferences().quickActions);
+  const [editing, setEditing] = useState(false);
   const [locked, setLocked] = useState<Set<string>>(new Set());
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
@@ -64,6 +68,7 @@ export default function TodayScreen() {
       setShortcuts(await treatmentShortcuts(deps));
       setFlares([...(await openFlareAreas(deps))]);
       setBackup({ due: await backupCardDue(deps), days: await daysSinceExport(deps) });
+      setLayout((await getPreferences(deps)).quickActions);
     })().catch((e) => Alert.alert(errorMessage(e)));
   }, [deps, day]);
   useFocusEffect(load);
@@ -89,6 +94,16 @@ export default function TodayScreen() {
       setTimeout(() => setLocked((l) => new Set([...l].filter((k) => k !== key))), SHORTCUT_LOCK_MS),
     );
   }
+
+  const setLayoutOrder = (order: QuickAction[]) => setLayout((l) => ({ ...l, order }));
+  const actions: Record<QuickAction, { title: string; onPress: () => void }> = {
+    meal: { title: t('home.meal'), onPress: () => router.push(isToday ? '/form/meal' : { pathname: '/form/meal', params: { day } }) },
+    skin: { title: t('home.skin'), onPress: () => router.push('/form/skin') },
+    treatment: { title: t('home.treatment'), onPress: () => router.push('/form/treatment') },
+    checkin: { title: t('home.checkin'), onPress: () => router.push('/form/checkin') },
+    stool: { title: t('day.stool'), onPress: () => setStoolOpen((o) => !o) },
+    more: { title: t('home.more'), onPress: () => router.push('/today/more') },
+  };
 
   const areaName = (id: string) => {
     const a = ctx.areas.find((x) => x.id === id);
@@ -128,22 +143,41 @@ export default function TodayScreen() {
       </View>
       {!isToday && <Button kind="secondary" title={t('day.today')} onPress={() => setChosen(null)} />}
 
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        {(
-          [
-            [t('home.meal'), () => router.push('/form/meal')],
-            [t('home.skin'), () => router.push('/form/skin')],
-            [t('home.treatment'), () => router.push('/form/treatment')],
-            [t('home.checkin'), () => router.push('/form/checkin')],
-            [t('day.stool'), () => setStoolOpen((o) => !o)],
-            [t('home.more'), () => router.push('/today/more')],
-          ] as const
-        ).map(([title, onPress]) => (
-          <View key={title} style={{ flexBasis: '31%', flexGrow: 1 }}>
-            <Button kind="secondary" title={title} onPress={onPress} />
-          </View>
-        ))}
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Label>{t('home.quickActions')}</Label>
+        <Button kind="secondary" title={editing ? t('home.done') : t('home.edit')} onPress={() => setEditing((e) => !e)} />
       </View>
+      {editing ? (
+        // UX-2: reorder and hide with buttons, never by dragging.
+        <View style={{ gap: 4 }}>
+          {layout.order.map((id) => {
+            const hidden = layout.hidden.includes(id);
+            return (
+              <View key={id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, opacity: hidden ? 0.5 : 1 }}>
+                <Text style={[styles.rowText, { flex: 1 }]}>{actions[id].title}</Text>
+                <Button kind="secondary" title="▲" accessibilityLabel={`${t('home.moveUp')} ${actions[id].title}`} onPress={() => void run(async () => setLayoutOrder(await moveQuickAction(deps, id, -1)))} />
+                <Button kind="secondary" title="▼" accessibilityLabel={`${t('home.moveDown')} ${actions[id].title}`} onPress={() => void run(async () => setLayoutOrder(await moveQuickAction(deps, id, 1)))} />
+                {id !== 'more' && (
+                  <Button
+                    kind="secondary"
+                    title={hidden ? t('home.show') : t('home.hide')}
+                    accessibilityLabel={`${hidden ? t('home.show') : t('home.hide')} ${actions[id].title}`}
+                    onPress={() => void run(() => setQuickActionHidden(deps, id, !hidden))}
+                  />
+                )}
+              </View>
+            );
+          })}
+        </View>
+      ) : (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+          {visibleQuickActions({ ...defaultPreferences(), quickActions: layout }).map((id) => (
+            <View key={id} style={{ flexBasis: '31%', flexGrow: 1 }}>
+              <Button kind="secondary" title={actions[id].title} onPress={actions[id].onPress} />
+            </View>
+          ))}
+        </View>
+      )}
 
       {stoolOpen && (
         <Card>

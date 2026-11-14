@@ -10,6 +10,7 @@ import { areaLabelIn, currentLanguage, errorMessage, itemLabelIn, t, tIn } from 
 import { useServices } from '@/services';
 import { confirmWithExport, exportEverything } from '@/ui/exportFirst';
 import { DEFAULT_PHOTO_SELECTION, type PhotoSelection } from '@/core/export/photoSelection';
+import { DayRangePickers, pickedDay } from '@/ui/DayRangePickers';
 import { PhotoSelectionField } from '@/ui/PhotoSelectionField';
 import { DeleteSection } from '@/ui/DeleteSection';
 import { Button, Chips, Heading, Hint, Label, Screen, styles } from '@/ui/components';
@@ -39,6 +40,10 @@ export default function DataScreen() {
   const { deps, fileShare } = useServices();
   const [exportParts, setExportParts] = useState<Parts>({ records: true, settings: true });
   const [csv, setCsv] = useState(false);
+  // EX-1, EX-11: an optional range of diary days for the records of a custom export.
+  const [limit, setLimit] = useState(false);
+  const [from, setFrom] = useState(() => new Date(Date.now() - 29 * 86_400_000));
+  const [to, setTo] = useState(() => new Date());
   const [report, setReport] = useState(false);
   const [reportLanguage, setReportLanguage] = useState<'en' | 'pl'>(currentLanguage());
   const [photoSelection, setPhotoSelection] = useState<PhotoSelection>(DEFAULT_PHOTO_SELECTION);
@@ -75,6 +80,7 @@ export default function DataScreen() {
   const doExport = () =>
     share('nettle-export', {
       parts: exportParts,
+      ...(limit ? { days: { from: pickedDay(from, deps.clock.timeZone()), to: pickedDay(to, deps.clock.timeZone()) } } : {}),
       photos: photoSelection,
       csv,
       report: report
@@ -181,6 +187,8 @@ export default function DataScreen() {
         value={exportParts.settings}
         onChange={(settings) => setExportParts((s) => ({ ...s, settings }))}
       />
+      <PartSwitch label={t('range.limit')} value={limit} onChange={setLimit} />
+      {limit && <DayRangePickers from={from} to={to} onFrom={setFrom} onTo={setTo} />}
       <PhotoSelectionField onChange={setPhotoSelection} />
       <Label>{t('export.extras')}</Label>
       <PartSwitch label={t('export.csv')} value={csv} onChange={setCsv} />

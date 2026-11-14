@@ -633,6 +633,12 @@
     "ai": "Wynik AI (odczyt składników, podpowiedzi alergenów, podsumowania, analizy) to wstępna sugestia do sprawdzenia i jest oznaczony jako AI w eksportach.",
     "medical": "Ta aplikacja to dziennik, nie wyrób medyczny. Nigdy nie stawia diagnozy ani nie daje porad medycznych; to, co widzisz, omów z lekarzem."
   },
+  "range": {
+    "from": "Od",
+    "to": "Do",
+    "invalid": "Pierwszy dzień jest po ostatnim.",
+    "limit": "Tylko zakres dat"
+  },
   "nav": {
     "about": "O aplikacji",
     "flare": "Rzut",
@@ -799,6 +805,7 @@
     "since": "Od ostatniego eksportu",
     "last30": "Ostatnie 30 dni",
     "last90": "Ostatnie 90 dni",
+    "custom": "Wybierz daty",
     "all": "Wszystko",
     "counts": "{{entries}} wpisów i {{photos}} zdjęć w tym okresie.",
     "sensitive": "Dołącz zdjęcia wrażliwe ({{n}})",

@@ -49,6 +49,7 @@ Requirements and flows are in `docs/requirements.md`, `docs/ux-design.md` and `d
 - AI marks in exports (IN-16, EX-4): `IngredientSource.aiTags` is set when the person selects tags from a label scan or an allergen suggestion. `data.json` has `source.ai_tags`; the CSV for meals and drinks has plain columns (`ingredients_source`, `ingredients_ai`, `ingredients_edited`, `allergens_ai`, `ai_model`, `ai_at`, `ai_prompt_version`); the PDF marks `[AI]` after the ingredients (label scan, photo estimate) and after the allergens (AI-suggested tags), with a legend; the analysis input has `ingredients_source` and `allergens_source`.
 - Privacy and photos, About (UX-6, SK-5): Skin and nail areas has "New photos of this area are sensitive" (`setAreaSensitiveDefault`); Privacy explains where photos live and what is blurred or left out; About shows the version, where the data lives and that the app is not a medical device.
 - Highlighted new row (UX-2): an entry that appears in Today's log after the first look at a day is tinted for 3 seconds. "Earlier…" opens the stool form (it had been built; the note here was stale).
+- Date range pickers (EX-1, EX-11, EX-14): the Doctor report has a "Choose dates" period and the custom export an "Only a date range" switch, both with from and to pickers (`DayRangePickers`); the days go through the day start (NF-7), and a first day after the last is refused with a hint.
 - Polish ingredient text (IN-2): the Open Food Facts adapter also asks for `ingredients_text_pl` and `lang`, prefers the Polish text and marks it `translated` when the product was entered in another language; the form then says to check it against the pack. Coverage of Polish products is unmeasured (phone checklist).
 - Skin and health: unique area names (SK-2), no change for nails and all areas (SK-3), empty-day confirmation (SK-11), reminder taps (SK-9), "Same as yesterday" (SK-7).
 - LLM: elapsed time, Cancel, billing notice, no retry of a timeout, the run in `AnalysisRunner` (survives leaving the screen, interrupted state with retry, keep-awake).
@@ -63,7 +64,7 @@ Requirements and flows are in `docs/requirements.md`, `docs/ux-design.md` and `d
 - *Settings.* Settings groups of UX-6 are all present.
 - *Today.* The first-run empty states beyond text.
 - *Intake details.* Ingredient chips with autocomplete, favorites for scanned products.
-- *Export and import.* A free date range picker for the report and the custom export, newest-wins merge (EX-12, Later: needs modified timestamps and a schema bump).
+- *Export and import.* Newest-wins merge (EX-12, Later: needs modified timestamps and a schema bump).
 - *Review.* A side-by-side comparison of two photos, trend charts.
 - *Other.* The accessibility pass (UX-8, deferred), polishing Polish strings, pruning unused template dependencies.
 

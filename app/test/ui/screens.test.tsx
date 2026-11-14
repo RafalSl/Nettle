@@ -34,7 +34,8 @@ const mockRouter = { push: jest.fn(), back: jest.fn(), navigate: jest.fn() };
 const mockCamera: { props?: { onBarcodeScanned?: (e: { data: string }) => void } } = {};
 const mockPermission: { current: { granted: boolean; canAskAgain: boolean } | null } = { current: { granted: true, canAskAgain: true } };
 const mockParams: { current: Record<string, string> } = { current: {} };
-const mockPicker: { last?: { maximumDate?: Date; onValueChange: (e: object, d: Date) => void } } = {};
+type MockPickerProps = { maximumDate?: Date; value?: Date; onValueChange: (e: object, d: Date) => void };
+const mockPicker: { last?: MockPickerProps; all: MockPickerProps[] } = { all: [] };
 const mockScreen: { options?: { headerLeft?: () => React.ReactElement; headerRight?: () => React.ReactElement; gestureEnabled?: boolean } } = {};
 
 // Native modules and the router are replaced; everything else (screens, components, i18n, use cases) is real.
@@ -55,8 +56,9 @@ jest.mock('expo-router', () => {
     }),
   };
 });
-jest.mock('@react-native-community/datetimepicker', () => (props: typeof mockPicker.last) => {
+jest.mock('@react-native-community/datetimepicker', () => (props: MockPickerProps) => {
   mockPicker.last = props;
+  mockPicker.all.push(props);
   return null;
 });
 jest.mock('expo-camera', () => ({
@@ -465,6 +467,50 @@ describe('screen flows (NF-2, NF-3)', () => {
       expect(await deps.repo.listMeals()).toHaveLength(1);
       sheet.mockRestore();
     }
+  });
+
+  it('EX-1, EX-11 a custom export can be limited to a range of days, and the range is refused the wrong way round', async () => {
+    const deps = nowDeps();
+    await logMeal(deps, { description: 'Synthetic inside', ingredients: [], at: new Date('2026-01-10T10:00:00.000Z') });
+    await logMeal(deps, { description: 'Synthetic outside', ingredients: [], at: new Date('2026-01-20T10:00:00.000Z') });
+    const { tree, fileShare } = await mount(() => require('@/app/(tabs)/today/settings/data'), deps);
+    await toggle(tree, en.range.limit);
+    const [fromPicker, toPicker] = mockPicker.all.slice(-2);
+    await act(async () => {
+      fromPicker!.onValueChange({}, new Date('2026-01-09T12:00:00'));
+      toPicker!.onValueChange({}, new Date('2026-01-12T12:00:00'));
+    });
+    await press(tree, en.data.exportButton);
+    await flush();
+    const files = unzipSync((fileShare.saveAndShare.mock.calls[0] as unknown as [string, Uint8Array])[1]);
+    const meals = JSON.parse(new TextDecoder().decode(files['data.json']!)).records.meals.map((m: { description: string }) => m.description);
+    expect(meals).toEqual(['Synthetic inside']);
+    const [from2] = mockPicker.all.slice(-2);
+    await act(async () => {
+      from2!.onValueChange({}, new Date('2026-01-15T12:00:00')); // after the "to" day
+    });
+    expect(hasText(tree, en.range.invalid)).toBe(true);
+  });
+
+  it('EX-14 the doctor report has a "Choose dates" period with its own range, and counts only that range', async () => {
+    const deps = nowDeps();
+    await logMeal(deps, { description: 'Synthetic inside', ingredients: [], at: new Date('2026-01-10T10:00:00.000Z') });
+    await logMeal(deps, { description: 'Synthetic recent', ingredients: [], at: new Date(Date.now() - 86_400_000) });
+    const { tree, fileShare } = await mount(() => require('@/app/(tabs)/review/report'), deps);
+    await flush();
+    await press(tree, en.doctor.custom);
+    await flush();
+    const [fromPicker, toPicker] = mockPicker.all.slice(-2);
+    await act(async () => {
+      fromPicker!.onValueChange({}, new Date('2026-01-09T12:00:00'));
+      toPicker!.onValueChange({}, new Date('2026-01-12T12:00:00'));
+    });
+    await flush();
+    expect(hasText(tree, en.doctor.counts.replace('{{entries}}', '1').replace('{{photos}}', '0'))).toBe(true);
+    await press(tree, en.doctor.button);
+    await flush();
+    const files = unzipSync((fileShare.saveAndShare.mock.calls[0] as unknown as [string, Uint8Array])[1]);
+    expect(JSON.parse(new TextDecoder().decode(files['data.json']!)).records.meals.map((m: { description: string }) => m.description)).toEqual(['Synthetic inside']);
   });
 
   it('EX-1, EX-9 the Data screen exports a ZIP with data.json and hands it to the share sheet', async () => {
@@ -1010,6 +1056,10 @@ describe('Review (UX-1, EX-14)', () => {
     await flush();
     expect(marked()).toHaveLength(1);
     expect(marked()[0]!.props.accessibilityLabel).toContain(en.log.stool.replace('{{n}}', '4'));
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 3100)); // the tint goes away by itself
+    });
+    expect(marked()).toHaveLength(0);
   });
 
   it('UX-2 Today opens the day given in the route parameter', async () => {

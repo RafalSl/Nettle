@@ -1,7 +1,8 @@
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Pressable, Text, TextInput, View } from 'react-native';
-import { suggestAllergens } from '@/core/model/allergens';
+import { addIngredients, suggestAllergens } from '@/core/model/allergens';
+import { NettleError } from '@/core/model/errors';
 import { defaultPreferences, type Preferences } from '@/core/model/preferences';
 import { mealHistory, rankSuggestions, type Suggestion } from '@/core/model/suggestions';
 import { atOnDay, localDay } from '@/core/model/time';
@@ -24,6 +25,8 @@ interface MealDraft {
 }
 
 const DAY_MS = 86_400_000;
+/** LL-12: after this long the form says the estimate is still working. */
+export const SLOW_ESTIMATE_MS = 30_000;
 
 /**
  * IN-1, IN-7, IN-14: the meal form has two phases. Choose: suggestions from the diary's own history (favorites,
@@ -42,7 +45,15 @@ export default function MealScreen() {
   const [ingredients, setIngredients] = useState<string[]>(['']);
   const [allergens, setAllergens] = useState<Set<string>>(new Set());
   const [note, setNote] = useState('');
-  const [unsure, setUnsure] = useState<string | null>(null);
+  type Estimate =
+    | { status: 'idle' }
+    | { status: 'running'; slow: boolean }
+    | { status: 'ready'; names: string[]; picked: Set<string>; uncertainty: string | null }
+    | { status: 'failed'; error: unknown };
+  const [est, setEst] = useState<Estimate>({ status: 'idle' });
+  const ctl = useRef<AbortController | null>(null);
+  const photoUri = useRef<string | null>(null);
+  const slowTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const [at, setAt] = useState<Date | null>(null);
   const [edited, setEdited] = useState(false);
 
@@ -100,7 +111,7 @@ export default function MealScreen() {
   };
   const setIngredient = (i: number, v: string) => touch(setIngredients)(ingredients.map((x, j) => (j === i ? v : x)));
 
-  /** IN-3: pick a photo, confirm that it is sent (LL-5), then add the suggestions to the list, never replacing what is typed. */
+  /** IN-3: pick a photo and confirm that it is sent (LL-5). The estimate then runs inline; the form stays editable. */
   function suggestFromPhoto() {
     const send = async (source: 'camera' | 'library') => {
       try {
@@ -108,24 +119,7 @@ export default function MealScreen() {
         if (!uri) return;
         Alert.alert(t('meal.photoConfirmTitle'), t('meal.photoConfirmBody'), [
           { text: t('common.cancel'), style: 'cancel' },
-          {
-            text: t('meal.photoSend'),
-            onPress: async () => {
-              try {
-                const data = await deps.photos.compress(uri, 1024);
-                const est = await estimateIngredients(deps, { image: { mimeType: 'image/jpeg', data }, language: currentLanguage() });
-                setIngredients((cur) => {
-                  const have = new Set(cur.map((x) => x.trim().toLowerCase()));
-                  const added = est.names.filter((n) => !have.has(n.trim().toLowerCase()));
-                  return [...cur.filter((x) => x.trim()), ...added, ''];
-                });
-                setEdited(true); // LLM allergen tags stay unselected until the user selects them (IN-10)
-                setUnsure(est.uncertainty);
-              } catch (e) {
-                Alert.alert(errorMessage(e));
-              }
-            },
-          },
+          { text: t('meal.photoSend'), onPress: () => void runEstimate(uri) },
         ]);
       } catch (e) {
         Alert.alert(errorMessage(e));
@@ -136,6 +130,46 @@ export default function MealScreen() {
       { text: t('photos.library'), onPress: () => send('library') },
       { text: t('common.cancel'), style: 'cancel' },
     ]);
+  }
+
+  /**
+   * LL-12: runs inline and can be cancelled; after 30 seconds the form says it is still working. Cancel, a
+   * failure, saving and leaving the form all store nothing; a failure offers a one-tap retry.
+   */
+  async function runEstimate(uri: string) {
+    ctl.current?.abort();
+    const controller = new AbortController();
+    ctl.current = controller;
+    photoUri.current = uri;
+    clearTimeout(slowTimer.current);
+    setEst({ status: 'running', slow: false });
+    slowTimer.current = setTimeout(() => setEst((e) => (e.status === 'running' ? { status: 'running', slow: true } : e)), SLOW_ESTIMATE_MS);
+    try {
+      const data = await deps.photos.compress(uri, 1024);
+      const result = await estimateIngredients(deps, { image: { mimeType: 'image/jpeg', data }, language: currentLanguage(), signal: controller.signal });
+      if (controller.signal.aborted) return;
+      setEst({ status: 'ready', names: result.names, picked: new Set(), uncertainty: result.uncertainty });
+    } catch (e) {
+      if (controller.signal.aborted || (e instanceof NettleError && e.code === 'llm_cancelled')) return setEst({ status: 'idle' });
+      setEst({ status: 'failed', error: e });
+    } finally {
+      if (ctl.current === controller) {
+        clearTimeout(slowTimer.current);
+        ctl.current = null;
+      }
+    }
+  }
+  const cancelEstimate = () => {
+    ctl.current?.abort();
+    setEst({ status: 'idle' });
+  };
+  // Leaving the form aborts a running estimate.
+  useEffect(() => () => ctl.current?.abort(), []);
+
+  /** IN-3: the chosen names become ordinary rows of the list, editable and removable; allergen tags stay as they are (IN-10). */
+  function addEstimate(names: string[]) {
+    touch(setIngredients)(addIngredients(ingredients, names));
+    setEst({ status: 'idle' });
   }
 
   const key = description.trim().toLowerCase().replace(/\s+/g, ' ');
@@ -155,6 +189,7 @@ export default function MealScreen() {
       dirty={phase === 'choose' ? description.trim().length > 0 : edited}
       missing={missing}
       onSave={async () => {
+        ctl.current?.abort(); // Save uses the fields as they are and drops a running estimate
         await logMeal(deps, { description, ingredients, allergens: [...allergens] as Allergen[], note, at: at ?? (day ? defaultAt : undefined) });
       }}>
       {phase === 'choose' ? (
@@ -184,7 +219,37 @@ export default function MealScreen() {
           <Button kind="secondary" title={isFavorite ? t('meal.unfavorite') : t('meal.favorite')} onPress={() => void star()} />
 
           <Button kind="secondary" title={t('meal.fromPhoto')} onPress={suggestFromPhoto} />
-          {unsure !== null && <Hint>{t('meal.suggested')} {t('meal.unsure', { text: unsure })}</Hint>}
+          {est.status === 'running' && (
+            <>
+              <Hint>{est.slow ? t('meal.estimateSlow') : t('meal.estimating')}</Hint>
+              {est.slow && <Button kind="secondary" title={t('meal.estimateCancel')} onPress={cancelEstimate} />}
+            </>
+          )}
+          {est.status === 'ready' && (
+            <>
+              <Hint>{t('meal.suggested')}</Hint>
+              {est.uncertainty !== null && <Hint>{t('meal.unsure', { text: est.uncertainty })}</Hint>}
+              <Chips
+                items={est.names.map((n) => ({ id: n, label: n }))}
+                selected={est.picked}
+                onToggle={(id) => {
+                  const picked = new Set(est.picked);
+                  if (!picked.delete(id)) picked.add(id);
+                  setEst({ ...est, picked });
+                }}
+              />
+              <Button title={t('meal.estimateAddAll')} onPress={() => addEstimate(est.names)} />
+              {est.picked.size > 0 && <Button kind="secondary" title={t('meal.estimateAddPicked')} onPress={() => addEstimate([...est.picked])} />}
+              <Button kind="secondary" title={t('meal.estimateDismiss')} onPress={() => setEst({ status: 'idle' })} />
+            </>
+          )}
+          {est.status === 'failed' && (
+            <>
+              <Hint>{`${errorMessage(est.error)} ${t('meal.estimateFailed')}`}</Hint>
+              <Button title={t('meal.estimateRetry')} onPress={() => photoUri.current && void runEstimate(photoUri.current)} />
+              <Button kind="secondary" title={t('meal.estimateDismiss')} onPress={() => setEst({ status: 'idle' })} />
+            </>
+          )}
           <Label>{t('meal.ingredients')}</Label>
           {ingredients.map((value, i) => (
             <View key={i} style={{ flexDirection: 'row', gap: 8 }}>

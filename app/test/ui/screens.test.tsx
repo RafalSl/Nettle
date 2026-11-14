@@ -1120,3 +1120,119 @@ describe('Analysis running state (LL-12)', () => {
     expect(keepAwake.deactivateKeepAwake).toHaveBeenCalledWith('analysis');
   });
 });
+
+describe('Inline photo estimate (IN-3, LL-12, IN-10)', () => {
+  let alert: jest.SpyInstance;
+  beforeEach(() => {
+    alert = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    jest.spyOn(ActionSheetIOS, 'showActionSheetWithOptions').mockImplementation((_o, cb) => cb(0));
+    mockParams.current = {};
+    require('@/adapters/photos/pickPhotos').pickPhotoUris.mockResolvedValue(['file:///synthetic-meal.jpg']);
+  });
+  afterEach(() => {
+    jest.useRealTimers();
+    jest.restoreAllMocks();
+  });
+  const meal = () => require('@/app/form/meal');
+  const buttonOf = (name: string) => alert.mock.calls.at(-1)![2].find((b: { text: string }) => b.text === name) as { onPress: () => unknown };
+
+  /** Opens a new meal in the review phase, then picks a photo and confirms sending it. */
+  async function startEstimate(llm: LlmProvider) {
+    const deps = nowDeps(llm);
+    await saveApiKey(deps, 'sk-synthetic-secret');
+    const { tree } = await mount(meal, deps);
+    await type(tree, en.meal.description, 'Synthetic dinner');
+    await press(tree, en.meal.continue);
+    await type(tree, en.meal.ingredientPlaceholder, 'my own rice');
+    await press(tree, en.meal.fromPhoto);
+    await act(async () => {
+      await buttonOf(en.photos.library).onPress();
+    });
+    expect(String(alert.mock.calls.at(-1)![1])).toContain('bills this separately'); // LL-5
+    return { deps, tree };
+  }
+
+  it('IN-3, LL-12 the estimate runs inline with the form editable, Cancel appears after 30 seconds and stores nothing', async () => {
+    jest.useFakeTimers({ doNotFake: ['setImmediate', 'nextTick'] }); // only this test needs to move the 30 second clock
+    const llm = { completeJson: (req: { signal?: AbortSignal }) => new Promise<never>((_r, reject) => req.signal?.addEventListener('abort', () => reject(new Error('aborted')))) };
+    const { deps, tree } = await startEstimate(llm);
+    await act(async () => {
+      void buttonOf(en.meal.photoSend).onPress();
+    });
+    expect(hasText(tree, en.meal.estimating)).toBe(true);
+    expect(hasText(tree, en.meal.estimateCancel)).toBe(false);
+    await type(tree, en.meal.description, 'Synthetic dinner, edited while waiting'); // still editable
+    await act(async () => {
+      jest.advanceTimersByTime(30_000);
+    });
+    expect(hasText(tree, en.meal.estimateSlow)).toBe(true);
+    await press(tree, en.meal.estimateCancel);
+    expect(hasText(tree, en.meal.estimating)).toBe(false);
+    expect(hasText(tree, en.meal.estimateSlow)).toBe(false);
+    expect(await deps.repo.listMeals()).toEqual([]);
+  });
+
+  it('IN-3 the estimate arrives as a list to add all of or pick from, never replacing what was typed, with LLM tags unselected', async () => {
+    const llm = new FakeLlm(['{"ingredients":["rice","Milk","my own rice","soy sauce"],"uncertainty":"the sauce"}']);
+    const { tree } = await startEstimate(llm);
+    await act(async () => {
+      void buttonOf(en.meal.photoSend).onPress();
+    });
+    await flush();
+    expect(hasText(tree, en.meal.unsure.replace('{{text}}', 'the sauce'))).toBe(true);
+    await press(tree, 'soy sauce');
+    await press(tree, en.meal.estimateAddPicked);
+    const values = () => tree.root.findAll((n) => n.props.placeholder === en.meal.ingredientPlaceholder).map((n) => n.props.value).filter((v, i, a) => a.indexOf(v) === i);
+    expect(values()).toEqual(['my own rice', 'soy sauce', '']); // typed text kept, only the picked name added
+    const milk = tree.root.findAll((n) => n.props.accessibilityLabel === en.allergens.milk && n.props.accessibilityState)[0]!;
+    expect(milk.props.accessibilityState.selected).toBe(false); // IN-10: LLM tags stay unselected
+  });
+
+  it('IN-3 Add all adds every name that is not already in the list, and the added rows are ordinary editable rows', async () => {
+    const llm = new FakeLlm(['{"ingredients":["rice","My Own Rice"],"uncertainty":null}']);
+    const { tree } = await startEstimate(llm);
+    await act(async () => {
+      void buttonOf(en.meal.photoSend).onPress();
+    });
+    await flush();
+    await press(tree, en.meal.estimateAddAll);
+    const values = tree.root.findAll((n) => n.props.placeholder === en.meal.ingredientPlaceholder).map((n) => n.props.value);
+    expect([...new Set(values)]).toEqual(['my own rice', 'rice', '']);
+    expect(hasText(tree, en.meal.estimateAddAll)).toBe(false); // the banner is gone
+  });
+
+  it('LL-8, LL-12 a failure adds nothing, says so and offers a one-tap retry', async () => {
+    const { NettleError } = require('@/core/model/errors');
+    const llm = new FakeLlm([new NettleError('llm_rate_limited'), '{"ingredients":["rice"],"uncertainty":null}']);
+    const { tree } = await startEstimate(llm);
+    await act(async () => {
+      void buttonOf(en.meal.photoSend).onPress();
+    });
+    await flush();
+    expect(hasText(tree, en.errors.llm_rate_limited)).toBe(true);
+    expect(hasText(tree, en.meal.estimateFailed)).toBe(true);
+    await press(tree, en.meal.estimateRetry);
+    await flush();
+    expect(hasText(tree, en.meal.estimateAddAll)).toBe(true);
+    expect(llm.requests).toHaveLength(2);
+  });
+
+  it('IN-3, LL-12 saving while the estimate runs uses the fields as they are and aborts the request', async () => {
+    let aborted = false;
+    const llm = { completeJson: (req: { signal?: AbortSignal }) => new Promise<never>((_r, reject) => req.signal?.addEventListener('abort', () => ((aborted = true), reject(new Error('aborted'))))) };
+    const { deps } = await startEstimate(llm);
+    await act(async () => {
+      void buttonOf(en.meal.photoSend).onPress();
+    });
+    let rendered!: ReactTestRenderer;
+    await act(async () => {
+      rendered = create(mockScreen.options!.headerRight!());
+    });
+    const save = rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!;
+    await act(async () => {
+      await save.props.onPress();
+    });
+    expect(aborted).toBe(true);
+    expect(await deps.repo.listMeals()).toMatchObject([{ description: 'Synthetic dinner', ingredients: ['my own rice'] }]);
+  });
+});

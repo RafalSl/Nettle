@@ -52,7 +52,15 @@
     "hintDays": "{{n}} days ago",
     "discardTitle": "Change the meal?",
     "discard": "Discard edits",
-    "reviewHint": "Check the ingredients and allergen tags before saving."
+    "reviewHint": "Check the ingredients and allergen tags before saving.",
+    "estimating": "Estimating ingredients from the photo. You can keep entering the meal.",
+    "estimateSlow": "Still working, keep entering the meal.",
+    "estimateCancel": "Cancel",
+    "estimateAddAll": "Add all",
+    "estimateAddPicked": "Add selected",
+    "estimateDismiss": "Dismiss",
+    "estimateRetry": "Try again",
+    "estimateFailed": "Nothing was added."
   },
   "skin": {
     "title": "Log skin status",

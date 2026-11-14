@@ -26,3 +26,24 @@ export function suggestAllergens(ingredients: string[]): Allergen[] {
   const text = ` ${ingredients.join(' , ').toLowerCase()} `;
   return (Object.keys(STEMS) as Allergen[]).filter((a) => STEMS[a].some((stem) => text.includes(stem)));
 }
+
+/**
+ * IN-3: add estimated ingredient names to the list the user is editing. Nothing typed is changed or removed;
+ * names already in the list (ignoring case and spacing) are not repeated, and one empty row stays at the end
+ * for the next ingredient.
+ */
+export function addIngredients(current: readonly string[], names: readonly string[]): string[] {
+  const clean = (s: string) => s.trim();
+  const kept = current.map(clean).filter(Boolean);
+  const have = new Set(kept.map((s) => s.toLowerCase().replace(/\s+/g, ' ')));
+  const added: string[] = [];
+  for (const raw of names) {
+    const name = clean(raw);
+    const key = name.toLowerCase().replace(/\s+/g, ' ');
+    if (name && !have.has(key)) {
+      have.add(key);
+      added.push(name);
+    }
+  }
+  return [...kept, ...added, ''];
+}

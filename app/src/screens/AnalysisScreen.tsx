@@ -20,7 +20,7 @@ async function loadScreenData(deps: Deps, dayFrom: string, dayTo: string) {
     [...(await deps.repo.listSkinEntries()), ...(await deps.repo.listRecords('nailEntries'))].map((e) => [e.id, e.areaId]),
   );
   const photos = (await deps.repo.listRecords('photos'))
-    .filter((p) => localDay(p.at.utc, p.at.tz) >= dayFrom && localDay(p.at.utc, p.at.tz) <= dayTo)
+    .filter((p) => localDay(p.at.utc, p.at.tz, deps.dayStart.get()) >= dayFrom && localDay(p.at.utc, p.at.tz, deps.dayStart.get()) <= dayTo)
     .map((photo) => {
       const area = areas.get(entryArea.get(photo.entryId) ?? '');
       return { photo, label: `${area ? areaLabel(area) : ''} ${localDateTime(photo.at.utc, photo.at.tz)}`.trim() };

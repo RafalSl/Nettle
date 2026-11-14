@@ -22,7 +22,7 @@ export default function ReportScreen() {
   const [sensitive, setSensitive] = useState(false);
   const [preview, setPreview] = useState<ReportPreview | null>(null);
 
-  const today = localDay(deps.clock.now().toISOString(), deps.clock.timeZone());
+  const today = localDay(deps.clock.now().toISOString(), deps.clock.timeZone(), deps.dayStart.get());
   const daysFor = async (p: Period): Promise<{ from?: string; to?: string }> => {
     if (p === 'since') return (await sinceLastExport(deps)) ?? {};
     if (p === 'last30') return { from: addDays(today, -29) ?? today, to: today };

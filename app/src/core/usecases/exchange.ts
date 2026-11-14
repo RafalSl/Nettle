@@ -22,6 +22,7 @@ import {
 } from '../model/types';
 import type { CollectionKey, ImportMode, ImportTombstones } from '../ports/storage';
 import type { Deps } from './deps';
+import { reloadDayStart } from './preferences';
 
 export interface ExportOptions {
   /** UTC bounds. Applies to records only; settings are always exported in full. */
@@ -46,7 +47,7 @@ const REPORT_PHOTO_EDGE = 500;
 export async function exportBundle(deps: Deps, options: ExportOptions = {}): Promise<Uint8Array> {
   let range = options.range ?? {};
   if (options.days) {
-    const converted = localDaysToRange(options.days.from, options.days.to, deps.clock.timeZone());
+    const converted = localDaysToRange(options.days.from, options.days.to, deps.clock.timeZone(), deps.dayStart.get());
     if (!converted) throw new NettleError('invalid_range');
     range = converted;
   }
@@ -99,6 +100,7 @@ export async function exportBundle(deps: Deps, options: ExportOptions = {}): Pro
       photos: thumbnails,
       range: data.range,
       exportedAt: data.exported_at,
+      dayStartHour: deps.dayStart.get(),
     });
     files['report.pdf'] = await deps.pdf.renderHtml(html);
   }
@@ -318,4 +320,5 @@ export async function applyImport(
     throw e;
   }
   for (const file of [...oldFiles, ...plan.removedFiles]) await deps.photos.remove(file);
+  await reloadDayStart(deps); // NF-7: the file may carry another day start
 }

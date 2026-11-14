@@ -23,11 +23,18 @@ function wallParts(utc: string, tz: string) {
   return { y: get('year').padStart(4, '0'), mo: get('month'), d: get('day'), h: get('hour') === '24' ? '00' : get('hour'), mi: get('minute') };
 }
 
-/** SK-7 / SK-11: the local calendar day of an instant in an IANA timezone, as "YYYY-MM-DD". */
-export function localDay(utc: string, tz: string): string {
-  const { y, mo, d } = wallParts(utc, tz);
-  return `${y}-${mo}-${d}`;
+/**
+ * SK-7 / SK-11, NF-7: the diary day of an instant, as "YYYY-MM-DD". A day runs from `startHour` (whole hours, default
+ * midnight) on the wall clock of `tz` to the same hour the next day, so 00:30 can still belong to the day before.
+ * The shift is done on the wall clock, so a daylight saving switch cannot move an entry by an hour.
+ */
+export function localDay(utc: string, tz: string, startHour = 0): string {
+  const { y, mo, d, h, mi } = wallParts(utc, tz);
+  if (startHour === 0) return `${y}-${mo}-${d}`;
+  return new Date(Date.UTC(+y, +mo - 1, +d, +h, +mi) - startHour * HOUR_MS).toISOString().slice(0, 10);
 }
+
+const HOUR_MS = 3600 * 1000;
 
 const DAY = /^(\d{4})-(\d{2})-(\d{2})$/;
 
@@ -67,14 +74,15 @@ function startOfLocalDayMs(dayMs: number, tz: string): number {
  * time). `from` is the start of its day, `to` the last millisecond of its day; either may be open.
  * Returns null when a day is not "YYYY-MM-DD" or `from` is after `to`.
  */
-export function localDaysToRange(from: string | undefined, to: string | undefined, tz: string): DateRange | null {
+export function localDaysToRange(from: string | undefined, to: string | undefined, tz: string, startHour = 0): DateRange | null {
   const range: DateRange = {};
   const f = from === undefined ? undefined : dayToMs(from);
   const t = to === undefined ? undefined : dayToMs(to);
   if (f === null || t === null) return null;
   if (f !== undefined && t !== undefined && f > t) return null;
-  if (f !== undefined) range.from = new Date(startOfLocalDayMs(f, tz)).toISOString();
-  if (t !== undefined) range.to = new Date(startOfLocalDayMs(t + 24 * 3600 * 1000, tz) - 1).toISOString();
+  const shift = startHour * HOUR_MS; // NF-7: a day begins at its start hour
+  if (f !== undefined) range.from = new Date(startOfLocalDayMs(f + shift, tz)).toISOString();
+  if (t !== undefined) range.to = new Date(startOfLocalDayMs(t + 24 * HOUR_MS + shift, tz) - 1).toISOString();
   return range;
 }
 
@@ -94,11 +102,11 @@ export function addDays(day: string, n: number): string | null {
  * UX-2: the moment to use for a new entry on a chosen day: the current clock time on that day (in the given
  * timezone), never later than the end of that day. For today it is simply now.
  */
-export function atOnDay(day: string, now: Date, tz: string): Date {
-  const todayDay = localDay(now.toISOString(), tz);
+export function atOnDay(day: string, now: Date, tz: string, startHour = 0): Date {
+  const todayDay = localDay(now.toISOString(), tz, startHour);
   if (day === todayDay) return now;
-  const dayRange = localDaysToRange(day, day, tz);
-  const todayRange = localDaysToRange(todayDay, todayDay, tz);
+  const dayRange = localDaysToRange(day, day, tz, startHour);
+  const todayRange = localDaysToRange(todayDay, todayDay, tz, startHour);
   if (!dayRange?.from || !dayRange.to || !todayRange?.from) return now;
   const at = Date.parse(dayRange.from) + (now.getTime() - Date.parse(todayRange.from));
   return new Date(Math.min(at, Date.parse(dayRange.to)));

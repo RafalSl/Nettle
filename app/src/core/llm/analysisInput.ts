@@ -38,7 +38,6 @@ export interface BuiltInput {
 
 const label = (x: { name: string; nameOverride: string | null }) => x.nameOverride ?? x.name;
 const time = (utc: string, tz: string) => localDateTime(utc, tz).slice(11);
-const dayOf = (at: { utc: string; tz: string }) => localDay(at.utc, at.tz);
 
 /**
  * LL-2 to LL-4: the diary as one timeline by local day, with exact local times, so the model can read same-day,
@@ -46,7 +45,9 @@ const dayOf = (at: { utc: string; tz: string }) => localDay(at.utc, at.tz);
  * was eaten, so "eaten on most days" cannot be missed (LL-4). Records of the lookback window before the
  * period are limited to the kinds the lookbacks need.
  */
-export function buildAnalysisInput(src: AnalysisSource, dayFrom: string, dayTo: string): BuiltInput {
+export function buildAnalysisInput(src: AnalysisSource, dayFrom: string, dayTo: string, startHour = 0): BuiltInput {
+  /** NF-7: the diary day of an entry, with the user's day start. */
+  const dayOf = (at: { utc: string; tz: string }) => localDay(at.utc, at.tz, startHour);
   const areaName = new Map(src.skinAreas.map((a) => [a.id, label(a)]));
   const tagName = new Map(src.dailyTags.map((t) => [t.id, label(t)]));
   const treatmentName = new Map(src.treatments.map((t) => [t.id, label(t)]));

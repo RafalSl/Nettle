@@ -121,7 +121,7 @@ export async function resolveReminderTap(
   switch (tap.target) {
     case 'checkin': {
       const at = tap.deliveredAt ?? deps.clock.now();
-      const day = localDay(at.toISOString(), deps.clock.timeZone());
+      const day = localDay(at.toISOString(), deps.clock.timeZone(), deps.dayStart.get());
       if ((await getCheckIn(deps, day))?.completedAt) return today;
       return { route: { pathname: '/form/checkin', params: { day } }, viaToday: true };
     }

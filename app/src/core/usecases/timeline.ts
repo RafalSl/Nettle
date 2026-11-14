@@ -26,13 +26,13 @@ export async function areaTimeline(deps: Deps, areaId: string): Promise<Timeline
     return cur;
   };
   for (const entry of await deps.repo.listSkinEntries()) {
-    if (entry.areaId === areaId) dayOf(localDay(entry.at.utc, entry.at.tz)).entries.push({ kind: 'skin', entry, photos: photosOf('skinEntry', entry.id) });
+    if (entry.areaId === areaId) dayOf(localDay(entry.at.utc, entry.at.tz, deps.dayStart.get())).entries.push({ kind: 'skin', entry, photos: photosOf('skinEntry', entry.id) });
   }
   for (const entry of await deps.repo.listRecords('nailEntries')) {
-    if (entry.areaId === areaId) dayOf(localDay(entry.at.utc, entry.at.tz)).entries.push({ kind: 'nail', entry, photos: photosOf('nailEntry', entry.id) });
+    if (entry.areaId === areaId) dayOf(localDay(entry.at.utc, entry.at.tz, deps.dayStart.get())).entries.push({ kind: 'nail', entry, photos: photosOf('nailEntry', entry.id) });
   }
   for (const marker of await deps.repo.listRecords('flareMarkers')) {
-    if (marker.areaId === areaId) dayOf(localDay(marker.at.utc, marker.at.tz)).flares.push(marker);
+    if (marker.areaId === areaId) dayOf(localDay(marker.at.utc, marker.at.tz, deps.dayStart.get())).flares.push(marker);
   }
   for (const d of days.values()) {
     d.entries.sort((a, b) => a.entry.at.utc.localeCompare(b.entry.at.utc) || a.entry.id.localeCompare(b.entry.id));
@@ -53,7 +53,7 @@ export async function areasWithEntries(deps: Deps): Promise<AreaSummary[]> {
   for (const e of [...(await deps.repo.listSkinEntries()), ...(await deps.repo.listRecords('nailEntries'))]) {
     const cur = byArea.get(e.areaId) ?? { entries: 0, last: '', lastDay: '' };
     cur.entries++;
-    if (e.at.utc > cur.last) Object.assign(cur, { last: e.at.utc, lastDay: localDay(e.at.utc, e.at.tz) });
+    if (e.at.utc > cur.last) Object.assign(cur, { last: e.at.utc, lastDay: localDay(e.at.utc, e.at.tz, deps.dayStart.get()) });
     byArea.set(e.areaId, cur);
   }
   const areas = new Map((await deps.repo.listAreas()).map((a) => [a.id, a]));

@@ -153,7 +153,7 @@ export async function editCheckIn(deps: Deps, id: string, input: CheckInInput): 
   const orig = (await getEntry(deps, 'checkIns', id)) as CheckIn;
   const tags = await validCheckInTags(deps, input);
   const at = input.at ? makeStamp(deps.clock, input.at) : orig.at;
-  const day = localDay(at.utc, at.tz);
+  const day = localDay(at.utc, at.tz, deps.dayStart.get());
   if ((await deps.repo.listRecords('checkIns')).some((c) => c.day === day && c.id !== id)) {
     throw new NettleError('checkin_day_taken', day);
   }

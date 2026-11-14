@@ -769,7 +769,7 @@ describe('Review (UX-1, EX-14)', () => {
   });
   afterEach(() => jest.restoreAllMocks());
 
-  it('UX-1 the days list shows logged days newest first and opens one on Today', async () => {
+  it('UX-1 the days list shows logged days newest first and opens one in its full log', async () => {
     const deps = nowDeps();
     await logMeal(deps, { description: 'Synthetic oats', ingredients: [], at: new Date('2026-01-10T08:00:00.000Z') });
     await logMeal(deps, { description: 'Synthetic soup', ingredients: [], at: new Date('2026-01-12T08:00:00.000Z') });
@@ -779,7 +779,7 @@ describe('Review (UX-1, EX-14)', () => {
     const first = en.review.dayRow.replace('{{day}}', '2026-01-12').replace('{{n}}', '2');
     expect(JSON.stringify(tree.toJSON()).indexOf(first)).toBeGreaterThan(-1);
     await press(tree, first);
-    expect(mockRouter.navigate).toHaveBeenLastCalledWith({ pathname: '/today', params: { day: '2026-01-12' } });
+    expect(mockRouter.navigate).toHaveBeenLastCalledWith({ pathname: '/review/day', params: { day: '2026-01-12' } });
     await press(tree, en.review.report);
     expect(mockRouter.push).toHaveBeenLastCalledWith('/review/report');
   });
@@ -798,6 +798,44 @@ describe('Review (UX-1, EX-14)', () => {
     await flush();
     expect(hasText(tree, 'Synthetic old meal')).toBe(true);
     expect(hasText(tree, '2026-01-10')).toBe(true);
+  });
+
+  it('UX-2 Today shows the 8 newest entries of the day and "Show all (n)" opens the full log in Review', async () => {
+    const deps = nowDeps();
+    const base = Date.now() - 3 * 3600_000;
+    for (let i = 0; i < 10; i++) await logMeal(deps, { description: `Synthetic meal ${i}`, ingredients: [], at: new Date(base + i * 60_000) });
+    const { tree } = await mount(() => require('@/app/(tabs)/today/index'), deps);
+    await flush();
+    expect(hasText(tree, 'Synthetic meal 9')).toBe(true); // newest on top
+    expect(hasText(tree, 'Synthetic meal 2')).toBe(true);
+    expect(hasText(tree, 'Synthetic meal 1')).toBe(false);
+    expect(hasText(tree, 'Synthetic meal 0')).toBe(false);
+    const today = new Date().toISOString().slice(0, 10);
+    await press(tree, en.day.showAll.replace('{{n}}', '10'));
+    expect(mockRouter.navigate).toHaveBeenLastCalledWith({ pathname: '/review/day', params: { day: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/) } });
+    mockParams.current = { day: (mockRouter.navigate.mock.calls.at(-1)![0] as { params: { day: string } }).params.day };
+    const full = await mount(() => require('@/app/(tabs)/review/day'), deps);
+    await flush();
+    for (let i = 0; i < 10; i++) expect(hasText(full.tree, `Synthetic meal ${i}`)).toBe(true);
+    expect(today).toMatch(/^\d{4}/);
+  });
+
+  it('UX-2 a day with 8 entries or fewer has no "Show all" row', async () => {
+    const deps = nowDeps();
+    for (let i = 0; i < 8; i++) await logMeal(deps, { description: `Synthetic meal ${i}`, ingredients: [], at: new Date(Date.now() - 3600_000 + i * 60_000) });
+    const { tree } = await mount(() => require('@/app/(tabs)/today/index'), deps);
+    await flush();
+    expect(JSON.stringify(tree.toJSON())).not.toContain(en.day.showAll.replace(' ({{n}})', ''));
+  });
+
+  it('NF-7 Logging settings has "Day starts at" and saves the hour at once', async () => {
+    const deps = nowDeps();
+    const { tree } = await mount(() => require('@/app/(tabs)/today/settings/logging'), deps);
+    expect(hasText(tree, en.day.dayStart)).toBe(true);
+    await press(tree, '03:00');
+    await flush();
+    expect(deps.dayStart.get()).toBe(3);
+    expect((await deps.repo.getPreferences())?.dayStartHour).toBe(3);
   });
 
   it('EX-14, EX-7 the doctor report counts the period, leaves sensitive photos out until asked, and remembers the export', async () => {

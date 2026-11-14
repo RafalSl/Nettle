@@ -8,7 +8,7 @@ import { useServices } from '@/services';
 import { useAnalysisRun } from '@/ui/useAnalysisRun';
 import { NavRow } from '@/ui/NavRow';
 
-/** UX-1: the second tab: the Doctor report, the AI analysis and the days list, which opens a day on Today. */
+/** UX-1: the second tab: the Doctor report, the AI analysis and the days list, which opens a day's full log. */
 export default function ReviewScreen() {
   const { deps } = useServices();
   const router = useRouter();
@@ -48,7 +48,7 @@ export default function ReviewScreen() {
         <NavRow
           key={d.day}
           title={`${t('review.dayRow', { day: d.day, n: d.entries })}${d.complete ? `, ${t('review.dayComplete')}` : ''}`}
-          onPress={() => router.navigate({ pathname: '/today', params: { day: d.day } })}
+          onPress={() => router.navigate({ pathname: '/review/day', params: { day: d.day } })}
         />
       ))}
     </Screen>

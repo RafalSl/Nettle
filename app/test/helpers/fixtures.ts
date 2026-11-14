@@ -1,3 +1,4 @@
+import { DayStart } from '@/core/model/dayStart';
 import { FakeAuth } from '../fakes/fakeAuth';
 import { FakeBarcode } from '../fakes/fakeBarcode';
 import { FakeNotifier } from '../fakes/fakeNotifier';
@@ -26,6 +27,7 @@ export function makeDeps(repo: StorageRepository, now = '2026-01-15T10:00:00.000
     notifier: new FakeNotifier(),
     keys: new MemoryKeyStore(),
     settings: new MemorySettings(),
+    dayStart: new DayStart(),
     llmFor: () => llm,
     llmModels: [
       { id: 'claude-haiku-5-5', label: 'Haiku' },

@@ -14,6 +14,7 @@ const MODES: Mode[] = ['non_sensitive', 'all', 'none', 'filter', 'custom'];
 /** EX-7: which photos go into the export. The default leaves out sensitive photos. */
 export function PhotoSelectionField({ onChange }: { onChange: (selection: PhotoSelection) => void }) {
   const { deps } = useServices();
+  const dayStart = deps.dayStart.get();
   const [mode, setMode] = useState<Mode>('non_sensitive');
   const [areas, setAreas] = useState<SkinArea[]>([]);
   const [areaIds, setAreaIds] = useState<Set<string>>(new Set());
@@ -51,14 +52,14 @@ export function PhotoSelectionField({ onChange }: { onChange: (selection: PhotoS
       onChange(mode === 'non_sensitive' ? DEFAULT_PHOTO_SELECTION : { mode });
       return;
     }
-    const range = limit ? localDaysToRange(localDay(from.toISOString(), tz), localDay(to.toISOString(), tz), tz) : null;
+    const range = limit ? localDaysToRange(localDay(from.toISOString(), tz), localDay(to.toISOString(), tz), tz, dayStart) : null;
     onChange({
       mode: 'filter',
       areaIds: areaIds.size > 0 ? [...areaIds] : undefined,
       range: range ?? undefined,
       includeSensitive,
     });
-  }, [mode, areaIds, includeSensitive, limit, from, to, tz, picked, onChange]);
+  }, [mode, areaIds, includeSensitive, limit, from, to, tz, dayStart, picked, onChange]);
 
   return (
     <>

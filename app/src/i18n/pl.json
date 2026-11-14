@@ -600,6 +600,7 @@
     "gear": "Ustawienia",
     "report": "Raport",
     "suggestions": "Podpowiedzi",
+    "day": "Dzień",
     "timeline": "Oś czasu",
     "privacy": "Prywatność",
     "drink": "Napój",
@@ -659,6 +660,10 @@
     "stoolEarlier": "Wcześniej…",
     "shortcuts": "Leczenie jednym dotknięciem",
     "applied": "Zastosowano",
+    "showAll": "Pokaż wszystko ({{n}})",
+    "openOnToday": "Otwórz ten dzień w Dzisiaj",
+    "dayStart": "Dzień zaczyna się o",
+    "dayStartHint": "Dzień trwa od tej godziny do tej samej godziny następnego dnia, więc napój o 00:30 może należeć do poprzedniego wieczoru. Ustaw to raz: zmiana przegrupowuje cały dziennik, a godzina każdego wpisu zostaje bez zmian.",
     "logTitle": "Dziennik"
   },
   "source": {

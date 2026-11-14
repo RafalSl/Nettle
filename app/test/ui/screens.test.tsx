@@ -1147,6 +1147,31 @@ describe('Alcohol and medication suggestions (IN-14, UX-5)', () => {
     expect(await deps.repo.listRecords('medicationEntries')).toHaveLength(2);
   });
 
+  it('IN-14 a star on the drink and medication forms keeps a favorite, and a second tap removes it', async () => {
+    const deps = nowDeps();
+    const drink = await mount(alcohol, deps);
+    await flush();
+    await type(drink.tree, en.more.drinkName, 'Synthetic coffee');
+    await type(drink.tree, en.more.drinkAmount, '200');
+    await type(drink.tree, en.more.drinkIngredients, 'coffee, milk');
+    await press(drink.tree, en.meal.favorite);
+    await flush();
+    expect((await deps.repo.getPreferences())!.favorites.drinks).toMatchObject([{ name: 'Synthetic coffee', amountMl: 200, alcohol: false, ingredients: ['coffee', 'milk'] }]);
+    expect(hasText(drink.tree, en.meal.unfavorite)).toBe(true);
+    await press(drink.tree, en.meal.unfavorite);
+    await flush();
+    expect((await deps.repo.getPreferences())!.favorites.drinks).toEqual([]);
+
+    const meds = await mount(medication, deps);
+    await flush();
+    await type(meds.tree, en.more.medName, 'Synthetic vitamin');
+    await type(meds.tree, en.more.medDose, '1 tablet');
+    await press(meds.tree, en.meal.favorite);
+    await flush();
+    expect((await deps.repo.getPreferences())!.favorites.medications).toMatchObject([{ name: 'Synthetic vitamin', dose: '1 tablet' }]);
+    expect(hasText(meds.tree, en.meal.unfavorite)).toBe(true);
+  });
+
   it('IN-14 favorites come first, even without history', async () => {
     const deps = nowDeps();
     await logDrink(deps, { name: 'Synthetic beer', amountMl: 500, at: at(10) });

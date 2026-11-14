@@ -2,14 +2,14 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, Pressable, Text, TextInput } from 'react-native';
 import { defaultPreferences, type Preferences } from '@/core/model/preferences';
-import { drinkHistory, medicationHistory, rankSuggestions, type Suggestion } from '@/core/model/suggestions';
+import { drinkHistory, drinkKey, medicationHistory, normalizeText, rankSuggestions, type Suggestion } from '@/core/model/suggestions';
 import { MEDICATION_CATEGORIES, type Allergen, type MedicationCategory } from '@/core/model/types';
 import { lookupProduct } from '@/core/usecases/barcode';
 import { addIngredients, joinIngredients, splitIngredients } from '@/core/model/allergens';
 import { typedSource } from '@/core/model/source';
 import { localDay } from '@/core/model/time';
 import { logDrink, logMedication } from '@/core/usecases/intake';
-import { getPreferences, type DrinkSnapshot } from '@/core/usecases/preferences';
+import { getPreferences, toggleFavoriteDrink, toggleFavoriteMedication, type DrinkSnapshot } from '@/core/usecases/preferences';
 import { errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
 import { FormModal, useField, useForm } from '@/ui/FormModal';
@@ -35,7 +35,7 @@ function useSuggestions<P>(load: (deps: ReturnType<typeof useServices>['deps'], 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deps]);
   useFocusEffect(refresh);
-  return { list, saveOnTap: prefs.suggestions.saveOnTap };
+  return { list, saveOnTap: prefs.suggestions.saveOnTap, prefs, refresh };
 }
 
 /** IN-4, IN-10: a drink with an alcohol switch and optional ingredients and allergen tags. */
@@ -45,7 +45,7 @@ export function DrinkSection() {
   const f = useForm();
   const [draft, setDraft] = useField<DrinkDraft>(emptyDrinkDraft(), f.touch);
   const time = useFormTime(f.touch);
-  const { list, saveOnTap } = useSuggestions<DrinkSnapshot>(async (d, p) => {
+  const { list, saveOnTap, prefs, refresh } = useSuggestions<DrinkSnapshot>(async (d, p) => {
     const options = { rows: p.suggestions.rows, windowDays: p.suggestions.windowDays };
     const snap = (x: DrinkSnapshot): DrinkSnapshot => ({ name: x.name, amountMl: x.amountMl, alcohol: x.alcohol, ingredients: x.ingredients, allergens: x.allergens, barcode: x.barcode, source: x.source });
     return rankSuggestions(
@@ -158,6 +158,16 @@ export function DrinkSection() {
         </>
       )}
       <DrinkFields draft={draft} onChange={setDraft} />
+      {/* IN-14: a star keeps a snapshot of the drink (amount, alcohol switch, ingredients, tags) as a favorite. */}
+      <Button
+        kind="secondary"
+        title={prefs.favorites.drinks.some((x) => x.key === drinkKey({ name: draft.name.trim(), amountMl: Number(draft.amount) })) ? t('meal.unfavorite') : t('meal.favorite')}
+        disabled={!draft.name.trim() || !(Number(draft.amount) > 0)}
+        onPress={() => {
+          const { name, amountMl, alcohol, ingredients, allergens, barcode, source } = drinkInput(draft);
+          toggleFavoriteDrink(deps, { name: name.trim(), amountMl, alcohol, ingredients, allergens, barcode, source }).then(refresh, (e) => Alert.alert(errorMessage(e)));
+        }}
+      />
       <TimeField value={time.value} onChange={time.set} />
     </FormModal>
   );
@@ -173,7 +183,7 @@ export function MedicationSection() {
   const [dose, setDose] = useField('', f.touch);
   const time = useFormTime(f.touch);
   type Med = { category: MedicationCategory; name: string; dose: string | null };
-  const { list, saveOnTap } = useSuggestions<Med>(async (d, p) => {
+  const { list, saveOnTap, prefs, refresh } = useSuggestions<Med>(async (d, p) => {
     const options = { rows: p.suggestions.rows, windowDays: p.suggestions.windowDays };
     return rankSuggestions(
       medicationHistory(await d.repo.listRecords('medicationEntries')).map((h) => ({ ...h, payload: { category: h.payload.category, name: h.payload.name, dose: h.payload.dose } })),
@@ -216,6 +226,12 @@ export function MedicationSection() {
       />
       <TextInput style={styles.input} accessibilityLabel={t('more.medName')} placeholder={t('more.medName')} value={name} onChangeText={setName} />
       <TextInput style={styles.input} accessibilityLabel={t('more.medDose')} placeholder={t('more.medDose')} value={dose} onChangeText={setDose} />
+      <Button
+        kind="secondary"
+        title={prefs.favorites.medications.some((x) => x.key === `${category}|${normalizeText(name)}|${normalizeText(dose)}`) ? t('meal.unfavorite') : t('meal.favorite')}
+        disabled={!name.trim()}
+        onPress={() => toggleFavoriteMedication(deps, { category, name: name.trim(), dose: dose.trim() || null }).then(refresh, (e) => Alert.alert(errorMessage(e)))}
+      />
       <TimeField value={time.value} onChange={time.set} />
     </FormModal>
   );

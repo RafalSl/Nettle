@@ -41,6 +41,7 @@ Requirements and flows are in `docs/requirements.md`, `docs/ux-design.md` and `d
 - Report summary (LL-14, EX-3, EX-4): `ReportSummary` record (migration 15, `data.json` `report_summaries`, delete group "AI"), `summaryPrompt` and `parseSummary`, `prepareSummary` (same input builder as the analysis, never photos), `runSummary` (stores nothing), `saveSummary` (stores what the person kept next to what the model wrote). The Doctor report screen has the panel: billing confirmation, elapsed time and Cancel, an editable text, "Use in the report"; the PDF opens with it under the AI label, and a summary for another period or language is refused (`summary_mismatch`). Unlike the analysis the run is inline on the screen, so leaving the screen cancels it.
 - Known names (IN-3): `Preferences.suggestions.knownNames` (off by default, in the Suggestions settings); `knownIngredientNames` collects the distinct names from meals and drinks, most used first (up to 150); the meal photo prompt (`ingredients-2`) prefers them, and the confirmation says how many go with the photo. The label scan never uses them.
 - Flares (SK-6, UX-2): More lists "Flare start or end" (`form/flare`, `FlareSection`): pick a skin area, the kind follows the area (start when none is open, end when one is), time and note, Save. The Skin form no longer has flare buttons.
+- Favorite stars (IN-14): the drink and medication forms have a Favorite / Remove favorite button; a drink favorite keeps its amount, alcohol switch, ingredients, tags, barcode and source.
 - Skin and health: unique area names (SK-2), no change for nails and all areas (SK-3), empty-day confirmation (SK-11), reminder taps (SK-9), "Same as yesterday" (SK-7).
 - LLM: elapsed time, Cancel, billing notice, no retry of a timeout, the run in `AnalysisRunner` (survives leaving the screen, interrupted state with retry, keep-awake).
 - Security: app lock (SE-8) with `expo-local-authentication`.
@@ -53,7 +54,7 @@ Requirements and flows are in `docs/requirements.md`, `docs/ux-design.md` and `d
 - *No change buttons (SK-3).* Built on the Skin form (all areas) and the nail form (one nail); the Skin form's single-area button existed.
 - *Settings.* Missing groups and screens: skin and nail areas (rename, archive; only the nail form adds areas), Favorites, the photo options of Privacy and photos, About. Delete data, Replace and bulk delete still use `Alert` and do not offer an export first.
 - *Today.* The highlighted new row, the date jump, the "Earlier…" stool form (it opens the check-in), the first-run empty states beyond text.
-- *Intake details.* Ingredient chips with autocomplete, favorite stars for drinks and medications in the UI (the core has them), LLM allergen suggestions, favorites for scanned products, a Polish ingredient text from the database.
+- *Intake details.* Ingredient chips with autocomplete, LLM allergen suggestions, favorites for scanned products, a Polish ingredient text from the database.
 - *Export and import.* A free date range picker for the report and the custom export, "export first" before Replace and Delete data, newest-wins merge (EX-12, Later: needs modified timestamps and a schema bump).
 - *Review.* A side-by-side comparison of two photos, trend charts.
 - *Other.* The accessibility pass (UX-8, deferred), polishing Polish strings, pruning unused template dependencies.

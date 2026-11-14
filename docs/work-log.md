@@ -231,3 +231,7 @@ Newest entry last. One short entry per working session or meaningful step: what 
 ## 2026-11-14: area timeline (branch feature/area-timeline)
 - **Done:** SK-8. `areaTimeline` groups an area's skin and nail entries, their photos and its flare markers by the entry's own local day, newest first; `areasWithEntries` lists the areas with history (archived ones too). Review has an Areas list and each area opens the timeline screen (scores or nail stage beside photos, blurred sensitive photos, notes). Also fixed: removing a photo now leaves a tombstone (EX-13), and the photo removal asks in an action sheet (UX-9). 540 tests pass, iOS bundle builds.
 - **Next:** photo selection screens for export and LLM runs (EX-7), then the app lock (SE-8).
+
+## 2026-11-14: single-photo selection for exports (branch feature/custom-photo-selection)
+- **Done:** EX-7. The photo selection of the custom export gained a "Pick photos" mode: every photo is listed with its area and time (sensitive ones marked), and only the picked ones go into the ZIP and the PDF (the core's `custom` mode already existed). A sensitive photo is included only when it is picked. 541 tests pass.
+- **Next:** the app lock (SE-8).

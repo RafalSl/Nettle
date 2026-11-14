@@ -388,7 +388,10 @@
     "filter": "Choose",
     "areas": "Only these areas (none selected = all)",
     "includeSensitive": "Include sensitive photos",
-    "limit": "Only a date range"
+    "limit": "Only a date range",
+    "custom": "Pick photos",
+    "customHint": "Tap the photos to include, one by one. Sensitive photos are included only when you pick them.",
+    "noPhotos": "No photos yet."
   },
   "llm": {
     "title": "AI settings",

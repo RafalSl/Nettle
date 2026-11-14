@@ -51,7 +51,7 @@ Requirements and flows are in `docs/requirements.md`, `docs/ux-design.md` and `d
 - Date range picker for the export (EX-11): the Doctor report offers presets only; the custom export on the Data screen still exports everything.
 - PDF report language should default to the app language (EX-3); the Data screen still starts on English (`reportLanguage`).
 - Built: the import preview counts entries a tombstone skips or deletes, with the restore switch (EX-10); the Full backup preset and the Doctor report (Review) with a period (since the last export, 30 or 90 days, everything), counts, sensitive photos off by default and a report language that defaults to the app language; `markExported` runs after every share. Not built: a free date range picker for the report, "export first" before Replace and Delete data.
-- Single-photo selection screens for export (EX-7) and for LLM runs; the core supports both, the screens offer all, none, non-sensitive and an area and date filter.
+- Single-photo selection (EX-7): the custom export has a "Pick photos" mode (photos listed by area and time, sensitive ones marked, included only when picked) and the analysis screen already picks single photos. Not built: thumbnails in the list (it is a list of labels).
 - Newest-wins merge (EX-12, Later): needs modified timestamps and a schema version bump. Today the daily check-in and a photo's sensitive flag are edited in place, and a merge cannot tell which version is newer.
 
 **Security**

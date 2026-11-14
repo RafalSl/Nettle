@@ -2,14 +2,14 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useEffect, useState } from 'react';
 import { Switch, Text, View } from 'react-native';
 import { DEFAULT_PHOTO_SELECTION, type PhotoSelection } from '@/core/export/photoSelection';
-import { localDay, localDaysToRange } from '@/core/model/time';
-import type { SkinArea } from '@/core/model/types';
+import { localDateTime, localDay, localDaysToRange } from '@/core/model/time';
+import type { Photo, SkinArea } from '@/core/model/types';
 import { areaLabel, t } from '@/i18n';
 import { useServices } from '@/services';
 import { Chips, Hint, Label, styles } from '@/ui/components';
 
-type Mode = 'non_sensitive' | 'all' | 'none' | 'filter';
-const MODES: Mode[] = ['non_sensitive', 'all', 'none', 'filter'];
+type Mode = 'non_sensitive' | 'all' | 'none' | 'filter' | 'custom';
+const MODES: Mode[] = ['non_sensitive', 'all', 'none', 'filter', 'custom'];
 
 /** EX-7: which photos go into the export. The default leaves out sensitive photos. */
 export function PhotoSelectionField({ onChange }: { onChange: (selection: PhotoSelection) => void }) {
@@ -17,6 +17,8 @@ export function PhotoSelectionField({ onChange }: { onChange: (selection: PhotoS
   const [mode, setMode] = useState<Mode>('non_sensitive');
   const [areas, setAreas] = useState<SkinArea[]>([]);
   const [areaIds, setAreaIds] = useState<Set<string>>(new Set());
+  const [photos, setPhotos] = useState<{ photo: Photo; label: string }[]>([]);
+  const [picked, setPicked] = useState<Set<string>>(new Set());
   const [includeSensitive, setIncludeSensitive] = useState(false);
   const [limit, setLimit] = useState(false);
   const [from, setFrom] = useState(new Date());
@@ -24,10 +26,27 @@ export function PhotoSelectionField({ onChange }: { onChange: (selection: PhotoS
   const tz = deps.clock.timeZone();
 
   useEffect(() => {
-    deps.repo.listAreas().then(setAreas);
+    (async () => {
+      const all = await deps.repo.listAreas();
+      setAreas(all);
+      // EX-7: single photos are listed by area and time, sensitive ones marked.
+      const areaOf = new Map(
+        [...(await deps.repo.listSkinEntries()), ...(await deps.repo.listRecords('nailEntries'))].map((e) => [e.id, all.find((a) => a.id === e.areaId)]),
+      );
+      setPhotos(
+        (await deps.repo.listRecords('photos')).map((photo) => {
+          const area = areaOf.get(photo.entryId);
+          return { photo, label: `${area ? areaLabel(area) : ''} ${localDateTime(photo.at.utc, photo.at.tz)}`.trim() };
+        }),
+      );
+    })().catch(() => undefined);
   }, [deps]);
 
   useEffect(() => {
+    if (mode === 'custom') {
+      onChange({ mode: 'custom', ids: [...picked] });
+      return;
+    }
     if (mode !== 'filter') {
       onChange(mode === 'non_sensitive' ? DEFAULT_PHOTO_SELECTION : { mode });
       return;
@@ -39,13 +58,33 @@ export function PhotoSelectionField({ onChange }: { onChange: (selection: PhotoS
       range: range ?? undefined,
       includeSensitive,
     });
-  }, [mode, areaIds, includeSensitive, limit, from, to, tz, onChange]);
+  }, [mode, areaIds, includeSensitive, limit, from, to, tz, picked, onChange]);
 
   return (
     <>
       <Label>{t('exportPhotos.title')}</Label>
       <Hint>{t('exportPhotos.hint')}</Hint>
       <Chips items={MODES.map((m) => ({ id: m, label: t(`exportPhotos.${m}`) }))} selected={new Set([mode])} onToggle={(id) => setMode(id as Mode)} />
+      {mode === 'custom' && (
+        <>
+          <Hint>{t('exportPhotos.customHint')}</Hint>
+          {photos.length === 0 ? (
+            <Hint>{t('exportPhotos.noPhotos')}</Hint>
+          ) : (
+            <Chips
+              items={photos.map(({ photo, label }) => ({ id: photo.id, label: photo.sensitive ? `${label} (${t('analysis.sensitiveMark')})` : label }))}
+              selected={picked}
+              onToggle={(id) =>
+                setPicked((cur) => {
+                  const next = new Set(cur);
+                  if (!next.delete(id)) next.add(id);
+                  return next;
+                })
+              }
+            />
+          )}
+        </>
+      )}
       {mode === 'filter' && (
         <>
           <Hint>{t('exportPhotos.areas')}</Hint>

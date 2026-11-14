@@ -388,7 +388,10 @@
     "filter": "Wybierz",
     "areas": "Tylko te miejsca (brak wyboru = wszystkie)",
     "includeSensitive": "Dołącz wrażliwe zdjęcia",
-    "limit": "Tylko zakres dat"
+    "limit": "Tylko zakres dat",
+    "custom": "Wybierz zdjęcia",
+    "customHint": "Dotknij zdjęć, które mają się znaleźć w pliku, jedno po drugim. Zdjęcia wrażliwe trafią tam tylko, jeśli je wybierzesz.",
+    "noPhotos": "Nie ma jeszcze zdjęć."
   },
   "llm": {
     "title": "Ustawienia AI",

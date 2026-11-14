@@ -32,3 +32,38 @@ export function ingredientsPrompt(language: Language) {
     maxTokens: 2000,
   };
 }
+
+/** LL-7: bump when the label prompt or schema changes. */
+export const LABEL_PROMPT_VERSION = 'label-1';
+
+/**
+ * LL-13, IN-15: provider-agnostic prompt for reading an ingredient label from a photo. The ingredient text keeps
+ * the language of the label; only the note follows the app language (LL-11). The allergen ids are the 14 EU ones.
+ */
+export function labelPrompt(language: Language, allergenIds: readonly string[]) {
+  return {
+    system: [
+      'You help someone keep a food diary to look for possible triggers of skin problems.',
+      'You read the ingredient label of a packaged food or drink from a photo and copy what is printed.',
+      'Copy the ingredient list exactly as printed, in the language of the label, without translating, without adding ingredients and without guessing. Put each ingredient in its own item; keep sub-ingredients in brackets as part of their item.',
+      `"allergens" lists the EU allergens the label declares as ingredients (often in bold or capitals), using only these ids: ${allergenIds.join(', ')}. "traces" lists those the label says the product may contain, or that it was made near, using the same ids.`,
+      '"text_read" is the ingredient text as printed, in one piece.',
+      `If part of the label is unreadable, cut off or missing, say so plainly in "note", written in ${languageName(language)}, instead of guessing. If the image is not an ingredient label, return empty lists and explain in "note".`,
+      'Your answer is a suggestion that the user will review and correct. Do not give medical advice or diagnoses.',
+    ].join(' '),
+    user: 'Read the ingredient label in this photo.',
+    schema: {
+      type: 'object',
+      properties: {
+        ingredients: { type: 'array', items: { type: 'string' } },
+        allergens: { type: 'array', items: { type: 'string' } },
+        traces: { type: 'array', items: { type: 'string' } },
+        text_read: { type: 'string' },
+        note: { type: ['string', 'null'] },
+      },
+      required: ['ingredients', 'allergens', 'traces', 'text_read', 'note'],
+      additionalProperties: false,
+    },
+    maxTokens: 3000,
+  };
+}

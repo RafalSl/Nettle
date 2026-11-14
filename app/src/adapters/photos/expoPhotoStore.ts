@@ -45,6 +45,13 @@ export const expoPhotoStore: PhotoStore = {
     return writeNew(await compressToBytes(sourceUri, MAX_EDGE));
   },
 
+  /** Only files in the app's cache are deleted, so a photo in the user's own library is never touched. */
+  async discardTemp(sourceUri) {
+    if (!sourceUri.startsWith(Paths.cache.uri)) return;
+    const f = new File(sourceUri);
+    if (f.exists) f.delete();
+  },
+
   saveBytes: writeNew,
 
   async read(file) {

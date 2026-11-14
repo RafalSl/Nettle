@@ -3,8 +3,9 @@ import { useCallback, useState } from 'react';
 import { Alert, Pressable, Text, TextInput } from 'react-native';
 import { defaultPreferences, type Preferences } from '@/core/model/preferences';
 import { drinkHistory, medicationHistory, rankSuggestions, type Suggestion } from '@/core/model/suggestions';
-import { MEDICATION_CATEGORIES, type MedicationCategory } from '@/core/model/types';
+import { MEDICATION_CATEGORIES, type Allergen, type MedicationCategory } from '@/core/model/types';
 import { lookupProduct } from '@/core/usecases/barcode';
+import { addIngredients, joinIngredients, splitIngredients } from '@/core/model/allergens';
 import { typedSource } from '@/core/model/source';
 import { localDay } from '@/core/model/time';
 import { logDrink, logMedication } from '@/core/usecases/intake';
@@ -15,6 +16,7 @@ import { FormModal, useField, useForm } from '@/ui/FormModal';
 import { DrinkFields, draftFromDrink, drinkInput, drinkMissing, emptyDrinkDraft, type DrinkDraft } from '@/ui/DrinkFields';
 import { useFormTime } from '@/ui/useFormTime';
 import { BarcodeScanner } from '@/ui/BarcodeScanner';
+import { IngredientRunPanel, SOURCE_OF, useIngredientRun, type Run } from '@/ui/useIngredientRun';
 import { Button, Chips, Hint, Label, TimeField, styles } from '@/ui/components';
 
 const rowText = (s: Suggestion<unknown>) => `${s.favorite ? '★ ' : ''}${s.label}${s.count >= 2 ? ` ×${s.count}` : ''}`;
@@ -73,7 +75,7 @@ export function DrinkSection() {
           setScanNote(t('meal.scanFromHistory', { date: localDay(h.at, deps.clock.timeZone()) }));
         } else if (p) {
           // IN-16: the database is the source; its tags stay unselected until the user selects them (IN-10).
-          setDraft({ ...base, name: p.name, amount: draft.amount, alcohol: draft.alcohol, ingredients: p.ingredients.join(', '), source: { kind: 'open_food_facts', edited: false, llm: null }, filled: { ingredients: p.ingredients, allergens: p.allergens } });
+          setDraft({ ...base, name: p.name, amount: draft.amount, alcohol: draft.alcohol, ingredients: joinIngredients(p.ingredients), source: { kind: 'open_food_facts', edited: false, llm: null }, filled: { ingredients: p.ingredients, allergens: p.allergens } });
           setScanNote(found.incomplete ? t('meal.scanIncomplete') : t('meal.scanFromDb'));
         } else {
           setDraft({ ...base, name: draft.name, amount: draft.amount, alcohol: draft.alcohol });
@@ -93,6 +95,23 @@ export function DrinkSection() {
     } finally {
       setLooking(false);
     }
+  }
+
+  // IN-3, IN-15: a label scan or photo estimate adds names to the list; its tags stay unselected (IN-10).
+  const run = useIngredientRun();
+  const [pendingTags, setPendingTags] = useState<Allergen[]>([]);
+  function addRun(names: string[], r: Extract<Run, { status: 'ready' }>) {
+    const current = splitIngredients(draft.ingredients);
+    const merged = addIngredients(current, names).filter(Boolean);
+    const tags = r.label ? [...new Set([...r.label.allergens, ...r.label.traces])] : [];
+    const typed = draft.source.kind === 'typed';
+    setDraft({
+      ...draft,
+      ingredients: joinIngredients(merged),
+      ...(typed ? { source: { kind: SOURCE_OF[r.kind], edited: false, llm: r.provenance }, filled: { ingredients: merged, allergens: r.label ? tags : [...draft.allergens] } } : {}),
+    });
+    setPendingTags(tags);
+    run.dismiss();
   }
 
   // IN-10: a pick comes from the diary's own history, so its tags are shown pre-selected and count as confirmed.
@@ -129,7 +148,15 @@ export function DrinkSection() {
       ) : (
         <Button kind="secondary" title={t('meal.scan')} onPress={() => setScanning(true)} />
       )}
+      <Button kind="secondary" title={t('meal.fromLabel')} onPress={() => run.start('label')} />
+      <IngredientRunPanel hook={run} onAdd={addRun} />
       {scanNote && <Hint>{scanNote}</Hint>}
+      {pendingTags.length > 0 && draft.allergens.size < pendingTags.length && (
+        <>
+          <Hint>{t('meal.labelTagsHint', { list: pendingTags.map((a) => t(`allergens.${a}`)).join(', ') })}</Hint>
+          <Button kind="secondary" title={t('meal.scanSelectTags')} onPress={() => setDraft({ ...draft, allergens: new Set([...draft.allergens, ...pendingTags]) })} />
+        </>
+      )}
       <DrinkFields draft={draft} onChange={setDraft} />
       <TimeField value={time.value} onChange={time.set} />
     </FormModal>

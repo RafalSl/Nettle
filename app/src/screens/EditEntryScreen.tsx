@@ -1,6 +1,7 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Switch, Text, TextInput, View } from 'react-native';
+import { joinIngredients, splitIngredients } from '@/core/model/allergens';
 import { ALLERGENS, CHANGE_ACTIONS, CHANGE_CATEGORIES, MEDICATION_CATEGORIES, NAIL_EXTENTS, NAIL_STAGES, SCORE_KEYS, SYMPTOMS } from '@/core/model/types';
 import type { Allergen, ListItem, MedicationCategory, RecordKind, SkinArea } from '@/core/model/types';
 import {
@@ -56,7 +57,7 @@ function MealFields({ r }: { r: Rec<'meals'> }) {
   const f = useForm();
   const c = useCommon(r.note, f.touch);
   const [description, setDescription] = useField(r.description, f.touch);
-  const [ingredients, setIngredients] = useField(r.ingredients.join(', '), f.touch);
+  const [ingredients, setIngredients] = useField(joinIngredients(r.ingredients), f.touch);
   const [allergens, setAllergens] = useField<Set<string>>(new Set(r.allergens), f.touch);
   return (
     <FormModal
@@ -65,7 +66,7 @@ function MealFields({ r }: { r: Rec<'meals'> }) {
       onSave={async () => {
         await editMeal(deps, r.id, {
           description,
-          ingredients: ingredients.split(','),
+          ingredients: splitIngredients(ingredients),
           allergens: [...allergens] as Allergen[],
           note: c.note,
           at: c.at ?? undefined,

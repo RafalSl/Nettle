@@ -1,4 +1,5 @@
 import { NettleError } from '../model/errors';
+import { ALLERGENS, type Allergen } from '../model/types';
 
 export interface IngredientEstimate {
   /** Suggestions only: never saved until the user confirms (IN-3). */
@@ -26,4 +27,38 @@ export function parseIngredientEstimate(text: string): IngredientEstimate {
   if (unc !== null && unc !== undefined && typeof unc !== 'string') throw new NettleError('llm_bad_response');
   const names = [...new Set((o.ingredients as string[]).map((s) => s.trim()).filter(Boolean))].slice(0, 50);
   return { names, uncertainty: typeof unc === 'string' && unc.trim() ? unc.trim() : null };
+}
+
+export interface LabelScan {
+  /** As printed, in the label's language. Suggestions only: never saved until the user confirms (IN-15). */
+  ingredients: string[];
+  /** Declared allergens; suggestions until the user selects them (IN-10). */
+  allergens: Allergen[];
+  /** "May contain" traces, same ids. */
+  traces: Allergen[];
+  /** The ingredient text as printed, shown beside the editable list. */
+  textRead: string;
+  /** What the model could not read, or why the image is not a label. */
+  note: string | null;
+}
+
+/** LL-13: parses the model's JSON text; unknown allergen ids are dropped, anything else unexpected is `llm_bad_response`. */
+export function parseLabelScan(text: string): LabelScan {
+  const o = parseJson(text);
+  const strings = (v: unknown): string[] => (Array.isArray(v) && v.every((x) => typeof x === 'string') ? (v as string[]) : bad());
+  const bad = (): never => {
+    throw new NettleError('llm_bad_response');
+  };
+  if (!isObj(o)) return bad();
+  const tags = (v: unknown) => [...new Set(strings(v).map((s) => s.trim()).filter((s): s is Allergen => (ALLERGENS as readonly string[]).includes(s)))];
+  const note = o.note;
+  if (note !== null && note !== undefined && typeof note !== 'string') return bad();
+  if (typeof o.text_read !== 'string') return bad();
+  return {
+    ingredients: [...new Set(strings(o.ingredients).map((s) => s.trim()).filter(Boolean))].slice(0, 80),
+    allergens: tags(o.allergens),
+    traces: tags(o.traces),
+    textRead: o.text_read.trim(),
+    note: typeof note === 'string' && note.trim() ? note.trim() : null,
+  };
 }

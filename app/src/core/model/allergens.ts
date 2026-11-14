@@ -47,3 +47,28 @@ export function addIngredients(current: readonly string[], names: readonly strin
   }
   return [...kept, ...added, ''];
 }
+
+/**
+ * IN-15: ingredients as one comma-separated text, for the one-line edit fields. A comma inside brackets
+ * ("mleko (3,2%)", "flour (wheat, barley)") or between two digits belongs to its item, so a label scan survives
+ * a round trip through `joinIngredients` and `splitIngredients`.
+ */
+export function splitIngredients(text: string): string[] {
+  const out: string[] = [];
+  let depth = 0;
+  let cur = '';
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i]!;
+    if (c === '(' || c === '[') depth++;
+    else if ((c === ')' || c === ']') && depth > 0) depth--;
+    const decimal = c === ',' && /\d/.test(text[i - 1] ?? '') && /\d/.test(text[i + 1] ?? '');
+    if (c === ',' && depth === 0 && !decimal) {
+      out.push(cur);
+      cur = '';
+    } else cur += c;
+  }
+  out.push(cur);
+  return out.map((s) => s.trim()).filter(Boolean);
+}
+
+export const joinIngredients = (list: readonly string[]): string => list.join(', ');

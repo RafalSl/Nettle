@@ -4,6 +4,7 @@ import type { PhotoStore } from '@/core/ports/platform';
 export class MemoryPhotoStore implements PhotoStore {
   files = new Map<string, Uint8Array>();
   failNextSave = false;
+  discarded: string[] = [];
   private n = 0;
 
   private put(bytes: Uint8Array) {
@@ -22,6 +23,9 @@ export class MemoryPhotoStore implements PhotoStore {
     // A stored photo's uri gives back its content, like re-reading and shrinking the real file.
     const stored = sourceUri.startsWith('memory://') ? this.files.get(sourceUri.slice('memory://'.length)) : undefined;
     return stored ? stored.slice() : new TextEncoder().encode(sourceUri);
+  }
+  async discardTemp(sourceUri: string) {
+    this.discarded.push(sourceUri);
   }
   async saveBytes(bytes: Uint8Array) {
     return this.put(bytes.slice());

@@ -16,8 +16,9 @@ Status: accepted 2026-11-14 and built except where `docs/open-questions.md` ("St
 3. Save creates a new, independent entry.
 4. "Change meal" returns to choose. It asks first only if something was edited (action sheet, Discard Changes).
 5. Allergen tags that come from the diary's history are pre-selected and visible, so they count as confirmed (IN-10). Hints from the ingredient text appear as unselected chips.
-6. *Packaged product (IN-2):* scan, then found (review), not found (manual entry) or an in-store code (warning, confirm the match).
+6. *Packaged product (IN-2):* scan. The diary's own history is checked first (a hit shows its date and "Scan label again"; an in-store code still asks to confirm the match), then Open Food Facts: found (review), not found (label scan, IN-15, or manual entry) or an in-store code (warning, confirm the match).
 7. *Photo (IN-3):* see "Waiting for the LLM". The estimate arrives as an editable list and lands in the review phase.
+8. *Label (IN-15):* offered when a barcode is not found or incomplete, or from the scan phase for a product without a barcode. Photograph the ingredient label; after the billing confirmation (LL-5) the result lands in the review phase as editable chips with the text the model read beside them. Allergen tags stay unselected.
 
 **Stool and treatment (1 to 2 taps).**
 - Stool tile opens a quick sheet. Tapping a Bristol type saves it now. "Earlier…" opens the full form.
@@ -33,7 +34,7 @@ Status: accepted 2026-11-14 and built except where `docs/open-questions.md` ("St
 
 ## Review, backup and import
 
-- **Doctor report (Review):** range (default since the last export), counts and photo count, sensitive photos off by default, then the share sheet. Nothing in the range disables Export and says why.
+- **Doctor report (Review):** range (default since the last export), counts and photo count, sensitive photos off by default, then the share sheet. An optional AI summary (LL-14) is generated here after the billing confirmation, shown for review and editable, and opens the PDF. Nothing in the range disables Export and says why.
 - **Full backup (Settings, Data and backup, EX-14):** records and settings, all photos including sensitive, optional password. The Doctor report defaults would silently drop sensitive photos, which is wrong for a backup or a migration from Expo Go.
 - **Import and restore:** pick the file; password if protected; preview with counts, new versus duplicate and entries skipped by a tombstone, with the restore switch (EX-10); choose records, settings or both and merge or replace. Replace asks again in an action sheet and offers an export first. All or nothing, then a summary. A file that needs settings the app lacks says so and offers to import settings too.
 - **AI analysis:** range, review of exactly what will be sent plus the billing notice (LL-5), confirm, progress screen, result stored as tentative hypotheses.
@@ -48,7 +49,7 @@ Status: accepted 2026-11-14 and built except where `docs/open-questions.md` ("St
 | Leaving the app | The request may be interrupted. On return: "Interrupted, nothing was saved" with a one-tap retry on the same prepared request. |
 | Cancel | Aborts the request and stores nothing. The note says work already started may still be billed. |
 | Failure | Clear message, nothing stored (LL-8). |
-| Meal photo | Inline in the form, which stays editable. After 30 seconds: "Still working, keep entering the meal" and a Cancel link. |
+| Meal photo or label | Inline in the form, which stays editable. After 30 seconds: "Still working, keep entering the meal" and a Cancel link. |
 | Meal photo result | A banner with the suggested ingredients: Add all, pick items, or Dismiss. Added items are normal chips, so they can be renamed and removed, and the user's own can be added. Never overwrites typed text. LLM allergen tags stay unselected. |
 | Save or leave the form while waiting | Save uses the fields as they are and drops the estimate. Leaving aborts it. |
 
@@ -76,7 +77,7 @@ Each reminder carries a target in its data (`checkin`, `nails`, `backup`). The a
 | Case | Default |
 | --- | --- |
 | Logging for a past day | Form defaults to the current clock time on that day, title shows the date; future times are blocked |
-| App open across midnight | On foreground it returns to today unless the user chose another day |
+| App open across the day start (NF-7) | On foreground it returns to today unless the user chose another day |
 | Travel across time zones | Each entry's day is its own recorded local day (NF-4) |
 | Edit a check-in to a day that already has one | Blocked, with a link to open that day's check-in |
 | Add or delete entries in a completed day | The mark stays; Today shows "Day complete" with Reopen |

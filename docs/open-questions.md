@@ -36,6 +36,16 @@ Requirements and flows are in `docs/requirements.md`, `docs/ux-design.md` and `d
 - LLM: elapsed time, Cancel, billing notice, no retry of a timeout, the run in `AnalysisRunner` (survives leaving the screen, interrupted state with retry, keep-awake).
 - Security: app lock (SE-8) with `expo-local-authentication`.
 
+**Decided in v0.5, not built**
+- Drinks (IN-4): the alcohol form and `AlcoholEntry` become a drink with an alcohol switch and optional ingredients and allergens (a storage migration); More lists "Drink"; suggestions and the allergen tags cover drinks (IN-10, IN-14).
+- Label scan (IN-15, LL-13): capture, the image-to-ingredients port shared with the meal photo, the review banner, and deleting the temporary label photo when the form closes.
+- Model per action (LL-9): the model setting is one value today; it becomes one per action in Settings, AI analysis, with Haiku 5.5 as the default.
+- Today log cap (UX-2): the latest 8 entries and the "Show all (n)" row.
+- Day start (NF-7): one setting, one `localDay` function with the start hour, used by the log, check-in, timelines, suggestions, export and analysis ranges.
+- Sources (IN-2, IN-16): an optional barcode and an ingredient source on meals and drinks (a migration), the history lookup before Open Food Facts, the "AI" mark in the PDF and the source in the analysis input.
+- Report summary (LL-14, EX-3): a new action and model setting, an input builder shared with the analysis, review and edit before the PDF, stored like an analysis.
+- Known-names setting for the meal photo prompt (IN-3).
+
 **Not built**
 - *Create forms.* Done: every create form is on `FormModal` (Cancel and Save in the header, Save disabled with what is missing, Discard Changes sheet, a past-day default through the `day` route parameter). Skin and nail entries get their photos from the entry's edit form (the "recent" lists they hung off are gone). Left: the reminder-tap guard (`unsavedForm`) covers them now, but flare start and end are still on the Skin form, not in the More list.
 - *Check-in (SK-7).* Built: "Same as yesterday" and a separate "Mark day complete" switch; stool has its own full form behind "Earlier…". Not built: the Settings screen that switches check-in scores off.

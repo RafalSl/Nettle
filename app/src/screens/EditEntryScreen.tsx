@@ -24,6 +24,7 @@ import { useServices } from '@/services';
 import { FormModal, useField, useForm } from '@/ui/FormModal';
 import { DrinkFields, draftFromDrink, drinkInput, drinkMissing, type DrinkDraft } from '@/ui/DrinkFields';
 import { PhotoStrip } from '@/ui/PhotoStrip';
+import { useCheckInScores } from '@/ui/useCheckInScores';
 import { Chips, Hint, Label, OptionalScoreStepper, ScoreStepper, TimeField, styles } from '@/ui/components';
 
 type Rec<K extends LogKind> = Extract<LogRow, { kind: K }>['record'];
@@ -135,11 +136,12 @@ function CheckInFields({ r, tags }: { r: Rec<'checkIns'>; tags: ListItem[] }) {
   const f = useForm();
   const c = useCommon(r.note, f.touch);
   const [v, setV] = useField({ wellbeing: r.wellbeing, stress: r.stress, sleep: r.sleep, abdominalPain: r.abdominalPain }, f.touch);
+  const scoresOn = useCheckInScores();
   const [bloating, setBloating] = useField(r.bloating, f.touch);
   const [picked, setPicked] = useField<Set<string>>(new Set(r.tags), f.touch);
   return (
     <FormModal dirty={f.dirty} missing={null} onSave={async () => void (await editCheckIn(deps, r.id, { ...v, bloating, tags: [...picked], note: c.note, at: c.at ?? undefined }))}>
-      {(['wellbeing', 'stress', 'sleep', 'abdominalPain'] as const).map((k) => (
+      {(['wellbeing', 'stress', 'sleep', 'abdominalPain'] as const).filter((k) => scoresOn[k]).map((k) => (
         <OptionalScoreStepper key={k} label={t(`today.${k}`)} value={v[k]} onChange={(n) => setV({ ...v, [k]: n })} />
       ))}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>

@@ -302,3 +302,8 @@ Newest entry last. One short entry per working session or meaningful step: what 
 ## 2026-11-14: favorite stars for drinks and medications (branch feature/favorite-stars)
 - **Done:** IN-14. A Favorite / Remove favorite button on the drink and medication forms, using the existing `toggleFavoriteDrink` and `toggleFavoriteMedication`. 616 tests pass.
 - **Next:** Settings screens (areas, favorites, check-in scores).
+
+## 2026-11-14: settings screens (branch feature/settings-screens)
+- **Done:** SK-2, SK-7, IN-14, UX-6. Settings gained "Skin and nail areas", "Favorites" and, in Logging, the four check-in score switches (`Preferences.checkInScores`, required in `data.json`). `scoresFor` keeps the stored value of a switched-off score, so nothing is lost. 628 tests pass.
+- **Left in Settings:** the photo options of Privacy and photos, and About.
+- **Next:** "export first" before Replace and Delete data.

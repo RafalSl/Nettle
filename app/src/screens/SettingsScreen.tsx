@@ -9,6 +9,8 @@ export default function SettingsScreen() {
   return (
     <Screen>
       <NavRow title={t('nav.logging')} onPress={() => router.push('/today/settings/logging')} />
+      <NavRow title={t('nav.areas')} onPress={() => router.push('/today/settings/areas')} />
+      <NavRow title={t('nav.favorites')} onPress={() => router.push('/today/settings/favorites')} />
       <NavRow title={t('nav.suggestions')} onPress={() => router.push('/today/settings/suggestions')} />
       <NavRow title={t('nav.reminders')} onPress={() => router.push('/today/settings/reminders')} />
       <NavRow title={t('nav.privacy')} onPress={() => router.push('/today/settings/privacy')} />

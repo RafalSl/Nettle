@@ -96,7 +96,10 @@
     "prefilled": "Oceny zaczynają od ostatniego wpisu dla tego miejsca.",
     "flareStart": "Początek rzutu",
     "flareEnd": "Koniec rzutu",
-    "flareOpen": "W tym miejscu trwa rzut."
+    "flareOpen": "W tym miejscu trwa rzut.",
+    "noChangeAll": "Bez zmian we wszystkich miejscach",
+    "noChangeAllNeed": "Te miejsca potrzebują pierwszego wpisu: {{list}}.",
+    "noChangeAllDone": "Zapisano {{n}} miejsc bez zmian."
   },
   "areas": {
     "area-chin": "Broda",
@@ -226,7 +229,11 @@
     "reopen": "Otwórz dzień ponownie",
     "stoolTitle": "Stolec",
     "stoolHint": "Skala Bristolska od 1 (twarde grudki) do 7 (wodnisty)",
-    "stoolAdd": "Dodaj wpis o stolcu"
+    "stoolAdd": "Dodaj wpis o stolcu",
+    "sameAsYesterday": "Tak samo jak wczoraj",
+    "noYesterday": "Nie ma wpisu dziennego z poprzedniego dnia.",
+    "markComplete": "Oznacz dzień jako zamknięty",
+    "stoolSave": "Zapisz stolec"
   },
   "tags": {
     "tag-illness-or-infection": "Choroba lub infekcja",
@@ -574,7 +581,10 @@
     "report": "Raport",
     "suggestions": "Podpowiedzi",
     "timeline": "Oś czasu",
-    "privacy": "Prywatność"
+    "privacy": "Prywatność",
+    "alcohol": "Alkohol",
+    "medication": "Lek",
+    "stool": "Stolec"
   },
   "home": {
     "quickActions": "Szybkie akcje",
@@ -594,7 +604,9 @@
     "moveUp": "W górę",
     "moveDown": "W dół",
     "hide": "Ukryj",
-    "show": "Pokaż"
+    "show": "Pokaż",
+    "moreAlcohol": "Alkohol",
+    "moreMedication": "Lek lub suplement"
   },
   "review": {
     "empty": "Na razie nie ma czego przeglądać. Wpisy dodane w Dziś pojawią się tutaj.",
@@ -684,7 +696,13 @@
     "scores": "Oceny",
     "bloating": "Wzdęcia",
     "unavailable": "Tego wpisu nie można już edytować.",
-    "ingredientsHint": "Oddziel składniki przecinkami."
+    "ingredientsHint": "Oddziel składniki przecinkami.",
+    "meal": "posiłku, na który była reakcja",
+    "stage": "etapu",
+    "extent": "zakresu na paznokciu",
+    "area": "miejsca",
+    "photos": "Zdjęcia",
+    "type": "typu stolca"
   },
   "doctor": {
     "range": "Okres",

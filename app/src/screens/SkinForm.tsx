@@ -1,147 +1,102 @@
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Pressable, Text, TextInput, View } from 'react-native';
-import { SCORE_KEYS, type SkinArea, type SkinEntry, type SkinScores } from '@/core/model/types';
+import { Alert, TextInput } from 'react-native';
+import { SCORE_KEYS, type SkinArea, type SkinScores } from '@/core/model/types';
 import { markFlare, openFlareAreas } from '@/core/usecases/flares';
-import { lastSkinScores, listActiveAreas, logSkinEntry, repeatSkinEntry } from '@/core/usecases/skin';
+import { lastSkinScores, listActiveAreas, logSkinEntry, repeatAllAreas, repeatSkinEntry } from '@/core/usecases/skin';
 import { areaLabel, errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
-import { PhotoStrip } from '@/ui/PhotoStrip';
-import { Button, Heading, Hint, Label, Screen, ScoreStepper, TimeField, styles } from '@/ui/components';
+import { FormModal, useField, useForm } from '@/ui/FormModal';
+import { useFormTime } from '@/ui/useFormTime';
+import { Button, Chips, Hint, Label, ScoreStepper, TimeField, styles } from '@/ui/components';
 
 const ZERO: SkinScores = { severity: 0, itch: 0, pain: 0, dryness: 0, scaling: 0 };
 
-/** SK-1 to SK-3: per-area entry with five separate 0-10 scores. */
-export default function SkinScreen() {
+/**
+ * SK-1 to SK-3, SK-6: a per-area entry with five separate 0-10 scores, prefilled from the area's last values.
+ * "No change" saves it in one tap, and "No change for all areas" saves every area that has an earlier entry.
+ * Flare start and end act at once. Photos are added from the entry in the day's log.
+ */
+export default function SkinForm() {
   const { deps } = useServices();
+  const router = useRouter();
+  const f = useForm();
   const [areas, setAreas] = useState<SkinArea[]>([]);
-  const [recent, setRecent] = useState<SkinEntry[]>([]);
-  const [areaId, setAreaId] = useState<string | null>(null);
+  const [areaId, setAreaId] = useField<string | null>(null, f.touch);
   const [scores, setScores] = useState<SkinScores>(ZERO);
-  const [note, setNote] = useState('');
-  const [at, setAt] = useState<Date | null>(null);
+  const [note, setNote] = useField('', f.touch);
   const [hasLast, setHasLast] = useState(false);
   const [flareOpen, setFlareOpen] = useState<Set<string>>(new Set());
+  const time = useFormTime(f.touch);
 
   const reload = useCallback(() => {
-    listActiveAreas(deps, 'skin').then((a) => {
-      setAreas(a);
-      setAreaId((cur) => (cur && a.some((x) => x.id === cur) ? cur : (a[0]?.id ?? null)));
-    });
-    deps.repo.listSkinEntries().then((e) => setRecent(e.slice(0, 5)));
+    listActiveAreas(deps, 'skin').then(setAreas);
     openFlareAreas(deps).then(setFlareOpen);
   }, [deps]);
   useFocusEffect(reload);
+  const selected = areaId && areas.some((a) => a.id === areaId) ? areaId : (areas[0]?.id ?? null);
 
   /** SK-3: start from the area's last scores so a small change is a tap or two. */
-  const prefill = useCallback(
-    (id: string) =>
-      lastSkinScores(deps, id).then((last) => {
-        setHasLast(!!last);
-        setScores(last ?? ZERO);
-      }),
-    [deps],
-  );
   useEffect(() => {
-    if (areaId) prefill(areaId);
-  }, [areaId, prefill]);
+    if (!selected) return;
+    lastSkinScores(deps, selected).then((last) => {
+      setHasLast(!!last);
+      setScores(last ?? ZERO);
+    });
+  }, [deps, selected]);
 
-  async function save() {
+  const act = async (fn: () => Promise<unknown>, close: boolean) => {
     try {
-      if (!areaId) return;
-      await logSkinEntry(deps, { areaId, scores, note, at: at ?? undefined });
-      setNote('');
-      setAt(null);
-      reload();
-      prefill(areaId);
+      await fn();
+      if (close) router.back();
+      else reload();
     } catch (e) {
       Alert.alert(errorMessage(e));
     }
-  }
-
-  async function flare(kind: 'start' | 'end') {
-    try {
-      if (!areaId) return;
-      await markFlare(deps, { areaId, kind, at: at ?? undefined });
-      reload();
-    } catch (e) {
-      Alert.alert(errorMessage(e));
-    }
-  }
-
-  async function noChange() {
-    try {
-      if (!areaId) return;
-      await repeatSkinEntry(deps, areaId, at ?? undefined);
-      setAt(null);
-      reload();
-    } catch (e) {
-      Alert.alert(errorMessage(e));
-    }
-  }
-
-  const labelFor = (id: string) => {
-    const a = areas.find((x) => x.id === id);
-    return a ? areaLabel(a) : id;
   };
 
-  return (
-    <Screen>
-      <Heading>{t('skin.title')}</Heading>
-      <Label>{t('skin.area')}</Label>
-      <View style={styles.chips}>
-        {areas.map((a) => (
-          <Pressable
-            key={a.id}
-            accessibilityRole="button"
-            onPress={() => setAreaId(a.id)}
-            style={[styles.chip, a.id === areaId && styles.chipOn]}>
-            <Text style={{ color: a.id === areaId ? '#fff' : '#111' }}>{areaLabel(a)}</Text>
-          </Pressable>
-        ))}
-      </View>
+  async function noChangeAll() {
+    try {
+      const result = await repeatAllAreas(deps, time.atForSave);
+      if (result.needFirstEntry.length > 0) {
+        Alert.alert(t('skin.noChangeAllDone', { n: result.saved.length }), t('skin.noChangeAllNeed', { list: result.needFirstEntry.map(areaLabel).join(', ') }));
+      }
+      router.back();
+    } catch (e) {
+      Alert.alert(errorMessage(e));
+    }
+  }
 
+  return (
+    <FormModal
+      dirty={f.dirty}
+      missing={selected ? null : t('edit.area')}
+      onSave={async () => void (await logSkinEntry(deps, { areaId: selected!, scores, note, at: time.atForSave }))}>
+      <Label>{t('skin.area')}</Label>
+      <Chips items={areas.map((a) => ({ id: a.id, label: areaLabel(a) }))} selected={new Set(selected ? [selected] : [])} onToggle={setAreaId} />
       {hasLast && (
         <>
-          <Button kind="secondary" title={t('skin.noChange')} onPress={noChange} />
+          <Button kind="secondary" title={t('skin.noChange')} onPress={() => void act(() => repeatSkinEntry(deps, selected!, time.atForSave), true)} />
           <Hint>{t('skin.noChangeHint')}</Hint>
-          <Hint>{t('skin.prefilled')}</Hint>
         </>
       )}
-      {areaId && flareOpen.has(areaId) ? (
+      <Button kind="secondary" title={t('skin.noChangeAll')} onPress={() => void noChangeAll()} />
+      {selected && flareOpen.has(selected) ? (
         <>
           <Hint>{t('skin.flareOpen')}</Hint>
-          <Button kind="secondary" title={t('skin.flareEnd')} onPress={() => flare('end')} />
+          <Button kind="secondary" title={t('skin.flareEnd')} onPress={() => void act(() => markFlare(deps, { areaId: selected, kind: 'end', at: time.atForSave }), false)} />
         </>
       ) : (
-        <Button kind="secondary" title={t('skin.flareStart')} onPress={() => flare('start')} />
+        <Button kind="secondary" title={t('skin.flareStart')} onPress={() => void act(() => markFlare(deps, { areaId: selected!, kind: 'start', at: time.atForSave }), false)} />
       )}
       <Hint>{t('skin.scale')}</Hint>
+      {hasLast && <Hint>{t('skin.prefilled')}</Hint>}
       {SCORE_KEYS.map((k) => (
-        <ScoreStepper
-          key={k}
-          label={t(`skin.scores.${k}`)}
-          value={scores[k]}
-          onChange={(v) => setScores((s) => ({ ...s, [k]: v }))}
-        />
+        <ScoreStepper key={k} label={t(`skin.scores.${k}`)} value={scores[k]} onChange={(v) => (f.touch(), setScores((s) => ({ ...s, [k]: v })))} />
       ))}
-
-      <TimeField value={at ?? new Date()} onChange={setAt} />
+      <TimeField value={time.value} onChange={time.set} />
       <Label>{t('common.note')}</Label>
-      <TextInput style={styles.input} value={note} onChangeText={setNote} />
-      <Button title={t('common.save')} onPress={save} />
-
-      <Label>{t('common.recent')}</Label>
-      {recent.length === 0 && <Hint>{t('common.nothingYet')}</Hint>}
-      {recent.map((e) => (
-        <View key={e.id} style={styles.row}>
-          <Text style={styles.rowText}>
-            {new Date(e.at.utc).toLocaleString()} · {labelFor(e.areaId)}
-          </Text>
-          <Hint>{SCORE_KEYS.map((k) => `${t(`skin.scores.${k}`)} ${e.scores[k]}`).join(' · ')}</Hint>
-          <PhotoStrip entryKind="skinEntry" entryId={e.id} />
-        </View>
-      ))}
-    </Screen>
+      <TextInput style={styles.input} accessibilityLabel={t('common.note')} value={note} onChangeText={setNote} />
+    </FormModal>
   );
 }

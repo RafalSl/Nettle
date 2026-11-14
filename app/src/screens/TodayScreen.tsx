@@ -98,9 +98,9 @@ export default function TodayScreen() {
   const setLayoutOrder = (order: QuickAction[]) => setLayout((l) => ({ ...l, order }));
   const actions: Record<QuickAction, { title: string; onPress: () => void }> = {
     meal: { title: t('home.meal'), onPress: () => router.push(isToday ? '/form/meal' : { pathname: '/form/meal', params: { day } }) },
-    skin: { title: t('home.skin'), onPress: () => router.push('/form/skin') },
-    treatment: { title: t('home.treatment'), onPress: () => router.push('/form/treatment') },
-    checkin: { title: t('home.checkin'), onPress: () => router.push('/form/checkin') },
+    skin: { title: t('home.skin'), onPress: () => router.push(isToday ? '/form/skin' : { pathname: '/form/skin', params: { day } }) },
+    treatment: { title: t('home.treatment'), onPress: () => router.push(isToday ? '/form/treatment' : { pathname: '/form/treatment', params: { day } }) },
+    checkin: { title: t('home.checkin'), onPress: () => router.push(isToday ? '/form/checkin' : { pathname: '/form/checkin', params: { day } }) },
     stool: { title: t('day.stool'), onPress: () => setStoolOpen((o) => !o) },
     more: { title: t('home.more'), onPress: () => router.push('/today/more') },
   };
@@ -196,7 +196,7 @@ export default function TodayScreen() {
               />
             ))}
           </View>
-          <Button kind="secondary" title={t('day.stoolEarlier')} onPress={() => router.push('/form/checkin')} />
+          <Button kind="secondary" title={t('day.stoolEarlier')} onPress={() => router.push(isToday ? '/form/stool' : { pathname: '/form/stool', params: { day } })} />
         </Card>
       )}
 

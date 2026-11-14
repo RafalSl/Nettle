@@ -88,7 +88,9 @@ const screens: [string, () => { default: React.ComponentType }][] = [
   ['form meal', () => require('@/app/form/meal')],
   ['form skin', () => require('@/app/form/skin')],
   ['form checkin', () => require('@/app/form/checkin')],
-  ['form intake', () => require('@/app/form/intake')],
+  ['form alcohol', () => require('@/app/form/alcohol')],
+  ['form medication', () => require('@/app/form/medication')],
+  ['form stool', () => require('@/app/form/stool')],
   ['form treatment', () => require('@/app/form/treatment')],
   ['form nails', () => require('@/app/form/nails')],
   ['form reaction', () => require('@/app/form/reaction')],
@@ -177,9 +179,9 @@ describe('screen flows (NF-2, NF-3)', () => {
   it('every screen shows its title from the English strings', async () => {
     const titles: [() => { default: React.ComponentType }, string][] = [
       [() => require('@/app/form/meal'), en.meal.chooseTitle],
-      [() => require('@/app/form/checkin'), en.today.title],
-      [() => require('@/app/form/skin'), en.skin.title],
-      [() => require('@/app/form/nails'), en.more.nailTitle],
+      [() => require('@/app/form/checkin'), en.today.hint],
+      [() => require('@/app/form/skin'), en.skin.scale],
+      [() => require('@/app/form/nails'), en.more.nailNone],
       [() => require('@/app/(tabs)/today/settings/data'), en.data.exportTitle],
       [() => require('@/app/(tabs)/review/analysis'), en.analysis.title],
     ];
@@ -189,24 +191,64 @@ describe('screen flows (NF-2, NF-3)', () => {
     }
   });
 
-  it('SK-7, SK-11 the check-in saves, closes the day, and can be reopened', async () => {
+  it('SK-7, SK-11 the check-in saves from the header, and closing a day with no meals asks first', async () => {
+    const sheet = jest.spyOn(ActionSheetIOS, 'showActionSheetWithOptions').mockImplementation((_o, cb) => cb(0));
     const deps = nowDeps();
     const { tree } = await mount(() => require('@/app/form/checkin'), deps);
     await press(tree, `${en.common.increase} ${en.today.wellbeing}`);
     await press(tree, `${en.common.increase} ${en.today.wellbeing}`);
-    await press(tree, en.today.saveClose);
-    await flush();
-    // SK-11: no meals are logged for the day, so the screen asks before closing it.
-    const buttons = alert.mock.calls.at(-1)![2] as { text: string; onPress?: () => void }[];
-    await act(async () => buttons.find((b) => b.text === en.today.closeAnyway)!.onPress!());
+    const save = async () => {
+      let rendered!: ReactTestRenderer;
+      await act(async () => {
+        rendered = create(mockScreen.options!.headerRight!());
+      });
+      const node = rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!;
+      await act(async () => {
+        await node.props.onPress();
+      });
+    };
+    await toggle(tree, en.today.markComplete);
+    sheet.mockImplementationOnce((_o, cb) => cb(1)); // Cancel in the sheet: nothing is saved, the form stays
+    await save();
+    expect(await deps.repo.listRecords('checkIns')).toEqual([]);
+    expect(mockRouter.back).not.toHaveBeenCalled();
+    await save(); // this time the user picks "Close the day anyway"
     await flush();
     const [checkIn] = await deps.repo.listRecords('checkIns');
     expect(checkIn).toMatchObject({ wellbeing: 1, stress: null, day: localDay(deps.clock.now().toISOString(), deps.clock.timeZone()) });
     expect(checkIn!.completedAt).not.toBeNull();
-    expect(hasText(tree, en.today.dayComplete)).toBe(true);
-    await press(tree, en.today.reopen);
+    expect(mockRouter.back).toHaveBeenCalledTimes(1);
+    sheet.mockRestore();
+  });
+
+  it('SK-7 "Same as yesterday" is an explicit button, and nothing is filled in silently', async () => {
+    const deps = nowDeps();
+    const yesterday = new Date(Date.now() - 86_400_000);
+    await saveCheckIn(deps, { at: yesterday, wellbeing: 7, stress: 2, bloating: true });
+    const { tree } = await mount(() => require('@/app/form/checkin'), deps);
     await flush();
-    expect((await deps.repo.listRecords('checkIns'))[0]!.completedAt).toBeNull();
+    const shown = () => tree.root.findAll((n) => n.props.accessibilityLabel === `${en.common.increase} ${en.today.wellbeing}`).length;
+    expect(shown()).toBeGreaterThan(0);
+    expect(hasText(tree, '7')).toBe(false); // today's form starts empty
+    await press(tree, en.today.sameAsYesterday);
+    expect(hasText(tree, '7')).toBe(true);
+    const bloating = tree.root.findAll((n) => n.props.accessibilityLabel === en.today.bloating && n.props.value !== undefined)[0]!;
+    expect(bloating.props.value).toBe(true);
+  });
+
+  it('SK-7 the stool form saves a type and a time through the header', async () => {
+    const deps = nowDeps();
+    const { tree } = await mount(() => require('@/app/form/stool'), deps);
+    await press(tree, '5');
+    let rendered!: ReactTestRenderer;
+    await act(async () => {
+      rendered = create(mockScreen.options!.headerRight!());
+    });
+    await act(async () => {
+      await rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!.props.onPress();
+    });
+    await flush();
+    expect((await deps.repo.listRecords('stoolEntries')).map((x) => x.bristol)).toEqual([5]);
   });
 
   it('SK-3 the skin screen starts from the last scores and "No change" saves a copy', async () => {
@@ -395,7 +437,8 @@ describe('navigation shell (UX-1, UX-2, UX-3, UX-6)', () => {
   it('UX-2 More lists the rarer entries and UX-6 Settings lists its groups, each a pushed screen', async () => {
     const more = await mount(() => require('@/app/(tabs)/today/more'), nowDeps());
     for (const [label, href] of [
-      [en.home.moreIntake, '/form/intake'],
+      [en.home.moreAlcohol, '/form/alcohol'],
+      [en.home.moreMedication, '/form/medication'],
       [en.home.moreReaction, '/form/reaction'],
       [en.home.moreNails, '/form/nails'],
       [en.home.moreChange, '/form/change'],
@@ -933,10 +976,12 @@ describe('Suggestion settings and quick-action layout (IN-14, UX-2, UX-6)', () =
 
 describe('Alcohol and medication suggestions (IN-14, UX-5)', () => {
   beforeEach(() => {
+    mockRouter.back.mockClear();
     jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
   });
   afterEach(() => jest.restoreAllMocks());
-  const intake = () => require('@/app/form/intake');
+  const alcohol = () => require('@/app/form/alcohol');
+  const medication = () => require('@/app/form/medication');
   const at = (h: number) => new Date(Date.now() - h * 3600_000);
 
   it('IN-14 a suggestion fills the form and saves nothing while "save on tap" is off', async () => {
@@ -944,14 +989,16 @@ describe('Alcohol and medication suggestions (IN-14, UX-5)', () => {
     await logAlcohol(deps, { drink: 'Synthetic beer', amountMl: 500, at: at(30) });
     await logAlcohol(deps, { drink: 'Synthetic beer', amountMl: 500, at: at(10) });
     await logMedication(deps, { category: 'supplement', name: 'Synthetic vitamin', dose: '1 tablet', at: at(5) });
-    const { tree } = await mount(intake, deps);
+    const { tree } = await mount(alcohol, deps);
     await flush();
     expect(hasText(tree, 'Synthetic beer 500 ml ×2')).toBe(true);
     await press(tree, 'Synthetic beer 500 ml');
     const drink = tree.root.findAll((n) => n.props.placeholder === en.more.alcoholDrink)[0]!;
     expect(drink.props.value).toBe('Synthetic beer');
-    await press(tree, 'Synthetic vitamin 1 tablet');
-    expect(tree.root.findAll((n) => n.props.placeholder === en.more.medName)[0]!.props.value).toBe('Synthetic vitamin');
+    const meds = await mount(medication, deps);
+    await flush();
+    await press(meds.tree, 'Synthetic vitamin 1 tablet');
+    expect(meds.tree.root.findAll((n) => n.props.placeholder === en.more.medName)[0]!.props.value).toBe('Synthetic vitamin');
     expect(await deps.repo.listRecords('alcoholEntries')).toHaveLength(2);
     expect(await deps.repo.listRecords('medicationEntries')).toHaveLength(1);
   });
@@ -961,11 +1008,14 @@ describe('Alcohol and medication suggestions (IN-14, UX-5)', () => {
     await logAlcohol(deps, { drink: 'Synthetic beer', amountMl: 500, at: at(10) });
     await logMedication(deps, { category: 'medication', name: 'Synthetic pill', at: at(5) });
     await updateSuggestionSettings(deps, { saveOnTap: true });
-    const { tree } = await mount(intake, deps);
+    const { tree } = await mount(alcohol, deps);
     await flush();
     await press(tree, 'Synthetic beer 500 ml');
-    await press(tree, 'Synthetic pill');
+    const meds = await mount(medication, deps);
     await flush();
+    await press(meds.tree, 'Synthetic pill');
+    await flush();
+    expect(mockRouter.back).toHaveBeenCalledTimes(2); // a tap that saves closes the form
     expect((await deps.repo.listRecords('alcoholEntries')).map((e) => e.amountMl)).toEqual([500, 500]);
     expect(await deps.repo.listRecords('medicationEntries')).toHaveLength(2);
   });
@@ -974,7 +1024,7 @@ describe('Alcohol and medication suggestions (IN-14, UX-5)', () => {
     const deps = nowDeps();
     await logAlcohol(deps, { drink: 'Synthetic beer', amountMl: 500, at: at(10) });
     await toggleFavoriteDrink(deps, { drink: 'Synthetic wine', amountMl: 150 });
-    const { tree } = await mount(intake, deps);
+    const { tree } = await mount(alcohol, deps);
     await flush();
     const labels = [...new Set(tree.root.findAll((n) => n.props.accessibilityRole === 'button' && /ml$/.test(n.props.accessibilityLabel ?? '')).map((n) => n.props.accessibilityLabel as string))];
     expect(labels).toEqual(['Synthetic wine 150 ml', 'Synthetic beer 500 ml']);
@@ -1564,5 +1614,129 @@ describe('App lock (SE-8)', () => {
       await tapped;
     });
     expect(mockRouter.navigate).toHaveBeenCalledWith({ pathname: '/today/settings/data' });
+  });
+});
+
+describe('Create forms on the unified modal (UX-3)', () => {
+  beforeEach(() => {
+    jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    mockRouter.back.mockClear();
+    mockParams.current = {};
+    mockScreen.options = undefined;
+  });
+  afterEach(() => jest.restoreAllMocks());
+  /** The Save button of the header the form put into Stack.Screen options: its state, and a press. */
+  const headerSave = async (press = true) => {
+    let rendered!: ReactTestRenderer;
+    await act(async () => {
+      rendered = create(mockScreen.options!.headerRight!());
+    });
+    const node = rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!;
+    if (press) {
+      await act(async () => {
+        await node.props.onPress();
+      });
+    }
+    return node.props.accessibilityState as { disabled?: boolean };
+  };
+
+  it('UX-3, IN-11 the treatment form keeps Save disabled until a treatment and an area are chosen, then saves and closes', async () => {
+    const deps = nowDeps();
+    const cream = await addListItem(deps, 'treatments', 'Synthetic cream');
+    const { tree } = await mount(() => require('@/app/form/treatment'), deps);
+    await flush();
+    expect((await headerSave(false)).disabled).toBe(true);
+    expect(hasText(tree, en.edit.missing.replace('{{what}}', en.edit.areas))).toBe(true);
+    await press(tree, en.areas['area-chin']);
+    expect((await headerSave(false)).disabled).toBe(false);
+    await headerSave();
+    await flush();
+    expect(await deps.repo.listRecords('treatmentApplications')).toMatchObject([{ treatmentId: cream.id, areaIds: ['area-chin'] }]);
+    expect(mockRouter.back).toHaveBeenCalledTimes(1);
+  });
+
+  it('UX-2 a treatment opened for a past day is stamped on that day', async () => {
+    const deps = nowDeps();
+    await addListItem(deps, 'treatments', 'Synthetic cream');
+    mockParams.current = { day: '2026-01-10' };
+    const { tree } = await mount(() => require('@/app/form/treatment'), deps);
+    await flush();
+    await press(tree, en.areas['area-neck']);
+    await headerSave();
+    await flush();
+    const [a] = await deps.repo.listRecords('treatmentApplications');
+    expect(localDay(a!.at.utc, a!.at.tz)).toBe('2026-01-10');
+  });
+
+  it('SK-10, SK-3 the nail form needs an area, a stage and an extent; "No change" repeats the last one and closes', async () => {
+    const deps = nowDeps();
+    const nail = await addArea(deps, 'Synthetic thumb', 'nail');
+    await logNailEntry(deps, { areaId: nail.id, stage: 'yellow', extent: 'up_to_half', at: new Date(Date.now() - 86_400_000) });
+    const { tree } = await mount(() => require('@/app/form/nails'), deps);
+    await flush();
+    expect(hasText(tree, en.edit.missing.replace('{{what}}', en.edit.stage))).toBe(true);
+    await press(tree, en.nail.stages.white);
+    expect(hasText(tree, en.edit.missing.replace('{{what}}', en.edit.extent))).toBe(true);
+    await press(tree, en.nail.extents.none);
+    await headerSave();
+    await flush();
+    expect((await deps.repo.listRecords('nailEntries'))[0]).toMatchObject({ stage: 'white', extent: 'none' });
+    mockRouter.back.mockClear();
+    await press(tree, en.skin.noChange);
+    await flush();
+    expect(await deps.repo.listRecords('nailEntries')).toHaveLength(3);
+    expect(mockRouter.back).toHaveBeenCalledTimes(1);
+  });
+
+  it('IN-12, IN-13 the change and reaction forms save from the header', async () => {
+    const deps = nowDeps();
+    const change = await mount(() => require('@/app/form/change'), deps);
+    expect((await headerSave(false)).disabled).toBe(true);
+    await type(change.tree, en.more.changeName, 'Synthetic soap');
+    await headerSave();
+    await flush();
+    expect(await deps.repo.listRecords('changeEvents')).toMatchObject([{ name: 'Synthetic soap', action: 'started' }]);
+    const meal = await logMeal(deps, { description: 'Synthetic oats', ingredients: [], at: new Date(Date.now() - 3600_000) });
+    const reaction = await mount(() => require('@/app/form/reaction'), deps);
+    await flush();
+    expect((await headerSave(false)).disabled).toBe(true);
+    await press(reaction.tree, en.symptoms.hives);
+    await headerSave();
+    await flush();
+    expect(await deps.repo.listRecords('reactions')).toMatchObject([{ mealId: meal.id, symptoms: ['hives'] }]);
+  });
+
+  it('SK-3, UX-3 the skin form saves from the header; "No change for all areas" saves every area with a history and says which need a first entry', async () => {
+    const deps = nowDeps();
+    const { tree } = await mount(() => require('@/app/form/skin'), deps);
+    await flush();
+    await press(tree, `${en.common.increase} ${en.skin.scores.itch}`);
+    await headerSave();
+    await flush();
+    expect(await deps.repo.listSkinEntries()).toMatchObject([{ areaId: 'area-behind-ears', scores: { itch: 1 } }]);
+    mockRouter.back.mockClear();
+    await press(tree, en.skin.noChangeAll);
+    await flush();
+    expect(await deps.repo.listSkinEntries()).toHaveLength(2); // only the area that had an entry
+    expect(mockRouter.back).toHaveBeenCalledTimes(1);
+  });
+
+  it('UX-3 a form with a change asks before Cancel throws it away, a clean one just closes', async () => {
+    const sheet = jest.spyOn(ActionSheetIOS, 'showActionSheetWithOptions').mockImplementation((_o, cb) => cb(1));
+    const deps = nowDeps();
+    const { tree } = await mount(() => require('@/app/form/alcohol'), deps);
+    await flush();
+    expect(mockScreen.options!.gestureEnabled).toBe(true);
+    await type(tree, en.more.alcoholDrink, 'Synthetic beer');
+    expect(mockScreen.options!.gestureEnabled).toBe(false);
+    let rendered!: ReactTestRenderer;
+    await act(async () => {
+      rendered = create(mockScreen.options!.headerLeft!());
+    });
+    await act(async () => {
+      await rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.cancel && typeof n.props.onPress === 'function')[0]!.props.onPress();
+    });
+    expect((sheet.mock.calls[0] as unknown as [{ options: string[] }])[0].options).toEqual([en.edit.discard, en.common.cancel]);
+    expect(mockRouter.back).not.toHaveBeenCalled();
   });
 });

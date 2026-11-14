@@ -32,7 +32,8 @@ export function FormModal({
   dirty: boolean;
   /** What is still needed before Save works, already localized; null when the form is complete. */
   missing: string | null;
-  onSave: () => Promise<void>;
+  /** Resolves to false to keep the form open without an error (for example when the user declined a confirmation). */
+  onSave: () => Promise<void | false>;
   children: ReactNode;
 }) {
   const router = useRouter();
@@ -44,8 +45,7 @@ export function FormModal({
   }, [dirty]);
   async function save() {
     try {
-      await onSave();
-      router.back();
+      if ((await onSave()) !== false) router.back();
     } catch (e) {
       Alert.alert(errorMessage(e));
     }

@@ -32,14 +32,14 @@ Requirements and flows are in `docs/requirements.md`, `docs/ux-design.md` and `d
 - Review (UX-1): Doctor report (EX-14), the days list, an Areas list with the per-area timeline (SK-8), AI analysis with a running card (LL-12).
 - Settings (UX-6): Logging (tags, treatments), Suggestions, Privacy (app lock), Reminders, AI analysis, Data and backup (Full backup preset, custom export with a photo picker, import with the tombstone switch, Delete data last).
 - Intake: two-phase meal form with suggestions and favorites (IN-7, IN-14), history tags pre-selected (IN-10), barcode scan and lookup (IN-2, IN-8, IN-9), inline editable photo estimate (IN-3), alcohol and medication suggestions with "save on tap". Preferences (favorites, suggestion settings, quick-action layout) travel in `settings.preferences`.
-- Skin and health core: unique area names (SK-2), no change for nails and all areas (SK-3, core only), empty-day confirmation (SK-11), reminder taps (SK-9).
+- Skin and health: unique area names (SK-2), no change for nails and all areas (SK-3), empty-day confirmation (SK-11), reminder taps (SK-9), "Same as yesterday" (SK-7).
 - LLM: elapsed time, Cancel, billing notice, no retry of a timeout, the run in `AnalysisRunner` (survives leaving the screen, interrupted state with retry, keep-awake).
 - Security: app lock (SE-8) with `expo-local-authentication`.
 
 **Not built**
-- *Create forms.* Only editing, the meal form and the settings use `FormModal`. The skin, nail, treatment, intake, change, reaction and check-in forms still have their own Save buttons and no discard guard, and a reminder tap can replace one that has typed text. Forms other than the meal form do not default to a chosen past day (only the quick logging does). Flare start and end are on the Skin form, not in the More list.
-- *Check-in (SK-7).* "Same as yesterday", and the Settings screen that switches check-in scores off, are not built.
-- *No change buttons (SK-3).* The core has `repeatNailEntry` and `repeatAllAreas`; the Skin form has no button for nails or for all areas.
+- *Create forms.* Done: every create form is on `FormModal` (Cancel and Save in the header, Save disabled with what is missing, Discard Changes sheet, a past-day default through the `day` route parameter). Skin and nail entries get their photos from the entry's edit form (the "recent" lists they hung off are gone). Left: the reminder-tap guard (`unsavedForm`) covers them now, but flare start and end are still on the Skin form, not in the More list.
+- *Check-in (SK-7).* Built: "Same as yesterday" and a separate "Mark day complete" switch; stool has its own full form behind "Earlier…". Not built: the Settings screen that switches check-in scores off.
+- *No change buttons (SK-3).* Built on the Skin form (all areas) and the nail form (one nail); the Skin form's single-area button existed.
 - *Settings.* Missing groups and screens: skin and nail areas (rename, archive; only the nail form adds areas), Favorites, the photo options of Privacy and photos, About. Delete data, Replace and bulk delete still use `Alert` and do not offer an export first.
 - *Today.* The highlighted new row, the date jump, the "Earlier…" stool form (it opens the check-in), the first-run empty states beyond text.
 - *Intake details.* Ingredient chips with autocomplete, favorite stars for drinks and medications in the UI (the core has them), LLM allergen suggestions, favorites for scanned products, a Polish ingredient text from the database.

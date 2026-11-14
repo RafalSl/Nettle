@@ -16,9 +16,9 @@ Today (start)                              gear -> Settings (pushed)
   quick actions  Meal  Skin  Treatment  Check-in  Stool  More      [Edit]
   treatment shortcuts  (one tap: treatment + areas)
   context cards  open flare, day not complete
-  the day's log  (tap a row: edit / delete)
+  the day's log  (latest 8, "Show all (n)" opens the day in Review; tap a row: edit / delete)
 
-More (pushed list)  Alcohol, Medication or supplement, Reaction after a meal,
+More (pushed list)  Drink, Medication or supplement, Reaction after a meal,
                     Nail update, Flare start or end, Started or stopped
 
 Forms (full-height modal, one at a time)
@@ -28,10 +28,10 @@ Review
   Doctor report (export preset)  |  AI analysis  |  Days list (edit, delete)  |  per-area timeline (SK-8, later)
 
 Settings (grouped list, chevrons)
-  Logging: Suggestions, Daily check-in scores, Skin and nail areas, Treatments, Favorites
+  Logging: Suggestions, Day start, Daily check-in scores, Skin and nail areas, Treatments, Favorites
   Reminders
   Privacy and photos
-  AI analysis (key, model)
+  AI analysis (key, model per action)
   Data and backup: Export and Import (each: records / settings / both), Delete data (last)
   About
 ```
@@ -53,13 +53,13 @@ A pure core function `rankSuggestions(history, favorites, now, options)` over ex
 
 - **Order:** favorites first, then the most frequent items in the window (default 30 days), then the most recent distinct items to fill the list (default 5 rows). Deduplicated. Each row shows a hint: count, "yesterday" or a star. Typing filters the whole history.
 - **Identity:** a meal is its normalized description. Choosing it copies the latest use's ingredients and allergen tags into the form. The user edits freely and saves a new, independent entry.
-- **Settings:** rows (default 5), window (7, 14, 30, 60 days), "save on tap" (off; only for alcohol and medication, never for meals).
+- **Settings:** rows (default 5), window (7, 14, 30, 60 days), "save on tap" (off; only for drinks and medication, never for meals).
 - **Alternative kept for later:** frecency (one score from frequency and recency, with exponential decay). Only the ranking function would change.
 
 | Input | Approach |
 | --- | --- |
 | Meal | choose phase (suggestions or typing), then review phase with editable ingredient chips and autocomplete |
-| Alcohol, medication, supplement | recent (item, amount) pairs from the same function |
+| Drink, medication, supplement | recent (item, amount) pairs from the same function |
 | Treatment | one-tap shortcuts for treatment plus areas |
 | Started or stopped | "stopped" offers items started and not stopped |
 | Skin and nails | prefilled with the last values, "No change" per area and for all areas |

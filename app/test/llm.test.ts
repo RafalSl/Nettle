@@ -75,7 +75,7 @@ describe('ingredient estimate (LL-1, IN-3)', () => {
     const deps = makeDeps(new MemoryRepo(), undefined, llm);
     await saveApiKey(deps, 'synthetic-test-key');
     const est = await estimateIngredients(deps, { image, language: 'pl' });
-    expect(est).toEqual({ names: ['tomato', 'bread'], uncertainty: 'sauce?' });
+    expect(est).toEqual({ names: ['tomato', 'bread'], uncertainty: 'sauce?', provenance: { model: 'fake-model', at: expect.any(String), promptVersion: 'ingredients-1' } });
     const req = llm.requests[0]!;
     expect(req.images).toEqual([image]);
     expect(req.system).toContain('Polish');

@@ -61,7 +61,7 @@ async function seeded(make: () => Promise<StorageRepository>) {
     name: 'Synthetic shampoo',
     note: null,
   });
-  await repo.addRecord('drinks', { id: 'al1', at: { utc: '2026-01-12T19:00:00.000Z', tz: TZ }, name: 'Synthetic beer', amountMl: 500, alcohol: true, ingredients: [], allergens: [], note: null });
+  await repo.addRecord('drinks', { id: 'al1', at: { utc: '2026-01-12T19:00:00.000Z', tz: TZ }, name: 'Synthetic beer', amountMl: 500, alcohol: true, ingredients: [], allergens: [], barcode: null, source: { kind: 'typed', edited: false, llm: null }, note: null });
   await repo.addRecord('medicationEntries', { id: 'md1', at: { utc: '2026-01-12T08:00:00.000Z', tz: TZ }, category: 'supplement', name: 'Synthetic vitamin', dose: '1 tablet', note: null });
   await repo.addRecord('reactions', {
     id: 'r1',
@@ -202,7 +202,7 @@ describe('data.json validation of check-ins, stool and tags (SK-7, SK-11, IN-6)'
 
 describe('data.json validation of alcohol and medication entries (IN-4, IN-5)', () => {
   const at = { utc: '2026-01-10T20:00:00.000Z', tz: 'Europe/Warsaw' };
-  const alcohol = { id: 'al1', utc: at.utc, tz: at.tz, name: 'x', amount_ml: 330, alcohol: false, ingredients: [], allergens: [], note: null };
+  const alcohol = { id: 'al1', utc: at.utc, tz: at.tz, name: 'x', amount_ml: 330, alcohol: false, ingredients: [], allergens: [], barcode: null, source: { kind: 'typed', edited: false, llm: null }, note: null };
   const med = { id: 'md1', utc: at.utc, tz: at.tz, category: 'medication', name: 'x', dose: null, note: null };
   const err = (r: object) => {
     try {
@@ -226,7 +226,7 @@ describe('data.json validation of treatments, events, reactions and allergens (I
   const application = { id: 'ta1', utc: at.utc, tz: at.tz, treatment_id: 'tr1', area_ids: ['area-chin'], note: null };
   const event = { id: 'ce1', utc: at.utc, tz: at.tz, action: 'started', category: 'product', name: 'x', note: null };
   const reaction = { id: 'r1', utc: at.utc, tz: at.tz, meal_id: 'm1', symptoms: ['hives'], note: null };
-  const meal = { id: 'm1', utc: at.utc, tz: at.tz, description: 'x', ingredients: [], allergens: ['milk'], note: null };
+  const meal = { id: 'm1', utc: at.utc, tz: at.tz, description: 'x', ingredients: [], allergens: ['milk'], barcode: null, source: { kind: 'typed', edited: false, llm: null }, note: null };
   const records = (over: object = {}) => ({
     ...RAW_RECORDS,
     meals: [meal],
@@ -257,6 +257,24 @@ describe('data.json validation of treatments, events, reactions and allergens (I
     expect(p.records?.changeEvents[0]).toMatchObject({ action: 'started', category: 'product' });
     expect(p.records?.reactions[0]).toMatchObject({ mealId: 'm1', symptoms: ['hives'] });
     expect(p.settings?.treatments).toHaveLength(1);
+  });
+
+  it('IN-16 and IN-2 validate the source and the barcode of a meal', () => {
+    const llm = { model: 'm', at: '2026-01-10T20:00:00.000Z', prompt_version: 'p' };
+    const withSource = (source: unknown, barcode: unknown = null) => file(records({ meals: [{ ...meal, source, barcode }] }));
+    expect(err(withSource({ kind: 'label_scan', edited: true, llm }, '5900000000008'))).toBe('no error');
+    expect(parseDataJson(withSource({ kind: 'photo_estimate', edited: false, llm })).records?.meals[0]?.source).toEqual({ kind: 'photo_estimate', edited: false, llm: { model: 'm', at: llm.at, promptVersion: 'p' } });
+    for (const bad of [
+      { kind: 'label_scan', edited: false, llm: null },
+      { kind: 'typed', edited: false, llm },
+      { kind: 'typed', edited: true, llm: null },
+      { kind: 'guess', edited: false, llm: null },
+      { kind: 'photo_estimate', edited: false, llm: { ...llm, at: 'yesterday' } },
+      undefined,
+    ]) {
+      expect(err(withSource(bad))).toBe('import_invalid_data');
+    }
+    expect(err(withSource({ kind: 'typed', edited: false, llm: null }, '12ab'))).toBe('import_invalid_data');
   });
 
   it('rejects unknown allergens, empty area or symptom lists and unknown enum values', () => {

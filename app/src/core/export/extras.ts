@@ -24,6 +24,7 @@ import {
 } from '../model/types';
 import { CANONICAL_UTC } from '../model/time';
 import { analysisResultFromJson, analysisResultToJson } from '../llm/analysisResult';
+import { parseBarcode, parseSource, sourceToJson } from './sourceJson';
 import { bad, bool, enumList, nullableScore, nullableText, oneOf, str, stringList, utc, type Obj } from './guards';
 
 /**
@@ -172,6 +173,8 @@ const drink: Codec<Drink> = {
     alcohol: e.alcohol,
     ingredients: [...e.ingredients],
     allergens: [...e.allergens],
+    barcode: e.barcode,
+    source: sourceToJson(e.source),
     note: e.note,
   }),
   parse: (o, w) => {
@@ -188,6 +191,8 @@ const drink: Codec<Drink> = {
       alcohol: o.alcohol as boolean,
       ingredients: ing as string[],
       allergens: enumList(o, 'allergens', ALLERGENS, w),
+      barcode: parseBarcode(o, w),
+      source: parseSource(o, w),
       note: nullableText(o, 'note', w),
     };
   },

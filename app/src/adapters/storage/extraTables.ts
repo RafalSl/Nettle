@@ -148,8 +148,8 @@ const reaction: ExtraTable<Reaction> = {
 
 const drink: ExtraTable<Drink> = {
   table: 'drink',
-  columns: ['name', 'amount_ml', 'alcohol', 'ingredients_json', 'allergens_json', 'note'],
-  toValues: (e) => [e.name, e.amountMl, +e.alcohol, JSON.stringify(e.ingredients), JSON.stringify(e.allergens), e.note],
+  columns: ['name', 'amount_ml', 'alcohol', 'ingredients_json', 'allergens_json', 'barcode', 'source_json', 'note'],
+  toValues: (e) => [e.name, e.amountMl, +e.alcohol, JSON.stringify(e.ingredients), JSON.stringify(e.allergens), e.barcode, JSON.stringify(e.source), e.note],
   fromRow: (r) => ({
     id: r.id as string,
     at: { utc: r.ts_utc as string, tz: r.tz as string },
@@ -158,6 +158,8 @@ const drink: ExtraTable<Drink> = {
     alcohol: !!r.alcohol,
     ingredients: JSON.parse(r.ingredients_json as string) as string[],
     allergens: JSON.parse(r.allergens_json as string) as Allergen[],
+    barcode: r.barcode as string | null,
+    source: JSON.parse(r.source_json as string) as Drink['source'],
     note: r.note as string | null,
   }),
 };

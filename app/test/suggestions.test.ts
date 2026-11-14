@@ -62,7 +62,7 @@ describe('rankSuggestions (IN-14)', () => {
     expect(meals).toHaveLength(1);
     expect(meals[0]).toMatchObject({ count: 2 });
     expect(meals[0]!.payload.id).toBe('m2'); // the latest use fills the form
-    const beer = (id: string, ml: number) => ({ id, at: { utc: day(1), tz: 'Europe/Warsaw' }, name: 'Synthetic beer', amountMl: ml, alcohol: true, ingredients: [], allergens: [], note: null });
+    const beer = (id: string, ml: number) => ({ id, at: { utc: day(1), tz: 'Europe/Warsaw' }, name: 'Synthetic beer', amountMl: ml, alcohol: true, ingredients: [], allergens: [], barcode: null, source: { kind: 'typed' as const, edited: false, llm: null }, note: null });
     expect(rankSuggestions(drinkHistory([beer('a', 500), beer('b', 330), beer('c', 500)]), [], now).map((s) => s.count)).toEqual([2, 1]);
   });
 });

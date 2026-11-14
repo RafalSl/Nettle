@@ -21,6 +21,7 @@ import type { StorageRepository } from '../ports/storage';
 import { logStool, validCheckInTags, type CheckInInput } from './checkin';
 import type { Deps } from './deps';
 import { applyTreatment, logChangeEvent, logReaction, type ApplyTreatmentInput, type ChangeEventInput, type ReactionInput } from './events';
+import { afterEdit, sameIngredients } from '../model/source';
 import { logDrink, logMedication, type LogDrinkInput } from './intake';
 import { logMeal, type LogMealInput } from './logMeal';
 import { logNailEntry, logSkinEntry, type LogNailEntryInput, type LogSkinEntryInput } from './skin';
@@ -43,6 +44,8 @@ export async function getEntry(deps: Deps, kind: RecordKind, id: string): Promis
  * kept, the "add" calls become "replace", an unchanged time keeps its stamp (and so its timezone) and areas
  * or items the entry already uses stay allowed after they were archived (archived, not deleted).
  */
+const cleanList = (l: readonly string[]) => l.map((i) => i.trim()).filter(Boolean);
+
 function editing(deps: Deps, id: string, keep: { at?: Stamp; used?: string[] }): Deps {
   const used = new Set(keep.used ?? []);
   const withStamp = <T extends { at: Stamp }>(r: T): T => (keep.at ? { ...r, at: keep.at } : r);
@@ -81,7 +84,8 @@ export async function editMeal(deps: Deps, id: string, input: LogMealInput): Pro
   for (const r of await deps.repo.listRecords('reactions')) {
     if (r.mealId === id && r.at.utc < at.utc) throw new NettleError('meal_after_reaction', id);
   }
-  return logMeal(editing(deps, id, { at: keepAt(orig, input.at) }), input);
+  const changed = !sameIngredients(orig, { ingredients: cleanList(input.ingredients), allergens: input.allergens ?? [] });
+  return logMeal(editing(deps, id, { at: keepAt(orig, input.at) }), { ...input, barcode: orig.barcode, source: afterEdit(orig.source, changed) });
 }
 
 export async function editSkinEntry(deps: Deps, id: string, input: LogSkinEntryInput): Promise<SkinEntry> {
@@ -105,7 +109,8 @@ export async function editDrink(
   input: LogDrinkInput,
 ): Promise<Drink> {
   const orig = (await getEntry(deps, 'drinks', id)) as Drink;
-  return logDrink(editing(deps, id, { at: keepAt(orig, input.at) }), input);
+  const changed = !sameIngredients(orig, { ingredients: cleanList(input.ingredients ?? []), allergens: input.allergens ?? [] });
+  return logDrink(editing(deps, id, { at: keepAt(orig, input.at) }), { ...input, barcode: orig.barcode, source: afterEdit(orig.source, changed) });
 }
 
 export async function editMedication(

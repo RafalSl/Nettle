@@ -15,6 +15,7 @@ import {
 import { isScore } from '../usecases/skin';
 import { EXTRA_CODECS } from './extras';
 import { parsePreferences } from './preferencesJson';
+import { parseBarcode, parseSource } from './sourceJson';
 import { bad, bool, enumList, oneOf, isObj, list, nullableText, str, unique, utc, type Obj } from './guards';
 import { LIST_KEYS, recordWireKey, SCHEMA_VERSION } from './schema';
 
@@ -88,6 +89,8 @@ export function parseDataJson(raw: unknown): Payload {
         description: str(o, 'description', w),
         ingredients: ing as string[],
         allergens: enumList(o, 'allergens', ALLERGENS, w),
+        barcode: parseBarcode(o, w),
+        source: parseSource(o, w),
         note: nullableText(o, 'note', w),
       };
     });

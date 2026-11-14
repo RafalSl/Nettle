@@ -1,4 +1,5 @@
 import type { Preferences } from './preferences';
+import type { IngredientSource } from './source';
 /** UTC instant (canonical ISO-8601, always 24 chars) plus the IANA timezone it was recorded in (NF-4). */
 export interface Stamp {
   utc: string;
@@ -31,6 +32,10 @@ export interface Meal {
   ingredients: string[];
   /** IN-10: confirmed by the user, never saved straight from a suggestion. */
   allergens: Allergen[];
+  /** IN-2: the barcode the entry was made from, if any. */
+  barcode: string | null;
+  /** IN-16 */
+  source: IngredientSource;
   note: string | null;
 }
 
@@ -166,6 +171,10 @@ export interface Drink {
   ingredients: string[];
   /** IN-10: confirmed by the user, never saved straight from a suggestion. */
   allergens: Allergen[];
+  /** IN-2 */
+  barcode: string | null;
+  /** IN-16 */
+  source: IngredientSource;
   note: string | null;
 }
 

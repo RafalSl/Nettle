@@ -17,6 +17,8 @@ describe('sqlite migrations', () => {
       description: 'Synthetic',
       ingredients: ['x'],
       allergens: [],
+      barcode: null,
+      source: { kind: 'typed', edited: false, llm: null },
       note: null,
     });
     const second = await SqliteRepo.open(db);
@@ -114,9 +116,23 @@ describe('sqlite migrations', () => {
     await db.run(`INSERT INTO tombstone (id, kind, deleted_utc, deleted_tz) VALUES ('t1', 'alcoholEntries', '2026-01-02T00:00:00.000Z', 'UTC')`);
     const repo = await SqliteRepo.open(db);
     expect(await repo.listRecords('drinks')).toEqual([
-      { id: 'd1', at: { utc: '2026-01-01T00:00:00.000Z', tz: 'UTC' }, name: 'beer', amountMl: 500, alcohol: true, ingredients: [], allergens: [], note: null },
+      { id: 'd1', at: { utc: '2026-01-01T00:00:00.000Z', tz: 'UTC' }, name: 'beer', amountMl: 500, alcohol: true, ingredients: [], allergens: [], barcode: null, source: { kind: 'typed', edited: false, llm: null }, note: null },
     ]);
     expect((await db.all<{ kind: string }>('SELECT kind FROM tombstone')).map((r) => r.kind)).toEqual(['drinks']);
+  });
+
+  it('IN-2, IN-16 migration 14 gives existing meals and drinks a typed source and no barcode', async () => {
+    const db = createNodeSqliteDb();
+    for (const [i, sql] of MIGRATIONS.slice(0, 13).entries()) {
+      await db.exec(sql);
+      await db.exec(`PRAGMA user_version = ${i + 1}`);
+    }
+    await db.run(`INSERT INTO meal (id, ts_utc, tz, description, allergens_json) VALUES ('m1', '2026-01-01T00:00:00.000Z', 'UTC', 'Synthetic', '[]')`);
+    await db.run(`INSERT INTO drink (id, ts_utc, tz, name, amount_ml) VALUES ('d1', '2026-01-01T00:00:00.000Z', 'UTC', 'tea', 200)`);
+    const repo = await SqliteRepo.open(db);
+    const typed = { kind: 'typed', edited: false, llm: null };
+    expect(await repo.listMeals()).toMatchObject([{ id: 'm1', barcode: null, source: typed }]);
+    expect(await repo.listRecords('drinks')).toMatchObject([{ id: 'd1', barcode: null, source: typed }]);
   });
 
   it('IN-4 and IN-5 enforce amount and category in the database itself', async () => {

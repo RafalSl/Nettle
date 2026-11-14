@@ -179,6 +179,34 @@ describe('export with CSV and PDF report (EX-3, EX-4, EX-5, EX-8)', () => {
     }
   });
 
+  it('EX-4 intake read by an AI is marked, with a legend, and typed intake is not', () => {
+    const at = { utc: '2026-01-10T12:00:00.000Z', tz: 'Europe/Warsaw' };
+    const llm = { model: 'm', at: at.utc, promptVersion: 'p' };
+    const meal = (id: string, source: object) => ({ id, at, description: `Synthetic ${id}`, ingredients: [`rice-${id}`], allergens: [], barcode: null, source, note: null });
+    const html = (meals: object[]) =>
+      buildReportHtml({
+        ...reportOptions('en'),
+        records: { ...Object.fromEntries(['skinEntries', 'nailEntries', 'checkIns', 'stoolEntries', 'treatmentApplications', 'changeEvents', 'reactions', 'drinks', 'medicationEntries', 'photos', 'analyses', 'flareMarkers'].map((k) => [k, []])), meals } as never,
+        skinAreas: [],
+        dailyTags: [],
+        treatments: [],
+        photos: new Map(),
+        range: { from: null, to: null },
+        exportedAt: { utc: '2026-01-20T10:00:00.000Z', tz: 'Europe/Warsaw' },
+      });
+    const out = html([
+      meal('a', { kind: 'photo_estimate', edited: false, llm }),
+      meal('b', { kind: 'label_scan', edited: true, llm }),
+      meal('c', { kind: 'open_food_facts', edited: false, llm: null }),
+      meal('d', { kind: 'typed', edited: false, llm: null }),
+    ]);
+    expect(out).toContain('rice-a [[report.aiMark]]');
+    expect(out).toContain('rice-b [[report.aiMarkEdited]]');
+    expect(out).toContain('[report.aiMarkLegend]');
+    expect(out).not.toMatch(/rice-[cd] \[/);
+    expect(html([meal('d', { kind: 'typed', edited: false, llm: null })])).not.toContain('[report.aiMarkLegend]');
+  });
+
   it('EX-3 an empty diary still produces a valid page with a title and the disclaimer', () => {
     const html = buildReportHtml({
       ...reportOptions('pl'),

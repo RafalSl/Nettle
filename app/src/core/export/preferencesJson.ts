@@ -1,13 +1,14 @@
 import { QUICK_ACTIONS, MAX_SUGGESTION_ROWS, WINDOW_DAYS, type Preferences, type QuickAction } from '../model/preferences';
 import { ALLERGENS, MEDICATION_CATEGORIES } from '../model/types';
+import { parseBarcode, parseSource, sourceToJson } from './sourceJson';
 import { bad, bool, enumList, isObj, list, nullableText, oneOf, str, stringList, unique, type Obj } from './guards';
 
 /** data.json form of the preferences (`settings.preferences`), snake_case like the rest of the file. */
 export function preferencesToJson(p: Preferences): Obj {
   return {
     favorites: {
-      meals: p.favorites.meals.map((m) => ({ key: m.key, description: m.description, ingredients: [...m.ingredients], allergens: [...m.allergens] })),
-      drinks: p.favorites.drinks.map((a) => ({ key: a.key, name: a.name, amount_ml: a.amountMl, alcohol: a.alcohol, ingredients: [...a.ingredients], allergens: [...a.allergens] })),
+      meals: p.favorites.meals.map((m) => ({ key: m.key, description: m.description, ingredients: [...m.ingredients], allergens: [...m.allergens], barcode: m.barcode, source: sourceToJson(m.source) })),
+      drinks: p.favorites.drinks.map((a) => ({ key: a.key, name: a.name, amount_ml: a.amountMl, alcohol: a.alcohol, ingredients: [...a.ingredients], allergens: [...a.allergens], barcode: a.barcode, source: sourceToJson(a.source) })),
       medications: p.favorites.medications.map((m) => ({ key: m.key, category: m.category, name: m.name, dose: m.dose })),
     },
     suggestions: { rows: p.suggestions.rows, window_days: p.suggestions.windowDays, save_on_tap: p.suggestions.saveOnTap },
@@ -27,7 +28,7 @@ export function parsePreferences(o: Obj, where = 'settings.preferences'): Prefer
   const fav = obj(o, 'favorites', where);
   const meals = list(fav, 'meals').map((m, i) => {
     const w = `${where}.favorites.meals[${i}]`;
-    return { key: str(m, 'key', w), description: str(m, 'description', w), ingredients: Array.isArray(m.ingredients) ? stringList(m, 'ingredients', w) : bad(`${w}.ingredients`), allergens: enumList(m, 'allergens', ALLERGENS, w) };
+    return { key: str(m, 'key', w), description: str(m, 'description', w), ingredients: Array.isArray(m.ingredients) ? stringList(m, 'ingredients', w) : bad(`${w}.ingredients`), allergens: enumList(m, 'allergens', ALLERGENS, w), barcode: parseBarcode(m, w), source: parseSource(m, w) };
   });
   const drinks = list(fav, 'drinks').map((a, i) => {
     const w = `${where}.favorites.drinks[${i}]`;
@@ -39,6 +40,8 @@ export function parsePreferences(o: Obj, where = 'settings.preferences'): Prefer
       alcohol: bool(a, 'alcohol', w),
       ingredients: Array.isArray(a.ingredients) ? stringList(a, 'ingredients', w) : bad(`${w}.ingredients`),
       allergens: enumList(a, 'allergens', ALLERGENS, w),
+      barcode: parseBarcode(a, w),
+      source: parseSource(a, w),
     };
   });
   const medications = list(fav, 'medications').map((m, i) => {

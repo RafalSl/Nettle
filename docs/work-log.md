@@ -266,3 +266,8 @@ Newest entry last. One short entry per working session or meaningful step: what 
 ## 2026-11-14: drinks (branch feature/drinks)
 - **Done:** IN-4, IN-10, IN-14 for drinks. `AlcoholEntry` is now `Drink` (record kind `drinks`, export key `drinks`, table `drink`, migration 13 renames the table and column, adds the alcohol flag, ingredients and allergens, and moves tombstones and drops old favorite drinks). The drink form and the edit form share `DrinkFields` (name, amount, alcohol switch, comma-separated ingredients, allergen chips); a suggestion pick fills them with the history tags pre-selected. Favorites keep the full snapshot and refresh when the drink is saved again. The report adds alcohol, ingredients and allergens columns; the analysis input carries them. 567 tests pass.
 - **Next:** sources and barcode on entries (IN-16, IN-2).
+
+## 2026-11-14: sources and barcode on entries (branch feature/entry-sources)
+- **Done:** IN-16, IN-2, LL-4, EX-4. `IngredientSource` (core/model/source.ts) and `barcode` on `Meal`, `Drink` and the favorite snapshots; migration 14; `data.json` validates the source (LLM details exactly for the two AI kinds). `estimateIngredients` returns the model, time and prompt version. Editing the ingredients or tags of a filled entry marks it edited (`editMeal`, `editDrink`, and the forms against the lists as filled). `lookupProduct` checks the diary's own entries for the barcode first; the meal and drink forms show the date of that entry. 578 tests pass.
+- **Trade-offs:** tags from Open Food Facts count as the source's own, so saving without selecting them marks the entry edited. A photo estimate becomes the source only on a meal that was still typed; on a scanned meal it counts as an edit.
+- **Next:** model per action (LL-9).

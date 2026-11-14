@@ -30,6 +30,8 @@ interface MealRow {
   tz: string;
   description: string;
   allergens_json: string;
+  barcode: string | null;
+  source_json: string;
   note: string | null;
 }
 interface AreaRow {
@@ -129,8 +131,8 @@ export class SqliteRepo implements StorageRepository {
   private async insertMeal(m: Meal, ignoreIfExists: boolean) {
     const verb = ignoreIfExists ? 'INSERT OR IGNORE' : 'INSERT';
     await this.db.run(
-      `${verb} INTO meal (id, ts_utc, tz, description, allergens_json, note) VALUES (?, ?, ?, ?, ?, ?)`,
-      [m.id, m.at.utc, m.at.tz, m.description, JSON.stringify(m.allergens), m.note],
+      `${verb} INTO meal (id, ts_utc, tz, description, allergens_json, barcode, source_json, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [m.id, m.at.utc, m.at.tz, m.description, JSON.stringify(m.allergens), m.barcode, JSON.stringify(m.source), m.note],
     );
     // Ingredients of a skipped duplicate must not be appended to the existing meal.
     const [row] = await this.db.all<{ n: number }>(
@@ -222,6 +224,8 @@ export class SqliteRepo implements StorageRepository {
       description: r.description,
       ingredients: byMeal.get(r.id) ?? [],
       allergens: JSON.parse(r.allergens_json) as Meal['allergens'],
+      barcode: r.barcode,
+      source: JSON.parse(r.source_json) as Meal['source'],
       note: r.note,
     }));
   }
@@ -280,8 +284,8 @@ export class SqliteRepo implements StorageRepository {
       const [row] = await this.db.all<{ n: number }>('SELECT COUNT(*) AS n FROM meal WHERE id = ?', [meal.id]);
       if (!row?.n) throw new Error('unknown meal');
       await this.db.run(
-        'UPDATE meal SET ts_utc = ?, tz = ?, description = ?, allergens_json = ?, note = ? WHERE id = ?',
-        [meal.at.utc, meal.at.tz, meal.description, JSON.stringify(meal.allergens), meal.note, meal.id],
+        'UPDATE meal SET ts_utc = ?, tz = ?, description = ?, allergens_json = ?, barcode = ?, source_json = ?, note = ? WHERE id = ?',
+        [meal.at.utc, meal.at.tz, meal.description, JSON.stringify(meal.allergens), meal.barcode, JSON.stringify(meal.source), meal.note, meal.id],
       );
       await this.db.run('DELETE FROM meal_ingredient WHERE meal_id = ?', [meal.id]);
       for (const [i, name] of meal.ingredients.entries()) {

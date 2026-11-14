@@ -2,6 +2,8 @@ import { openFoodFacts, parseOffResponse } from '@/adapters/barcode/openFoodFact
 import { allergensFromTags, isInStoreCode, normalizeBarcode, parseIngredientText } from '@/core/model/barcode';
 import { NettleError } from '@/core/model/errors';
 import { lookupProduct } from '@/core/usecases/barcode';
+import { logDrink } from '@/core/usecases/intake';
+import { logMeal } from '@/core/usecases/logMeal';
 import { FakeBarcode } from './fakes/fakeBarcode';
 import { MemoryRepo } from './fakes/memoryRepo';
 import { makeDeps } from './helpers/fixtures';
@@ -114,8 +116,20 @@ describe('looking a product up (IN-2, IN-8)', () => {
   it('IN-2 a found product comes with its ingredients and allergen suggestions, and nothing is saved', async () => {
     const deps = depsWith(new FakeBarcode({ '5900000000008': info }));
     const result = await lookupProduct(deps, ' 5900 0000 00008 ');
-    expect(result).toEqual({ barcode: '5900000000008', inStore: false, product: info, incomplete: false });
+    expect(result).toEqual({ barcode: '5900000000008', inStore: false, product: info, incomplete: false, history: null });
     expect(await deps.repo.listMeals()).toEqual([]);
+  });
+
+  it('IN-2 a barcode the diary already knows is answered from the latest entry, without asking the source', async () => {
+    const source = new FakeBarcode({ '5900000000008': info });
+    const deps = depsWith(source);
+    const src = { kind: 'label_scan' as const, edited: true, llm: { model: 'm', at: '2026-01-01T00:00:00.000Z', promptVersion: 'p' } };
+    await logMeal(deps, { description: 'Old name', ingredients: ['a'], barcode: '5900000000008', at: new Date('2026-01-01T10:00:00Z') });
+    await logDrink(deps, { name: 'Newer name', amountMl: 200, ingredients: ['milk'], allergens: ['milk'], barcode: '5900000000008', source: src, at: new Date('2026-01-05T10:00:00Z') });
+    const result = await lookupProduct(deps, '5900000000008');
+    expect(result.history).toMatchObject({ name: 'Newer name', ingredients: ['milk'], allergens: ['milk'], source: src, at: '2026-01-05T10:00:00.000Z' });
+    expect(result.product).toBeNull();
+    expect(source.lookups).toEqual([]);
   });
 
   it('IN-8 an unknown code and a product without ingredients both lead to manual entry', async () => {

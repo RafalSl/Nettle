@@ -1,8 +1,8 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, TextInput, View } from 'react-native';
+import { Alert, Switch, Text, TextInput, View } from 'react-native';
 import type { AreaKind, SkinArea } from '@/core/model/types';
-import { addArea, archiveSkinArea, renameSkinArea, resetSkinAreaName } from '@/core/usecases/skin';
+import { addArea, archiveSkinArea, renameSkinArea, resetSkinAreaName, setAreaSensitiveDefault } from '@/core/usecases/skin';
 import { areaLabel, errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
 import { Button, Chips, Heading, Hint, Label, styles } from '@/ui/components';
@@ -58,6 +58,17 @@ export function AreasSection({ kind }: { kind: AreaKind }) {
           </>
         )}
       </View>
+      {current && (
+        // SK-5: new photos of this area start as sensitive; a photo can still be changed one by one.
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Text style={styles.rowText}>{t('settings.sensitiveDefault')}</Text>
+          <Switch
+            value={current.sensitiveDefault}
+            onValueChange={(v) => run(() => setAreaSensitiveDefault(deps, current.id, v))}
+            accessibilityLabel={t('settings.sensitiveDefault')}
+          />
+        </View>
+      )}
       {archived.length > 0 && (
         <>
           <Label>{t('more.archivedList')}</Label>

@@ -608,6 +608,10 @@
     }
   },
   "settings": {
+    "sensitiveDefault": "Nowe zdjęcia tego miejsca są wrażliwe",
+    "photosTitle": "Zdjęcia",
+    "photosInfo": "Zdjęcia są zapisywane w prywatnej pamięci aplikacji na tym telefonie, nigdy w galerii, a dane EXIF, takie jak lokalizacja, są usuwane przy zapisie. Opuszczają telefon tylko w eksporcie, który udostępnisz, albo w uruchomieniu AI, które potwierdzisz.",
+    "photosSensitive": "Wrażliwe zdjęcia są rozmyte w aplikacji i pomijane w raporcie dla lekarza oraz w uruchomieniach AI, chyba że je dodasz. Ustawienie domyślne miejsca zmienisz w Miejscach na skórze i paznokciach, a pojedyncze zdjęcie osobno.",
     "scoresTitle": "Oceny w codziennym podsumowaniu",
     "scoresHint": "Wyłączona ocena nie jest pytana w podsumowaniu dnia i nie jest zapisywana. Zapisane wartości zostają.",
     "skinAreas": "Miejsca na skórze",
@@ -622,7 +626,15 @@
     "favMedications": "Leki i suplementy",
     "favRemove": "Usuń z ulubionych: {{name}}"
   },
+  "about": {
+    "title": "O aplikacji",
+    "version": "Wersja {{version}}",
+    "local": "Wszystko, co zapisujesz, zostaje na tym telefonie. Nie ma konta, synchronizacji z chmurą ani analityki. Dane opuszczają telefon tylko w eksporcie, który udostępnisz, albo w uruchomieniu AI, które potwierdzisz.",
+    "ai": "Wynik AI (odczyt składników, podpowiedzi alergenów, podsumowania, analizy) to wstępna sugestia do sprawdzenia i jest oznaczony jako AI w eksportach.",
+    "medical": "Ta aplikacja to dziennik, nie wyrób medyczny. Nigdy nie stawia diagnozy ani nie daje porad medycznych; to, co widzisz, omów z lekarzem."
+  },
   "nav": {
+    "about": "O aplikacji",
     "flare": "Rzut",
     "settings": "Ustawienia",
     "more": "Więcej",

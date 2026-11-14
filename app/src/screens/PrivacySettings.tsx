@@ -2,7 +2,7 @@ import { useSyncExternalStore } from 'react';
 import { Alert, Switch, Text, View } from 'react-native';
 import { errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
-import { Hint, Screen, styles } from '@/ui/components';
+import { Heading, Hint, Screen, styles } from '@/ui/components';
 
 /** SE-8, UX-6: the app lock switch. Changing it asks for Face ID or the passcode first, either way. */
 export default function PrivacySettings() {
@@ -22,6 +22,9 @@ export default function PrivacySettings() {
         <Switch value={enabled} onValueChange={(v) => void change(v)} accessibilityLabel={t('lock.switch')} />
       </View>
       <Hint>{t('lock.hint')}</Hint>
+      <Heading>{t('settings.photosTitle')}</Heading>
+      <Hint>{t('settings.photosInfo')}</Hint>
+      <Hint>{t('settings.photosSensitive')}</Hint>
     </Screen>
   );
 }

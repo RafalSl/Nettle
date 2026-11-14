@@ -254,6 +254,25 @@ export interface Analysis {
   result: AnalysisResult;
 }
 
+/**
+ * LL-14: the optional AI narrative at the start of the doctor report, stored as its own object like an analysis
+ * (LL-7). `generated` is what the model wrote, `text` what the person reviewed and kept (equal when unedited).
+ */
+export interface ReportSummary {
+  id: string;
+  at: Stamp;
+  dayFrom: LocalDay;
+  dayTo: LocalDay;
+  /** The language the report is written in (EX-3). */
+  language: 'en' | 'pl';
+  model: string;
+  promptVersion: string;
+  /** What was sent: record counts by kind, plus `days` and `completeDays`. Never photos. */
+  counts: Record<string, number>;
+  generated: string;
+  text: string;
+}
+
 /** SK-6 */
 export const FLARE_KINDS = ['start', 'end'] as const;
 export type FlareKind = (typeof FLARE_KINDS)[number];
@@ -281,6 +300,7 @@ export interface Records {
   medicationEntries: MedicationEntry[];
   photos: Photo[];
   analyses: Analysis[];
+  reportSummaries: ReportSummary[];
   flareMarkers: FlareMarker[];
 }
 
@@ -313,6 +333,7 @@ export const EXTRA_KINDS: readonly ExtraKind[] = [
   'medicationEntries',
   'photos',
   'analyses',
+  'reportSummaries',
   'flareMarkers',
 ];
 

@@ -186,7 +186,7 @@ describe('export with CSV and PDF report (EX-3, EX-4, EX-5, EX-8)', () => {
     const html = (meals: object[]) =>
       buildReportHtml({
         ...reportOptions('en'),
-        records: { ...Object.fromEntries(['skinEntries', 'nailEntries', 'checkIns', 'stoolEntries', 'treatmentApplications', 'changeEvents', 'reactions', 'drinks', 'medicationEntries', 'photos', 'analyses', 'flareMarkers'].map((k) => [k, []])), meals } as never,
+        records: { ...Object.fromEntries(['skinEntries', 'nailEntries', 'checkIns', 'stoolEntries', 'treatmentApplications', 'changeEvents', 'reactions', 'drinks', 'medicationEntries', 'photos', 'analyses', 'reportSummaries', 'flareMarkers'].map((k) => [k, []])), meals } as never,
         skinAreas: [],
         dailyTags: [],
         treatments: [],
@@ -211,7 +211,7 @@ describe('export with CSV and PDF report (EX-3, EX-4, EX-5, EX-8)', () => {
     const html = buildReportHtml({
       ...reportOptions('pl'),
       records: Object.fromEntries(
-        ['meals', 'skinEntries', 'nailEntries', 'checkIns', 'stoolEntries', 'treatmentApplications', 'changeEvents', 'reactions', 'drinks', 'medicationEntries', 'photos', 'analyses', 'flareMarkers'].map((k) => [k, []]),
+        ['meals', 'skinEntries', 'nailEntries', 'checkIns', 'stoolEntries', 'treatmentApplications', 'changeEvents', 'reactions', 'drinks', 'medicationEntries', 'photos', 'analyses', 'reportSummaries', 'flareMarkers'].map((k) => [k, []]),
       ) as never,
       skinAreas: [],
       dailyTags: [],

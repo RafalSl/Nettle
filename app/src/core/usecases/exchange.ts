@@ -18,6 +18,7 @@ import {
   type Payload,
   type RecordKind,
   type Records,
+  type ReportSummary,
   type Tombstone,
 } from '../model/types';
 import type { CollectionKey, ImportMode, ImportTombstones } from '../ports/storage';
@@ -38,6 +39,8 @@ export interface ExportOptions {
   csv?: boolean;
   /** EX-3, EX-4: also write report.pdf in this language; the photo selection above applies to it too (EX-8). */
   report?: Pick<ReportInput, 'language' | 'text' | 'areaName' | 'itemName'>;
+  /** LL-14: a stored report summary to open the PDF with; it must match the report's language and period. */
+  summaryId?: string;
 }
 
 /** Width of the photos in the PDF, in pixels: small enough to keep the report light. */
@@ -91,8 +94,18 @@ export async function exportBundle(deps: Deps, options: ExportOptions = {}): Pro
       const jpeg = await deps.photos.compress(deps.photos.uri(original.file), REPORT_PHOTO_EDGE);
       thumbnails.set(p.id, `data:image/jpeg;base64,${bytesToBase64(jpeg)}`);
     }
+    let summary: ReportSummary | undefined;
+    if (options.summaryId) {
+      // LL-14: changing the range or the language asks for a new summary, so a stale one is refused, not printed.
+      summary = (await deps.repo.listRecords('reportSummaries')).find((s) => s.id === options.summaryId);
+      const days = options.days;
+      if (!summary || summary.language !== options.report.language || (days?.from && days.from !== summary.dayFrom) || (days?.to && days.to !== summary.dayTo)) {
+        throw new NettleError('summary_mismatch');
+      }
+    }
     const html = buildReportHtml({
       ...options.report,
+      ...(summary ? { summary } : {}),
       records: parts.records ? snapshot : emptyRecords(),
       skinAreas: snapshot.skinAreas,
       dailyTags: snapshot.dailyTags,

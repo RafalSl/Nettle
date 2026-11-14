@@ -78,6 +78,7 @@ export const noExtra = {
   medicationEntries: [],
   photos: [],
   analyses: [],
+  reportSummaries: [],
   flareMarkers: [],
 };
 

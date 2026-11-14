@@ -5,7 +5,7 @@ export const DELETE_GROUPS = {
   food: ['meals', 'reactions', 'drinks', 'medicationEntries'],
   skin: ['skinEntries', 'nailEntries', 'photos', 'treatmentApplications', 'flareMarkers'],
   health: ['checkIns', 'stoolEntries', 'changeEvents'],
-  ai: ['analyses'],
+  ai: ['analyses', 'reportSummaries'],
 } as const satisfies Record<string, readonly RecordKind[]>;
 
 export type DeleteGroup = keyof typeof DELETE_GROUPS;

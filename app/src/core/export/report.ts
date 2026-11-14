@@ -1,6 +1,6 @@
 import { isAiSource, type IngredientSource } from '../model/source';
 import { localDateTime, localDay } from '../model/time';
-import type { Analysis, ListItem, Records, SkinArea } from '../model/types';
+import type { Analysis, ListItem, Records, ReportSummary, SkinArea } from '../model/types';
 import type { Language } from '../ports/llm';
 
 /** Text lookup for the report language, supplied by the app (core has no i18n). Keys are under `report.*`. */
@@ -21,6 +21,8 @@ export interface ReportInput {
   photos: Map<string, string>;
   range: { from: string | null; to: string | null };
   exportedAt: { utc: string; tz: string };
+  /** LL-14: the reviewed AI summary that opens the report, if the person included one. */
+  summary?: ReportSummary;
   /** NF-7: the diary day starts at this hour (default midnight). */
   dayStartHour?: number;
 }
@@ -74,6 +76,17 @@ export function buildReportHtml(input: ReportInput): string {
     `<div class="note">${esc(tx('report.period', { from: input.range.from ? input.range.from.slice(0, 10) : '…', to: input.range.to ? input.range.to.slice(0, 10) : '…' }))} · ${esc(tx('report.exported', { date: when(input.exportedAt) }))}</div>`,
   );
   out.push(`<p class="note">${esc(tx('report.disclaimer'))}</p>`);
+
+  // LL-14, EX-4: the reviewed AI summary opens the report, with the same AI label as an analysis.
+  if (input.summary) {
+    const s = input.summary;
+    out.push(
+      `<div class="ai"><h2>${esc(tx('report.summaryTitle'))}</h2><p><strong>${esc(tx('report.aiWarning'))}</strong></p>${s.text
+        .split(/\n{2,}/)
+        .map((p) => `<p>${esc(p.trim()).replace(/\n/g, '<br/>')}</p>`)
+        .join('')}<div class="note">${esc(tx('report.summaryMeta', { date: when(s.at), from: s.dayFrom, to: s.dayTo, model: s.model }))}${s.text === s.generated ? '' : ` · ${esc(tx('report.summaryEdited'))}`}</div></div>`,
+    );
+  }
 
   // Flares (SK-6)
   const flares = byTime(r.flareMarkers);

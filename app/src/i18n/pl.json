@@ -1,11 +1,7 @@
 {
   "tabs": {
-    "meal": "Posiłek",
-    "skin": "Skóra",
-    "data": "Dane",
     "today": "Dziś",
-    "more": "Więcej",
-    "analysis": "Analiza AI"
+    "review": "Przegląd"
   },
   "common": {
     "save": "Zapisz",
@@ -498,5 +494,41 @@
       "backupTitle": "Kopia dziennika",
       "backupBody": "Wyeksportuj dziennik z zakładki Dane i przechowaj plik w bezpiecznym miejscu."
     }
+  },
+  "nav": {
+    "settings": "Ustawienia",
+    "more": "Więcej",
+    "meal": "Posiłek",
+    "skin": "Skóra",
+    "checkin": "Wpis dzienny",
+    "intake": "Alkohol, leki",
+    "treatment": "Leczenie",
+    "nails": "Paznokcie",
+    "reaction": "Reakcja",
+    "change": "Start lub stop",
+    "logging": "Wpisy",
+    "reminders": "Przypomnienia",
+    "ai": "Analiza AI",
+    "data": "Dane i kopia",
+    "analysis": "Analiza AI",
+    "gear": "Ustawienia"
+  },
+  "home": {
+    "quickActions": "Szybkie akcje",
+    "meal": "Posiłek",
+    "skin": "Skóra",
+    "treatment": "Leczenie",
+    "checkin": "Wpis dzienny",
+    "more": "Więcej",
+    "moreIntake": "Alkohol, lek lub suplement",
+    "moreReaction": "Reakcja po posiłku",
+    "moreNails": "Aktualizacja paznokci",
+    "moreChange": "Rozpoczęte lub zakończone",
+    "flareHint": "Początek i koniec rzutu są w formularzu Skóra."
+  },
+  "review": {
+    "empty": "Na razie nie ma czego przeglądać. Wpisy dodane w Dziś pojawią się tutaj.",
+    "analysis": "Analiza AI",
+    "export": "Eksport i import"
   }
 }

@@ -37,7 +37,7 @@ Requirements and flows are in `docs/requirements.md`, `docs/ux-design.md` and `d
 - SK-9 reminders: tap targets and the handled-notification marker. The reminders themselves are built (the nail reminder follows nail areas; weekday numbering is iOS, 1 = Sunday).
 
 **Navigation (UX-1 to UX-9)**
-- Two tabs (Today, Review), Settings behind a gear icon, modal forms, action sheets.
+- Built: two tabs (Today, Review) with a stack each, Settings and More pushed inside the Today stack (tab bar stays), gear icon, every entry form a modal route under `form/` with Cancel on the leading edge; Metro bundles it. Not built: the unified form (Save in the header, disabled with "what is missing", swipe-down guard), action sheets (UX-9; `Alert` is still used), the Today day switcher, log, shortcuts and cards, the Review content (Doctor report, days list), the Settings groups Privacy and About, large titles, tab icons. Flare start and end are still on the Skin form, not in the More list.
 
 **Editing and deleting (EN-1, EX-13)**
 - Core, storage, `data.json` and merge are built (`core/usecases/entries.ts`, migration 11, the `tombstones` section of `records`). Not built: the screens (tap a log row, Edit or Delete, action sheet from `previewEntryDelete`) and the import switch in the UI. `schema_version` stays 1 while prototyping, so exports made before the `tombstones` section do not import.

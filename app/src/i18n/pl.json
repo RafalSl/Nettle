@@ -530,5 +530,57 @@
     "empty": "Na razie nie ma czego przeglądać. Wpisy dodane w Dziś pojawią się tutaj.",
     "analysis": "Analiza AI",
     "export": "Eksport i import"
+  },
+  "day": {
+    "previous": "Poprzedni dzień",
+    "next": "Następny dzień",
+    "today": "Dziś",
+    "empty": "Tego dnia nic nie zapisano.",
+    "stool": "Stolec",
+    "stoolTitle": "Typ stolca (zapisuje od razu)",
+    "stoolType": "Typ {{n}}",
+    "stoolEarlier": "Wcześniej…",
+    "shortcuts": "Leczenie jednym dotknięciem",
+    "applied": "Zastosowano",
+    "logTitle": "Dziennik"
+  },
+  "log": {
+    "meal": "Posiłek",
+    "skin": "Skóra",
+    "nail": "Paznokieć",
+    "checkin": "Wpis dzienny",
+    "complete": "dzień zamknięty",
+    "stool": "Stolec typu {{n}}",
+    "treatment": "{{name}}: {{areas}}",
+    "change": "{{action}} {{name}}",
+    "reaction": "Reakcja: {{symptoms}}",
+    "alcohol": "{{drink}}, {{ml}} ml",
+    "medication": "{{name}}",
+    "flareStart": "Początek rzutu: {{area}}",
+    "flareEnd": "Koniec rzutu: {{area}}",
+    "scores": "nasilenie {{severity}}, świąd {{itch}}, ból {{pain}}",
+    "deleteTitle": "Usunąć ten wpis?",
+    "deleteAction": "Usuń wpis",
+    "also": "Usunie też: {{list}}.",
+    "alsoNothing": "Nie można tego tu cofnąć; przywróć go z kopii zapasowej.",
+    "kinds": {
+      "reactions": "reakcje",
+      "photos": "zdjęcia",
+      "flareMarkers": "koniec rzutu",
+      "meals": "posiłki",
+      "skinEntries": "wpisy",
+      "nailEntries": "wpisy"
+    }
+  },
+  "cards": {
+    "openFlare": "Rzut trwa: {{area}}",
+    "endFlare": "Zakończ rzut",
+    "notComplete": "Ten dzień nie jest oznaczony jako zamknięty.",
+    "openCheckin": "Otwórz wpis dzienny",
+    "complete": "Dzień zamknięty.",
+    "reopen": "Otwórz ponownie",
+    "noExport": "Nie było jeszcze eksportu. Dziennik jest tylko na tym telefonie.",
+    "lastExport": "Ostatni eksport {{days}} dni temu.",
+    "openBackup": "Zrób kopię"
   }
 }

@@ -89,3 +89,17 @@ export function addDays(day: string, n: number): string | null {
   const ms = dayToMs(day);
   return ms === null ? null : new Date(ms + n * 24 * 3600 * 1000).toISOString().slice(0, 10);
 }
+
+/**
+ * UX-2: the moment to use for a new entry on a chosen day: the current clock time on that day (in the given
+ * timezone), never later than the end of that day. For today it is simply now.
+ */
+export function atOnDay(day: string, now: Date, tz: string): Date {
+  const todayDay = localDay(now.toISOString(), tz);
+  if (day === todayDay) return now;
+  const dayRange = localDaysToRange(day, day, tz);
+  const todayRange = localDaysToRange(todayDay, todayDay, tz);
+  if (!dayRange?.from || !dayRange.to || !todayRange?.from) return now;
+  const at = Date.parse(dayRange.from) + (now.getTime() - Date.parse(todayRange.from));
+  return new Date(Math.min(at, Date.parse(dayRange.to)));
+}

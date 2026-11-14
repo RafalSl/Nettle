@@ -1,11 +1,14 @@
 /* eslint-disable @typescript-eslint/no-require-imports -- screens are loaded lazily, after the mocks below are in place */
 import React from 'react';
-import { Alert } from 'react-native';
+import { ActionSheetIOS, Alert } from 'react-native';
 import { unzipSync } from 'fflate';
 import { FakeLlm } from '../fakes/fakeLlm';
 import type { LlmProvider } from '@/core/ports/llm';
 import { logMeal } from '@/core/usecases/logMeal';
 import { logSkinEntry } from '@/core/usecases/skin';
+import { applyTreatment, logReaction } from '@/core/usecases/events';
+import { addListItem } from '@/core/usecases/lists';
+import { markFlare } from '@/core/usecases/flares';
 import { saveApiKey } from '@/core/usecases/llm';
 import { localDay } from '@/core/model/time';
 import en from '@/i18n/en.json';
@@ -405,5 +408,100 @@ describe('navigation shell (UX-1, UX-2, UX-3, UX-6)', () => {
       expect(en.nav[key].length).toBeLessThan(15);
     }
     expect(Object.keys(en.tabs)).toEqual(['today', 'review']);
+  });
+});
+
+describe('Today (UX-2, UX-5, EN-1, UX-9)', () => {
+  let sheet: jest.SpyInstance;
+  beforeEach(() => {
+    sheet = jest.spyOn(ActionSheetIOS, 'showActionSheetWithOptions').mockImplementation((_o, cb) => cb(0));
+    jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+  });
+  afterEach(() => jest.restoreAllMocks());
+  const today = () => require('@/app/(tabs)/today/index');
+
+  it('UX-2 shows the day log, and a row opens an action sheet that names what goes with a meal (EN-1, UX-9)', async () => {
+    const deps = nowDeps();
+    const meal = await logMeal(deps, { description: 'Synthetic oats', ingredients: ['oats'], at: new Date(Date.now() - 3600_000) });
+    await logReaction(deps, { mealId: meal.id, symptoms: ['hives'], at: new Date(Date.now() - 1800_000) });
+    const { tree } = await mount(today, deps);
+    await flush();
+    expect(hasText(tree, 'Synthetic oats')).toBe(true);
+    const row = tree.root.findAll((n) => typeof n.props.accessibilityLabel === 'string' && n.props.accessibilityLabel.includes('Synthetic oats') && typeof n.props.onPress === 'function')[0]!;
+    await act(async () => row.props.onPress());
+    await flush();
+    const [options] = sheet.mock.calls[0] as [{ options: string[]; destructiveButtonIndex: number; cancelButtonIndex: number; message: string }];
+    expect(options.options).toEqual([en.log.deleteAction, en.common.cancel]); // destructive first, Cancel last
+    expect(options.destructiveButtonIndex).toBe(0);
+    expect(options.cancelButtonIndex).toBe(1);
+    expect(options.message).toContain('1 reactions');
+    expect(await deps.repo.listMeals()).toEqual([]);
+    expect(await deps.repo.listRecords('reactions')).toEqual([]);
+    expect((await deps.repo.listTombstones()).map((x) => x.id).sort()).toHaveLength(2);
+    expect(hasText(tree, 'Synthetic oats')).toBe(false);
+  });
+
+  it('UX-9 choosing Cancel in the action sheet deletes nothing', async () => {
+    const deps = nowDeps();
+    await logMeal(deps, { description: 'Synthetic oats', ingredients: [], at: new Date(Date.now() - 3600_000) });
+    sheet.mockImplementation((_o, cb) => cb(1));
+    const { tree } = await mount(today, deps);
+    await flush();
+    await press(tree, tree.root.findAll((n) => typeof n.props.accessibilityLabel === 'string' && n.props.accessibilityLabel.includes('Synthetic oats'))[0]!.props.accessibilityLabel);
+    await flush();
+    expect(await deps.repo.listMeals()).toHaveLength(1);
+    expect(await deps.repo.listTombstones()).toEqual([]);
+  });
+
+  it('NF-2 the stool quick sheet saves a type in two taps and the row appears in the log', async () => {
+    const deps = nowDeps();
+    const { tree } = await mount(today, deps);
+    await press(tree, en.day.stool);
+    await press(tree, en.day.stoolType.replace('{{n}}', '4'));
+    await flush();
+    expect((await deps.repo.listRecords('stoolEntries')).map((s) => s.bristol)).toEqual([4]);
+    expect(hasText(tree, en.log.stool.replace('{{n}}', '4'))).toBe(true);
+  });
+
+  it('IN-11, NF-2 a treatment shortcut logs in one tap and is disabled right after', async () => {
+    const deps = nowDeps();
+    const cream = await addListItem(deps, 'treatments', 'Synthetic cream');
+    for (const h of [5, 4]) await applyTreatment(deps, { treatmentId: cream.id, areaIds: ['area-chin'], at: new Date(Date.now() - h * 3600_000) });
+    const { tree } = await mount(today, deps);
+    await flush();
+    const label = 'Synthetic cream: ' + en.areas['area-chin'];
+    await press(tree, label);
+    await flush();
+    expect(await deps.repo.listRecords('treatmentApplications')).toHaveLength(3);
+    const node = tree.root.findAll((n) => n.props.accessibilityLabel === label && n.props.accessibilityState)[0]!;
+    expect(node.props.accessibilityState.disabled).toBe(true);
+    await act(async () => tree.unmount());
+  });
+
+  it('UX-2 a past day shows its own log, and a quick entry there gets that day', async () => {
+    const deps = nowDeps();
+    const { tree } = await mount(today, deps);
+    await press(tree, en.day.previous);
+    await press(tree, en.day.stool);
+    await press(tree, en.day.stoolType.replace('{{n}}', '3'));
+    await flush();
+    const [stool] = await deps.repo.listRecords('stoolEntries');
+    const yesterday = new Date(Date.now() - 86_400_000);
+    expect(localDay(stool!.at.utc, stool!.at.tz)).toBe(localDay(yesterday.toISOString(), deps.clock.timeZone()));
+    await press(tree, en.day.today);
+    expect(hasText(tree, en.day.empty)).toBe(true);
+  });
+
+  it('UX-2 the cards offer to end an open flare and to open the check-in of an incomplete day', async () => {
+    const deps = nowDeps();
+    await markFlare(deps, { areaId: 'area-chin', kind: 'start', at: new Date(Date.now() - 3600_000) });
+    const { tree } = await mount(today, deps);
+    await flush();
+    expect(hasText(tree, en.cards.notComplete)).toBe(true);
+    expect(hasText(tree, en.cards.noExport)).toBe(true);
+    await press(tree, en.cards.endFlare);
+    await flush();
+    expect((await deps.repo.listRecords('flareMarkers')).map((m) => m.kind).sort()).toEqual(['end', 'start']);
+    expect(hasText(tree, en.cards.endFlare)).toBe(false);
   });
 });

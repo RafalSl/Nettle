@@ -343,3 +343,7 @@ Newest entry last. One short entry per working session or meaningful step: what 
 ## 2026-11-14: ingredient autocomplete (branch feature/autocomplete-scan-favorites)
 - **Done:** IN-1, IN-14. Names from the diary complete what is typed in a meal row or a drink's ingredient text. Starring a scanned product already kept its barcode and source; a test now covers it. 647 tests pass.
 - **Left:** Review photo comparison and trend charts.
+
+## 2026-11-14: trend chart and photo comparison (branch feature/review-compare-trends)
+- **Done:** SK-8, UX-1. The area timeline has a score chart and a two-photo comparison. 653 tests pass; the iOS bundle builds.
+- **Left (not built):** first-run empty states beyond text, check-in trend charts, newest-wins merge (EX-12), the accessibility pass (UX-8), the Polish string review, pruning unused template dependencies, and the phone check of everything.

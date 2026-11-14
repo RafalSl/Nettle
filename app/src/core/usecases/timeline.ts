@@ -1,5 +1,5 @@
 import { localDay } from '../model/time';
-import type { FlareMarker, LocalDay, NailEntry, Photo, SkinArea, SkinEntry } from '../model/types';
+import { NAIL_EXTENTS, type FlareMarker, type LocalDay, type NailEntry, type Photo, type SkinArea, type SkinEntry } from '../model/types';
 import type { Deps } from './deps';
 
 /** SK-8: one skin or nail entry of an area with its photos, so scores and photos sit side by side. */
@@ -61,4 +61,35 @@ export async function areasWithEntries(deps: Deps): Promise<AreaSummary[]> {
     .flatMap(([id, v]) => (areas.has(id) ? [{ area: areas.get(id)!, entries: v.entries, lastDay: v.lastDay, last: v.last }] : []))
     .sort((a, b) => b.last.localeCompare(a.last))
     .map(({ area, entries, lastDay }) => ({ area, entries, lastDay }));
+}
+
+/** What a trend chart can plot: one of the five skin scores, or the extent of a nail entry (0 = none to 3 = over half). */
+export type TrendKey = keyof SkinEntry['scores'] | 'extent';
+
+export interface TrendPoint {
+  day: LocalDay;
+  /** The day's average (skin scores) or worst (nail extent), to one decimal. */
+  value: number;
+  /** A flare marker of the area on this day, for the chart's marks. */
+  flare: 'start' | 'end' | null;
+}
+
+/**
+ * SK-8, UX-1: the points of a trend chart, oldest day first, from the timeline of one area. A day with several skin
+ * entries is averaged; a nail day takes its largest extent. Days without an entry of that kind are skipped.
+ */
+export function trendPoints(days: readonly TimelineDay[], key: TrendKey): TrendPoint[] {
+  const points: TrendPoint[] = [];
+  for (const d of [...days].reverse()) {
+    const values: number[] = [];
+    for (const e of d.entries) {
+      if (key === 'extent' && e.kind === 'nail') values.push(NAIL_EXTENTS.indexOf(e.entry.extent));
+      if (key !== 'extent' && e.kind === 'skin') values.push(e.entry.scores[key]);
+    }
+    if (values.length === 0) continue;
+    const value = key === 'extent' ? Math.max(...values) : values.reduce((a, b) => a + b, 0) / values.length;
+    const last = d.flares[d.flares.length - 1];
+    points.push({ day: d.day, value: Math.round(value * 10) / 10, flare: last ? last.kind : null });
+  }
+  return points;
 }

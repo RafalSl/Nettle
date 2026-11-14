@@ -7,7 +7,7 @@ import { saveCheckIn, logStool } from '@/core/usecases/checkin';
 import { applyTreatment, logReaction } from '@/core/usecases/events';
 import { logMeal } from '@/core/usecases/logMeal';
 import { addArea, archiveSkinArea, logNailEntry, logSkinEntry } from '@/core/usecases/skin';
-import { areasWithEntries, areaTimeline } from '@/core/usecases/timeline';
+import { areasWithEntries, areaTimeline, trendPoints } from '@/core/usecases/timeline';
 import { markFlare } from '@/core/usecases/flares';
 import { MemoryRepo } from './fakes/memoryRepo';
 import { makeDeps } from './helpers/fixtures';
@@ -140,6 +140,24 @@ describe('area timeline (SK-8)', () => {
     expect(days[1]!.entries[0]).toMatchObject({ kind: 'skin', photos: [{ id: p1.id }] });
     expect(await areaTimeline(deps, nail.id)).toMatchObject([{ day: '2026-01-12', entries: [{ kind: 'nail', photos: [] }] }]);
     expect(await areaTimeline(deps, 'area-sternum')).toEqual([]);
+  });
+
+  it('SK-8 trend points average a day, go oldest first, carry the flare marks, and skip other kinds', async () => {
+    const deps = makeDeps(new MemoryRepo());
+    await logSkinEntry(deps, { areaId: 'area-chin', scores: { ...scores, severity: 2 }, at: d('2026-01-10T08:00:00.000Z') });
+    await logSkinEntry(deps, { areaId: 'area-chin', scores: { ...scores, severity: 5 }, at: d('2026-01-10T18:00:00.000Z') });
+    await logSkinEntry(deps, { areaId: 'area-chin', scores: { ...scores, severity: 8 }, at: d('2026-01-12T08:00:00.000Z') });
+    await markFlare(deps, { areaId: 'area-chin', kind: 'start', at: d('2026-01-12T07:00:00.000Z') });
+    const days = await areaTimeline(deps, 'area-chin');
+    expect(trendPoints(days, 'severity')).toEqual([
+      { day: '2026-01-10', value: 3.5, flare: null },
+      { day: '2026-01-12', value: 8, flare: 'start' },
+    ]);
+    expect(trendPoints(days, 'extent')).toEqual([]);
+    const nail = await addArea(deps, 'Synthetic thumb', 'nail');
+    await logNailEntry(deps, { areaId: nail.id, stage: 'white', extent: 'under_quarter', at: d('2026-01-12T09:00:00.000Z') });
+    await logNailEntry(deps, { areaId: nail.id, stage: 'white', extent: 'over_half', at: d('2026-01-12T10:00:00.000Z') });
+    expect(trendPoints(await areaTimeline(deps, nail.id), 'extent')).toEqual([{ day: '2026-01-12', value: 3, flare: null }]);
   });
 
   it('SK-8 lists the areas that have entries, the most recently logged first, archived ones included', async () => {

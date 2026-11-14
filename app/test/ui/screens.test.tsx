@@ -2134,6 +2134,32 @@ describe('Area timeline (SK-8)', () => {
     expect(mockRouter.push).toHaveBeenLastCalledWith({ pathname: '/review/area', params: { id: 'area-chin' } });
   });
 
+  it('SK-8, UX-1 the timeline charts a score, switches score, and compares two photos side by side with the earlier one first', async () => {
+    const deps = nowDeps();
+    const a = await logSkinEntry(deps, { areaId: 'area-chin', scores: { ...scores, severity: 2, itch: 9 }, at: new Date('2026-01-10T08:00:00.000Z') });
+    const b = await logSkinEntry(deps, { areaId: 'area-chin', scores: { ...scores, severity: 6, itch: 1 }, at: new Date('2026-01-12T08:00:00.000Z') });
+    const pa = await addPhoto(deps, { entryKind: 'skinEntry', entryId: a.id, sourceUri: 'first-photo', at: new Date('2026-01-10T08:05:00.000Z') });
+    const pb = await addPhoto(deps, { entryKind: 'skinEntry', entryId: b.id, sourceUri: 'second-photo', at: new Date('2026-01-12T08:05:00.000Z') });
+    mockParams.current = { id: 'area-chin' };
+    const { tree } = await mount(() => require('@/app/(tabs)/review/area'), deps);
+    await flush();
+    const summary = (label: string) => en.review.trendSummary.replace('{{label}}', label).replace('{{from}}', '2026-01-10').replace('{{to}}', '2026-01-12');
+    expect(hasText(tree, summary(en.skin.scores.severity).replace('{{first}}', '2').replace('{{last}}', '6').replace('{{min}}', '2').replace('{{max}}', '6'))).toBe(true);
+    await press(tree, en.skin.scores.itch);
+    expect(hasText(tree, summary(en.skin.scores.itch).replace('{{first}}', '9').replace('{{last}}', '1').replace('{{min}}', '1').replace('{{max}}', '9'))).toBe(true);
+    await press(tree, en.review.compare);
+    expect(hasText(tree, en.review.comparePick)).toBe(true);
+    await press(tree, `${en.review.pick} ${pb.at.utc}`); // the later photo first: the comparison still puts the earlier one on the left
+    await press(tree, `${en.review.pick} ${pa.at.utc}`);
+    const shownLabels = tree.root
+      .findAll((n) => typeof n.props.accessibilityLabel === 'string' && /^2026-01-1[02] 0[0-9]:05/.test(n.props.accessibilityLabel))
+      .map((n) => n.props.accessibilityLabel as string);
+    expect([...new Set(shownLabels)].map((l) => l.slice(0, 16))).toEqual(['2026-01-10 09:05', '2026-01-12 09:05']);
+    await press(tree, en.review.compareDone);
+    expect(hasText(tree, en.review.comparePick)).toBe(false);
+    mockParams.current = {};
+  });
+
   it('SK-8, SK-5 the timeline shows scores beside photos, and a sensitive photo stays blurred until tapped', async () => {
     const deps = nowDeps();
     const entry = await logSkinEntry(deps, { areaId: 'area-intimate', scores, at: new Date('2026-01-10T08:00:00.000Z') });

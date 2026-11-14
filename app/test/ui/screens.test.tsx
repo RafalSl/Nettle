@@ -34,6 +34,7 @@ const mockRouter = { push: jest.fn(), back: jest.fn(), navigate: jest.fn() };
 const mockCamera: { props?: { onBarcodeScanned?: (e: { data: string }) => void } } = {};
 const mockPermission: { current: { granted: boolean; canAskAgain: boolean } | null } = { current: { granted: true, canAskAgain: true } };
 const mockParams: { current: Record<string, string> } = { current: {} };
+const mockPicker: { last?: { maximumDate?: Date; onValueChange: (e: object, d: Date) => void } } = {};
 const mockScreen: { options?: { headerLeft?: () => React.ReactElement; headerRight?: () => React.ReactElement; gestureEnabled?: boolean } } = {};
 
 // Native modules and the router are replaced; everything else (screens, components, i18n, use cases) is real.
@@ -54,7 +55,10 @@ jest.mock('expo-router', () => {
     }),
   };
 });
-jest.mock('@react-native-community/datetimepicker', () => () => null);
+jest.mock('@react-native-community/datetimepicker', () => (props: typeof mockPicker.last) => {
+  mockPicker.last = props;
+  return null;
+});
 jest.mock('expo-camera', () => ({
   CameraView: (props: typeof mockCamera.props) => {
     mockCamera.props = props;
@@ -939,6 +943,33 @@ describe('Review (UX-1, EX-14)', () => {
     const { tree } = await mount(() => require('@/app/(tabs)/review/index'), nowDeps());
     await flush();
     expect(hasText(tree, en.review.noDays)).toBe(true);
+  });
+
+  it('UX-2 the day heading opens a date picker; a picked past day shows that day, a future day is not chosen, and Today returns', async () => {
+    const deps = nowDeps();
+    await logMeal(deps, { description: 'Synthetic old meal', ingredients: [], at: new Date('2026-01-10T08:00:00.000Z') });
+    const { tree } = await mount(() => require('@/app/(tabs)/today/index'), deps);
+    await flush();
+    mockPicker.last = undefined;
+    expect(mockPicker.last).toBeUndefined(); // closed until the heading is pressed
+    await press(tree, en.day.jump);
+    expect(mockPicker.last!.maximumDate).toBeInstanceOf(Date);
+    await act(async () => {
+      mockPicker.last!.onValueChange({}, new Date('2026-01-10T12:00:00'));
+    });
+    await flush();
+    expect(hasText(tree, '2026-01-10')).toBe(true);
+    expect(hasText(tree, 'Synthetic old meal')).toBe(true);
+    mockPicker.last = undefined;
+    await flush();
+    expect(mockPicker.last).toBeUndefined(); // closes after a pick
+    await press(tree, en.day.jump);
+    await act(async () => {
+      mockPicker.last!.onValueChange({}, new Date(Date.now() + 5 * 86_400_000));
+    });
+    await flush();
+    expect(hasText(tree, en.day.today)).toBe(true); // a future date lands on today
+    expect(hasText(tree, 'Synthetic old meal')).toBe(false);
   });
 
   it('UX-2 Today opens the day given in the route parameter', async () => {

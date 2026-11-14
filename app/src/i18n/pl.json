@@ -681,6 +681,7 @@
     "flareEnd": "Koniec rzutu"
   },
   "day": {
+    "jump": "Przejdź do daty",
     "previous": "Poprzedni dzień",
     "next": "Następny dzień",
     "today": "Dziś",

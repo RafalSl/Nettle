@@ -37,19 +37,26 @@ export function parseSummary(text: string): string {
 }
 
 export interface AllergenSuggestion {
-  /** Suggestions only: unselected until the user selects them (IN-10). */
-  allergens: Allergen[];
+  /** Suggested tags per ingredient name, as the model wrote the name. Suggestions only (IN-10). */
+  items: { name: string; allergens: Allergen[] }[];
   note: string | null;
 }
 
 /** IN-10: unknown ids are dropped and duplicates merged; anything else unexpected is `llm_bad_response`. */
 export function parseAllergenSuggestion(text: string): AllergenSuggestion {
   const o = parseJson(text);
-  if (!isObj(o) || !Array.isArray(o.allergens) || o.allergens.some((x) => typeof x !== 'string')) throw new NettleError('llm_bad_response');
+  const bad = (): never => {
+    throw new NettleError('llm_bad_response');
+  };
+  if (!isObj(o) || !Array.isArray(o.items)) return bad();
   const note = o.note;
-  if (note !== null && note !== undefined && typeof note !== 'string') throw new NettleError('llm_bad_response');
-  const allergens = [...new Set((o.allergens as string[]).map((s) => s.trim()))].filter((s): s is Allergen => (ALLERGENS as readonly string[]).includes(s));
-  return { allergens, note: typeof note === 'string' && note.trim() ? note.trim() : null };
+  if (note !== null && note !== undefined && typeof note !== 'string') return bad();
+  const items = o.items.map((it) => {
+    if (!isObj(it) || typeof it.name !== 'string' || !Array.isArray(it.allergens) || it.allergens.some((x) => typeof x !== 'string')) return bad();
+    const allergens = [...new Set((it.allergens as string[]).map((s) => s.trim()))].filter((s): s is Allergen => (ALLERGENS as readonly string[]).includes(s));
+    return { name: it.name.trim(), allergens };
+  });
+  return { items, note: typeof note === 'string' && note.trim() ? note.trim() : null };
 }
 
 export interface LabelScan {

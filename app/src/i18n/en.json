@@ -34,6 +34,8 @@
     "aiAllergens": "Suggest allergens with AI",
     "aiAllergensConfirmTitle": "Send the ingredients to Anthropic?",
     "aiAllergensConfirmBody": "These ingredient names (text only, no photo) are sent over the internet to Anthropic to suggest which allergens they contain. Nothing is selected or saved from the answer until you select it. Anthropic bills this separately to your API account (a small amount); a Claude subscription does not cover it.",
+    "aiAllergensSaved": "Taken from suggestions saved on this phone; nothing was sent.",
+    "aiAllergensKept": "{{n}} more ingredients were asked before and are not sent again.",
     "aiAllergensSend": "Send",
     "aiAllergensRunning": "Asking the model about the ingredients. You can keep entering the meal.",
     "aiAllergensFailed": "Nothing was selected.",

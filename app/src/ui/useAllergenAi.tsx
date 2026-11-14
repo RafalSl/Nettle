@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Alert } from 'react-native';
 import { NettleError } from '@/core/model/errors';
 import type { Allergen } from '@/core/model/types';
-import { MAX_ALLERGEN_INGREDIENTS, suggestAllergensWithAi } from '@/core/usecases/llm';
+import { planAllergenSuggestion, suggestAllergensWithAi } from '@/core/usecases/llm';
 import { currentLanguage, errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
 import { Button, Hint } from '@/ui/components';
@@ -21,6 +21,7 @@ export function useAllergenAi(onSuggested: (tags: Allergen[], note: string | nul
   useEffect(() => () => ctl.current?.abort(), []);
 
   async function run(ingredients: string[]) {
+    // Names with a saved answer are not sent again; with none left to send the answer is immediate and free.
     ctl.current?.abort();
     const controller = new AbortController();
     ctl.current = controller;
@@ -29,7 +30,7 @@ export function useAllergenAi(onSuggested: (tags: Allergen[], note: string | nul
       const r = await suggestAllergensWithAi(deps, { ingredients, language: currentLanguage(), signal: controller.signal });
       if (controller.signal.aborted) return;
       setState({ s: 'idle' });
-      onSuggested(r.allergens, r.note);
+      onSuggested(r.allergens, r.note ?? (r.asked === 0 ? t('meal.aiAllergensSaved') : null));
     } catch (e) {
       if (controller.signal.aborted || (e instanceof NettleError && e.code === 'llm_cancelled')) return setState({ s: 'idle' });
       setState({ s: 'failed', error: e });
@@ -38,13 +39,23 @@ export function useAllergenAi(onSuggested: (tags: Allergen[], note: string | nul
     }
   }
 
-  function start(ingredients: string[]) {
-    const names = [...new Set(ingredients.map((i) => i.trim()).filter(Boolean))].slice(0, MAX_ALLERGEN_INGREDIENTS);
-    if (names.length === 0) return Alert.alert(errorMessage(new NettleError('no_ingredients')));
-    Alert.alert(t('meal.aiAllergensConfirmTitle'), `${t('meal.aiAllergensConfirmBody')}\n\n${names.map((n) => `• ${n}`).join('\n')}`, [
-      { text: t('common.cancel'), style: 'cancel' },
-      { text: t('meal.aiAllergensSend'), onPress: () => void run(names) },
-    ]);
+  async function start(ingredients: string[]) {
+    try {
+      const plan = await planAllergenSuggestion(deps, ingredients);
+      // Everything asked before: no call, no billing, so no confirmation either.
+      if (plan.toSend.length === 0) return void (await run(plan.names));
+      const kept = plan.names.length - plan.toSend.length;
+      Alert.alert(
+        t('meal.aiAllergensConfirmTitle'),
+        `${t('meal.aiAllergensConfirmBody')}\n\n${plan.toSend.map((n) => `• ${n}`).join('\n')}${kept > 0 ? `\n\n${t('meal.aiAllergensKept', { n: kept })}` : ''}`,
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          { text: t('meal.aiAllergensSend'), onPress: () => void run(plan.names) },
+        ],
+      );
+    } catch (e) {
+      Alert.alert(errorMessage(e));
+    }
   }
 
   return {
@@ -78,7 +89,7 @@ export function AllergenAiControls({ hook, ingredients }: { hook: ReturnType<typ
           <Button title={t('meal.estimateRetry')} onPress={() => hook.retry(ingredients)} />
         </>
       )}
-      <Button kind="secondary" title={t('meal.aiAllergens')} onPress={() => hook.start(ingredients)} />
+      <Button kind="secondary" title={t('meal.aiAllergens')} onPress={() => void hook.start(ingredients)} />
     </>
   );
 }

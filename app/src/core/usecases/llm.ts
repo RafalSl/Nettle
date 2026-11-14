@@ -1,8 +1,8 @@
-import { allergenPrompt, INGREDIENTS_PROMPT_VERSION, LABEL_PROMPT_VERSION, MAX_KNOWN_NAMES, ingredientsPrompt, labelPrompt } from '../llm/prompts';
+import { ALLERGEN_PROMPT_VERSION, allergenPrompt, INGREDIENTS_PROMPT_VERSION, LABEL_PROMPT_VERSION, MAX_KNOWN_NAMES, ingredientsPrompt, labelPrompt } from '../llm/prompts';
 import type { LlmProvenance } from '../model/source';
-import { parseAllergenSuggestion, parseIngredientEstimate, parseLabelScan, type AllergenSuggestion, type IngredientEstimate, type LabelScan } from '../llm/parse';
+import { parseAllergenSuggestion, parseIngredientEstimate, parseLabelScan, type IngredientEstimate, type LabelScan } from '../llm/parse';
 import { NettleError } from '../model/errors';
-import { ALLERGENS } from '../model/types';
+import { ALLERGENS, type Allergen } from '../model/types';
 import { LLM_ACTIONS, type LlmAction } from '../llm/actions';
 import type { Language, LlmImage, LlmProvider, ModelChoice } from '../ports/llm';
 import type { Deps } from './deps';
@@ -105,19 +105,81 @@ export async function knownIngredientNames(deps: Deps): Promise<string[]> {
 
 /** Most ingredient names one allergen request sends. */
 export const MAX_ALLERGEN_INGREDIENTS = 80;
+const ALLERGEN_CACHE = 'allergen_cache';
+const MAX_CACHED_NAMES = 3000;
+
+const nameKey = (name: string) => name.trim().toLowerCase().replace(/\s+/g, ' ');
+
+type CacheFile = { version: string; names: Record<string, Allergen[]> };
+
+async function readAllergenCache(deps: Deps): Promise<CacheFile> {
+  const empty: CacheFile = { version: ALLERGEN_PROMPT_VERSION, names: {} };
+  try {
+    const raw = await deps.settings.get(ALLERGEN_CACHE);
+    const parsed = raw ? (JSON.parse(raw) as CacheFile) : empty;
+    // A different prompt version means different answers: the old ones are not reused.
+    return parsed.version === ALLERGEN_PROMPT_VERSION && typeof parsed.names === 'object' && parsed.names !== null ? parsed : empty;
+  } catch {
+    return empty;
+  }
+}
+
+/** IN-10: forgets every saved allergen suggestion (Delete data, AI). */
+export const clearAllergenCache = (deps: Deps) => deps.settings.delete(ALLERGEN_CACHE);
+
+export interface AllergenPlan {
+  /** The distinct ingredient names, as given. */
+  names: string[];
+  /** The saved suggestions for names asked before. */
+  known: Allergen[];
+  /** The names the model has not been asked about yet: only these are sent, and they are what the confirmation lists. */
+  toSend: string[];
+}
 
 /**
- * IN-10, LL-5: ask the model which EU allergens an ingredient list contains. Text only. The caller must have shown
- * the confirmation that names the ingredients; the result only suggests tags, nothing is selected or saved here.
+ * IN-10, LL-5: works out what an allergen suggestion needs. The model's answers are saved per ingredient name on
+ * this phone (not exported), so a name asked before is never sent again. Nothing is sent here.
+ */
+export async function planAllergenSuggestion(deps: Deps, ingredients: readonly string[]): Promise<AllergenPlan> {
+  const names = [...new Map(ingredients.map((i) => i.trim()).filter(Boolean).map((n) => [nameKey(n), n])).values()].slice(0, MAX_ALLERGEN_INGREDIENTS);
+  if (names.length === 0) throw new NettleError('no_ingredients');
+  const cache = await readAllergenCache(deps);
+  const known = new Set<Allergen>();
+  const toSend: string[] = [];
+  for (const n of names) {
+    const hit = cache.names[nameKey(n)];
+    if (hit) hit.forEach((a) => known.add(a));
+    else toSend.push(n);
+  }
+  return { names, known: [...known], toSend };
+}
+
+/**
+ * IN-10, LL-5: ask the model about the names that have no saved answer, save its answers per name, and return the
+ * tags of the whole list. Text only. With nothing to send, no call is made. The tags are suggestions: nothing is
+ * selected or saved on an entry here.
  */
 export async function suggestAllergensWithAi(
   deps: Deps,
   input: { ingredients: readonly string[]; language: Language; signal?: AbortSignal },
-): Promise<AllergenSuggestion> {
-  const ingredients = [...new Set(input.ingredients.map((i) => i.trim()).filter(Boolean))].slice(0, MAX_ALLERGEN_INGREDIENTS);
-  if (ingredients.length === 0) throw new NettleError('no_ingredients');
+): Promise<{ allergens: Allergen[]; note: string | null; asked: number }> {
+  const plan = await planAllergenSuggestion(deps, input.ingredients);
+  if (plan.toSend.length === 0) return { allergens: plan.known, note: null, asked: 0 };
   const { provider } = await currentProvider(deps, 'allergen_suggest');
-  const prompt = allergenPrompt(input.language, ALLERGENS, ingredients);
+  const prompt = allergenPrompt(input.language, ALLERGENS, plan.toSend);
   const response = await provider.completeJson({ ...prompt, ...(input.signal ? { signal: input.signal } : {}) });
-  return parseAllergenSuggestion(response.text);
+  const parsed = parseAllergenSuggestion(response.text);
+  if (input.signal?.aborted) throw new NettleError('llm_cancelled');
+  const answered = new Map(parsed.items.map((i) => [nameKey(i.name), i.allergens]));
+  const cache = await readAllergenCache(deps);
+  const all = new Set<Allergen>(plan.known);
+  for (const n of plan.toSend) {
+    const tags = answered.get(nameKey(n)) ?? []; // a name the model skipped counts as "none found"
+    cache.names[nameKey(n)] = tags;
+    tags.forEach((a) => all.add(a));
+  }
+  const keys = Object.keys(cache.names);
+  for (const k of keys.slice(0, Math.max(0, keys.length - MAX_CACHED_NAMES))) delete cache.names[k]; // oldest first
+  await deps.settings.set(ALLERGEN_CACHE, JSON.stringify(cache));
+  return { allergens: [...all], note: parsed.note, asked: plan.toSend.length };
 }

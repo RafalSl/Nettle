@@ -1579,7 +1579,7 @@ describe('Inline photo estimate (IN-3, LL-12, IN-10)', () => {
   });
 
   it('IN-10, LL-5 the AI allergen suggestion names the ingredients it sends, and its tags stay unselected until selected', async () => {
-    const llm = new FakeLlm(['{"allergens":["milk","gluten"],"note":null}']);
+    const llm = new FakeLlm(['{"items":[{"name":"butter","allergens":["milk","gluten"]}],"note":null}']);
     const deps = nowDeps(llm);
     await saveApiKey(deps, 'sk-synthetic-secret');
     const { tree } = await mount(meal, deps);
@@ -1603,6 +1603,13 @@ describe('Inline photo estimate (IN-3, LL-12, IN-10)', () => {
     expect(selected(en.allergens.milk)).toBe(true);
     expect(selected(en.allergens.gluten)).toBe(true);
     expect(await deps.repo.listMeals()).toEqual([]);
+    // asking again for the same ingredient needs no confirmation and no call
+    alert.mockClear();
+    await press(tree, en.meal.aiAllergens);
+    await flush();
+    expect(llm.requests).toHaveLength(1);
+    expect(alert.mock.calls.some((c) => c[0] === en.meal.aiAllergensConfirmTitle)).toBe(false);
+    expect(hasText(tree, en.meal.aiAllergensSaved)).toBe(true);
   });
 
   it('IN-10 with no ingredients the AI allergen button asks for one and sends nothing', async () => {

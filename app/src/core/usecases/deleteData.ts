@@ -2,6 +2,7 @@ import { countPlan, planDeletion, type DeleteSelection } from '../model/deletion
 import { NettleError } from '../model/errors';
 import type { RecordKind } from '../model/types';
 import type { Deps } from './deps';
+import { clearAllergenCache } from './llm';
 
 async function plan(deps: Deps, selection: DeleteSelection) {
   if (selection.kinds.length === 0) throw new NettleError('nothing_selected');
@@ -27,5 +28,7 @@ export async function deleteData(deps: Deps, selection: DeleteSelection): Promis
   for (const photo of records.photos) {
     if (doomed.has(photo.id)) await deps.photos.remove(photo.file);
   }
+  // IN-10: the saved allergen suggestions are AI output derived from the diary's ingredients; they go with the AI group.
+  if (selection.kinds.includes('analyses')) await clearAllergenCache(deps);
   return countPlan(p);
 }

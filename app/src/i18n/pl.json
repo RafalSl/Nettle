@@ -41,6 +41,8 @@
     "aiAllergens": "Zaproponuj alergeny z AI",
     "aiAllergensConfirmTitle": "Wysłać składniki do Anthropic?",
     "aiAllergensConfirmBody": "Te nazwy składników (tylko tekst, bez zdjęcia) są wysyłane przez internet do Anthropic, żeby podpowiedzieć, jakie zawierają alergeny. Nic z odpowiedzi nie zostanie zaznaczone ani zapisane, dopóki sam tego nie zaznaczysz. Anthropic nalicza to osobno na Twoim koncie API (niewielka kwota); subskrypcja Claude tego nie obejmuje.",
+    "aiAllergensSaved": "Wzięto z podpowiedzi zapisanych na tym telefonie; nic nie wysłano.",
+    "aiAllergensKept": "Jeszcze {{n}} składników było już sprawdzanych wcześniej i nie jest wysyłanych ponownie.",
     "aiAllergensSend": "Wyślij",
     "aiAllergensRunning": "Pytam model o składniki. Możesz dalej wpisywać posiłek.",
     "aiAllergensFailed": "Nic nie zaznaczono.",

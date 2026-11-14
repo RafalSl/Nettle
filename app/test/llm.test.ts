@@ -1,3 +1,4 @@
+import { LLM_ACTIONS } from '@/core/llm/actions';
 import { buildBody, createAnthropicProvider, mapHttpError, readResponse } from '@/adapters/llm/anthropicProvider';
 import { SqliteSettings } from '@/adapters/storage/sqliteSettings';
 import { SqliteRepo } from '@/adapters/storage/sqliteRepo';
@@ -47,13 +48,30 @@ describe('API key and model settings (SE-2, SE-4, LL-9)', () => {
     expect(await code(saveApiKey(deps, '   '))).toBe('empty_key');
   });
 
-  it('LL-9 the model is a setting with a default, and clearing it restores the default', async () => {
+  it('LL-9 each action has its own model, Haiku 5.5 by default, chosen from the offered list', async () => {
     const deps = makeDeps(new MemoryRepo());
-    expect(await getModel(deps)).toBe(DEFAULT_MODEL);
-    await setModel(deps, ' claude-sonnet-5-5 ');
-    expect(await getModel(deps)).toBe('claude-sonnet-5-5');
-    await setModel(deps, ' ');
-    expect(await getModel(deps)).toBe(DEFAULT_MODEL);
+    expect(DEFAULT_MODEL).toBe('claude-haiku-5-5');
+    for (const a of LLM_ACTIONS) expect(await getModel(deps, a)).toBe(DEFAULT_MODEL);
+    await setModel(deps, 'analysis', 'claude-sonnet-5-5');
+    expect(await getModel(deps, 'analysis')).toBe('claude-sonnet-5-5');
+    expect(await getModel(deps, 'meal_photo')).toBe(DEFAULT_MODEL); // the others are untouched
+    expect(await code(setModel(deps, 'analysis', 'made-up-model'))).toBe('invalid_value');
+    expect(await code(setModel(deps, 'nonsense' as never, 'claude-sonnet-5-5'))).toBe('invalid_value');
+    await setModel(deps, 'analysis', null);
+    expect(await getModel(deps, 'analysis')).toBe(DEFAULT_MODEL);
+    // a stored model the provider no longer offers falls back to the default
+    await deps.settings.set('llm_model.analysis', 'retired-model');
+    expect(await getModel(deps, 'analysis')).toBe(DEFAULT_MODEL);
+  });
+
+  it('LL-9 the provider is built with the model of the action asked for', async () => {
+    const deps = makeDeps(new MemoryRepo());
+    await saveApiKey(deps, 'synthetic-test-key');
+    const seen: string[] = [];
+    const spy = { ...deps, llmFor: (c: { model: string }) => (seen.push(c.model), { completeJson: async () => ({ text: '{"ingredients":[],"uncertainty":null}', model: c.model }) }) };
+    await setModel(spy, 'meal_photo', 'claude-sonnet-5-5');
+    await estimateIngredients(spy, { image, language: 'en' });
+    expect(seen).toEqual(['claude-sonnet-5-5']);
   });
 
   it('LL-9 the SQLite settings store keeps values, overwrites and deletes', async () => {

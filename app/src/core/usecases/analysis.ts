@@ -70,7 +70,7 @@ export async function prepareAnalysis(deps: Deps, sel: AnalysisSelection): Promi
     dayFrom: sel.dayFrom,
     dayTo: sel.dayTo,
     language: sel.language,
-    model: await getModel(deps),
+    model: await getModel(deps, 'analysis'),
     promptVersion: ANALYSIS_PROMPT_VERSION,
     counts: { ...built.counts, photos: photos.length },
     photos,
@@ -85,7 +85,7 @@ export async function prepareAnalysis(deps: Deps, sel: AnalysisSelection): Promi
  * refusal, unreadable answer) loses no data and leaves the diary as it was.
  */
 export async function runAnalysis(deps: Deps, prepared: PreparedAnalysis, signal?: AbortSignal): Promise<Analysis> {
-  const { provider } = await currentProvider(deps);
+  const { provider } = await currentProvider(deps, 'analysis');
   const response = await provider.completeJson(signal ? { ...prepared.request, signal } : prepared.request);
   // LL-12: Cancel stores nothing, even when the answer arrived at the same moment.
   if (signal?.aborted) throw new NettleError('llm_cancelled');

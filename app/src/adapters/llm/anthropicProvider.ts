@@ -1,5 +1,5 @@
 import { NettleError } from '@/core/model/errors';
-import type { LlmConfig, LlmProvider, LlmRequest, LlmResponse } from '@/core/ports/llm';
+import type { LlmConfig, LlmProvider, LlmRequest, LlmResponse, ModelChoice } from '@/core/ports/llm';
 import { bytesToBase64 } from '@/core/util/base64';
 
 /**
@@ -9,6 +9,14 @@ import { bytesToBase64 } from '@/core/util/base64';
  * evaluate, so the app crashed at start-up on the phone. The request here is one POST with a JSON body, which
  * the API documents as raw HTTP, so the adapter stays small and has no extra dependency.
  */
+/** LL-9: the models offered in Settings, AI analysis. The first one is the default (Haiku 5.5). */
+export const ANTHROPIC_MODELS: readonly ModelChoice[] = [
+  { id: 'claude-haiku-5-5', label: 'Haiku 5.5' },
+  { id: 'claude-sonnet-5-5', label: 'Sonnet 5.5' },
+  { id: 'claude-opus-5-5', label: 'Opus 5.5' },
+  { id: 'claude-fable-5-2', label: 'Fable 5.2' },
+];
+
 const ENDPOINT = 'https://api.anthropic.com/v1/messages';
 const API_VERSION = '2026-10-21';
 const MAX_RETRIES = 2;

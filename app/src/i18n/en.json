@@ -414,9 +414,14 @@
     "keyField": "API key",
     "keySave": "Save key",
     "keyDelete": "Delete key",
-    "modelField": "Model name",
-    "modelSave": "Save model",
-    "modelHint": "Leave empty to use the default.",
+    "modelsTitle": "Models",
+    "modelsHint": "Each AI action uses its own model. Haiku 5.5 is the default: fast and cheap. A larger model costs more per run.",
+    "action": {
+      "label_scan": "Label scan",
+      "meal_photo": "Meal photo",
+      "analysis": "AI analysis",
+      "report_summary": "Report summary"
+    },
     "saved": "Saved"
   },
   "analysis": {

@@ -27,6 +27,10 @@ export function makeDeps(repo: StorageRepository, now = '2026-01-15T10:00:00.000
     keys: new MemoryKeyStore(),
     settings: new MemorySettings(),
     llmFor: () => llm,
+    llmModels: [
+      { id: 'claude-haiku-5-5', label: 'Haiku' },
+      { id: 'claude-sonnet-5-5', label: 'Sonnet' },
+    ],
     barcode: new FakeBarcode(),
     auth: new FakeAuth(),
   };

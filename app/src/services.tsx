@@ -3,7 +3,7 @@ import { getCalendars } from 'expo-localization';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { openExpoSqlite } from '@/adapters/storage/expoSqliteDb';
-import { createAnthropicProvider } from '@/adapters/llm/anthropicProvider';
+import { ANTHROPIC_MODELS, createAnthropicProvider } from '@/adapters/llm/anthropicProvider';
 import { secureStoreKeyStore } from '@/adapters/keystore/secureStoreKeyStore';
 import { SqliteRepo } from '@/adapters/storage/sqliteRepo';
 import { SqliteSettings } from '@/adapters/storage/sqliteSettings';
@@ -59,6 +59,7 @@ export function ServicesProvider({ children }: { children: ReactNode }) {
           keys: secureStoreKeyStore,
           settings: new SqliteSettings(db),
           llmFor: createAnthropicProvider,
+          llmModels: ANTHROPIC_MODELS,
           clock: { now: () => new Date(), timeZone: () => getCalendars()[0]?.timeZone ?? 'UTC' },
         };
         const appLock = new AppLock(deps);

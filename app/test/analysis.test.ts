@@ -180,7 +180,7 @@ describe.each(repos)('prepare and run an analysis (%s)', (_name, make) => {
     const { deps, llm } = await diary(make);
     const prepared = await prepareAnalysis(deps, sel);
     expect(llm.requests).toHaveLength(0);
-    expect(prepared).toMatchObject({ dayFrom: '2026-01-10', dayTo: '2026-01-14', model: 'claude-opus-5-5', promptVersion: 'analysis-2' });
+    expect(prepared).toMatchObject({ dayFrom: '2026-01-10', dayTo: '2026-01-14', model: 'claude-haiku-5-5', promptVersion: 'analysis-2' });
     expect(prepared.counts).toMatchObject({ meals: 3, skinEntries: 1, nailEntries: 1, reactions: 1, treatmentApplications: 1, checkIns: 2, days: 5, completeDays: 1, photos: 0 });
     expect(prepared.counts.changeEvents).toBe(1); // lookback
     expect(prepared.sentCharacters).toBeGreaterThan(500);
@@ -275,7 +275,7 @@ describe.each(repos)('prepare and run an analysis (%s)', (_name, make) => {
 
   it('LL-9 the prepared request names the model from the setting', async () => {
     const { deps } = await diary(make);
-    await deps.settings.set('llm_model', 'claude-sonnet-5-5');
+    await deps.settings.set('llm_model.analysis', 'claude-sonnet-5-5');
     expect((await prepareAnalysis(deps, sel)).model).toBe('claude-sonnet-5-5');
   });
 });

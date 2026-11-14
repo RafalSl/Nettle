@@ -271,3 +271,7 @@ Newest entry last. One short entry per working session or meaningful step: what 
 - **Done:** IN-16, IN-2, LL-4, EX-4. `IngredientSource` (core/model/source.ts) and `barcode` on `Meal`, `Drink` and the favorite snapshots; migration 14; `data.json` validates the source (LLM details exactly for the two AI kinds). `estimateIngredients` returns the model, time and prompt version. Editing the ingredients or tags of a filled entry marks it edited (`editMeal`, `editDrink`, and the forms against the lists as filled). `lookupProduct` checks the diary's own entries for the barcode first; the meal and drink forms show the date of that entry. 578 tests pass.
 - **Trade-offs:** tags from Open Food Facts count as the source's own, so saving without selecting them marks the entry edited. A photo estimate becomes the source only on a meal that was still typed; on a scanned meal it counts as an edit.
 - **Next:** model per action (LL-9).
+
+## 2026-11-14: model per action (branch feature/model-per-action)
+- **Done:** LL-9, LL-10, UX-6. `core/llm/actions.ts`, `getModel`, `setModel` and `currentProvider` take the action; the list of models comes from the adapter through `deps.llmModels`; a stored model that is no longer offered falls back to Haiku 5.5. The AI settings screen shows a chip row per action. 580 tests pass.
+- **Next:** label scan (IN-15, LL-13).

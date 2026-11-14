@@ -32,6 +32,12 @@ export interface LlmProvider {
   completeJson(req: LlmRequest): Promise<LlmResponse>;
 }
 
+/** LL-9: one entry of the list a provider offers for the model setting. */
+export interface ModelChoice {
+  id: string;
+  label: string;
+}
+
 /** LL-9, LL-10: provider, model and key come from settings. */
 export interface LlmConfig {
   provider: 'anthropic';

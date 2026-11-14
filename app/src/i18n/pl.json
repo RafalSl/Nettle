@@ -41,6 +41,7 @@
     "fromPhoto": "Zaproponuj składniki ze zdjęcia",
     "photoConfirmTitle": "Wysłać to zdjęcie do Anthropic?",
     "photoConfirmBody": "Zdjęcie zostanie wysłane przez internet do Anthropic, aby odgadnąć składniki. Nic z odpowiedzi nie zostanie zapisane, dopóki jej nie sprawdzisz. Anthropic rozlicza to osobno na Twoim koncie API (niewielka kwota); subskrypcja Claude tego nie obejmuje.",
+    "knownNamesSent": "Wraz ze zdjęciem wysyłanych jest {{n}} nazw składników z Twojego dziennika, bo włączono \"Preferuj moje nazwy składników\".",
     "photoSend": "Wyślij zdjęcie",
     "suggested": "Proponowane składniki. Sprawdź je i popraw przed zapisem.",
     "unsure": "Niepewne: {{text}}",
@@ -777,6 +778,8 @@
     "window": "Okres wstecz",
     "days": "{{n}} dni",
     "saveOnTap": "Zapis jednym dotknięciem",
+    "knownNames": "Preferuj moje nazwy składników",
+    "knownNamesHint": "Domyślnie wyłączone. Szacunek ze zdjęcia wysyła wtedy także nazwy składników, których już używałeś (tylko nazwy, bez wpisów i zdjęć), żeby model użył Twojej pisowni. Potwierdzenie podaje ich liczbę.",
     "saveOnTapHint": "Dotknięcie podpowiedzi napoju lub leku zapisuje ją od razu. Posiłki nigdy nie zapisują się dotknięciem.",
     "hint": "Podpowiedzi są liczone na tym telefonie z Twoich wpisów. Nic nie jest nigdzie wysyłane."
   },

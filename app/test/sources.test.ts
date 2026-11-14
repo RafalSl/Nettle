@@ -6,7 +6,7 @@ import { logMeal } from '@/core/usecases/logMeal';
 import { MemoryRepo } from './fakes/memoryRepo';
 import { makeDeps } from './helpers/fixtures';
 
-const llm = { model: 'synthetic-model', at: '2026-01-01T00:00:00.000Z', promptVersion: 'ingredients-1' };
+const llm = { model: 'synthetic-model', at: '2026-01-01T00:00:00.000Z', promptVersion: 'ingredients-2' };
 const photo = { kind: 'photo_estimate' as const, edited: false, llm };
 
 describe('source of ingredients (IN-16)', () => {

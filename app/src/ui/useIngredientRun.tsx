@@ -4,7 +4,7 @@ import { pickPhotoUris } from '@/adapters/photos/pickPhotos';
 import { NettleError } from '@/core/model/errors';
 import type { LlmProvenance, SourceKind } from '@/core/model/source';
 import type { Allergen } from '@/core/model/types';
-import { estimateIngredients, scanLabel } from '@/core/usecases/llm';
+import { estimateIngredients, knownIngredientNames, scanLabel } from '@/core/usecases/llm';
 import { currentLanguage, errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
 import { Button, Chips, Hint } from '@/ui/components';
@@ -41,7 +41,7 @@ export function useIngredientRun() {
   const { deps } = useServices();
   const [run, setRun] = useState<Run>({ status: 'idle' });
   const ctl = useRef<AbortController | null>(null);
-  const photo = useRef<{ uri: string; kind: RunKind } | null>(null);
+  const photo = useRef<{ uri: string; kind: RunKind; knownNames: readonly string[] } | null>(null);
   const slowTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const discard = () => {
@@ -63,12 +63,12 @@ export function useIngredientRun() {
     [],
   );
 
-  async function execute(uri: string, kind: RunKind) {
+  async function execute(uri: string, kind: RunKind, knownNames: readonly string[] = []) {
     abort();
     const controller = new AbortController();
     ctl.current = controller;
     if (photo.current && photo.current.uri !== uri) discard();
-    photo.current = { uri, kind };
+    photo.current = { uri, kind, knownNames };
     setRun({ status: 'running', slow: false });
     slowTimer.current = setTimeout(() => setRun((r) => (r.status === 'running' ? { status: 'running', slow: true } : r)), SLOW_ESTIMATE_MS);
     try {
@@ -80,7 +80,7 @@ export function useIngredientRun() {
         const label = { textRead: r.textRead, allergens: r.allergens, traces: r.traces };
         next = { status: 'ready', kind, names: r.ingredients, picked: new Set(), uncertainty: r.note, provenance: r.provenance, label };
       } else {
-        const r = await estimateIngredients(deps, input);
+        const r = await estimateIngredients(deps, { ...input, knownNames });
         next = { status: 'ready', kind, names: r.names, picked: new Set(), uncertainty: r.uncertainty, provenance: r.provenance, label: null };
       }
       if (controller.signal.aborted) return;
@@ -103,14 +103,16 @@ export function useIngredientRun() {
   /** LL-5: pick a photo, then confirm that it is sent before anything leaves the phone. */
   function start(kind: RunKind) {
     const title = t(kind === 'label' ? 'meal.labelConfirmTitle' : 'meal.photoConfirmTitle');
-    const body = t(kind === 'label' ? 'meal.labelConfirmBody' : 'meal.photoConfirmBody');
     const send = async (source: 'camera' | 'library') => {
       try {
         const uri = (await pickPhotoUris(source))[0];
         if (!uri) return;
+        // IN-3, LL-5: with "prefer my names" on, the confirmation says how many names go with the photo.
+        const known = kind === 'photo' ? await knownIngredientNames(deps) : [];
+        const body = `${t(kind === 'label' ? 'meal.labelConfirmBody' : 'meal.photoConfirmBody')}${known.length > 0 ? `\n\n${t('meal.knownNamesSent', { n: known.length })}` : ''}`;
         Alert.alert(title, body, [
           { text: t('common.cancel'), style: 'cancel', onPress: () => void deps.photos.discardTemp(uri).catch(() => undefined) },
-          { text: t('meal.photoSend'), onPress: () => void execute(uri, kind) },
+          { text: t('meal.photoSend'), onPress: () => void execute(uri, kind, known) },
         ]);
       } catch (e) {
         Alert.alert(errorMessage(e));
@@ -135,7 +137,7 @@ export function useIngredientRun() {
       discard();
       setRun({ status: 'idle' });
     },
-    retry: () => photo.current && void execute(photo.current.uri, photo.current.kind),
+    retry: () => photo.current && void execute(photo.current.uri, photo.current.kind, photo.current.knownNames),
     toggle: (id: string) =>
       setRun((r) => {
         if (r.status !== 'ready') return r;

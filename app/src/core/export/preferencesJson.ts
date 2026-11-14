@@ -12,7 +12,7 @@ export function preferencesToJson(p: Preferences): Obj {
       drinks: p.favorites.drinks.map((a) => ({ key: a.key, name: a.name, amount_ml: a.amountMl, alcohol: a.alcohol, ingredients: [...a.ingredients], allergens: [...a.allergens], barcode: a.barcode, source: sourceToJson(a.source) })),
       medications: p.favorites.medications.map((m) => ({ key: m.key, category: m.category, name: m.name, dose: m.dose })),
     },
-    suggestions: { rows: p.suggestions.rows, window_days: p.suggestions.windowDays, save_on_tap: p.suggestions.saveOnTap },
+    suggestions: { rows: p.suggestions.rows, window_days: p.suggestions.windowDays, save_on_tap: p.suggestions.saveOnTap, known_names: p.suggestions.knownNames },
     quick_actions: { order: [...p.quickActions.order], hidden: [...p.quickActions.hidden] },
     day_start_hour: p.dayStartHour,
   };
@@ -65,7 +65,7 @@ export function parsePreferences(o: Obj, where = 'settings.preferences'): Prefer
   const hidden = quickList(qa, 'hidden', `${where}.quick_actions`);
   return {
     favorites: { meals, drinks, medications },
-    suggestions: { rows: rows as number, windowDays: windowDays as (typeof WINDOW_DAYS)[number], saveOnTap: bool(sg, 'save_on_tap', `${where}.suggestions`) },
+    suggestions: { rows: rows as number, windowDays: windowDays as (typeof WINDOW_DAYS)[number], saveOnTap: bool(sg, 'save_on_tap', `${where}.suggestions`), knownNames: bool(sg, 'known_names', `${where}.suggestions`) },
     quickActions: { order, hidden },
     dayStartHour: isDayStartHour(o.day_start_hour) ? o.day_start_hour : bad(`${where}.day_start_hour`),
   };

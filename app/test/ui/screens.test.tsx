@@ -1067,7 +1067,7 @@ describe('Suggestion settings and quick-action layout (IN-14, UX-2, UX-6)', () =
     await press(tree, en.sugg.days.replace('{{n}}', '14'));
     await toggle(tree, en.sugg.saveOnTap);
     await flush();
-    expect((await deps.repo.getPreferences())!.suggestions).toEqual({ rows: 6, windowDays: 14, saveOnTap: true });
+    expect((await deps.repo.getPreferences())!.suggestions).toEqual({ rows: 6, windowDays: 14, saveOnTap: true, knownNames: false });
   });
 
   it('UX-2 Edit mode on Today moves and hides quick actions with buttons, and the grid follows', async () => {
@@ -1348,6 +1348,27 @@ describe('Inline photo estimate (IN-3, LL-12, IN-10)', () => {
     expect(hasText(tree, en.meal.estimating)).toBe(false);
     expect(hasText(tree, en.meal.estimateSlow)).toBe(false);
     expect(await deps.repo.listMeals()).toEqual([]);
+  });
+
+  it('IN-3, LL-5 with "prefer my ingredient names" on, the confirmation says how many names go with the photo', async () => {
+    const llm = new FakeLlm(['{"ingredients":["rice"],"uncertainty":null}']);
+    const deps = nowDeps(llm);
+    await saveApiKey(deps, 'sk-synthetic-secret');
+    await logMeal(deps, { description: 'Synthetic earlier', ingredients: ['rice', 'oat milk'], at: new Date(Date.now() - 3600_000) });
+    await updateSuggestionSettings(deps, { knownNames: true });
+    const { tree } = await mount(meal, deps);
+    await type(tree, en.meal.description, 'Synthetic dinner');
+    await press(tree, en.meal.continue);
+    await press(tree, en.meal.fromPhoto);
+    await act(async () => {
+      await buttonOf(en.photos.library).onPress();
+    });
+    expect(String(alert.mock.calls.at(-1)![1])).toContain(en.meal.knownNamesSent.replace('{{n}}', '2'));
+    await act(async () => {
+      void buttonOf(en.meal.photoSend).onPress();
+    });
+    await flush();
+    expect(llm.requests[0]!.system).toContain('["oat milk","rice"]');
   });
 
   it('IN-3 the estimate arrives as a list to add all of or pick from, never replacing what was typed, with LLM tags unselected', async () => {

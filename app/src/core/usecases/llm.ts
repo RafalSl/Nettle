@@ -1,4 +1,4 @@
-import { INGREDIENTS_PROMPT_VERSION, LABEL_PROMPT_VERSION, ingredientsPrompt, labelPrompt } from '../llm/prompts';
+import { INGREDIENTS_PROMPT_VERSION, LABEL_PROMPT_VERSION, MAX_KNOWN_NAMES, ingredientsPrompt, labelPrompt } from '../llm/prompts';
 import type { LlmProvenance } from '../model/source';
 import { parseIngredientEstimate, parseLabelScan, type IngredientEstimate, type LabelScan } from '../llm/parse';
 import { NettleError } from '../model/errors';
@@ -55,10 +55,10 @@ export async function currentProvider(deps: Deps, action: LlmAction): Promise<{ 
  */
 export async function estimateIngredients(
   deps: Deps,
-  input: { image: LlmImage; language: Language; signal?: AbortSignal },
+  input: { image: LlmImage; language: Language; signal?: AbortSignal; /** From `knownIngredientNames`; empty when the setting is off. */ knownNames?: readonly string[] },
 ): Promise<IngredientEstimate & { provenance: LlmProvenance }> {
   const { provider } = await currentProvider(deps, 'meal_photo');
-  const prompt = ingredientsPrompt(input.language);
+  const prompt = ingredientsPrompt(input.language, input.knownNames ?? []);
   const response = await provider.completeJson({ ...prompt, images: [input.image], ...(input.signal ? { signal: input.signal } : {}) });
   // IN-16: the model that answered, when, and which prompt asked.
   const provenance: LlmProvenance = { model: response.model, at: deps.clock.now().toISOString(), promptVersion: INGREDIENTS_PROMPT_VERSION };
@@ -78,4 +78,27 @@ export async function scanLabel(
   const response = await provider.completeJson({ ...prompt, images: [input.image], ...(input.signal ? { signal: input.signal } : {}) });
   const provenance: LlmProvenance = { model: response.model, at: deps.clock.now().toISOString(), promptVersion: LABEL_PROMPT_VERSION };
   return { ...parseLabelScan(response.text), provenance };
+}
+
+/**
+ * IN-3: the ingredient names already used in meals and drinks, most used first, for the optional "prefer my names"
+ * setting. Empty when the setting is off. Only the names leave the phone, never entries or photos, and the
+ * confirmation says how many.
+ */
+export async function knownIngredientNames(deps: Deps): Promise<string[]> {
+  const prefs = await deps.repo.getPreferences();
+  if (!prefs?.suggestions.knownNames) return [];
+  const counts = new Map<string, { name: string; n: number }>();
+  const lists = [...(await deps.repo.listMeals()).map((m) => m.ingredients), ...(await deps.repo.listRecords('drinks')).map((d) => d.ingredients)];
+  for (const list of lists) {
+    for (const raw of list) {
+      const name = raw.trim();
+      if (!name || name.length > 40) continue;
+      const key = name.toLowerCase();
+      const cur = counts.get(key);
+      if (cur) cur.n++;
+      else counts.set(key, { name, n: 1 });
+    }
+  }
+  return [...counts.values()].sort((a, b) => b.n - a.n || a.name.localeCompare(b.name)).slice(0, MAX_KNOWN_NAMES).map((c) => c.name);
 }

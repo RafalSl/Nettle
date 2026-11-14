@@ -1,4 +1,7 @@
 import { LLM_ACTIONS } from '@/core/llm/actions';
+import { logDrink } from '@/core/usecases/intake';
+import { logMeal } from '@/core/usecases/logMeal';
+import { updateSuggestionSettings } from '@/core/usecases/preferences';
 import { buildBody, createAnthropicProvider, mapHttpError, readResponse } from '@/adapters/llm/anthropicProvider';
 import { SqliteSettings } from '@/adapters/storage/sqliteSettings';
 import { SqliteRepo } from '@/adapters/storage/sqliteRepo';
@@ -10,6 +13,7 @@ import {
   DEFAULT_MODEL,
   deleteApiKey,
   estimateIngredients,
+  knownIngredientNames,
   getModel,
   hasApiKey,
   saveApiKey,
@@ -87,13 +91,43 @@ describe('API key and model settings (SE-2, SE-4, LL-9)', () => {
   });
 });
 
+describe('known ingredient names (IN-3)', () => {
+  const setup = async () => {
+    const llm = new FakeLlm(['{"ingredients":["rice"],"uncertainty":null}', '{"ingredients":["rice"],"uncertainty":null}']);
+    const deps = makeDeps(new MemoryRepo(), undefined, llm);
+    await saveApiKey(deps, 'synthetic-test-key');
+    await logMeal(deps, { description: 'A', ingredients: ['Rice', 'oat milk', 'rice'], allergens: [] });
+    await logMeal(deps, { description: 'B', ingredients: ['rice', ' '], allergens: [] });
+    await logDrink(deps, { name: 'Tea', amountMl: 200, ingredients: ['oat milk'] });
+    return { deps, llm };
+  };
+
+  it('IN-3 is off by default: no names are collected and none go into the prompt', async () => {
+    const { deps, llm } = await setup();
+    expect(await knownIngredientNames(deps)).toEqual([]);
+    await estimateIngredients(deps, { image, language: 'en', knownNames: await knownIngredientNames(deps) });
+    expect(llm.requests[0]!.system).not.toContain('already uses');
+  });
+
+  it('IN-3 when switched on, the most used names go into the prompt, names only', async () => {
+    const { deps, llm } = await setup();
+    await updateSuggestionSettings(deps, { knownNames: true });
+    const names = await knownIngredientNames(deps);
+    expect(names).toEqual(['Rice', 'oat milk']); // one spelling per name, most used first
+    await estimateIngredients(deps, { image, language: 'en', knownNames: names });
+    const req = llm.requests[0]!;
+    expect(req.system).toContain('["Rice","oat milk"]');
+    expect(req.user).not.toContain('Rice');
+  });
+});
+
 describe('ingredient estimate (LL-1, IN-3)', () => {
   it('IN-3 returns cleaned suggestions and sends the photo, language and a JSON schema', async () => {
     const llm = new FakeLlm(['{"ingredients":[" tomato ","tomato","","bread"],"uncertainty":" sauce? "}']);
     const deps = makeDeps(new MemoryRepo(), undefined, llm);
     await saveApiKey(deps, 'synthetic-test-key');
     const est = await estimateIngredients(deps, { image, language: 'pl' });
-    expect(est).toEqual({ names: ['tomato', 'bread'], uncertainty: 'sauce?', provenance: { model: 'fake-model', at: expect.any(String), promptVersion: 'ingredients-1' } });
+    expect(est).toEqual({ names: ['tomato', 'bread'], uncertainty: 'sauce?', provenance: { model: 'fake-model', at: expect.any(String), promptVersion: 'ingredients-2' } });
     const req = llm.requests[0]!;
     expect(req.images).toEqual([image]);
     expect(req.system).toContain('Polish');

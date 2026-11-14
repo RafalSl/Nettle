@@ -41,6 +41,7 @@
     "labelTagsHint": "The label lists these allergens or traces: {{list}}. They are not selected until you select them.",
     "photoConfirmTitle": "Send this photo to Anthropic?",
     "photoConfirmBody": "The photo is sent over the internet to Anthropic to guess the ingredients. Nothing is saved from the answer until you review it. Anthropic bills this separately to your API account (a small amount); a Claude subscription does not cover it.",
+    "knownNamesSent": "{{n}} ingredient names from your diary are sent with the photo, because \"Prefer my ingredient names\" is on.",
     "photoSend": "Send photo",
     "suggested": "Suggested ingredients. Check and edit them before saving.",
     "unsure": "Unsure about: {{text}}",
@@ -777,6 +778,8 @@
     "window": "Look-back window",
     "days": "{{n}} days",
     "saveOnTap": "Save on tap",
+    "knownNames": "Prefer my ingredient names",
+    "knownNamesHint": "Off by default. A photo estimate then also sends the ingredient names you have already used (names only, not entries or photos), so the model uses your spelling. The confirmation says how many.",
     "saveOnTapHint": "A tap on a drink or medication suggestion saves it at once. Meals never save on tap.",
     "hint": "Suggestions are worked out on this phone from your own entries. Nothing is sent anywhere."
   },

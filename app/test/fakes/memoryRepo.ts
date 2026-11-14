@@ -1,5 +1,6 @@
 import { PREDEFINED_AREAS } from '@/core/model/areas';
 import { PREDEFINED_ITEMS } from '@/core/model/lists';
+import type { Preferences } from '@/core/model/preferences';
 import { recordRefs } from '@/core/model/refs';
 import {
   EXTRA_KINDS,
@@ -31,6 +32,7 @@ export class MemoryRepo implements StorageRepository {
   private areas = new Map<string, SkinArea>();
   private entries = new Map<string, SkinEntry>();
   private tombstones = new Map<string, Tombstone>();
+  private preferences: Preferences | null = null;
   private extra = Object.fromEntries(EXTRA_KINDS.map((k) => [k, new Map<string, Records[ExtraKind][number]>()])) as Record<
     ExtraKind,
     Map<string, Records[ExtraKind][number]>
@@ -124,6 +126,12 @@ export class MemoryRepo implements StorageRepository {
     }
     await this.deleteRecords(ids);
   }
+  async getPreferences(): Promise<Preferences | null> {
+    return this.preferences ? clone(this.preferences) : null;
+  }
+  async setPreferences(p: Preferences) {
+    this.preferences = clone(p);
+  }
   async listTombstones(): Promise<Tombstone[]> {
     return [...this.tombstones.values()]
       .sort((a, b) => a.deletedAt.utc.localeCompare(b.deletedAt.utc) || a.id.localeCompare(b.id))
@@ -150,7 +158,7 @@ export class MemoryRepo implements StorageRepository {
     for (const kind of LIST_KINDS) result[kind] = new Set(this.items[kind].keys());
     return result;
   }
-  async importData({ records, settings }: Payload, mode: ImportMode, tombstones: ImportTombstones = {}) {
+  async importData({ records, settings, preferences }: Payload, mode: ImportMode, tombstones: ImportTombstones = {}) {
     // Work on copies so a failure leaves the store untouched (atomic).
     const meals = new Map(records && mode === 'replace' ? [] : this.meals);
     const entries = new Map(records && mode === 'replace' ? [] : this.entries);
@@ -201,6 +209,7 @@ export class MemoryRepo implements StorageRepository {
     this.areas = areas;
     this.entries = entries;
     this.tombstones = tombs;
+    if (settings && preferences && (mode === 'replace' || this.preferences === null)) this.preferences = clone(preferences);
     this.extra = extra;
     this.items = items;
     this.seed();

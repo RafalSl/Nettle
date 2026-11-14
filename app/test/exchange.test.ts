@@ -1,3 +1,5 @@
+import { defaultPreferences } from '@/core/model/preferences';
+import { preferencesToJson } from '@/core/export/preferencesJson';
 import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate';
 import { SqliteRepo } from '@/adapters/storage/sqliteRepo';
 import { NettleError } from '@/core/model/errors';
@@ -94,7 +96,7 @@ const RAW_RECORDS = {
   flare_markers: [],
   tombstones: [],
 };
-const RAW_SETTINGS = { skin_areas: [], daily_tags: [], treatments: [] };
+const RAW_SETTINGS = { skin_areas: [], daily_tags: [], treatments: [], preferences: preferencesToJson(defaultPreferences()) };
 
 describe('data.json validation of nail data (SK-10)', () => {
   const stamp = { utc: '2026-01-10T08:00:00.000Z', tz: 'Europe/Warsaw' };

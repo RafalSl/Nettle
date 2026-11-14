@@ -1,3 +1,4 @@
+import type { Preferences } from '../model/preferences';
 import type {
   DateRange,
   ExtraKind,
@@ -74,6 +75,10 @@ export interface StorageRepository {
   /** All tombstones, oldest deletion first. */
   listTombstones(): Promise<Tombstone[]>;
 
+  /** IN-14, UX-2: the stored preferences, or null while the user never changed any (the defaults apply). */
+  getPreferences(): Promise<Preferences | null>;
+  setPreferences(preferences: Preferences): Promise<void>;
+
   /** Entries inside the range plus all areas. */
   snapshot(range?: DateRange): Promise<Snapshot>;
   existingIds(): Promise<ExistingIds>;
@@ -84,6 +89,7 @@ export interface StorageRepository {
    * replace settings: overwrite areas and list items by id, delete user areas and items that are neither
    * in the payload nor used by a remaining record, keep predefined ones.
    * Tombstones (EX-13): see ImportTombstones. Replace records also wipes all local tombstones.
+   * Preferences (the payload's, with settings): merge stores them only when none are stored yet, replace overwrites.
    */
   importData(payload: Payload, mode: ImportMode, tombstones?: ImportTombstones): Promise<void>;
 }

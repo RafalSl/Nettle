@@ -1,3 +1,4 @@
+import type { Preferences } from './preferences';
 /** UTC instant (canonical ISO-8601, always 24 chars) plus the IANA timezone it was recorded in (NF-4). */
 export interface Stamp {
   utc: string;
@@ -331,6 +332,8 @@ export interface Payload {
   settings?: Settings;
   /** EX-13: tombstones of the records part (present when `records` is). */
   tombstones?: Tombstone[];
+  /** EX-1: favorites, suggestion settings and the quick-action layout (present when `settings` is). */
+  preferences?: Preferences;
 }
 
 /** Which parts to export or to apply. */

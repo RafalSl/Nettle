@@ -1,5 +1,6 @@
 import { PREDEFINED_AREAS } from '@/core/model/areas';
 import { PREDEFINED_ITEMS } from '@/core/model/lists';
+import type { Preferences } from '@/core/model/preferences';
 import { recordRefs } from '@/core/model/refs';
 import {
   EXTRA_KINDS,
@@ -363,6 +364,18 @@ export class SqliteRepo implements StorageRepository {
     });
   }
 
+  async getPreferences(): Promise<Preferences | null> {
+    const [row] = await this.db.all<{ json: string }>('SELECT json FROM preference WHERE id = 1');
+    return row ? (JSON.parse(row.json) as Preferences) : null;
+  }
+
+  async setPreferences(p: Preferences) {
+    await this.db.run(
+      'INSERT INTO preference (id, json) VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET json = excluded.json',
+      [JSON.stringify(p)],
+    );
+  }
+
   async listTombstones(): Promise<Tombstone[]> {
     const rows = await this.db.all<{ id: string; kind: string; deleted_utc: string; deleted_tz: string }>(
       'SELECT * FROM tombstone ORDER BY deleted_utc, id',
@@ -415,6 +428,9 @@ export class SqliteRepo implements StorageRepository {
         await this.db.exec('DELETE FROM skin_entry; DELETE FROM meal_ingredient; DELETE FROM meal;');
       }
       if (settings) {
+        if (payload.preferences && (mode === 'replace' || (await this.getPreferences()) === null)) {
+          await this.setPreferences(payload.preferences); // merge keeps local preferences once there are some
+        }
         for (const a of settings.skinAreas) {
           if (mode === 'replace') await this.upsertArea(a);
           else await this.insertArea(a, true);

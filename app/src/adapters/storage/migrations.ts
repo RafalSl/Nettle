@@ -200,6 +200,13 @@ export const MIGRATIONS: string[] = [
     deleted_tz TEXT NOT NULL
   );
   `,
+  // EX-1, IN-14, UX-2: favorites, suggestion settings and the quick-action layout, one JSON document.
+  `
+  CREATE TABLE preference (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    json TEXT NOT NULL
+  );
+  `,
 ];
 
 export async function migrate(db: SqlDb): Promise<void> {

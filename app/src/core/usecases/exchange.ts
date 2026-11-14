@@ -70,12 +70,12 @@ export async function exportBundle(deps: Deps, options: ExportOptions = {}): Pro
       snapshot.photos.push({ ...p, file: path });
     }
   }
-  const data = toDataJson(snapshot, range, makeStamp(deps.clock), parts, await deps.repo.listTombstones());
+  const data = toDataJson(snapshot, range, makeStamp(deps.clock), parts, await deps.repo.listTombstones(), (await deps.repo.getPreferences()) ?? undefined);
 
   if (options.csv) {
     for (const section of [data.records, data.settings]) {
       for (const [name, rows] of Object.entries(section ?? {})) {
-        files[csvPath(name)] = strToU8(toCsv(rows as Record<string, never>[]));
+        if (Array.isArray(rows)) files[csvPath(name)] = strToU8(toCsv(rows as Record<string, never>[]));
       }
     }
   }
@@ -260,7 +260,10 @@ export async function applyImport(
 ): Promise<void> {
   const payload: Payload = {};
   if (choice.parts.records && parsed.payload.records) payload.records = parsed.payload.records;
-  if (choice.parts.settings && parsed.payload.settings) payload.settings = parsed.payload.settings;
+  if (choice.parts.settings && parsed.payload.settings) {
+    payload.settings = parsed.payload.settings;
+    payload.preferences = parsed.payload.preferences;
+  }
   if (!payload.records && !payload.settings) throw new NettleError('nothing_selected');
   // EX-13: leave out what a tombstone forbids and work out what the tombstones delete.
   const plan = await planTombstones(deps, { ...parsed.payload, records: payload.records }, choice.mode, !!choice.restoreTombstoned);

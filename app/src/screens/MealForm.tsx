@@ -144,7 +144,7 @@ export default function MealScreen() {
           source: p ? { kind: 'open_food_facts', edited: false, llm: null } : typedSource(),
           sourceAllergens: p?.allergens ?? [],
         });
-        setFromCode({ note: !p ? t('meal.scanNotFound') : found.incomplete ? t('meal.scanIncomplete') : t('meal.scanFromDb'), tags: p?.allergens ?? [] });
+        setFromCode({ note: !p ? t('meal.scanNotFound') : found.incomplete ? t('meal.scanIncomplete') : p.translated ? t('meal.scanFromDbTranslated') : t('meal.scanFromDb'), tags: p?.allergens ?? [] });
       };
       if ((found.product || found.history) && found.inStore) {
         // IN-2: an in-store code is ambiguous; the user confirms the match or enters the product by hand.

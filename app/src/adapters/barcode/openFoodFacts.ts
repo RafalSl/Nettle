@@ -2,7 +2,7 @@ import { allergensFromTags, parseIngredientText } from '@/core/model/barcode';
 import { NettleError } from '@/core/model/errors';
 import type { BarcodeSource, ProductInfo } from '@/core/ports/barcode';
 
-const FIELDS = 'code,product_name,ingredients_text,allergens_tags';
+const FIELDS = 'code,product_name,ingredients_text,ingredients_text_pl,lang,allergens_tags';
 
 /** Turns an Open Food Facts v2 answer into a product, or null when the product is not in the database. */
 export function parseOffResponse(barcode: string, json: unknown): ProductInfo | null {
@@ -11,10 +11,15 @@ export function parseOffResponse(barcode: string, json: unknown): ProductInfo | 
   if (body.status === 0) return null;
   if (body.status !== 1 || typeof body.product !== 'object' || body.product === null) throw new NettleError('barcode_lookup_failed');
   const p = body.product;
+  // The Polish text is preferred when the database has one. It is a translation unless the product was entered in Polish.
+  const pl = typeof p.ingredients_text_pl === 'string' ? p.ingredients_text_pl.trim() : '';
+  const text = pl || (typeof p.ingredients_text === 'string' ? p.ingredients_text : '');
+  const translated = pl !== '' && p.lang !== 'pl';
   return {
     barcode,
     name: typeof p.product_name === 'string' ? p.product_name.trim() : '',
-    ingredients: typeof p.ingredients_text === 'string' ? parseIngredientText(p.ingredients_text) : [],
+    ingredients: parseIngredientText(text),
+    ...(translated ? { translated: true } : {}),
     allergens: Array.isArray(p.allergens_tags) ? allergensFromTags(p.allergens_tags) : [],
   };
 }

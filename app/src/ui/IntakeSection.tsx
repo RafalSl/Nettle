@@ -77,7 +77,7 @@ export function DrinkSection() {
         } else if (p) {
           // IN-16: the database is the source; its tags stay unselected until the user selects them (IN-10).
           setDraft({ ...base, name: p.name, amount: draft.amount, alcohol: draft.alcohol, ingredients: joinIngredients(p.ingredients), source: { kind: 'open_food_facts', edited: false, llm: null }, filled: { ingredients: p.ingredients, allergens: p.allergens } });
-          setScanNote(found.incomplete ? t('meal.scanIncomplete') : t('meal.scanFromDb'));
+          setScanNote(found.incomplete ? t('meal.scanIncomplete') : p.translated ? t('meal.scanFromDbTranslated') : t('meal.scanFromDb'));
         } else {
           setDraft({ ...base, name: draft.name, amount: draft.amount, alcohol: draft.alcohol });
           setScanNote(t('meal.scanNotFound'));

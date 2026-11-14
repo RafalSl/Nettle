@@ -4,6 +4,8 @@ export interface ProductInfo {
   barcode: string;
   name: string;
   ingredients: string[];
+  /** The ingredient text is a Polish translation the database holds for a product entered in another language (check it). */
+  translated?: boolean;
   /** EU allergen tags the source lists. A suggestion only: the user confirms it (IN-10). */
   allergens: Allergen[];
 }

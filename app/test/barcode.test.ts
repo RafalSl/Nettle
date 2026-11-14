@@ -69,6 +69,12 @@ describe('Open Food Facts adapter (IN-9)', () => {
   it('IN-9 turns a found product into name, ingredients and allergens, an unknown one into null', () => {
     expect(parseOffResponse('3017620422003', found)).toEqual({ barcode: '3017620422003', name: 'Synthetic spread', ingredients: ['sugar', 'palm oil'], allergens: ['milk'] });
     expect(parseOffResponse('3017620422003', { status: 0 })).toBeNull();
+    // IN-2: the Polish text wins when there is one; it is marked as a translation unless the product was entered in Polish
+    const pl = { product_name: 'Krem', ingredients_text: 'sugar, milk', ingredients_text_pl: 'cukier, mleko', allergens_tags: [] };
+    expect(parseOffResponse('3017620422003', { status: 1, product: { ...pl, lang: 'en' } })).toMatchObject({ ingredients: ['cukier', 'mleko'], translated: true });
+    expect(parseOffResponse('3017620422003', { status: 1, product: { ...pl, lang: 'pl' } })).toEqual({ barcode: '3017620422003', name: 'Krem', ingredients: ['cukier', 'mleko'], allergens: [] });
+    expect(parseOffResponse('3017620422003', { status: 1, product: { ...pl, ingredients_text_pl: ' ', lang: 'en' } })).toMatchObject({ ingredients: ['sugar', 'milk'] });
+    expect(parseOffResponse('3017620422003', { status: 1, product: { ...pl, ingredients_text_pl: ' ', lang: 'en' } })).not.toHaveProperty('translated');
     expect(parseOffResponse('3017620422003', { status: 1, product: {} })).toMatchObject({ name: '', ingredients: [], allergens: [] });
   });
 
@@ -90,7 +96,7 @@ describe('Open Food Facts adapter (IN-9)', () => {
       global.fetch = fetchMock as unknown as typeof fetch;
       await openFoodFacts.lookup('3017620422003');
       const [url, init] = fetchMock.mock.calls[0] as unknown as [string, { headers: Record<string, string> }];
-      expect(url).toBe('https://world.openfoodfacts.org/api/v2/product/3017620422003.json?fields=code,product_name,ingredients_text,allergens_tags');
+      expect(url).toBe('https://world.openfoodfacts.org/api/v2/product/3017620422003.json?fields=code,product_name,ingredients_text,ingredients_text_pl,lang,allergens_tags');
       expect(init.headers['User-Agent']).toBe('Nettle/1.0 (private diary app)');
     });
 

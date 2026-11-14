@@ -41,6 +41,7 @@ export default function RootLayout() {
         <Stack.Screen name="form/nails" options={form(t('nav.nails'))} />
         <Stack.Screen name="form/reaction" options={form(t('nav.reaction'))} />
         <Stack.Screen name="form/change" options={form(t('nav.change'))} />
+        <Stack.Screen name="form/edit" options={form(t('edit.title'))} />
       </Stack>
     </ServicesProvider>
   );

@@ -134,6 +134,7 @@ export function Chips({
         <Pressable
           key={item.id}
           accessibilityRole="button"
+          accessibilityLabel={item.label}
           accessibilityState={{ selected: selected.has(item.id) }}
           onPress={() => onToggle(item.id)}
           style={[styles.chip, selected.has(item.id) && styles.chipOn]}>

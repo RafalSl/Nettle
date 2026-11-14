@@ -1,0 +1,78 @@
+import { Stack, useRouter } from 'expo-router';
+import { useState, type ReactNode } from 'react';
+import { Alert, Pressable, Text } from 'react-native';
+import { errorMessage, t } from '@/i18n';
+import { confirmDestructive } from '@/ui/actionSheet';
+import { Hint, Screen } from '@/ui/components';
+
+/** Tracks whether the user changed anything, for the discard guard (UX-3). */
+export function useForm() {
+  const [dirty, setDirty] = useState(false);
+  return { dirty, touch: () => setDirty(true) };
+}
+
+/** A field whose changes mark the form dirty. */
+export function useField<T>(initial: T, touch: () => void) {
+  const [value, set] = useState<T>(initial);
+  return [value, (next: T) => (touch(), set(next))] as const;
+}
+
+/**
+ * UX-3: the body of a full-height modal form. Cancel sits on the leading edge of the header and Save on the
+ * trailing edge. Save is disabled until `missing` is null, and the form says what is missing. Cancel and the
+ * swipe-down gesture ask first (Discard Changes) when something was changed. A failed save keeps the form open.
+ */
+export function FormModal({
+  dirty,
+  missing,
+  onSave,
+  children,
+}: {
+  dirty: boolean;
+  /** What is still needed before Save works, already localized; null when the form is complete. */
+  missing: string | null;
+  onSave: () => Promise<void>;
+  children: ReactNode;
+}) {
+  const router = useRouter();
+  async function save() {
+    try {
+      await onSave();
+      router.back();
+    } catch (e) {
+      Alert.alert(errorMessage(e));
+    }
+  }
+  async function cancel() {
+    if (!dirty || (await confirmDestructive({ title: t('edit.discardTitle'), action: t('edit.discard') }))) router.back();
+  }
+  return (
+    <>
+      <Stack.Screen
+        options={{
+          gestureEnabled: !dirty,
+          headerLeft: () => (
+            <Pressable accessibilityRole="button" accessibilityLabel={t('common.cancel')} onPress={() => void cancel()} hitSlop={8}>
+              <Text style={{ color: '#208AEF', fontSize: 17 }}>{t('common.cancel')}</Text>
+            </Pressable>
+          ),
+          headerRight: () => (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('common.save')}
+              accessibilityState={{ disabled: missing !== null }}
+              disabled={missing !== null}
+              onPress={() => void save()}
+              hitSlop={8}>
+              <Text style={{ color: '#208AEF', fontSize: 17, fontWeight: '600', opacity: missing !== null ? 0.4 : 1 }}>{t('common.save')}</Text>
+            </Pressable>
+          ),
+        }}
+      />
+      <Screen>
+        {children}
+        {missing !== null && <Hint>{t('edit.missing', { what: missing })}</Hint>}
+      </Screen>
+    </>
+  );
+}

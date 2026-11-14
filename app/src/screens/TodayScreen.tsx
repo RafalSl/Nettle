@@ -11,7 +11,7 @@ import { applyTreatment } from '@/core/usecases/events';
 import { markFlare, openFlareAreas } from '@/core/usecases/flares';
 import { areaLabel, errorMessage, itemLabel, t } from '@/i18n';
 import { useServices } from '@/services';
-import { confirmDestructive } from '@/ui/actionSheet';
+import { chooseAction } from '@/ui/actionSheet';
 import { describeRow } from '@/ui/logRow';
 import { Button, Heading, Hint, Label, Screen, styles } from '@/ui/components';
 
@@ -24,9 +24,9 @@ const Card = ({ children }: { children: React.ReactNode }) => (
 
 /**
  * UX-2: the start screen. A day switcher, quick actions (each opens a modal form), one-tap treatment shortcuts,
- * a stool quick sheet, context cards and the day's log; tapping a log row offers Delete in an action sheet
- * that names what goes with the entry (EN-1, UX-9). Editing a row, the highlight of a new row, reordering the
- * quick actions and the date jump are not built yet.
+ * a stool quick sheet, context cards and the day's log; tapping a log row offers Edit and Delete in an action sheet
+ * that names what goes with the entry (EN-1, UX-9) or opens it for editing. The highlight of a new row,
+ * reordering the quick actions and the date jump are not built yet.
  */
 export default function TodayScreen() {
   const { deps } = useServices();
@@ -95,12 +95,14 @@ export default function TodayScreen() {
         .map(([kind, n]) => `${n} ${t(`log.kinds.${kind}`)}`)
         .join(', ');
       const { title } = describeRow(row, ctx);
-      const ok = await confirmDestructive({
-        title: `${t('log.deleteTitle')}\n${title}`,
-        message: list ? t('log.also', { list }) : t('log.alsoNothing'),
-        action: t('log.deleteAction'),
+      // EN-1, UX-9: Edit or Delete in one sheet; the delete names what goes with the entry.
+      const choice = await chooseAction({
+        title,
+        message: list ? t('log.also', { list }) : undefined,
+        actions: [{ label: t('log.editAction') }, { label: t('log.deleteAction'), destructive: true }],
       });
-      if (ok) await run(() => deleteEntry(deps, row.kind, row.id));
+      if (choice === 0) router.push({ pathname: '/form/edit', params: { kind: row.kind, id: row.id } });
+      else if (choice === 1) await run(() => deleteEntry(deps, row.kind, row.id));
     } catch (e) {
       Alert.alert(errorMessage(e));
     }

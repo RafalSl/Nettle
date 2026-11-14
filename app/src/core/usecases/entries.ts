@@ -26,7 +26,7 @@ import { logMeal, type LogMealInput } from './logMeal';
 import { logNailEntry, logSkinEntry, type LogNailEntryInput, type LogSkinEntryInput } from './skin';
 
 /** The record of a kind with this id, or a NettleError('unknown_entry'). */
-async function findEntry(deps: Deps, kind: RecordKind, id: string): Promise<Records[RecordKind][number]> {
+export async function getEntry(deps: Deps, kind: RecordKind, id: string): Promise<Records[RecordKind][number]> {
   const all =
     kind === 'meals'
       ? await deps.repo.listMeals()
@@ -76,7 +76,7 @@ const keepAt = (orig: { at: Stamp }, at?: Date) => (at ? undefined : orig.at);
 
 /** EN-1: edit a meal. Its time cannot move after one of its reactions. */
 export async function editMeal(deps: Deps, id: string, input: LogMealInput): Promise<Meal> {
-  const orig = (await findEntry(deps, 'meals', id)) as Meal;
+  const orig = (await getEntry(deps, 'meals', id)) as Meal;
   const at = input.at ? makeStamp(deps.clock, input.at) : orig.at;
   for (const r of await deps.repo.listRecords('reactions')) {
     if (r.mealId === id && r.at.utc < at.utc) throw new NettleError('meal_after_reaction', id);
@@ -85,17 +85,17 @@ export async function editMeal(deps: Deps, id: string, input: LogMealInput): Pro
 }
 
 export async function editSkinEntry(deps: Deps, id: string, input: LogSkinEntryInput): Promise<SkinEntry> {
-  const orig = (await findEntry(deps, 'skinEntries', id)) as SkinEntry;
+  const orig = (await getEntry(deps, 'skinEntries', id)) as SkinEntry;
   return logSkinEntry(editing(deps, id, { at: keepAt(orig, input.at), used: [orig.areaId] }), input);
 }
 
 export async function editNailEntry(deps: Deps, id: string, input: LogNailEntryInput): Promise<NailEntry> {
-  const orig = (await findEntry(deps, 'nailEntries', id)) as NailEntry;
+  const orig = (await getEntry(deps, 'nailEntries', id)) as NailEntry;
   return logNailEntry(editing(deps, id, { at: keepAt(orig, input.at), used: [orig.areaId] }), input);
 }
 
 export async function editStool(deps: Deps, id: string, input: { bristol: number; at?: Date; note?: string }): Promise<StoolEntry> {
-  const orig = (await findEntry(deps, 'stoolEntries', id)) as StoolEntry;
+  const orig = (await getEntry(deps, 'stoolEntries', id)) as StoolEntry;
   return logStool(editing(deps, id, { at: keepAt(orig, input.at) }), input);
 }
 
@@ -104,7 +104,7 @@ export async function editAlcohol(
   id: string,
   input: { drink: string; amountMl: number; at?: Date; note?: string },
 ): Promise<AlcoholEntry> {
-  const orig = (await findEntry(deps, 'alcoholEntries', id)) as AlcoholEntry;
+  const orig = (await getEntry(deps, 'alcoholEntries', id)) as AlcoholEntry;
   return logAlcohol(editing(deps, id, { at: keepAt(orig, input.at) }), input);
 }
 
@@ -113,7 +113,7 @@ export async function editMedication(
   id: string,
   input: Parameters<typeof logMedication>[1],
 ): Promise<MedicationEntry> {
-  const orig = (await findEntry(deps, 'medicationEntries', id)) as MedicationEntry;
+  const orig = (await getEntry(deps, 'medicationEntries', id)) as MedicationEntry;
   return logMedication(editing(deps, id, { at: keepAt(orig, input.at) }), input);
 }
 
@@ -122,7 +122,7 @@ export async function editTreatmentApplication(
   id: string,
   input: ApplyTreatmentInput,
 ): Promise<TreatmentApplication> {
-  const orig = (await findEntry(deps, 'treatmentApplications', id)) as TreatmentApplication;
+  const orig = (await getEntry(deps, 'treatmentApplications', id)) as TreatmentApplication;
   return applyTreatment(
     editing(deps, id, { at: keepAt(orig, input.at), used: [orig.treatmentId, ...orig.areaIds] }),
     input,
@@ -130,13 +130,13 @@ export async function editTreatmentApplication(
 }
 
 export async function editChangeEvent(deps: Deps, id: string, input: ChangeEventInput): Promise<ChangeEvent> {
-  const orig = (await findEntry(deps, 'changeEvents', id)) as ChangeEvent;
+  const orig = (await getEntry(deps, 'changeEvents', id)) as ChangeEvent;
   return logChangeEvent(editing(deps, id, { at: keepAt(orig, input.at) }), input);
 }
 
 /** EN-1: edit a reaction; it still cannot start before its meal (a different meal may be chosen). */
 export async function editReaction(deps: Deps, id: string, input: ReactionInput): Promise<Reaction> {
-  const orig = (await findEntry(deps, 'reactions', id)) as Reaction;
+  const orig = (await getEntry(deps, 'reactions', id)) as Reaction;
   return logReaction(editing(deps, id, { at: keepAt(orig, input.at) }), input);
 }
 
@@ -145,7 +145,7 @@ export async function editReaction(deps: Deps, id: string, input: ReactionInput)
  * another check-in is refused: a day has one check-in.
  */
 export async function editCheckIn(deps: Deps, id: string, input: CheckInInput): Promise<CheckIn> {
-  const orig = (await findEntry(deps, 'checkIns', id)) as CheckIn;
+  const orig = (await getEntry(deps, 'checkIns', id)) as CheckIn;
   const tags = await validCheckInTags(deps, input);
   const at = input.at ? makeStamp(deps.clock, input.at) : orig.at;
   const day = localDay(at.utc, at.tz);
@@ -180,7 +180,7 @@ export async function editFlareMarker(
   id: string,
   input: { at?: Date; note?: string },
 ): Promise<FlareMarker> {
-  const orig = (await findEntry(deps, 'flareMarkers', id)) as FlareMarker;
+  const orig = (await getEntry(deps, 'flareMarkers', id)) as FlareMarker;
   const at = input.at ? makeStamp(deps.clock, input.at) : orig.at;
   const order = (a: FlareMarker, b: FlareMarker) => a.at.utc.localeCompare(b.at.utc) || a.id.localeCompare(b.id);
   const same = (await deps.repo.listRecords('flareMarkers')).filter((m) => m.areaId === orig.areaId).sort(order);
@@ -216,7 +216,7 @@ function alsoDeleted(plan: Record<RecordKind, string[]>, kind: RecordKind): Part
  * kind, not including the entry itself. Changes nothing.
  */
 export async function previewEntryDelete(deps: Deps, kind: RecordKind, id: string): Promise<Partial<Record<RecordKind, number>>> {
-  await findEntry(deps, kind, id);
+  await getEntry(deps, kind, id);
   const plan = planEntryDeletion(await deps.repo.snapshot(), kind, id);
   return alsoDeleted(plan, kind);
 }
@@ -227,7 +227,7 @@ export async function previewEntryDelete(deps: Deps, kind: RecordKind, id: strin
  * caller has asked for confirmation (UX-9). Returns the same counts as `previewEntryDelete`.
  */
 export async function deleteEntry(deps: Deps, kind: RecordKind, id: string): Promise<Partial<Record<RecordKind, number>>> {
-  await findEntry(deps, kind, id);
+  await getEntry(deps, kind, id);
   const records = await deps.repo.snapshot();
   const plan = planEntryDeletion(records, kind, id);
   await deps.repo.deleteWithTombstones(plan, makeStamp(deps.clock));

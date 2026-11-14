@@ -298,3 +298,7 @@ Newest entry last. One short entry per working session or meaningful step: what 
 ## 2026-11-14: flare start and end in More (branch feature/flare-in-more)
 - **Done:** SK-6, UX-2. A flare form in More (area chips with an "open" mark, the kind follows the area, time, note, Save in the header); the Skin form lost its flare buttons. 615 tests pass.
 - **Next:** favorite stars for drinks and medications (IN-14).
+
+## 2026-11-14: favorite stars for drinks and medications (branch feature/favorite-stars)
+- **Done:** IN-14. A Favorite / Remove favorite button on the drink and medication forms, using the existing `toggleFavoriteDrink` and `toggleFavoriteMedication`. 616 tests pass.
+- **Next:** Settings screens (areas, favorites, check-in scores).

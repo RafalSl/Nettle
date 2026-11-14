@@ -5,8 +5,10 @@ import { unzipSync } from 'fflate';
 import { FakeLlm } from '../fakes/fakeLlm';
 import type { LlmProvider } from '@/core/ports/llm';
 import { logMeal } from '@/core/usecases/logMeal';
-import { logSkinEntry } from '@/core/usecases/skin';
-import { applyTreatment, logReaction } from '@/core/usecases/events';
+import { addArea, logNailEntry, logSkinEntry } from '@/core/usecases/skin';
+import { logStool, saveCheckIn } from '@/core/usecases/checkin';
+import { logAlcohol, logMedication } from '@/core/usecases/intake';
+import { applyTreatment, logChangeEvent, logReaction } from '@/core/usecases/events';
 import { addListItem } from '@/core/usecases/lists';
 import { markFlare } from '@/core/usecases/flares';
 import { saveApiKey } from '@/core/usecases/llm';
@@ -17,6 +19,8 @@ import { MemoryRepo } from '../fakes/memoryRepo';
 import { makeDeps } from '../helpers/fixtures';
 
 const mockRouter = { push: jest.fn(), back: jest.fn() };
+const mockParams: { current: Record<string, string> } = { current: {} };
+const mockScreen: { options?: { headerLeft?: () => React.ReactElement; headerRight?: () => React.ReactElement; gestureEnabled?: boolean } } = {};
 
 // Native modules and the router are replaced; everything else (screens, components, i18n, use cases) is real.
 jest.mock('expo-router', () => {
@@ -24,8 +28,15 @@ jest.mock('expo-router', () => {
   return {
     useFocusEffect: (cb: () => void | (() => void)) => useEffect(cb, [cb]),
     useRouter: () => mockRouter,
+    useLocalSearchParams: () => mockParams.current,
     Tabs: Object.assign(({ children }: { children: unknown }) => children, { Screen: () => null }),
-    Stack: Object.assign(({ children }: { children: unknown }) => children, { Screen: () => null }),
+    // The header buttons a form puts into its Stack.Screen options are kept, so a test can press them.
+    Stack: Object.assign(({ children }: { children: unknown }) => children, {
+      Screen: ({ options }: { options?: unknown }) => {
+        mockScreen.options = options as typeof mockScreen.options;
+        return null;
+      },
+    }),
   };
 });
 jest.mock('@react-native-community/datetimepicker', () => () => null);
@@ -414,7 +425,7 @@ describe('navigation shell (UX-1, UX-2, UX-3, UX-6)', () => {
 describe('Today (UX-2, UX-5, EN-1, UX-9)', () => {
   let sheet: jest.SpyInstance;
   beforeEach(() => {
-    sheet = jest.spyOn(ActionSheetIOS, 'showActionSheetWithOptions').mockImplementation((_o, cb) => cb(0));
+    sheet = jest.spyOn(ActionSheetIOS, 'showActionSheetWithOptions').mockImplementation((_o, cb) => cb(1)); // Delete
     jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
   });
   afterEach(() => jest.restoreAllMocks());
@@ -430,10 +441,10 @@ describe('Today (UX-2, UX-5, EN-1, UX-9)', () => {
     const row = tree.root.findAll((n) => typeof n.props.accessibilityLabel === 'string' && n.props.accessibilityLabel.includes('Synthetic oats') && typeof n.props.onPress === 'function')[0]!;
     await act(async () => row.props.onPress());
     await flush();
-    const [options] = sheet.mock.calls[0] as [{ options: string[]; destructiveButtonIndex: number; cancelButtonIndex: number; message: string }];
-    expect(options.options).toEqual([en.log.deleteAction, en.common.cancel]); // destructive first, Cancel last
-    expect(options.destructiveButtonIndex).toBe(0);
-    expect(options.cancelButtonIndex).toBe(1);
+    const [options] = sheet.mock.calls[0] as [{ options: string[]; destructiveButtonIndex: number[]; cancelButtonIndex: number; message: string }];
+    expect(options.options).toEqual([en.log.editAction, en.log.deleteAction, en.common.cancel]); // Cancel last
+    expect(options.destructiveButtonIndex).toEqual([1]);
+    expect(options.cancelButtonIndex).toBe(2);
     expect(options.message).toContain('1 reactions');
     expect(await deps.repo.listMeals()).toEqual([]);
     expect(await deps.repo.listRecords('reactions')).toEqual([]);
@@ -444,7 +455,7 @@ describe('Today (UX-2, UX-5, EN-1, UX-9)', () => {
   it('UX-9 choosing Cancel in the action sheet deletes nothing', async () => {
     const deps = nowDeps();
     await logMeal(deps, { description: 'Synthetic oats', ingredients: [], at: new Date(Date.now() - 3600_000) });
-    sheet.mockImplementation((_o, cb) => cb(1));
+    sheet.mockImplementation((_o, cb) => cb(2)); // Cancel
     const { tree } = await mount(today, deps);
     await flush();
     await press(tree, tree.root.findAll((n) => typeof n.props.accessibilityLabel === 'string' && n.props.accessibilityLabel.includes('Synthetic oats'))[0]!.props.accessibilityLabel);
@@ -503,5 +514,121 @@ describe('Today (UX-2, UX-5, EN-1, UX-9)', () => {
     await flush();
     expect((await deps.repo.listRecords('flareMarkers')).map((m) => m.kind).sort()).toEqual(['end', 'start']);
     expect(hasText(tree, en.cards.endFlare)).toBe(false);
+  });
+});
+
+describe('Edit entry (EN-1, UX-3)', () => {
+  let sheet: jest.SpyInstance;
+  beforeEach(() => {
+    sheet = jest.spyOn(ActionSheetIOS, 'showActionSheetWithOptions').mockImplementation((_o, cb) => cb(0));
+    jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    mockRouter.push.mockClear();
+    mockRouter.back.mockClear();
+    mockScreen.options = undefined;
+  });
+  afterEach(() => jest.restoreAllMocks());
+  const edit = () => require('@/app/form/edit');
+  /** Presses a button of the header that the form put into Stack.Screen options. */
+  const header = async (side: 'headerLeft' | 'headerRight', label: string) => {
+    let rendered!: ReactTestRenderer;
+    await act(async () => {
+      rendered = create(mockScreen.options![side]!());
+    });
+    const node = rendered.root.findAll((n) => n.props.accessibilityLabel === label && typeof n.props.onPress === 'function')[0]!;
+    await act(async () => {
+      await node.props.onPress();
+    });
+    return node.props.accessibilityState as { disabled?: boolean } | undefined;
+  };
+
+  it('EN-1 a log row offers Edit, which opens the edit form with the kind and id', async () => {
+    const deps = nowDeps();
+    const meal = await logMeal(deps, { description: 'Synthetic oats', ingredients: [], at: new Date(Date.now() - 3600_000) });
+    const { tree } = await mount(() => require('@/app/(tabs)/today/index'), deps);
+    await flush();
+    await press(tree, tree.root.findAll((n) => typeof n.props.accessibilityLabel === 'string' && n.props.accessibilityLabel.includes('Synthetic oats'))[0]!.props.accessibilityLabel);
+    await flush();
+    expect(mockRouter.push).toHaveBeenLastCalledWith({ pathname: '/form/edit', params: { kind: 'meals', id: meal.id } });
+    expect(await deps.repo.listMeals()).toHaveLength(1); // Edit deleted nothing
+  });
+
+  it('EN-1, UX-3 editing a meal keeps its id, Save is disabled while the description is empty, and saving closes the form', async () => {
+    const deps = nowDeps();
+    const meal = await logMeal(deps, { description: 'Synthetic oats', ingredients: ['oats'], at: new Date(Date.now() - 3600_000) });
+    mockParams.current = { kind: 'meals', id: meal.id };
+    const { tree } = await mount(edit, deps);
+    await flush();
+    await type(tree, en.meal.description, '');
+    expect(hasText(tree, en.edit.missing.replace('{{what}}', en.edit.description))).toBe(true);
+    expect(mockScreen.options!.gestureEnabled).toBe(false); // changed: swiping down is guarded
+    const state = await header('headerRight', en.common.save);
+    expect(state?.disabled).toBe(true);
+    expect(mockRouter.back).not.toHaveBeenCalled();
+    await type(tree, en.meal.description, 'Synthetic porridge');
+    await header('headerRight', en.common.save);
+    await flush();
+    expect(await deps.repo.listMeals()).toMatchObject([{ id: meal.id, description: 'Synthetic porridge' }]);
+    expect(mockRouter.back).toHaveBeenCalledTimes(1);
+  });
+
+  it('UX-3, UX-9 Cancel after a change asks before discarding; without a change it just closes', async () => {
+    const deps = nowDeps();
+    const stool = await deps.repo.addRecord('stoolEntries', { id: 'st1', at: { utc: new Date().toISOString(), tz: 'Europe/Warsaw' }, bristol: 4, note: null }).then(() => 'st1');
+    mockParams.current = { kind: 'stoolEntries', id: stool };
+    const { tree } = await mount(edit, deps);
+    await flush();
+    await header('headerLeft', en.common.cancel);
+    expect(sheet).not.toHaveBeenCalled();
+    expect(mockRouter.back).toHaveBeenCalledTimes(1);
+    await press(tree, '6');
+    sheet.mockImplementation((_o, cb) => cb(1)); // Cancel in the sheet: keep editing
+    await header('headerLeft', en.common.cancel);
+    expect((sheet.mock.calls[0] as [{ options: string[] }])[0].options).toEqual([en.edit.discard, en.common.cancel]);
+    expect(mockRouter.back).toHaveBeenCalledTimes(1);
+    sheet.mockImplementation((_o, cb) => cb(0)); // Discard Changes
+    await header('headerLeft', en.common.cancel);
+    expect(mockRouter.back).toHaveBeenCalledTimes(2);
+    expect((await deps.repo.listRecords('stoolEntries'))[0]!.bristol).toBe(4);
+  });
+
+  it('EN-1 every kind in the day log opens in its form and saves unchanged under its own id', async () => {
+    const deps = nowDeps();
+    const at = new Date(Date.now() - 3600_000);
+    const nail = await addArea(deps, 'Synthetic thumb', 'nail');
+    const cream = await addListItem(deps, 'treatments', 'Synthetic cream');
+    const meal = await logMeal(deps, { description: 'Synthetic oats', ingredients: ['oats'], at });
+    const ids: [string, string][] = [
+      ['meals', meal.id],
+      ['skinEntries', (await logSkinEntry(deps, { areaId: 'area-chin', scores, at })).id],
+      ['nailEntries', (await logNailEntry(deps, { areaId: nail.id, stage: 'white', extent: 'none', at })).id],
+      ['checkIns', (await saveCheckIn(deps, { at, wellbeing: 5 })).id],
+      ['stoolEntries', (await logStool(deps, { bristol: 3, at })).id],
+      ['treatmentApplications', (await applyTreatment(deps, { treatmentId: cream.id, areaIds: ['area-chin'], at })).id],
+      ['changeEvents', (await logChangeEvent(deps, { action: 'started', category: 'product', name: 'Synthetic soap', at })).id],
+      ['reactions', (await logReaction(deps, { mealId: meal.id, symptoms: ['hives'], at: new Date(at.getTime() + 600_000) })).id],
+      ['alcoholEntries', (await logAlcohol(deps, { drink: 'Synthetic beer', amountMl: 500, at })).id],
+      ['medicationEntries', (await logMedication(deps, { category: 'medication', name: 'Synthetic pill', at })).id],
+      ['flareMarkers', (await markFlare(deps, { areaId: 'area-neck', kind: 'start', at })).id],
+    ];
+    for (const [kind, id] of ids) {
+      mockRouter.back.mockClear();
+      mockParams.current = { kind, id };
+      const { tree } = await mount(edit, deps);
+      await flush();
+      expect(tree.toJSON()).not.toBeNull();
+      await header('headerRight', en.common.save);
+      await flush();
+      expect(mockRouter.back).toHaveBeenCalledTimes(1);
+      const all = [...(await deps.repo.listMeals()), ...(await deps.repo.listSkinEntries()), ...(await deps.repo.listRecords('nailEntries')), ...(await deps.repo.listRecords('checkIns')), ...(await deps.repo.listRecords('stoolEntries')), ...(await deps.repo.listRecords('treatmentApplications')), ...(await deps.repo.listRecords('changeEvents')), ...(await deps.repo.listRecords('reactions')), ...(await deps.repo.listRecords('alcoholEntries')), ...(await deps.repo.listRecords('medicationEntries')), ...(await deps.repo.listRecords('flareMarkers'))];
+      expect(all.filter((r) => r.id === id)).toHaveLength(1);
+      expect(all).toHaveLength(ids.length);
+    }
+  });
+
+  it('EN-1 an entry that no longer exists shows a message instead of a form', async () => {
+    mockParams.current = { kind: 'meals', id: 'gone' };
+    const { tree } = await mount(edit, nowDeps());
+    await flush();
+    expect(hasText(tree, en.edit.unavailable)).toBe(true);
   });
 });

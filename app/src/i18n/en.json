@@ -570,7 +570,8 @@
       "meals": "meals",
       "skinEntries": "entries",
       "nailEntries": "entries"
-    }
+    },
+    "editAction": "Edit entry"
   },
   "cards": {
     "openFlare": "Flare open: {{area}}",
@@ -582,5 +583,22 @@
     "noExport": "No export yet. The diary exists only on this phone.",
     "lastExport": "Last export {{days}} days ago.",
     "openBackup": "Back up now"
+  },
+  "edit": {
+    "title": "Edit entry",
+    "missing": "Missing: {{what}}",
+    "discardTitle": "Discard changes?",
+    "discard": "Discard Changes",
+    "description": "a description",
+    "drink": "a drink",
+    "amount": "an amount in ml",
+    "name": "a name",
+    "treatment": "a treatment",
+    "areas": "at least one area",
+    "symptoms": "at least one symptom",
+    "scores": "Scores",
+    "bloating": "Bloating",
+    "unavailable": "This entry can no longer be edited.",
+    "ingredientsHint": "Separate ingredients with commas."
   }
 }

@@ -570,7 +570,8 @@
       "meals": "posiłki",
       "skinEntries": "wpisy",
       "nailEntries": "wpisy"
-    }
+    },
+    "editAction": "Edytuj wpis"
   },
   "cards": {
     "openFlare": "Rzut trwa: {{area}}",
@@ -582,5 +583,22 @@
     "noExport": "Nie było jeszcze eksportu. Dziennik jest tylko na tym telefonie.",
     "lastExport": "Ostatni eksport {{days}} dni temu.",
     "openBackup": "Zrób kopię"
+  },
+  "edit": {
+    "title": "Edycja wpisu",
+    "missing": "Brakuje: {{what}}",
+    "discardTitle": "Odrzucić zmiany?",
+    "discard": "Odrzuć zmiany",
+    "description": "opisu",
+    "drink": "napoju",
+    "amount": "ilości w ml",
+    "name": "nazwy",
+    "treatment": "leczenia",
+    "areas": "co najmniej jednego miejsca",
+    "symptoms": "co najmniej jednego objawu",
+    "scores": "Oceny",
+    "bloating": "Wzdęcia",
+    "unavailable": "Tego wpisu nie można już edytować.",
+    "ingredientsHint": "Oddziel składniki przecinkami."
   }
 }

@@ -294,3 +294,7 @@ Newest entry last. One short entry per working session or meaningful step: what 
 ## 2026-11-14: known-names setting (branch feature/known-names)
 - **Done:** IN-3, LL-5. A setting (off by default, Suggestions screen) lets the meal photo prompt prefer ingredient names already used in the diary; only names are sent, and the billing confirmation states how many. Prompt `ingredients-2`. 615 tests pass.
 - **Next:** flare start and end in More (SK-6).
+
+## 2026-11-14: flare start and end in More (branch feature/flare-in-more)
+- **Done:** SK-6, UX-2. A flare form in More (area chips with an "open" mark, the kind follows the area, time, note, Save in the header); the Skin form lost its flare buttons. 615 tests pass.
+- **Next:** favorite stars for drinks and medications (IN-14).

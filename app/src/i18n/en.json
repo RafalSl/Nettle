@@ -259,6 +259,9 @@
   },
   "more": {
     "nailTitle": "Nails",
+    "flareOpenMark": "open",
+    "flareWillStart": "Saving marks a flare as started in this area.",
+    "flareWillEnd": "Saving marks the open flare in this area as ended.",
     "nailAreaName": "New nail (for example left thumb)",
     "nailAddArea": "Add nail",
     "nailNone": "Add a nail first.",
@@ -589,6 +592,7 @@
     }
   },
   "nav": {
+    "flare": "Flare",
     "settings": "Settings",
     "more": "More",
     "meal": "Meal",
@@ -625,7 +629,7 @@
     "moreReaction": "Reaction after a meal",
     "moreNails": "Nail update",
     "moreChange": "Started or stopped",
-    "flareHint": "Flare start or end is on the Skin form.",
+    "moreFlare": "Flare start or end",
     "stool": "Stool",
     "edit": "Edit",
     "done": "Done",

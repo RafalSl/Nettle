@@ -11,6 +11,7 @@ export default function MoreScreen() {
       <NavRow title={t('home.moreDrink')} onPress={() => router.push('/form/drink')} />
       <NavRow title={t('home.moreMedication')} onPress={() => router.push('/form/medication')} />
       <NavRow title={t('home.moreReaction')} onPress={() => router.push('/form/reaction')} />
+      <NavRow title={t('home.moreFlare')} onPress={() => router.push('/form/flare')} />
       <NavRow title={t('home.moreNails')} onPress={() => router.push('/form/nails')} />
       <NavRow title={t('home.moreChange')} onPress={() => router.push('/form/change')} />
     </Screen>

@@ -567,7 +567,8 @@
     "analysis": "Analiza AI",
     "gear": "Ustawienia",
     "report": "Raport",
-    "suggestions": "Podpowiedzi"
+    "suggestions": "Podpowiedzi",
+    "timeline": "Oś czasu"
   },
   "home": {
     "quickActions": "Szybkie akcje",
@@ -601,7 +602,13 @@
     "runRunning": "Analiza trwa",
     "runReady": "Analiza gotowa",
     "runInterrupted": "Analiza przerwana, nic nie zapisano",
-    "runFailed": "Analiza nie powiodła się, nic nie zapisano"
+    "runFailed": "Analiza nie powiodła się, nic nie zapisano",
+    "areas": "Miejsca",
+    "areaRow": "{{area}}: {{n}} wpisów, ostatni {{day}}",
+    "noAreas": "Nie ma jeszcze wpisów skóry ani paznokci.",
+    "timelineEmpty": "Dla tego miejsca nic nie zapisano.",
+    "flareStart": "Początek rzutu",
+    "flareEnd": "Koniec rzutu"
   },
   "day": {
     "previous": "Poprzedni dzień",

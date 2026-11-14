@@ -567,7 +567,8 @@
     "analysis": "AI analysis",
     "gear": "Settings",
     "report": "Doctor report",
-    "suggestions": "Suggestions"
+    "suggestions": "Suggestions",
+    "timeline": "Timeline"
   },
   "home": {
     "quickActions": "Quick actions",
@@ -601,7 +602,13 @@
     "runRunning": "Analysis running",
     "runReady": "Analysis ready",
     "runInterrupted": "Analysis interrupted, nothing saved",
-    "runFailed": "Analysis failed, nothing saved"
+    "runFailed": "Analysis failed, nothing saved",
+    "areas": "Areas",
+    "areaRow": "{{area}}: {{n}} entries, last {{day}}",
+    "noAreas": "No skin or nail entries yet.",
+    "timelineEmpty": "Nothing logged for this area yet.",
+    "flareStart": "Flare started",
+    "flareEnd": "Flare ended"
   },
   "day": {
     "previous": "Previous day",

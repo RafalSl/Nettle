@@ -5,6 +5,7 @@ import type { Photo, PhotoEntryKind } from '@/core/model/types';
 import { addPhoto, listPhotos, removePhoto, setPhotoSensitive } from '@/core/usecases/photos';
 import { errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
+import { confirmDestructive } from '@/ui/actionSheet';
 import { Button, Hint } from '@/ui/components';
 
 /**
@@ -72,19 +73,13 @@ export function PhotoStrip({ entryKind, entryId }: { entryKind: PhotoEntryKind; 
           <Button
             kind="danger"
             title={t('photos.remove')}
-            onPress={() =>
-              Alert.alert(t('photos.removeTitle'), t('photos.removeBody'), [
-                { text: t('common.cancel'), style: 'cancel' },
-                {
-                  text: t('photos.remove'),
-                  style: 'destructive',
-                  onPress: () => {
-                    setSelected(null);
-                    run(() => removePhoto(deps, current.id));
-                  },
-                },
-              ])
-            }
+            onPress={async () => {
+              // UX-9: an action sheet with the destructive choice first and Cancel last.
+              if (await confirmDestructive({ title: t('photos.removeTitle'), message: t('photos.removeBody'), action: t('photos.remove') })) {
+                setSelected(null);
+                await run(() => removePhoto(deps, current.id));
+              }
+            }}
           />
         </View>
       )}

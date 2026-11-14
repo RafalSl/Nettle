@@ -106,3 +106,15 @@ describe.each(repos)('photos (%s)', (_name, make) => {
     expect(await repo.listSkinEntries()).toHaveLength(1);
   });
 });
+
+describe('removing a photo leaves a tombstone (EN-1, EX-13)', () => {
+  it('EX-13 a removed photo has a tombstone, so a merge cannot bring it back', async () => {
+    const repo = new MemoryRepo();
+    const deps = makeDeps(repo);
+    const entry = await logSkinEntry(deps, { areaId: 'area-chin', scores });
+    const photo = await addPhoto(deps, { entryKind: 'skinEntry', entryId: entry.id, sourceUri: 'x' });
+    await removePhoto(deps, photo.id);
+    expect(await repo.listTombstones()).toMatchObject([{ id: photo.id, kind: 'photos' }]);
+    expect(await repo.listRecords('photos')).toEqual([]);
+  });
+});

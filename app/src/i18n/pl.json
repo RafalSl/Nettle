@@ -55,7 +55,10 @@
     "scale": "0 = brak, 10 = najgorzej",
     "noChange": "Bez zmian",
     "noChangeHint": "Zapisuje nowy wpis z takimi samymi ocenami jak ostatni dla tego miejsca.",
-    "prefilled": "Oceny zaczynają od ostatniego wpisu dla tego miejsca."
+    "prefilled": "Oceny zaczynają od ostatniego wpisu dla tego miejsca.",
+    "flareStart": "Początek rzutu",
+    "flareEnd": "Koniec rzutu",
+    "flareOpen": "W tym miejscu trwa rzut."
   },
   "areas": {
     "area-chin": "Broda",
@@ -145,7 +148,9 @@
     "llm_failed": "Zapytanie nie powiodło się. Nic nie zapisano.",
     "analysis_too_large": "Ten zakres dat jest za duży do wysłania. Wybierz krótszy.",
     "analysis_no_data": "W tym zakresie dat nic nie zapisano.",
-    "too_many_photos": "Za dużo zdjęć na jedno uruchomienie. Wybierz mniej."
+    "too_many_photos": "Za dużo zdjęć na jedno uruchomienie. Wybierz mniej.",
+    "flare_already_started": "Dla tego miejsca zaznaczono już początek rzutu.",
+    "flare_not_started": "Dla tego miejsca nie zaznaczono początku rzutu."
   },
   "today": {
     "title": "Codzienna kontrola",
@@ -313,7 +318,8 @@
       "checkIns": "codzienne kontrole: {{n}}",
       "stoolEntries": "wpisy o stolcu: {{n}}",
       "changeEvents": "zmiany: {{n}}",
-      "analyses": "analizy AI: {{n}}"
+      "analyses": "analizy AI: {{n}}",
+      "flareMarkers": "znaczniki rzutów: {{n}}"
     }
   },
   "exportPhotos": {
@@ -381,5 +387,77 @@
     "suggestions": "Pomysły",
     "meta": "{{date}} · {{from}} do {{to}} · {{model}} · prompt {{prompt}}",
     "noHypotheses": "Nic nie wyróżnia się jako wzorzec."
+  },
+  "report": {
+    "title": "Dziennik skóry i zdrowia: raport",
+    "period": "Okres: od {{from}} do {{to}}",
+    "exported": "Utworzono {{date}}",
+    "disclaimer": "Ten raport podsumowuje to, co zapisała jedna osoba. Nie jest diagnozą ani poradą medyczną. Oceny są własnymi ocenami tej osoby.",
+    "flares": "Rzuty",
+    "ongoing": "trwa",
+    "area": "Miejsce",
+    "start": "Początek",
+    "end": "Koniec",
+    "skin": "Skóra według miejsc",
+    "date": "Data",
+    "scores": {
+      "severity": "Nasilenie",
+      "itch": "Swędzenie",
+      "pain": "Ból",
+      "dryness": "Suchość",
+      "scaling": "Łuszczenie"
+    },
+    "note": "Notatka",
+    "nails": "Paznokcie",
+    "stage": "Etap",
+    "extent": "Zakres",
+    "photos": "Zdjęcia",
+    "nailTimeline": "zdjęcia w czasie",
+    "firstLast": "pierwsze i ostatnie zdjęcie",
+    "checkins": "Codzienne kontrole",
+    "wellbeing": "Samopoczucie",
+    "stress": "Stres",
+    "sleep": "Sen",
+    "abdominalPain": "Ból brzucha",
+    "bloating": "Wzdęcia",
+    "tags": "Tagi",
+    "dayComplete": "Dzień zamknięty",
+    "yes": "tak",
+    "no": "nie",
+    "stool": "Stolec",
+    "bristol": "Typ w skali Bristolskiej",
+    "treatments": "Zastosowane zabiegi",
+    "treatment": "Zabieg",
+    "areas": "Miejsca",
+    "changes": "Rozpoczęte lub zakończone",
+    "what": "Co",
+    "name": "Nazwa",
+    "medication": "Leki i suplementy",
+    "dose": "Dawka",
+    "intake": "Posiłki i napoje",
+    "meal": "Posiłek",
+    "ingredients": "Składniki",
+    "allergens": "Alergeny",
+    "drink": "Napój",
+    "reactions": "Reakcje po posiłkach",
+    "onset": "Początek",
+    "symptoms": "Objawy",
+    "aiTitle": "Analizy AI (nie są częścią zapisów tej osoby)",
+    "aiWarning": "Wygenerowane przez AI, wstępne. To możliwe wzorce zapisane przez model AI na podstawie dziennika, a nie ustalenia lekarza ani diagnoza.",
+    "aiMeta": "Uruchomiono {{date}} · dni od {{from}} do {{to}} · {{model}}",
+    "aiSummary": "Podsumowanie",
+    "aiEvidence": "Dowody",
+    "aiAgainst": "Przeciw",
+    "aiUncertainty": "Niepewność",
+    "aiOrder": "Kolejność i czas",
+    "aiLimits": "Czego dane nie pokazują"
+  },
+  "export": {
+    "extras": "Dodatkowe pliki",
+    "csv": "Pliki CSV (po jednym na tabelę)",
+    "report": "Raport PDF dla lekarza",
+    "reportLanguage": "Język raportu",
+    "english": "Angielski",
+    "polish": "Polski"
   }
 }

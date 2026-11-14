@@ -1,3 +1,4 @@
+import { FakePdf } from '../fakes/fakePdf';
 import { FakeLlm } from '../fakes/fakeLlm';
 import { MemoryKeyStore } from '../fakes/memoryKeyStore';
 import { MemoryPhotoStore } from '../fakes/memoryPhotoStore';
@@ -18,6 +19,7 @@ export function makeDeps(repo: StorageRepository, now = '2026-01-15T10:00:00.000
     clock: { now: () => new Date(now), timeZone: () => TZ },
     randomBytes: (n) => crypto.getRandomValues(new Uint8Array(n)),
     photos: new MemoryPhotoStore(),
+    pdf: new FakePdf(),
     keys: new MemoryKeyStore(),
     settings: new MemorySettings(),
     llmFor: () => llm,
@@ -62,6 +64,7 @@ export const noExtra = {
   medicationEntries: [],
   photos: [],
   analyses: [],
+  flareMarkers: [],
 };
 
 /** The user lists (see ListKind) with no items, to complete a Settings literal. */

@@ -1,5 +1,7 @@
 import {
   CHANGE_ACTIONS,
+  FLARE_KINDS,
+  type FlareMarker,
   MEDICATION_CATEGORIES,
   type AlcoholEntry,
   type Analysis,
@@ -257,6 +259,18 @@ const analysis: Codec<Analysis> = {
   },
 };
 
+const flare: Codec<FlareMarker> = {
+  key: 'flare_markers',
+  toJson: (f) => ({ id: f.id, utc: f.at.utc, tz: f.at.tz, area_id: f.areaId, kind: f.kind, note: f.note }),
+  parse: (o, w) => ({
+    id: str(o, 'id', w),
+    at: { utc: utc(o, w), tz: str(o, 'tz', w) },
+    areaId: str(o, 'area_id', w),
+    kind: oneOf(o, 'kind', FLARE_KINDS, w),
+    note: nullableText(o, 'note', w),
+  }),
+};
+
 export const EXTRA_CODECS: { [K in ExtraKind]: Codec<Records[K][number]> } = {
   nailEntries: nail,
   checkIns: checkIn,
@@ -268,6 +282,7 @@ export const EXTRA_CODECS: { [K in ExtraKind]: Codec<Records[K][number]> } = {
   medicationEntries: medication,
   photos: photo,
   analyses: analysis,
+  flareMarkers: flare,
 };
 
 export { EXTRA_KINDS };

@@ -1,5 +1,7 @@
 import { analysisResultFromJson, analysisResultToJson } from '@/core/llm/analysisResult';
 import type {
+  FlareKind,
+  FlareMarker,
   Analysis,
   AlcoholEntry,
   Photo,
@@ -202,6 +204,19 @@ const analysis: ExtraTable<Analysis> = {
   }),
 };
 
+const flare: ExtraTable<FlareMarker> = {
+  table: 'flare_marker',
+  columns: ['area_id', 'kind', 'note'],
+  toValues: (f) => [f.areaId, f.kind, f.note],
+  fromRow: (r) => ({
+    id: r.id as string,
+    at: { utc: r.ts_utc as string, tz: r.tz as string },
+    areaId: r.area_id as string,
+    kind: r.kind as FlareKind,
+    note: r.note as string | null,
+  }),
+};
+
 export const EXTRA_TABLES: { [K in ExtraKind]: ExtraTable<Records[K][number]> } = {
   nailEntries: nail,
   checkIns: checkIn,
@@ -213,4 +228,5 @@ export const EXTRA_TABLES: { [K in ExtraKind]: ExtraTable<Records[K][number]> } 
   medicationEntries: medication,
   photos: photo,
   analyses: analysis,
+  flareMarkers: flare,
 };

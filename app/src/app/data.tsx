@@ -6,13 +6,13 @@ import type { Parts } from '@/core/model/types';
 import type { ImportMode } from '@/core/ports/storage';
 import { EXTRA_KINDS, LIST_KINDS } from '@/core/model/types';
 import { applyImport, exportBundle, previewImport, type ParsedImport } from '@/core/usecases/exchange';
-import { errorMessage, t } from '@/i18n';
+import { areaLabelIn, errorMessage, itemLabelIn, t, tIn } from '@/i18n';
 import { useServices } from '@/services';
 import { DEFAULT_PHOTO_SELECTION, type PhotoSelection } from '@/core/export/photoSelection';
 import { PhotoSelectionField } from '@/ui/PhotoSelectionField';
 import { LlmSettingsSection } from '@/ui/LlmSettingsSection';
 import { DeleteSection } from '@/ui/DeleteSection';
-import { Button, Heading, Hint, Label, Screen, styles } from '@/ui/components';
+import { Button, Chips, Heading, Hint, Label, Screen, styles } from '@/ui/components';
 
 function PartSwitch({
   label,
@@ -39,6 +39,9 @@ export default function DataScreen() {
   const { deps, fileShare } = useServices();
   const router = useRouter();
   const [exportParts, setExportParts] = useState<Parts>({ records: true, settings: true });
+  const [csv, setCsv] = useState(false);
+  const [report, setReport] = useState(false);
+  const [reportLanguage, setReportLanguage] = useState<'en' | 'pl'>('en');
   const [photoSelection, setPhotoSelection] = useState<PhotoSelection>(DEFAULT_PHOTO_SELECTION);
   const [pending, setPending] = useState<ParsedImport | null>(null);
   const [importParts, setImportParts] = useState<Parts>({ records: true, settings: true });
@@ -55,7 +58,20 @@ export default function DataScreen() {
         return;
       }
       const stamp = deps.clock.now().toISOString().slice(0, 10);
-      const bytes = await exportBundle(deps, { parts: exportParts, password: password || undefined, photos: photoSelection });
+      const bytes = await exportBundle(deps, {
+        parts: exportParts,
+        password: password || undefined,
+        photos: photoSelection,
+        csv,
+        report: report
+          ? {
+              language: reportLanguage,
+              text: (key, vars) => tIn(reportLanguage, key, vars),
+              areaName: (a) => areaLabelIn(reportLanguage, a),
+              itemName: (i) => itemLabelIn(reportLanguage, i),
+            }
+          : undefined,
+      });
       await fileShare.saveAndShare(`nettle-export-${stamp}.zip`, bytes, 'application/zip');
       setPassword('');
       setRepeat('');
@@ -126,6 +142,22 @@ export default function DataScreen() {
         onChange={(settings) => setExportParts((s) => ({ ...s, settings }))}
       />
       <PhotoSelectionField onChange={setPhotoSelection} />
+      <Label>{t('export.extras')}</Label>
+      <PartSwitch label={t('export.csv')} value={csv} onChange={setCsv} />
+      <PartSwitch label={t('export.report')} value={report} onChange={setReport} />
+      {report && (
+        <>
+          <Hint>{t('export.reportLanguage')}</Hint>
+          <Chips
+            items={[
+              { id: 'en', label: t('export.english') },
+              { id: 'pl', label: t('export.polish') },
+            ]}
+            selected={new Set([reportLanguage])}
+            onToggle={(id) => setReportLanguage(id as 'en' | 'pl')}
+          />
+        </>
+      )}
       <Label>{t('data.passwordLabel')}</Label>
       <TextInput
         style={styles.input}

@@ -55,7 +55,10 @@
     "scale": "0 = none, 10 = worst",
     "noChange": "No change",
     "noChangeHint": "Saves a new entry with the same scores as the last one for this area.",
-    "prefilled": "Scores start from the last entry for this area."
+    "prefilled": "Scores start from the last entry for this area.",
+    "flareStart": "Flare started",
+    "flareEnd": "Flare ended",
+    "flareOpen": "A flare is open in this area."
   },
   "areas": {
     "area-chin": "Chin",
@@ -145,7 +148,9 @@
     "llm_failed": "The request failed. Nothing was saved.",
     "analysis_too_large": "That date range is too large to send. Choose a shorter range.",
     "analysis_no_data": "There is nothing logged in that date range.",
-    "too_many_photos": "Too many photos for one run. Choose fewer."
+    "too_many_photos": "Too many photos for one run. Choose fewer.",
+    "flare_already_started": "A flare is already marked as started for this area.",
+    "flare_not_started": "No flare is marked as started for this area."
   },
   "today": {
     "title": "Daily check-in",
@@ -313,7 +318,8 @@
       "checkIns": "{{n}} check-ins",
       "stoolEntries": "{{n}} stool entries",
       "changeEvents": "{{n}} change events",
-      "analyses": "{{n}} AI analyses"
+      "analyses": "{{n}} AI analyses",
+      "flareMarkers": "{{n}} flare markers"
     }
   },
   "exportPhotos": {
@@ -381,5 +387,77 @@
     "suggestions": "Ideas",
     "meta": "{{date}} · {{from}} to {{to}} · {{model}} · prompt {{prompt}}",
     "noHypotheses": "No pattern stands out."
+  },
+  "report": {
+    "title": "Skin and health diary: report",
+    "period": "Period: {{from}} to {{to}}",
+    "exported": "Created {{date}}",
+    "disclaimer": "This report is a summary of what one person recorded. It is not a diagnosis or medical advice. Scores are the person's own ratings.",
+    "flares": "Flares",
+    "ongoing": "ongoing",
+    "area": "Area",
+    "start": "Start",
+    "end": "End",
+    "skin": "Skin by area",
+    "date": "Date",
+    "scores": {
+      "severity": "Severity",
+      "itch": "Itch",
+      "pain": "Pain",
+      "dryness": "Dryness",
+      "scaling": "Scaling"
+    },
+    "note": "Note",
+    "nails": "Nails",
+    "stage": "Stage",
+    "extent": "Extent",
+    "photos": "Photos",
+    "nailTimeline": "photos over time",
+    "firstLast": "first and latest photo",
+    "checkins": "Daily check-ins",
+    "wellbeing": "Wellbeing",
+    "stress": "Stress",
+    "sleep": "Sleep",
+    "abdominalPain": "Abdominal pain",
+    "bloating": "Bloating",
+    "tags": "Tags",
+    "dayComplete": "Day closed",
+    "yes": "yes",
+    "no": "no",
+    "stool": "Stool",
+    "bristol": "Bristol type",
+    "treatments": "Treatments applied",
+    "treatment": "Treatment",
+    "areas": "Areas",
+    "changes": "Started or stopped",
+    "what": "What",
+    "name": "Name",
+    "medication": "Medications and supplements",
+    "dose": "Dose",
+    "intake": "Meals and drinks",
+    "meal": "Meal",
+    "ingredients": "Ingredients",
+    "allergens": "Allergens",
+    "drink": "Drink",
+    "reactions": "Reactions after meals",
+    "onset": "Onset",
+    "symptoms": "Symptoms",
+    "aiTitle": "AI analyses (not part of the person's records)",
+    "aiWarning": "AI-generated and tentative. These are possible patterns written by an AI model from the diary, not findings of a doctor and not a diagnosis.",
+    "aiMeta": "Run {{date}} · days {{from}} to {{to}} · {{model}}",
+    "aiSummary": "Summary",
+    "aiEvidence": "Evidence",
+    "aiAgainst": "Against",
+    "aiUncertainty": "Uncertainty",
+    "aiOrder": "Order and timing",
+    "aiLimits": "What the data cannot show"
+  },
+  "export": {
+    "extras": "Extra files",
+    "csv": "CSV files (one per table)",
+    "report": "PDF report for a doctor",
+    "reportLanguage": "Report language",
+    "english": "English",
+    "polish": "Polish"
   }
 }

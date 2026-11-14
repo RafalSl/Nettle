@@ -33,3 +33,8 @@ export interface PhotoStore {
   /** A URI the UI can show. */
   uri(file: string): string;
 }
+
+/** EX-3: turns the report HTML into PDF bytes (expo-print in the app). */
+export interface PdfRenderer {
+  renderHtml(html: string): Promise<Uint8Array>;
+}

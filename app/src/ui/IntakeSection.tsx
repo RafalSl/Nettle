@@ -3,15 +3,19 @@ import { useCallback, useState } from 'react';
 import { Alert, Pressable, Text, TextInput } from 'react-native';
 import { defaultPreferences, type Preferences } from '@/core/model/preferences';
 import { drinkHistory, medicationHistory, rankSuggestions, type Suggestion } from '@/core/model/suggestions';
-import { MEDICATION_CATEGORIES, type Drink, type MedicationCategory } from '@/core/model/types';
+import { MEDICATION_CATEGORIES, type MedicationCategory } from '@/core/model/types';
+import { lookupProduct } from '@/core/usecases/barcode';
+import { typedSource } from '@/core/model/source';
+import { localDay } from '@/core/model/time';
 import { logDrink, logMedication } from '@/core/usecases/intake';
-import { getPreferences } from '@/core/usecases/preferences';
+import { getPreferences, type DrinkSnapshot } from '@/core/usecases/preferences';
 import { errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
 import { FormModal, useField, useForm } from '@/ui/FormModal';
 import { DrinkFields, draftFromDrink, drinkInput, drinkMissing, emptyDrinkDraft, type DrinkDraft } from '@/ui/DrinkFields';
 import { useFormTime } from '@/ui/useFormTime';
-import { Chips, Label, TimeField, styles } from '@/ui/components';
+import { BarcodeScanner } from '@/ui/BarcodeScanner';
+import { Button, Chips, Hint, Label, TimeField, styles } from '@/ui/components';
 
 const rowText = (s: Suggestion<unknown>) => `${s.favorite ? '★ ' : ''}${s.label}${s.count >= 2 ? ` ×${s.count}` : ''}`;
 
@@ -41,7 +45,7 @@ export function DrinkSection() {
   const time = useFormTime(f.touch);
   const { list, saveOnTap } = useSuggestions<DrinkSnapshot>(async (d, p) => {
     const options = { rows: p.suggestions.rows, windowDays: p.suggestions.windowDays };
-    const snap = (x: DrinkSnapshot): DrinkSnapshot => ({ name: x.name, amountMl: x.amountMl, alcohol: x.alcohol, ingredients: x.ingredients, allergens: x.allergens });
+    const snap = (x: DrinkSnapshot): DrinkSnapshot => ({ name: x.name, amountMl: x.amountMl, alcohol: x.alcohol, ingredients: x.ingredients, allergens: x.allergens, barcode: x.barcode, source: x.source });
     return rankSuggestions(
       drinkHistory(await d.repo.listRecords('drinks')).map((h) => ({ ...h, payload: snap(h.payload) })),
       p.favorites.drinks.map((x) => ({ key: x.key, label: `${x.name} ${x.amountMl} ml`, payload: snap(x) })),
@@ -49,6 +53,47 @@ export function DrinkSection() {
       options,
     );
   });
+
+  // IN-2: a packaged drink is scanned like a meal; the result only fills this form.
+  const [scanning, setScanning] = useState(false);
+  const [code, setCode] = useState('');
+  const [looking, setLooking] = useState(false);
+  const [scanNote, setScanNote] = useState<string | null>(null);
+  async function handleCode(raw: string) {
+    setLooking(true);
+    try {
+      const found = await lookupProduct(deps, raw);
+      const fill = () => {
+        const h = found.history;
+        const p = found.product;
+        const base = draftFromDrink({ name: '', amountMl: 0, alcohol: false, ingredients: [], allergens: [], barcode: found.barcode, source: typedSource() });
+        if (h) {
+          // IN-2: the diary knows this code: its confirmed ingredients and tags (pre-selected) fill the form.
+          setDraft({ ...draftFromDrink({ ...h, amountMl: 0, alcohol: false, barcode: found.barcode }), name: h.name, amount: draft.amount, alcohol: draft.alcohol });
+          setScanNote(t('meal.scanFromHistory', { date: localDay(h.at, deps.clock.timeZone()) }));
+        } else if (p) {
+          // IN-16: the database is the source; its tags stay unselected until the user selects them (IN-10).
+          setDraft({ ...base, name: p.name, amount: draft.amount, alcohol: draft.alcohol, ingredients: p.ingredients.join(', '), source: { kind: 'open_food_facts', edited: false, llm: null }, filled: { ingredients: p.ingredients, allergens: p.allergens } });
+          setScanNote(found.incomplete ? t('meal.scanIncomplete') : t('meal.scanFromDb'));
+        } else {
+          setDraft({ ...base, name: draft.name, amount: draft.amount, alcohol: draft.alcohol });
+          setScanNote(t('meal.scanNotFound'));
+        }
+        setScanning(false);
+      };
+      if ((found.product || found.history) && found.inStore) {
+        Alert.alert(t('meal.scanInStoreTitle'), t('meal.scanInStoreBody'), [
+          { text: t('common.cancel'), style: 'cancel', onPress: () => setScanning(false) },
+          { text: t('meal.scanUse'), onPress: fill },
+        ]);
+      } else fill();
+    } catch (e) {
+      Alert.alert(errorMessage(e));
+      setScanning(false); // IN-8: the source is out of reach, so enter the drink by hand
+    } finally {
+      setLooking(false);
+    }
+  }
 
   // IN-10: a pick comes from the diary's own history, so its tags are shown pre-selected and count as confirmed.
   async function pick(s: DrinkSnapshot) {
@@ -72,13 +117,24 @@ export function DrinkSection() {
           <Text style={styles.rowText}>{rowText(s)}</Text>
         </Pressable>
       ))}
+      {scanning ? (
+        <>
+          <BarcodeScanner onCode={(c) => void handleCode(c)} />
+          <Label>{t('meal.scanOrType')}</Label>
+          <TextInput style={styles.input} accessibilityLabel={t('meal.scanCode')} placeholder={t('meal.scanCode')} keyboardType="number-pad" value={code} onChangeText={setCode} />
+          <Button title={t('meal.scanLookup')} disabled={!code.trim() || looking} onPress={() => void handleCode(code)} />
+          {looking && <Hint>{t('meal.scanLooking')}</Hint>}
+          <Button kind="secondary" title={t('meal.scanCancel')} onPress={() => setScanning(false)} />
+        </>
+      ) : (
+        <Button kind="secondary" title={t('meal.scan')} onPress={() => setScanning(true)} />
+      )}
+      {scanNote && <Hint>{scanNote}</Hint>}
       <DrinkFields draft={draft} onChange={setDraft} />
       <TimeField value={time.value} onChange={time.set} />
     </FormModal>
   );
 }
-
-type DrinkSnapshot = Pick<Drink, 'name' | 'amountMl' | 'alcohol' | 'ingredients' | 'allergens'>;
 
 /** IN-5: a medication or supplement with an optional dose. */
 export function MedicationSection() {

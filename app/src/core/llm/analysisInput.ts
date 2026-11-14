@@ -1,7 +1,11 @@
+import type { IngredientSource } from '../model/source';
 import { localDateTime, localDay, addDays } from '../model/time';
 import type { Allergen, ListItem, Records, SkinArea } from '../model/types';
 
 /** LL-3: how far before the analysed period illness, antibiotics, stress, sleep and change events are looked up. */
+/** LL-4, IN-16: where an ingredient list came from; typed lists say nothing. Photo estimates are rough. */
+const sourceOf = (s: IngredientSource) => (s.kind === 'typed' ? {} : { ingredients_source: s.kind + (s.edited ? ' (edited by the user)' : '') });
+
 export const LOOKBACK_DAYS = 21;
 
 export interface AnalysisSource extends Records {
@@ -97,10 +101,10 @@ export function buildAnalysisInput(src: AnalysisSource, dayFrom: string, dayTo: 
 
   // Period-only kinds.
   for (const m of src.meals) {
-    add('meals', dayOf(m.at), 'meals', { time: time(m.at.utc, m.at.tz), description: m.description, ingredients: m.ingredients, allergens: m.allergens, ...(m.note ? { note: m.note } : {}) });
+    add('meals', dayOf(m.at), 'meals', { time: time(m.at.utc, m.at.tz), description: m.description, ingredients: m.ingredients, allergens: m.allergens, ...sourceOf(m.source), ...(m.note ? { note: m.note } : {}) });
   }
   for (const a of src.drinks) {
-    add('drinks', dayOf(a.at), 'drinks', { time: time(a.at.utc, a.at.tz), name: a.name, ml: a.amountMl, alcohol: a.alcohol, ...(a.ingredients.length ? { ingredients: a.ingredients } : {}), ...(a.allergens.length ? { allergens: a.allergens } : {}), ...(a.note ? { note: a.note } : {}) });
+    add('drinks', dayOf(a.at), 'drinks', { time: time(a.at.utc, a.at.tz), name: a.name, ml: a.amountMl, alcohol: a.alcohol, ...(a.ingredients.length ? { ingredients: a.ingredients } : {}), ...(a.allergens.length ? { allergens: a.allergens } : {}), ...sourceOf(a.source), ...(a.note ? { note: a.note } : {}) });
   }
   for (const t of src.treatmentApplications) {
     add('treatmentApplications', dayOf(t.at), 'treatments', { time: time(t.at.utc, t.at.tz), name: treatmentName.get(t.treatmentId) ?? t.treatmentId, areas: t.areaIds.map((id) => areaName.get(id) ?? id) });

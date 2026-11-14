@@ -2,6 +2,7 @@ import { EXTRA_KINDS, LIST_KINDS, type DateRange, type Parts, type RecordKind, t
 import { DEFAULT_PREFERENCES, type Preferences } from '../model/preferences';
 import { EXTRA_CODECS } from './extras';
 import { preferencesToJson } from './preferencesJson';
+import { sourceToJson } from './sourceJson';
 
 /** Bump on any breaking change to data.json (EX-1). */
 export const SCHEMA_VERSION = 1;
@@ -13,6 +14,8 @@ export interface MealJson {
   description: string;
   ingredients: string[];
   allergens: string[];
+  barcode: string | null;
+  source: Record<string, unknown>;
   note: string | null;
 }
 
@@ -78,6 +81,8 @@ export function toDataJson(
           description: m.description,
           ingredients: [...m.ingredients],
           allergens: [...m.allergens],
+          barcode: m.barcode,
+          source: sourceToJson(m.source),
           note: m.note,
         })),
         skin_entries: snap.skinEntries.map((e) => ({

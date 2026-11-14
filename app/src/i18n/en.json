@@ -77,6 +77,7 @@
     "scanInStoreBody": "This number is used by shops for their own products, so the same code can mean different products. Is the match right?",
     "scanUse": "Use it",
     "scanFromDb": "Filled from Open Food Facts. Check it before saving.",
+    "scanFromHistory": "Filled from your diary: this code was last logged on {{date}}. The ingredients and tags are the ones you confirmed then.",
     "scanTagsHint": "The database lists these allergens: {{list}}. They are not selected until you select them.",
     "scanSelectTags": "Select the listed allergens"
   },
@@ -517,6 +518,9 @@
     "allergens": "Allergens",
     "drink": "Drink",
     "alcohol": "Alcohol",
+    "aiMark": "AI",
+    "aiMarkEdited": "AI, edited",
+    "aiMarkLegend": "[AI]: the ingredients were read by an AI model from a photo, and the person reviewed and confirmed them before saving. [AI, edited]: the person changed them afterwards.",
     "reactions": "Reactions after meals",
     "onset": "Onset",
     "symptoms": "Symptoms",
@@ -644,6 +648,12 @@
     "shortcuts": "One-tap treatments",
     "applied": "Applied",
     "logTitle": "Log"
+  },
+  "source": {
+    "open_food_facts": "Open Food Facts",
+    "label_scan": "AI label scan",
+    "photo_estimate": "AI photo estimate",
+    "edited": "edited"
   },
   "log": {
     "meal": "Meal",

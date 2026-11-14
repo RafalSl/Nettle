@@ -6,6 +6,7 @@ import { NettleError } from '@/core/model/errors';
 import { defaultPreferences, type Preferences } from '@/core/model/preferences';
 import { mealHistory, rankSuggestions, type Suggestion } from '@/core/model/suggestions';
 import { atOnDay, localDay } from '@/core/model/time';
+import { afterEdit, sameIngredients, typedSource, type IngredientSource, type LlmProvenance } from '@/core/model/source';
 import { ALLERGENS, type Allergen } from '@/core/model/types';
 import { estimateIngredients } from '@/core/usecases/llm';
 import { lookupProduct } from '@/core/usecases/barcode';
@@ -24,7 +25,20 @@ interface MealDraft {
   description: string;
   ingredients: string[];
   allergens: Allergen[];
+  /** IN-2, IN-16: kept from the entry the draft was copied from; a new meal is typed. */
+  barcode?: string | null;
+  source?: IngredientSource;
+  /** The tags the source itself listed, to tell later edits from the source's own tags (defaults to `allergens`). */
+  sourceAllergens?: Allergen[];
 }
+
+/** IN-16: where the form's lists came from, and the lists as they were filled in. */
+interface Origin {
+  barcode: string | null;
+  source: IngredientSource;
+  filled: { ingredients: string[]; allergens: string[] };
+}
+const typedOrigin = (): Origin => ({ barcode: null, source: typedSource(), filled: { ingredients: [], allergens: [] } });
 
 const DAY_MS = 86_400_000;
 /** LL-12: after this long the form says the estimate is still working. */
@@ -54,7 +68,7 @@ export default function MealScreen() {
   type Estimate =
     | { status: 'idle' }
     | { status: 'running'; slow: boolean }
-    | { status: 'ready'; names: string[]; picked: Set<string>; uncertainty: string | null }
+    | { status: 'ready'; names: string[]; picked: Set<string>; uncertainty: string | null; provenance: LlmProvenance }
     | { status: 'failed'; error: unknown };
   const [est, setEst] = useState<Estimate>({ status: 'idle' });
   const ctl = useRef<AbortController | null>(null);
@@ -62,6 +76,8 @@ export default function MealScreen() {
   const slowTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const [at, setAt] = useState<Date | null>(null);
   const [edited, setEdited] = useState(false);
+  const [origin, setOrigin] = useState<Origin>(typedOrigin());
+  const [dateHint, setDateHint] = useState<string | null>(null);
 
   const load = useCallback(() => {
     (async () => {
@@ -77,8 +93,8 @@ export default function MealScreen() {
   const defaultAt = typeof day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(day) ? atOnDay(day, now, tz) : now;
 
   const suggestions: Suggestion<MealDraft>[] = rankSuggestions(
-    meals.map((h) => ({ ...h, payload: { description: h.payload.description, ingredients: h.payload.ingredients, allergens: h.payload.allergens } })),
-    prefs.favorites.meals.map((f) => ({ key: f.key, label: f.description, payload: { description: f.description, ingredients: f.ingredients, allergens: f.allergens } })),
+    meals.map((h) => ({ ...h, payload: { description: h.payload.description, ingredients: h.payload.ingredients, allergens: h.payload.allergens, barcode: h.payload.barcode, source: h.payload.source } })),
+    prefs.favorites.meals.map((f) => ({ key: f.key, label: f.description, payload: { description: f.description, ingredients: f.ingredients, allergens: f.allergens, barcode: f.barcode, source: f.source } })),
     now,
     { rows: prefs.suggestions.rows, windowDays: prefs.suggestions.windowDays, query: description },
   );
@@ -98,6 +114,12 @@ export default function MealScreen() {
     setDescription(draft.description);
     setIngredients(draft.ingredients.length > 0 ? [...draft.ingredients] : ['']);
     setAllergens(new Set(draft.allergens)); // from the diary's history: visible and pre-selected, so confirmed
+    setOrigin({
+      barcode: draft.barcode ?? null,
+      source: draft.source ?? typedSource(),
+      filled: { ingredients: [...draft.ingredients], allergens: [...(draft.sourceAllergens ?? draft.allergens)] },
+    });
+    setDateHint(null);
     setEdited(false);
     setFromCode(null);
     setPhase('review');
@@ -109,11 +131,26 @@ export default function MealScreen() {
     try {
       const found = await lookupProduct(deps, raw);
       const fill = () => {
+        const h = found.history;
+        if (h) {
+          // IN-2: a barcode the diary knows fills the review from its latest use, tags pre-selected (confirmed).
+          review({ description: h.name, ingredients: h.ingredients, allergens: h.allergens, barcode: found.barcode, source: h.source });
+          setDateHint(t('meal.scanFromHistory', { date: localDay(h.at, deps.clock.timeZone()) }));
+          return;
+        }
         const p = found.product;
-        review({ description: p?.name ?? '', ingredients: p?.ingredients ?? [], allergens: [] });
+        // IN-16: what the database lists is the source; its tags are suggestions and the baseline for later edits.
+        review({
+          description: p?.name ?? '',
+          ingredients: p?.ingredients ?? [],
+          allergens: [],
+          barcode: found.barcode,
+          source: p ? { kind: 'open_food_facts', edited: false, llm: null } : typedSource(),
+          sourceAllergens: p?.allergens ?? [],
+        });
         setFromCode({ note: !p ? t('meal.scanNotFound') : found.incomplete ? t('meal.scanIncomplete') : t('meal.scanFromDb'), tags: p?.allergens ?? [] });
       };
-      if (found.product && found.inStore) {
+      if ((found.product || found.history) && found.inStore) {
         // IN-2: an in-store code is ambiguous; the user confirms the match or enters the product by hand.
         Alert.alert(t('meal.scanInStoreTitle'), t('meal.scanInStoreBody'), [
           { text: t('common.cancel'), style: 'cancel', onPress: () => setPhase('choose') },
@@ -182,7 +219,7 @@ export default function MealScreen() {
       const data = await deps.photos.compress(uri, 1024);
       const result = await estimateIngredients(deps, { image: { mimeType: 'image/jpeg', data }, language: currentLanguage(), signal: controller.signal });
       if (controller.signal.aborted) return;
-      setEst({ status: 'ready', names: result.names, picked: new Set(), uncertainty: result.uncertainty });
+      setEst({ status: 'ready', names: result.names, picked: new Set(), uncertainty: result.uncertainty, provenance: result.provenance });
     } catch (e) {
       if (controller.signal.aborted || (e instanceof NettleError && e.code === 'llm_cancelled')) return setEst({ status: 'idle' });
       setEst({ status: 'failed', error: e });
@@ -202,15 +239,27 @@ export default function MealScreen() {
 
   /** IN-3: the chosen names become ordinary rows of the list, editable and removable; allergen tags stay as they are (IN-10). */
   function addEstimate(names: string[]) {
-    touch(setIngredients)(addIngredients(ingredients, names));
+    const next = addIngredients(ingredients, names);
+    touch(setIngredients)(next);
+    // IN-16: an estimate on a typed meal becomes its source; the list as just filled is the baseline for edits.
+    if (est.status === 'ready' && origin.source.kind === 'typed') {
+      setOrigin({ barcode: origin.barcode, source: { kind: 'photo_estimate', edited: false, llm: est.provenance }, filled: { ingredients: next.map((i) => i.trim()).filter(Boolean), allergens: [...allergens] } });
+    }
     setEst({ status: 'idle' });
+  }
+
+  /** What is saved from the lists: cleaned, with the barcode and the source (marked edited when the lists differ from how they were filled). */
+  function saveFields() {
+    const list = ingredients.map((i) => i.trim()).filter(Boolean);
+    const tags = [...allergens] as Allergen[];
+    return { ingredients: list, allergens: tags, barcode: origin.barcode, source: afterEdit(origin.source, !sameIngredients(origin.filled, { ingredients: list, allergens: tags })) };
   }
 
   const key = description.trim().toLowerCase().replace(/\s+/g, ' ');
   const isFavorite = prefs.favorites.meals.some((m) => m.key === key);
   async function star() {
     try {
-      await toggleFavoriteMeal(deps, { description: description.trim(), ingredients: ingredients.map((i) => i.trim()).filter(Boolean), allergens: [...allergens] as Allergen[] });
+      await toggleFavoriteMeal(deps, { description: description.trim(), ...saveFields() });
       setPrefs(await getPreferences(deps));
     } catch (e) {
       Alert.alert(errorMessage(e));
@@ -224,7 +273,7 @@ export default function MealScreen() {
       missing={missing}
       onSave={async () => {
         ctl.current?.abort(); // Save uses the fields as they are and drops a running estimate
-        await logMeal(deps, { description, ingredients, allergens: [...allergens] as Allergen[], note, at: at ?? (day ? defaultAt : undefined) });
+        await logMeal(deps, { description, ...saveFields(), note, at: at ?? (day ? defaultAt : undefined) });
       }}>
       {phase === 'choose' ? (
         <>
@@ -258,6 +307,7 @@ export default function MealScreen() {
       ) : (
         <>
           <Button kind="secondary" title={t('meal.changeMeal')} onPress={() => void changeMeal()} />
+          {dateHint && <Hint>{dateHint}</Hint>}
           {fromCode && <Hint>{fromCode.note}</Hint>}
           <Label>{t('meal.description')}</Label>
           <TextInput style={styles.input} accessibilityLabel={t('meal.description')} value={description} onChangeText={touch(setDescription)} />

@@ -37,25 +37,39 @@ const toggle = <T extends { key: string }>(list: T[], item: T): T[] =>
   list.some((x) => x.key === item.key) ? list.filter((x) => x.key !== item.key) : [...list, item];
 
 /** IN-14: star or unstar a meal. The favorite is a snapshot of description, ingredients and allergen tags. */
-export async function toggleFavoriteMeal(deps: Deps, meal: Pick<Meal, 'description' | 'ingredients' | 'allergens'>): Promise<boolean> {
+export async function toggleFavoriteMeal(deps: Deps, meal: MealSnapshot): Promise<boolean> {
   const key = normalizeText(meal.description);
   const prefs = await change(deps, (p) => {
-    p.favorites.meals = toggle(p.favorites.meals, { key, description: meal.description, ingredients: [...meal.ingredients], allergens: [...meal.allergens] });
+    p.favorites.meals = toggle(p.favorites.meals, mealSnapshot(meal));
   });
   return prefs.favorites.meals.some((m) => m.key === key);
 }
 
 /** IN-14: a favorite drink is a snapshot of name, amount, alcohol switch, ingredients and allergen tags. */
-const drinkSnapshot = (e: Pick<Drink, 'name' | 'amountMl' | 'alcohol' | 'ingredients' | 'allergens'>) => ({
+export type MealSnapshot = Pick<Meal, 'description' | 'ingredients' | 'allergens' | 'barcode' | 'source'>;
+export type DrinkSnapshot = Pick<Drink, 'name' | 'amountMl' | 'alcohol' | 'ingredients' | 'allergens' | 'barcode' | 'source'>;
+
+const mealSnapshot = (m: MealSnapshot) => ({
+  key: normalizeText(m.description),
+  description: m.description,
+  ingredients: [...m.ingredients],
+  allergens: [...m.allergens],
+  barcode: m.barcode,
+  source: structuredClone(m.source),
+});
+
+const drinkSnapshot = (e: DrinkSnapshot) => ({
   key: drinkKey(e),
   name: e.name,
   amountMl: e.amountMl,
   alcohol: e.alcohol,
   ingredients: [...e.ingredients],
   allergens: [...e.allergens],
+  barcode: e.barcode,
+  source: structuredClone(e.source),
 });
 
-export async function toggleFavoriteDrink(deps: Deps, e: Pick<Drink, 'name' | 'amountMl' | 'alcohol' | 'ingredients' | 'allergens'>): Promise<boolean> {
+export async function toggleFavoriteDrink(deps: Deps, e: DrinkSnapshot): Promise<boolean> {
   const snap = drinkSnapshot(e);
   const prefs = await change(deps, (p) => {
     p.favorites.drinks = toggle(p.favorites.drinks, snap);
@@ -89,7 +103,7 @@ export async function refreshFavoriteMeal(deps: Deps, meal: Meal): Promise<void>
   const prefs = await deps.repo.getPreferences();
   if (!prefs?.favorites.meals.some((m) => m.key === key)) return;
   prefs.favorites.meals = prefs.favorites.meals.map((m) =>
-    m.key === key ? { key, description: meal.description, ingredients: [...meal.ingredients], allergens: [...meal.allergens] } : m,
+    m.key === key ? mealSnapshot(meal) : m,
   );
   await deps.repo.setPreferences(prefs);
 }

@@ -221,6 +221,17 @@ export const MIGRATIONS: string[] = [
   UPDATE tombstone SET kind = 'drinks' WHERE kind = 'alcoholEntries';
   UPDATE preference SET json = json_set(json_remove(json, '$.favorites.alcohol'), '$.favorites.drinks', json('[]'));
   `,
+  // IN-2, IN-16: the barcode an entry was made from and where its ingredients came from. Existing rows are typed.
+  // Favorites are dropped again: their snapshots now carry both fields (prototype data only).
+  `
+  ALTER TABLE meal ADD COLUMN barcode TEXT;
+  ALTER TABLE meal ADD COLUMN source_json TEXT NOT NULL DEFAULT '{"kind":"typed","edited":false,"llm":null}';
+  ALTER TABLE drink ADD COLUMN barcode TEXT;
+  ALTER TABLE drink ADD COLUMN source_json TEXT NOT NULL DEFAULT '{"kind":"typed","edited":false,"llm":null}';
+  CREATE INDEX meal_barcode ON meal (barcode);
+  CREATE INDEX drink_barcode ON drink (barcode);
+  UPDATE preference SET json = json_set(json, '$.favorites.meals', json('[]'), '$.favorites.drinks', json('[]'));
+  `,
 ];
 
 export async function migrate(db: SqlDb): Promise<void> {

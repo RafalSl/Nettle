@@ -68,6 +68,19 @@ async function diary(make: () => Promise<StorageRepository>, llm = new FakeLlm([
 }
 
 describe('buildAnalysisInput (LL-2, LL-3, LL-4)', () => {
+  it('LL-4 and IN-16 tell the model where a non-typed ingredient list came from', async () => {
+    const repo = new MemoryRepo();
+    const deps = makeDeps(repo);
+    const llm = { model: 'm', at: '2026-01-10T00:00:00.000Z', promptVersion: 'p' };
+    const at = new Date('2026-01-12T10:00:00Z');
+    await logMeal(deps, { description: 'Synthetic a', ingredients: ['x'], source: { kind: 'photo_estimate', edited: true, llm }, at });
+    await logMeal(deps, { description: 'Synthetic b', ingredients: ['y'], at });
+    const data = JSON.parse(buildAnalysisInput(await repo.snapshot(), '2026-01-10', '2026-01-14').json);
+    const meals = data.days.flatMap((d: { meals?: { description: string }[] }) => d.meals ?? []);
+    expect(meals.find((m: { description: string }) => m.description === 'Synthetic a').ingredients_source).toBe('photo_estimate (edited by the user)');
+    expect(meals.find((m: { description: string }) => m.description === 'Synthetic b').ingredients_source).toBeUndefined();
+  });
+
   it('LL-2 builds a timeline by local day with local times, areas, treatments and reactions by name', async () => {
     const { repo } = await diary(async () => new MemoryRepo());
     const built = buildAnalysisInput(await repo.snapshot(), '2026-01-10', '2026-01-14');
@@ -167,7 +180,7 @@ describe.each(repos)('prepare and run an analysis (%s)', (_name, make) => {
     const { deps, llm } = await diary(make);
     const prepared = await prepareAnalysis(deps, sel);
     expect(llm.requests).toHaveLength(0);
-    expect(prepared).toMatchObject({ dayFrom: '2026-01-10', dayTo: '2026-01-14', model: 'claude-opus-5-5', promptVersion: 'analysis-1' });
+    expect(prepared).toMatchObject({ dayFrom: '2026-01-10', dayTo: '2026-01-14', model: 'claude-opus-5-5', promptVersion: 'analysis-2' });
     expect(prepared.counts).toMatchObject({ meals: 3, skinEntries: 1, nailEntries: 1, reactions: 1, treatmentApplications: 1, checkIns: 2, days: 5, completeDays: 1, photos: 0 });
     expect(prepared.counts.changeEvents).toBe(1); // lookback
     expect(prepared.sentCharacters).toBeGreaterThan(500);
@@ -211,7 +224,7 @@ describe.each(repos)('prepare and run an analysis (%s)', (_name, make) => {
     const prepared = await prepareAnalysis(deps, sel);
     const analysis = await runAnalysis(deps, prepared);
     expect(llm.requests[0]).toBe(prepared.request); // exactly what was confirmed
-    expect(analysis).toMatchObject({ dayFrom: '2026-01-10', dayTo: '2026-01-14', model: 'fake-model', promptVersion: 'analysis-1', language: 'en', at: { utc: '2026-01-20T10:00:00.000Z' } });
+    expect(analysis).toMatchObject({ dayFrom: '2026-01-10', dayTo: '2026-01-14', model: 'fake-model', promptVersion: 'analysis-2', language: 'en', at: { utc: '2026-01-20T10:00:00.000Z' } });
     expect(analysis.result.hypotheses[0]?.title).toBe('Synthetic hypothesis');
     expect(await listAnalyses(deps)).toEqual([analysis]);
     const after = await repo.snapshot();

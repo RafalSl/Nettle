@@ -1,3 +1,4 @@
+import type { IngredientSource } from './source';
 import type { Allergen, MedicationCategory } from './types';
 
 /** IN-14: a favorite keeps a snapshot, so it survives when its entries are deleted. `key` is the suggestion identity. */
@@ -6,6 +7,8 @@ export interface FavoriteMeal {
   description: string;
   ingredients: string[];
   allergens: Allergen[];
+  barcode: string | null;
+  source: IngredientSource;
 }
 export interface FavoriteDrink {
   key: string;
@@ -14,6 +17,8 @@ export interface FavoriteDrink {
   alcohol: boolean;
   ingredients: string[];
   allergens: Allergen[];
+  barcode: string | null;
+  source: IngredientSource;
 }
 export interface FavoriteMedication {
   key: string;

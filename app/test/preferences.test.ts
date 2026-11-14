@@ -50,7 +50,7 @@ describe.each(repos)('preferences (%s)', (_name, make) => {
     const deps = makeDeps(await make());
     const meal = await logMeal(deps, { description: 'Synthetic  OATS', ingredients: ['oats'], allergens: ['milk'] });
     expect(await toggleFavoriteMeal(deps, meal)).toBe(true);
-    expect((await getPreferences(deps)).favorites.meals).toEqual([{ key: 'synthetic oats', description: 'Synthetic  OATS', ingredients: ['oats'], allergens: ['milk'] }]);
+    expect((await getPreferences(deps)).favorites.meals).toEqual([{ key: 'synthetic oats', description: 'Synthetic  OATS', ingredients: ['oats'], allergens: ['milk'], barcode: null, source: { kind: 'typed', edited: false, llm: null } }]);
     await deps.repo.deleteRecords({ meals: [meal.id] });
     expect((await getPreferences(deps)).favorites.meals).toHaveLength(1);
     await logMeal(deps, { description: 'synthetic oats', ingredients: ['oats', 'honey'], allergens: [] });
@@ -68,8 +68,8 @@ describe.each(repos)('preferences (%s)', (_name, make) => {
 
   it('IN-14 favorite drinks are identified by name and amount', async () => {
     const deps = makeDeps(await make());
-    expect(await toggleFavoriteDrink(deps, { name: 'Synthetic beer', amountMl: 500, alcohol: true, ingredients: [], allergens: [] })).toBe(true);
-    expect(await toggleFavoriteDrink(deps, { name: 'synthetic BEER', amountMl: 330, alcohol: true, ingredients: [], allergens: [] })).toBe(true);
+    expect(await toggleFavoriteDrink(deps, { name: 'Synthetic beer', amountMl: 500, alcohol: true, ingredients: [], allergens: [], barcode: null, source: { kind: 'typed', edited: false, llm: null } })).toBe(true);
+    expect(await toggleFavoriteDrink(deps, { name: 'synthetic BEER', amountMl: 330, alcohol: true, ingredients: [], allergens: [], barcode: null, source: { kind: 'typed', edited: false, llm: null } })).toBe(true);
     expect((await getPreferences(deps)).favorites.drinks.map((a) => a.amountMl)).toEqual([500, 330]);
   });
 
@@ -120,7 +120,7 @@ describe.each(repos)('preferences (%s)', (_name, make) => {
       { ...good, suggestions: { ...good.suggestions, window_days: 10 } },
       { ...good, quick_actions: { order: ['meal', 'meal'], hidden: [] } },
       { ...good, quick_actions: { order: ['nope'], hidden: [] } },
-      { ...good, favorites: { ...good.favorites, drinks: [{ key: 'k', name: 'x', amount_ml: -5, alcohol: false, ingredients: [], allergens: [] }] } },
+      { ...good, favorites: { ...good.favorites, drinks: [{ key: 'k', name: 'x', amount_ml: -5, alcohol: false, ingredients: [], allergens: [], barcode: null, source: { kind: 'typed', edited: false, llm: null } }] } },
     ]) {
       expect(() => parsePreferences(bad)).toThrow(NettleError);
     }

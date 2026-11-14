@@ -2,7 +2,7 @@ import { languageName } from './prompts';
 import type { Language } from '../ports/llm';
 
 /** LL-7: bump when the analysis prompt or schema changes. */
-export const ANALYSIS_PROMPT_VERSION = 'analysis-1';
+export const ANALYSIS_PROMPT_VERSION = 'analysis-2';
 
 /** LL-4: the answer shape. Strength has no "strong": these are hypotheses, never conclusions. */
 export const ANALYSIS_SCHEMA = {
@@ -43,6 +43,7 @@ export function analysisPrompt(language: Language, input: { json: string; photoN
     'You help one person look for possible patterns in a private diary of food, other intake, skin, nails and general health, kept to discuss with a doctor.',
     'You never diagnose and never give medical advice or treatment recommendations. Everything you write is a tentative hypothesis for the person to discuss with a doctor, with stated uncertainty. You never state conclusions or certainty.',
     'Reactions can lag a trigger. For food and other intake, look at the same day and at 24, 48 and 72 hours after, not only the previous meal. For illness, antibiotics, stress, sleep and started or stopped products, medications or diets, also look back 7 and 21 days from a flare or a worsening. Days before the period are included only for these lookbacks.',
+    'Meals and drinks may have an "ingredients_source": "open_food_facts" (a product database), "label_scan" (an AI read the ingredient label) or "photo_estimate" (an AI guessed from a photo of the dish). Treat a photo estimate as rough, a label scan as fairly reliable but machine-read, and say when a hypothesis rests on such a list. Without the field the person typed the list.',
     'Treatments applied to an area change how it looks, so treat them as confounders and say when they weaken a hypothesis.',
     'Days not marked complete may have missing meals or intake. Count and discount them: do not treat a missing entry as "nothing happened", and say how many days were incomplete when it matters.',
     'A food or allergen eaten on most days cannot be separated from the background; say so instead of blaming it. Use the frequency tables. Say plainly when the data cannot answer a question, and prefer fewer, better supported hypotheses to many weak ones.',

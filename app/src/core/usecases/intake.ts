@@ -1,4 +1,5 @@
 import { NettleError } from '../model/errors';
+import { assertSource, typedSource, type IngredientSource } from '../model/source';
 import { makeStamp } from '../model/time';
 import {
   ALLERGENS,
@@ -22,6 +23,8 @@ export interface LogDrinkInput {
   allergens?: Allergen[];
   at?: Date;
   note?: string;
+  barcode?: string | null;
+  source?: IngredientSource;
 }
 
 /** IN-4: any beverage, with an alcohol switch and optional ingredients and allergen tags. */
@@ -31,6 +34,8 @@ export async function logDrink(deps: Deps, input: LogDrinkInput): Promise<Drink>
   if (!Number.isInteger(input.amountMl) || input.amountMl <= 0) throw new NettleError('invalid_amount');
   const allergens = [...new Set(input.allergens ?? [])];
   for (const a of allergens) if (!ALLERGENS.includes(a)) throw new NettleError('invalid_value', a);
+  const source = input.source ?? typedSource();
+  assertSource(source);
   const entry: Drink = {
     id: deps.ids(),
     at: makeStamp(deps.clock, input.at),
@@ -39,6 +44,8 @@ export async function logDrink(deps: Deps, input: LogDrinkInput): Promise<Drink>
     alcohol: input.alcohol ?? false,
     ingredients: (input.ingredients ?? []).map((i) => i.trim()).filter(Boolean),
     allergens,
+    barcode: input.barcode ?? null,
+    source,
     note: input.note?.trim() || null,
   };
   await deps.repo.addRecord('drinks', entry);

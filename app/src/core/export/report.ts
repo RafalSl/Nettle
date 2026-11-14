@@ -1,3 +1,4 @@
+import { isAiSource, type IngredientSource } from '../model/source';
 import { localDateTime } from '../model/time';
 import type { Analysis, ListItem, Records, SkinArea } from '../model/types';
 import type { Language } from '../ports/llm';
@@ -169,11 +170,14 @@ export function buildReportHtml(input: ReportInput): string {
 
   // Intake log (IN-1, IN-4, IN-10, IN-13)
   const meals = byTime(r.meals);
+  const withMark = (text: string, s: IngredientSource) => (isAiSource(s) ? `${text} [${tx(s.edited ? 'report.aiMarkEdited' : 'report.aiMark')}]` : text);
   if (meals.length > 0 || r.drinks.length > 0) {
     out.push(`<h2>${esc(tx('report.intake'))}</h2>`);
-    out.push(table([tx('report.date'), tx('report.meal'), tx('report.ingredients'), tx('report.allergens')], meals.map((m) => [when(m.at), m.description, m.ingredients.join(', '), m.allergens.map((a) => tx(`allergens.${a}`)).join(', ')])));
-    out.push(table([tx('report.date'), tx('report.drink'), 'ml', tx('report.alcohol'), tx('report.ingredients'), tx('report.allergens')], byTime(r.drinks).map((a) => [when(a.at), a.name, a.amountMl, a.alcohol ? '✓' : '', a.ingredients.join(', '), a.allergens.map((x) => tx(`allergens.${x}`)).join(', ')])));
+    out.push(table([tx('report.date'), tx('report.meal'), tx('report.ingredients'), tx('report.allergens')], meals.map((m) => [when(m.at), m.description, withMark(m.ingredients.join(', '), m.source), m.allergens.map((a) => tx(`allergens.${a}`)).join(', ')])));
+    out.push(table([tx('report.date'), tx('report.drink'), 'ml', tx('report.alcohol'), tx('report.ingredients'), tx('report.allergens')], byTime(r.drinks).map((a) => [when(a.at), a.name, a.amountMl, a.alcohol ? '✓' : '', withMark(a.ingredients.join(', '), a.source), a.allergens.map((x) => tx(`allergens.${x}`)).join(', ')])));
   }
+  // EX-4: intake whose ingredients an AI model read gets a mark, and the legend says what it means.
+  if ([...meals, ...r.drinks].some((e) => isAiSource(e.source))) out.push(`<p class="note">${esc(tx('report.aiMarkLegend'))}</p>`);
   const reactions = byTime(r.reactions);
   if (reactions.length > 0) {
     const mealById = new Map(r.meals.map((m) => [m.id, m]));

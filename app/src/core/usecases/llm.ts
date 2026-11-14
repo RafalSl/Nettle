@@ -1,4 +1,5 @@
-import { ingredientsPrompt } from '../llm/prompts';
+import { INGREDIENTS_PROMPT_VERSION, ingredientsPrompt } from '../llm/prompts';
+import type { LlmProvenance } from '../model/source';
 import { parseIngredientEstimate, type IngredientEstimate } from '../llm/parse';
 import { NettleError } from '../model/errors';
 import type { Language, LlmImage, LlmProvider } from '../ports/llm';
@@ -46,9 +47,11 @@ export async function currentProvider(deps: Deps): Promise<{ provider: LlmProvid
 export async function estimateIngredients(
   deps: Deps,
   input: { image: LlmImage; language: Language; signal?: AbortSignal },
-): Promise<IngredientEstimate> {
+): Promise<IngredientEstimate & { provenance: LlmProvenance }> {
   const { provider } = await currentProvider(deps);
   const prompt = ingredientsPrompt(input.language);
   const response = await provider.completeJson({ ...prompt, images: [input.image], ...(input.signal ? { signal: input.signal } : {}) });
-  return parseIngredientEstimate(response.text);
+  // IN-16: the model that answered, when, and which prompt asked.
+  const provenance: LlmProvenance = { model: response.model, at: deps.clock.now().toISOString(), promptVersion: INGREDIENTS_PROMPT_VERSION };
+  return { ...parseIngredientEstimate(response.text), provenance };
 }

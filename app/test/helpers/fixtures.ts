@@ -38,6 +38,8 @@ export const syntheticMeal = (id: string, utc: string, ingredients = ['Synthetic
   description: `Synthetic breakfast ${id}`,
   ingredients,
   allergens: [],
+  barcode: null,
+  source: { kind: 'typed', edited: false, llm: null },
   note: null,
 });
 

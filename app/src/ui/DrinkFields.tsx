@@ -1,5 +1,7 @@
 import { Switch, Text, TextInput, View } from 'react-native';
-import { ALLERGENS, type Allergen, type Drink } from '@/core/model/types';
+import { afterEdit, sameIngredients, typedSource, type IngredientSource } from '@/core/model/source';
+import { ALLERGENS, type Allergen } from '@/core/model/types';
+import type { DrinkSnapshot } from '@/core/usecases/preferences';
 import { t } from '@/i18n';
 import { Chips, Label, styles } from '@/ui/components';
 
@@ -10,26 +12,48 @@ export interface DrinkDraft {
   alcohol: boolean;
   ingredients: string;
   allergens: Set<string>;
+  /** IN-2, IN-16: where the filled-in values came from, and the lists as they were filled (to tell an edit). */
+  barcode: string | null;
+  source: IngredientSource;
+  filled: { ingredients: string[]; allergens: string[] };
 }
 
-export const emptyDrinkDraft = (): DrinkDraft => ({ name: '', amount: '', alcohol: false, ingredients: '', allergens: new Set() });
+export const emptyDrinkDraft = (): DrinkDraft => ({
+  name: '',
+  amount: '',
+  alcohol: false,
+  ingredients: '',
+  allergens: new Set(),
+  barcode: null,
+  source: typedSource(),
+  filled: { ingredients: [], allergens: [] },
+});
 
-export const draftFromDrink = (d: Pick<Drink, 'name' | 'amountMl' | 'alcohol' | 'ingredients' | 'allergens'>): DrinkDraft => ({
+export const draftFromDrink = (d: DrinkSnapshot): DrinkDraft => ({
   name: d.name,
   amount: String(d.amountMl),
   alcohol: d.alcohol,
   ingredients: d.ingredients.join(', '),
   allergens: new Set(d.allergens),
+  barcode: d.barcode,
+  source: d.source,
+  filled: { ingredients: [...d.ingredients], allergens: [...d.allergens] },
 });
 
 /** Input for `logDrink` and `editDrink` from the form state. */
-export const drinkInput = (d: DrinkDraft) => ({
-  name: d.name,
-  amountMl: Number(d.amount),
-  alcohol: d.alcohol,
-  ingredients: d.ingredients.split(','),
-  allergens: [...d.allergens] as Allergen[],
-});
+export const drinkInput = (d: DrinkDraft) => {
+  const ingredients = d.ingredients.split(',').map((i) => i.trim()).filter(Boolean);
+  const allergens = [...d.allergens] as Allergen[];
+  return {
+    name: d.name,
+    amountMl: Number(d.amount),
+    alcohol: d.alcohol,
+    ingredients,
+    allergens,
+    barcode: d.barcode,
+    source: afterEdit(d.source, !sameIngredients(d.filled, { ingredients, allergens })),
+  };
+};
 
 export const drinkMissing = (d: DrinkDraft): string | null =>
   !d.name.trim() ? t('edit.drink') : !(Number(d.amount) > 0) ? t('edit.amount') : null;

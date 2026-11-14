@@ -886,7 +886,7 @@ describe('Meal form (IN-1, IN-7, IN-10, IN-14, UX-3)', () => {
     for (const [i, name] of ['Synthetic eggs', 'Synthetic rice', 'Synthetic ricotta'].entries()) {
       await logMeal(deps, { description: name, ingredients: [], at: new Date(Date.now() - (i + 1) * 3600_000) });
     }
-    await toggleFavoriteMeal(deps, { description: 'Synthetic rice', ingredients: [], allergens: [] });
+    await toggleFavoriteMeal(deps, { description: 'Synthetic rice', ingredients: [], allergens: [], barcode: null, source: { kind: 'typed', edited: false, llm: null } });
     const { tree } = await mount(meal, deps);
     await flush();
     const labels = () => [...new Set(tree.root.findAll((n) => n.props.accessibilityRole === 'button' && typeof n.props.accessibilityLabel === 'string' && n.props.accessibilityLabel.startsWith('Synthetic')).map((n) => n.props.accessibilityLabel as string))];
@@ -1023,7 +1023,7 @@ describe('Alcohol and medication suggestions (IN-14, UX-5)', () => {
   it('IN-14 favorites come first, even without history', async () => {
     const deps = nowDeps();
     await logDrink(deps, { name: 'Synthetic beer', amountMl: 500, at: at(10) });
-    await toggleFavoriteDrink(deps, { name: 'Synthetic wine', amountMl: 150, alcohol: true, ingredients: [], allergens: [] });
+    await toggleFavoriteDrink(deps, { name: 'Synthetic wine', amountMl: 150, alcohol: true, ingredients: [], allergens: [], barcode: null, source: { kind: 'typed', edited: false, llm: null } });
     const { tree } = await mount(alcohol, deps);
     await flush();
     const labels = [...new Set(tree.root.findAll((n) => n.props.accessibilityRole === 'button' && /ml$/.test(n.props.accessibilityLabel ?? '')).map((n) => n.props.accessibilityLabel as string))];
@@ -1352,7 +1352,47 @@ describe('Barcode in the meal form (IN-2, IN-8, IN-9, IN-10)', () => {
     expect(milk()).toBe(true);
     await header();
     await flush();
-    expect(await deps.repo.listMeals()).toMatchObject([{ description: 'Synthetic yoghurt', ingredients: ['milk', 'cultures'], allergens: ['milk'] }]);
+    expect(await deps.repo.listMeals()).toMatchObject([{ description: 'Synthetic yoghurt', ingredients: ['milk', 'cultures'], allergens: ['milk'], barcode: '5900000000008', source: { kind: 'open_food_facts', edited: false, llm: null } }]);
+  });
+
+  it('IN-16 changing a filled list before saving marks the entry edited', async () => {
+    const { deps, tree } = await open();
+    await type(tree, en.meal.scanCode, '5900000000008');
+    await press(tree, en.meal.scanLookup);
+    await flush();
+    await press(tree, en.meal.scanSelectTags);
+    await type(tree, en.meal.ingredientPlaceholder, 'oat milk');
+    await header();
+    await flush();
+    expect((await deps.repo.listMeals())[0]!.source).toEqual({ kind: 'open_food_facts', edited: true, llm: null });
+  });
+
+  it('IN-2 a code the diary already knows is filled from history without asking the database', async () => {
+    const { deps, tree, fake } = await open();
+    await logMeal(deps, { description: 'Synthetic kefir', ingredients: ['kefir'], allergens: ['milk'], barcode: '5900000000008', at: new Date(Date.now() - 86_400_000) });
+    await type(tree, en.meal.scanCode, '5900000000008');
+    await press(tree, en.meal.scanLookup);
+    await flush();
+    expect(fake.lookups).toEqual([]);
+    expect(tree.root.findAll((n) => n.props.accessibilityLabel === en.meal.description && n.props.value === 'Synthetic kefir')).not.toHaveLength(0);
+    expect(tree.root.findAll((n) => n.props.accessibilityLabel === en.allergens.milk && n.props.accessibilityState)[0]!.props.accessibilityState.selected).toBe(true);
+  });
+
+  it('IN-4, IN-2 a scanned packaged drink is logged as a drink with its barcode and source', async () => {
+    const deps = nowDeps();
+    deps.barcode = new FakeBarcode({ '5900000000008': product });
+    const { tree } = await mount(() => require('@/app/form/drink'), deps);
+    await flush();
+    await press(tree, en.meal.scan);
+    await type(tree, en.meal.scanCode, '5900000000008');
+    await press(tree, en.meal.scanLookup);
+    await flush();
+    await type(tree, en.more.drinkAmount, '250');
+    await header();
+    await flush();
+    expect(await deps.repo.listRecords('drinks')).toMatchObject([
+      { name: 'Synthetic yoghurt', amountMl: 250, alcohol: false, ingredients: ['milk', 'cultures'], barcode: '5900000000008', source: { kind: 'open_food_facts', edited: true } },
+    ]);
   });
 
   it('IN-2 the camera reports a code once, even when it sees it many times', async () => {

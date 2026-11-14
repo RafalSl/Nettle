@@ -2,6 +2,7 @@ import { NettleError } from '../model/errors';
 import { makeStamp } from '../model/time';
 import { ALLERGENS, type Allergen, type Meal } from '../model/types';
 import type { Deps } from './deps';
+import { refreshFavoriteMeal } from './preferences';
 
 export interface LogMealInput {
   description: string;
@@ -28,5 +29,6 @@ export async function logMeal(deps: Deps, input: LogMealInput): Promise<Meal> {
     note: input.note?.trim() || null,
   };
   await deps.repo.addMeal(meal);
+  await refreshFavoriteMeal(deps, meal);
   return meal;
 }

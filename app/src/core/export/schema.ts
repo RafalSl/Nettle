@@ -1,5 +1,7 @@
 import { EXTRA_KINDS, LIST_KINDS, type DateRange, type Parts, type RecordKind, type Snapshot, type Tombstone } from '../model/types';
+import { DEFAULT_PREFERENCES, type Preferences } from '../model/preferences';
 import { EXTRA_CODECS } from './extras';
+import { preferencesToJson } from './preferencesJson';
 
 /** Bump on any breaking change to data.json (EX-1). */
 export const SCHEMA_VERSION = 1;
@@ -44,7 +46,7 @@ export interface DataJson {
   /** meals and skin_entries plus one array per flat record kind (see export/extras.ts). */
   records?: { meals: MealJson[]; skin_entries: SkinEntryJson[]; [kind: string]: unknown[] };
   /** skin_areas plus one array per list kind (daily_tags, ...). */
-  settings?: { skin_areas: SkinAreaJson[]; [list: string]: unknown[] };
+  settings?: { skin_areas: SkinAreaJson[]; preferences: unknown; [list: string]: unknown };
 }
 
 /** Array name inside `settings` for each list kind. */
@@ -61,6 +63,7 @@ export function toDataJson(
   exportedAt: { utc: string; tz: string },
   parts: Parts,
   tombstones: Tombstone[] = [],
+  preferences: Preferences = DEFAULT_PREFERENCES,
 ): DataJson {
   return {
     schema_version: SCHEMA_VERSION,
@@ -107,6 +110,7 @@ export function toDataJson(
           sensitive_default: a.sensitiveDefault,
           name_override: a.nameOverride,
         })),
+        preferences: preferencesToJson(preferences),
         ...Object.fromEntries(
           LIST_KINDS.map((k) => [
             LIST_KEYS[k],

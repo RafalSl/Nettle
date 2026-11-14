@@ -14,9 +14,11 @@ import {
 } from '../model/types';
 import { isScore } from '../usecases/skin';
 import { EXTRA_CODECS } from './extras';
+import { parsePreferences } from './preferencesJson';
 import { bad, bool, enumList, oneOf, isObj, list, nullableText, str, unique, utc, type Obj } from './guards';
 import { LIST_KEYS, recordWireKey, SCHEMA_VERSION } from './schema';
 
+const obj = (o: Obj, k: string, where: string): Obj => (isObj(o[k]) ? (o[k] as Obj) : bad(`${where}.${k}`));
 const section = (o: Obj, k: string): Obj | null => {
   const v = o[k];
   if (v === undefined) return null;
@@ -71,6 +73,7 @@ export function parseDataJson(raw: unknown): Payload {
       unique(lists[kind].map((x) => x.id), `settings.${key}`);
     }
     payload.settings = { skinAreas, ...lists };
+    payload.preferences = parsePreferences(obj(settings, 'preferences', 'settings'));
   }
 
   const records = section(raw, 'records');

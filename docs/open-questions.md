@@ -32,7 +32,7 @@ Requirements and flows are in `docs/requirements.md`, `docs/ux-design.md` and `d
 
 **Skin and health**
 - "No change" for nail entries and for all areas: the core is built (`repeatNailEntry`, `repeatAllAreas`); no button yet.
-- Timeline per area with photos side by side (SK-8).
+- Timeline per area (SK-8) is built: Review lists the areas that have entries, and an area opens a day-by-day timeline with each entry's scores or nail stage beside its photos (sensitive ones blurred until tapped) and the flare markers. Not built: a side-by-side comparison of two chosen photos, and trend charts.
 - SK-2 unique names and SK-11 empty-day confirmation are built (core and the current check-in screen). The duplicate check compares the English seed name of a predefined area, not its localized one.
 - SK-9 reminder taps are built in code (`resolveReminderTap`, `Notifier.onTap`, the root layout listener; the check-in form takes a `day` parameter) but not run on a device. Only forms on `FormModal` (meal, edit) report unsaved changes, so a tap can still replace an old-style form (skin, nails, intake) that has typed text. With the app lock (SE-8) a tap should wait until unlock. The reminders themselves are built (the nail reminder follows nail areas; weekday numbering is iOS, 1 = Sunday).
 

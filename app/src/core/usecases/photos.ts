@@ -65,10 +65,10 @@ export async function setPhotoSensitive(deps: Deps, id: string, sensitive: boole
   await deps.repo.putRecord('photos', { ...(await findPhoto(deps, id)), sensitive });
 }
 
-/** Remove one photo: the record first, then its file. */
+/** Remove one photo: the record first (with a tombstone, EX-13, so a merge cannot bring it back), then its file. */
 export async function removePhoto(deps: Deps, id: string): Promise<void> {
   const photo = await findPhoto(deps, id);
-  await deps.repo.deleteRecords({ photos: [id] });
+  await deps.repo.deleteWithTombstones({ photos: [id] }, makeStamp(deps.clock));
   await deps.photos.remove(photo.file);
 }
 

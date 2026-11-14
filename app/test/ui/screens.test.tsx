@@ -1369,3 +1369,45 @@ describe('Barcode in the meal form (IN-2, IN-8, IN-9, IN-10)', () => {
     expect(hasText(tree, en.meal.scanFromDb)).toBe(true);
   });
 });
+
+describe('Area timeline (SK-8)', () => {
+  beforeEach(() => {
+    jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    mockRouter.push.mockClear();
+  });
+  afterEach(() => jest.restoreAllMocks());
+
+  it('SK-8 Review lists the areas with entries and opens one timeline', async () => {
+    const deps = nowDeps();
+    await logSkinEntry(deps, { areaId: 'area-chin', scores, at: new Date('2026-01-10T08:00:00.000Z') });
+    const { tree } = await mount(() => require('@/app/(tabs)/review/index'), deps);
+    await flush();
+    const row = en.review.areaRow.replace('{{area}}', en.areas['area-chin']).replace('{{n}}', '1').replace('{{day}}', '2026-01-10');
+    await press(tree, row);
+    expect(mockRouter.push).toHaveBeenLastCalledWith({ pathname: '/review/area', params: { id: 'area-chin' } });
+  });
+
+  it('SK-8, SK-5 the timeline shows scores beside photos, and a sensitive photo stays blurred until tapped', async () => {
+    const deps = nowDeps();
+    const entry = await logSkinEntry(deps, { areaId: 'area-intimate', scores, at: new Date('2026-01-10T08:00:00.000Z') });
+    await addPhoto(deps, { entryKind: 'skinEntry', entryId: entry.id, sourceUri: 'secret' }); // sensitive by the area default
+    mockParams.current = { id: 'area-intimate' };
+    const { tree } = await mount(() => require('@/app/(tabs)/review/area'), deps);
+    await flush();
+    expect(hasText(tree, '2026-01-10')).toBe(true);
+    expect(hasText(tree, `${en.skin.scores.itch} 2`)).toBe(true);
+    const blurred = () => tree.root.findAll((n) => n.props.blurRadius !== undefined).map((n) => n.props.blurRadius as number);
+    expect(blurred()).toContain(30);
+    await press(tree, en.photos.tapToShow);
+    expect(blurred()).not.toContain(30);
+    mockParams.current = {};
+  });
+
+  it('SK-8 an area without entries explains it is empty', async () => {
+    mockParams.current = { id: 'area-sternum' };
+    const { tree } = await mount(() => require('@/app/(tabs)/review/area'), nowDeps());
+    await flush();
+    expect(hasText(tree, en.review.timelineEmpty)).toBe(true);
+    mockParams.current = {};
+  });
+});

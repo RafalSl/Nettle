@@ -1,4 +1,5 @@
 import { packBundle, unpackBundle } from '../export/bundle';
+import { strToU8 } from 'fflate';
 import { csvPath, toCsv } from '../export/csv';
 import { buildReportHtml, type ReportInput } from '../export/report';
 import { bytesToBase64 } from '../util/base64';
@@ -63,7 +64,7 @@ export async function exportBundle(deps: Deps, options: ExportOptions = {}): Pro
   if (options.csv) {
     for (const section of [data.records, data.settings]) {
       for (const [name, rows] of Object.entries(section ?? {})) {
-        files[csvPath(name)] = new TextEncoder().encode(toCsv(rows as Record<string, never>[]));
+        files[csvPath(name)] = strToU8(toCsv(rows as Record<string, never>[]));
       }
     }
   }

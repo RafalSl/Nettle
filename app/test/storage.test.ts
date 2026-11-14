@@ -139,6 +139,26 @@ describe('sqlite migrations', () => {
     ).rejects.toThrow();
   });
 
+  it('NF-3 a database left at any earlier version upgrades to exactly the schema of a fresh one', async () => {
+    const schema = async (db: ReturnType<typeof createNodeSqliteDb>) =>
+      (await db.all<{ name: string; sql: string }>("SELECT name, sql FROM sqlite_master WHERE name NOT LIKE 'sqlite_%' ORDER BY name"))
+        .map((r) => `${r.name}: ${(r.sql ?? '').replace(/\s+/g, ' ')}`)
+        .join('\n');
+    const fresh = createNodeSqliteDb();
+    await SqliteRepo.open(fresh);
+    const expected = await schema(fresh);
+    for (let version = 1; version < MIGRATIONS.length; version++) {
+      const db = createNodeSqliteDb();
+      await db.exec('PRAGMA foreign_keys = ON');
+      for (let v = 0; v < version; v++) await db.exec(MIGRATIONS[v]!); // the app as it was at `version`
+      await db.exec(`PRAGMA user_version = ${version}`);
+      await SqliteRepo.open(db);
+      const [row] = await db.all<{ user_version: number }>('PRAGMA user_version');
+      expect(row?.user_version).toBe(MIGRATIONS.length);
+      expect(await schema(db)).toBe(expected);
+    }
+  });
+
   it('SK-3 enforces 0-10 scores in the database itself', async () => {
     const db = createNodeSqliteDb();
     await SqliteRepo.open(db);

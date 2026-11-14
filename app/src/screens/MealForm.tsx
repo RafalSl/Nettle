@@ -1,7 +1,7 @@
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, Pressable, Text, TextInput, View } from 'react-native';
-import { addIngredients, suggestAllergens } from '@/core/model/allergens';
+import { addIngredients, matchIngredientNames, suggestAllergens } from '@/core/model/allergens';
 import { NettleError } from '@/core/model/errors';
 import { defaultPreferences, type Preferences } from '@/core/model/preferences';
 import { mealHistory, rankSuggestions, type Suggestion } from '@/core/model/suggestions';
@@ -9,6 +9,7 @@ import { atOnDay, localDay } from '@/core/model/time';
 import { afterEdit, sameIngredients, typedSource, type IngredientSource } from '@/core/model/source';
 import { ALLERGENS, type Allergen } from '@/core/model/types';
 import { lookupProduct } from '@/core/usecases/barcode';
+import { ingredientNameHistory } from '@/core/usecases/llm';
 import { logMeal } from '@/core/usecases/logMeal';
 import { getPreferences, toggleFavoriteMeal } from '@/core/usecases/preferences';
 import { errorMessage, t } from '@/i18n';
@@ -73,12 +74,15 @@ export default function MealScreen() {
   const [at, setAt] = useState<Date | null>(null);
   const [edited, setEdited] = useState(false);
   const [origin, setOrigin] = useState<Origin>(typedOrigin());
+  const [names, setNames] = useState<string[]>([]);
+  const [focused, setFocused] = useState<number | null>(null);
   const [dateHint, setDateHint] = useState<string | null>(null);
 
   const load = useCallback(() => {
     (async () => {
       setMeals(mealHistory(await deps.repo.listMeals()));
       setPrefs(await getPreferences(deps));
+      setNames(await ingredientNameHistory(deps));
     })().catch((e) => Alert.alert(errorMessage(e)));
   }, [deps]);
   useFocusEffect(load);
@@ -269,7 +273,27 @@ export default function MealScreen() {
           <Label>{t('meal.ingredients')}</Label>
           {ingredients.map((value, i) => (
             <View key={i} style={{ flexDirection: 'row', gap: 8 }}>
-              <TextInput style={[styles.input, { flex: 1 }]} placeholder={t('meal.ingredientPlaceholder')} value={value} onChangeText={(v) => setIngredient(i, v)} />
+              <View style={{ flex: 1 }}>
+                <TextInput
+                  style={styles.input}
+                  placeholder={t('meal.ingredientPlaceholder')}
+                  value={value}
+                  onChangeText={(v) => setIngredient(i, v)}
+                  onFocus={() => setFocused(i)}
+                  onBlur={() => setFocused((f) => (f === i ? null : f))}
+                />
+                {/* IN-1: names from the diary that match what is being typed; a tap fills the row. */}
+                {focused === i && matchIngredientNames(names, value, ingredients).length > 0 && (
+                  <Chips
+                    items={matchIngredientNames(names, value, ingredients).map((n) => ({ id: n, label: n }))}
+                    selected={new Set()}
+                    onToggle={(n) => {
+                      setIngredient(i, n);
+                      setFocused(null);
+                    }}
+                  />
+                )}
+              </View>
               {ingredients.length > 1 && (
                 <Button kind="secondary" title="−" accessibilityLabel={t('meal.removeIngredient')} onPress={() => touch(setIngredients)(ingredients.filter((_, j) => j !== i))} />
               )}

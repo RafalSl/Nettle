@@ -88,6 +88,14 @@ export async function scanLabel(
 export async function knownIngredientNames(deps: Deps): Promise<string[]> {
   const prefs = await deps.repo.getPreferences();
   if (!prefs?.suggestions.knownNames) return [];
+  return ingredientNameHistory(deps, MAX_KNOWN_NAMES);
+}
+
+/**
+ * IN-1: every ingredient name in meals and drinks, most used first (one spelling per name), for autocomplete. It
+ * stays on the phone and does not depend on the "prefer my names" setting, which only governs what is sent.
+ */
+export async function ingredientNameHistory(deps: Deps, limit = 500): Promise<string[]> {
   const counts = new Map<string, { name: string; n: number }>();
   const lists = [...(await deps.repo.listMeals()).map((m) => m.ingredients), ...(await deps.repo.listRecords('drinks')).map((d) => d.ingredients)];
   for (const list of lists) {
@@ -100,7 +108,7 @@ export async function knownIngredientNames(deps: Deps): Promise<string[]> {
       else counts.set(key, { name, n: 1 });
     }
   }
-  return [...counts.values()].sort((a, b) => b.n - a.n || a.name.localeCompare(b.name)).slice(0, MAX_KNOWN_NAMES).map((c) => c.name);
+  return [...counts.values()].sort((a, b) => b.n - a.n || a.name.localeCompare(b.name)).slice(0, limit).map((c) => c.name);
 }
 
 /** Most ingredient names one allergen request sends. */

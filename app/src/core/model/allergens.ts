@@ -72,3 +72,23 @@ export function splitIngredients(text: string): string[] {
 }
 
 export const joinIngredients = (list: readonly string[]): string => list.join(', ');
+
+/**
+ * IN-1: names from the diary's own ingredient lists that match what is being typed, for autocomplete. A name matches
+ * when it starts with the text or a word of it does; names that start with it come first, the given order (most used
+ * first) otherwise holds. Exact matches of the text and names in `exclude` (already in the list) are left out.
+ */
+export function matchIngredientNames(known: readonly string[], typed: string, exclude: readonly string[] = [], limit = 5): string[] {
+  const q = typed.trim().toLowerCase();
+  if (q.length < 2) return [];
+  const skip = new Set([q, ...exclude.map((e) => e.trim().toLowerCase())]);
+  const starts: string[] = [];
+  const words: string[] = [];
+  for (const name of known) {
+    const n = name.toLowerCase();
+    if (skip.has(n)) continue;
+    if (n.startsWith(q)) starts.push(name);
+    else if (n.split(/[\s(,;-]+/).some((w) => w.startsWith(q))) words.push(name);
+  }
+  return [...starts, ...words].slice(0, limit);
+}

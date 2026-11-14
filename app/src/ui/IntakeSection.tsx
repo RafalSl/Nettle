@@ -8,6 +8,7 @@ import { lookupProduct } from '@/core/usecases/barcode';
 import { addIngredients, joinIngredients, splitIngredients } from '@/core/model/allergens';
 import { typedSource } from '@/core/model/source';
 import { localDay } from '@/core/model/time';
+import { ingredientNameHistory } from '@/core/usecases/llm';
 import { logDrink, logMedication } from '@/core/usecases/intake';
 import { getPreferences, toggleFavoriteDrink, toggleFavoriteMedication, type DrinkSnapshot } from '@/core/usecases/preferences';
 import { errorMessage, t } from '@/i18n';
@@ -100,6 +101,12 @@ export function DrinkSection() {
 
   // IN-3, IN-15: a label scan or photo estimate adds names to the list; its tags stay unselected (IN-10).
   const run = useIngredientRun();
+  const [names, setNames] = useState<string[]>([]);
+  useFocusEffect(
+    useCallback(() => {
+      ingredientNameHistory(deps).then(setNames, () => undefined);
+    }, [deps]),
+  );
   const [pendingTags, setPendingTags] = useState<Allergen[]>([]);
   const [pendingHint, setPendingHint] = useState('meal.labelTagsHint');
   const [pendingAi, setPendingAi] = useState(false);
@@ -168,7 +175,7 @@ export function DrinkSection() {
           <Button kind="secondary" title={t('meal.scanSelectTags')} onPress={() => setDraft({ ...draft, allergens: new Set([...draft.allergens, ...pendingTags]), ...(pendingAi ? { source: { ...draft.source, aiTags: true } } : {}) })} />
         </>
       )}
-      <DrinkFields draft={draft} onChange={setDraft} />
+      <DrinkFields draft={draft} onChange={setDraft} names={names} />
       <AllergenAiControls hook={allergenAi} ingredients={splitIngredients(draft.ingredients)} />
       {/* IN-14: a star keeps a snapshot of the drink (amount, alcohol switch, ingredients, tags) as a favorite. */}
       <Button

@@ -339,3 +339,7 @@ Newest entry last. One short entry per working session or meaningful step: what 
 ## 2026-11-14: date range pickers (branch feature/date-range-picker)
 - **Done:** EX-1, EX-11, EX-14. A free range for the Doctor report and the custom export. 643 tests pass.
 - **Next:** ingredient autocomplete and favorites for scanned products.
+
+## 2026-11-14: ingredient autocomplete (branch feature/autocomplete-scan-favorites)
+- **Done:** IN-1, IN-14. Names from the diary complete what is typed in a meal row or a drink's ingredient text. Starring a scanned product already kept its barcode and source; a test now covers it. 647 tests pass.
+- **Left:** Review photo comparison and trend charts.

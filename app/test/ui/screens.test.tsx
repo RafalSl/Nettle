@@ -1975,6 +1975,38 @@ describe('Barcode in the meal form (IN-2, IN-8, IN-9, IN-10)', () => {
     expect(hasText(tree, en.meal.scanFromDb)).toBe(false);
   });
 
+  it('IN-1 typing in an ingredient row offers names from the diary, and a tap fills the row', async () => {
+    const deps = nowDeps();
+    await logMeal(deps, { description: 'Synthetic earlier', ingredients: ['oat milk', 'oat milk', 'rice'], at: new Date(Date.now() - 3600_000) });
+    const { tree } = await mount(meal, deps);
+    await flush();
+    await type(tree, en.meal.description, 'Synthetic new');
+    await press(tree, en.meal.continue);
+    const field = () => tree.root.findAll((n) => n.props.placeholder === en.meal.ingredientPlaceholder && typeof n.props.onFocus === 'function')[0]!;
+    await act(async () => {
+      field().props.onFocus();
+    });
+    await type(tree, en.meal.ingredientPlaceholder, 'oa');
+    await press(tree, 'oat milk');
+    expect(field().props.value).toBe('oat milk');
+  });
+
+  it('IN-14 a scanned product can be starred; the favorite keeps its barcode and source and fills them again', async () => {
+    const { deps, tree } = await open();
+    await type(tree, en.meal.scanCode, '5900000000008');
+    await press(tree, en.meal.scanLookup);
+    await flush();
+    await press(tree, en.meal.favorite);
+    await flush();
+    expect((await deps.repo.getPreferences())!.favorites.meals).toMatchObject([{ description: 'Synthetic yoghurt', barcode: '5900000000008', source: { kind: 'open_food_facts' } }]);
+    const again = await mount(meal, deps);
+    await flush();
+    await press(again.tree, 'Synthetic yoghurt');
+    await header();
+    await flush();
+    expect(await deps.repo.listMeals()).toMatchObject([{ description: 'Synthetic yoghurt', barcode: '5900000000008', source: { kind: 'open_food_facts', edited: true } }]);
+  });
+
   it('IN-16 changing a filled list before saving marks the entry edited', async () => {
     const { deps, tree } = await open();
     await type(tree, en.meal.scanCode, '5900000000008');

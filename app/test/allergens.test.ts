@@ -1,4 +1,4 @@
-import { addIngredients, joinIngredients, splitIngredients } from '@/core/model/allergens';
+import { addIngredients, joinIngredients, matchIngredientNames, splitIngredients } from '@/core/model/allergens';
 
 
 describe('adding estimated ingredients (IN-3)', () => {
@@ -22,5 +22,19 @@ describe('ingredient text round trip (IN-15)', () => {
     expect(splitIngredients(joinIngredients(list))).toEqual(list);
     expect(splitIngredients('')).toEqual([]);
     expect(splitIngredients('a)), b')).toEqual(['a))', 'b']); // stray brackets never swallow the rest
+  });
+});
+
+describe('ingredient autocomplete (IN-1)', () => {
+  const known = ['oat milk', 'rice', 'milk chocolate', 'whole milk', 'butter', 'ricotta'];
+  it('IN-1 names that start with the text come first, then names with a word that does; used and exact names are left out', () => {
+    expect(matchIngredientNames(known, 'mil')).toEqual(['milk chocolate', 'oat milk', 'whole milk']);
+    expect(matchIngredientNames(known, 'ric')).toEqual(['rice', 'ricotta']);
+    expect(matchIngredientNames(known, 'ric', ['rice'])).toEqual(['ricotta']);
+    expect(matchIngredientNames(known, 'RICE')).toEqual([]); // an exact match is not offered back
+  });
+  it('IN-1 needs two letters and returns at most five', () => {
+    expect(matchIngredientNames(known, 'm')).toEqual([]);
+    expect(matchIngredientNames(Array.from({ length: 9 }, (_, i) => `milk ${i}`), 'mi')).toHaveLength(5);
   });
 });

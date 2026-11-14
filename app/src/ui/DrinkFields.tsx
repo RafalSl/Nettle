@@ -1,5 +1,5 @@
 import { Switch, Text, TextInput, View } from 'react-native';
-import { joinIngredients, splitIngredients } from '@/core/model/allergens';
+import { joinIngredients, matchIngredientNames, splitIngredients } from '@/core/model/allergens';
 import { afterEdit, sameIngredients, typedSource, type IngredientSource } from '@/core/model/source';
 import { ALLERGENS, type Allergen } from '@/core/model/types';
 import type { DrinkSnapshot } from '@/core/usecases/preferences';
@@ -60,7 +60,7 @@ export const drinkMissing = (d: DrinkDraft): string | null =>
   !d.name.trim() ? t('edit.drink') : !(Number(d.amount) > 0) ? t('edit.amount') : null;
 
 /** IN-4: name, amount, the alcohol switch, optional ingredients and allergen tags. Setters are the form's touching ones. */
-export function DrinkFields({ draft, onChange }: { draft: DrinkDraft; onChange: (next: DrinkDraft) => void }) {
+export function DrinkFields({ draft, onChange, names = [] }: { draft: DrinkDraft; onChange: (next: DrinkDraft) => void; names?: readonly string[] }) {
   const set = <K extends keyof DrinkDraft>(k: K, v: DrinkDraft[K]) => onChange({ ...draft, [k]: v });
   return (
     <>
@@ -71,6 +71,12 @@ export function DrinkFields({ draft, onChange }: { draft: DrinkDraft; onChange: 
         <Switch value={draft.alcohol} onValueChange={(v) => set('alcohol', v)} accessibilityLabel={t('more.drinkAlcohol')} />
       </View>
       <TextInput style={styles.input} accessibilityLabel={t('more.drinkIngredients')} placeholder={t('more.drinkIngredients')} value={draft.ingredients} onChangeText={(v) => set('ingredients', v)} />
+      {/* IN-1: the word being typed after the last comma matches names from the diary; a tap completes it. */}
+      <Chips
+        items={matchIngredientNames(names, lastToken(draft.ingredients), splitIngredients(draft.ingredients)).map((n) => ({ id: n, label: n }))}
+        selected={new Set()}
+        onToggle={(n) => set('ingredients', `${draft.ingredients.slice(0, draft.ingredients.length - lastToken(draft.ingredients).length).replace(/\s*$/, ' ').trimStart()}${n}, `)}
+      />
       <Label>{t('more.drinkAllergens')}</Label>
       <Chips
         items={ALLERGENS.map((a) => ({ id: a, label: t(`allergens.${a}`) }))}
@@ -83,4 +89,10 @@ export function DrinkFields({ draft, onChange }: { draft: DrinkDraft; onChange: 
       />
     </>
   );
+}
+
+/** The text after the last top-level comma: the ingredient being typed. */
+export function lastToken(text: string): string {
+  const parts = text.split(',');
+  return (parts[parts.length - 1] ?? '').trimStart();
 }

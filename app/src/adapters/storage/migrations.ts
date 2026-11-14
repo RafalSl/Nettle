@@ -163,6 +163,22 @@ export const MIGRATIONS: string[] = [
   `,
   // LL-9: small device settings (the model name). Not exported; the API key is never stored here.
   `CREATE TABLE app_setting (key TEXT PRIMARY KEY, value TEXT NOT NULL);`,
+  // LL-7: stored analyses. counts_json and result_json hold JSON; the result has the same shape as in data.json.
+  `
+  CREATE TABLE analysis (
+    id TEXT PRIMARY KEY,
+    ts_utc TEXT NOT NULL,
+    tz TEXT NOT NULL,
+    day_from TEXT NOT NULL,
+    day_to TEXT NOT NULL,
+    model TEXT NOT NULL,
+    prompt_version TEXT NOT NULL,
+    language TEXT NOT NULL CHECK (language IN ('en', 'pl')),
+    counts_json TEXT NOT NULL,
+    result_json TEXT NOT NULL
+  );
+  CREATE INDEX analysis_ts ON analysis (ts_utc);
+  `,
 ];
 
 export async function migrate(db: SqlDb): Promise<void> {

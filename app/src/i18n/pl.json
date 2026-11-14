@@ -141,7 +141,10 @@
     "llm_model_not_found": "Nie znaleziono takiego modelu. Sprawdź ustawienie modelu.",
     "llm_refused": "Model odmówił wykonania tego zapytania.",
     "llm_bad_response": "Nie udało się odczytać odpowiedzi. Nic nie zapisano.",
-    "llm_failed": "Zapytanie nie powiodło się. Nic nie zapisano."
+    "llm_failed": "Zapytanie nie powiodło się. Nic nie zapisano.",
+    "analysis_too_large": "Ten zakres dat jest za duży do wysłania. Wybierz krótszy.",
+    "analysis_no_data": "W tym zakresie dat nic nie zapisano.",
+    "too_many_photos": "Za dużo zdjęć na jedno uruchomienie. Wybierz mniej."
   },
   "today": {
     "title": "Codzienna kontrola",
@@ -284,7 +287,8 @@
     "groups": {
       "food": "Jedzenie i przyjmowane substancje (posiłki, reakcje, alkohol, leki)",
       "skin": "Skóra i paznokcie (wpisy, zdjęcia, zastosowane zabiegi)",
-      "health": "Codzienne kontrole, stolec i zmiany"
+      "health": "Codzienne kontrole, stolec i zmiany",
+      "ai": "Analizy AI"
     },
     "limit": "Tylko zakres dat",
     "from": "Od",
@@ -307,7 +311,8 @@
       "treatmentApplications": "zastosowane zabiegi: {{n}}",
       "checkIns": "codzienne kontrole: {{n}}",
       "stoolEntries": "wpisy o stolcu: {{n}}",
-      "changeEvents": "zmiany: {{n}}"
+      "changeEvents": "zmiany: {{n}}",
+      "analyses": "analizy AI: {{n}}"
     }
   },
   "exportPhotos": {

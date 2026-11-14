@@ -141,7 +141,10 @@
     "llm_model_not_found": "That model name was not found. Check the model setting.",
     "llm_refused": "The model declined this request.",
     "llm_bad_response": "The answer could not be read. Nothing was saved.",
-    "llm_failed": "The request failed. Nothing was saved."
+    "llm_failed": "The request failed. Nothing was saved.",
+    "analysis_too_large": "That date range is too large to send. Choose a shorter range.",
+    "analysis_no_data": "There is nothing logged in that date range.",
+    "too_many_photos": "Too many photos for one run. Choose fewer."
   },
   "today": {
     "title": "Daily check-in",
@@ -284,7 +287,8 @@
     "groups": {
       "food": "Food and intake (meals, reactions, alcohol, medications)",
       "skin": "Skin and nails (entries, photos, treatments applied)",
-      "health": "Daily check-ins, stool and changes"
+      "health": "Daily check-ins, stool and changes",
+      "ai": "AI analyses"
     },
     "limit": "Only a date range",
     "from": "From",
@@ -307,7 +311,8 @@
       "treatmentApplications": "{{n}} treatment applications",
       "checkIns": "{{n}} check-ins",
       "stoolEntries": "{{n}} stool entries",
-      "changeEvents": "{{n}} change events"
+      "changeEvents": "{{n}} change events",
+      "analyses": "{{n}} AI analyses"
     }
   },
   "exportPhotos": {

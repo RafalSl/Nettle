@@ -2,6 +2,7 @@ import {
   CHANGE_ACTIONS,
   MEDICATION_CATEGORIES,
   type AlcoholEntry,
+  type Analysis,
   type Photo,
   type MedicationEntry,
   CHANGE_CATEGORIES,
@@ -19,6 +20,7 @@ import {
   type TreatmentApplication,
 } from '../model/types';
 import { CANONICAL_UTC } from '../model/time';
+import { analysisResultFromJson, analysisResultToJson } from '../llm/analysisResult';
 import { bad, bool, enumList, nullableScore, nullableText, oneOf, str, stringList, utc, type Obj } from './guards';
 
 /**
@@ -217,6 +219,44 @@ const photo: Codec<Photo> = {
   }),
 };
 
+/** LL-7, EX-4: stored analyses travel in data.json; the result keeps the shape the model answered with. */
+const analysis: Codec<Analysis> = {
+  key: 'analyses',
+  toJson: (a) => ({
+    id: a.id,
+    utc: a.at.utc,
+    tz: a.at.tz,
+    day_from: a.dayFrom,
+    day_to: a.dayTo,
+    model: a.model,
+    prompt_version: a.promptVersion,
+    language: a.language,
+    counts: a.counts,
+    result: analysisResultToJson(a.result),
+  }),
+  parse: (o, w) => {
+    const counts = o.counts;
+    if (typeof counts !== 'object' || counts === null || Object.values(counts).some((n) => typeof n !== 'number')) bad(`${w}.counts`);
+    const result = analysisResultFromJson(o.result);
+    if (!result) bad(`${w}.result`);
+    const day = (k: string) => {
+      const v = str(o, k, w);
+      return /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(Date.parse(v)) ? v : bad(`${w}.${k}`);
+    };
+    return {
+      id: str(o, 'id', w),
+      at: { utc: utc(o, w), tz: str(o, 'tz', w) },
+      dayFrom: day('day_from'),
+      dayTo: day('day_to'),
+      model: str(o, 'model', w),
+      promptVersion: str(o, 'prompt_version', w),
+      language: oneOf(o, 'language', ['en', 'pl'] as const, w),
+      counts: counts as Record<string, number>,
+      result: result!,
+    };
+  },
+};
+
 export const EXTRA_CODECS: { [K in ExtraKind]: Codec<Records[K][number]> } = {
   nailEntries: nail,
   checkIns: checkIn,
@@ -227,6 +267,7 @@ export const EXTRA_CODECS: { [K in ExtraKind]: Codec<Records[K][number]> } = {
   alcoholEntries: alcohol,
   medicationEntries: medication,
   photos: photo,
+  analyses: analysis,
 };
 
 export { EXTRA_KINDS };

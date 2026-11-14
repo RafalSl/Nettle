@@ -1,3 +1,4 @@
+import type { Authenticator } from '../ports/auth';
 import type { BarcodeSource } from '../ports/barcode';
 import type { KeyStore } from '../ports/keystore';
 import type { LlmConfig, LlmProvider } from '../ports/llm';
@@ -20,6 +21,8 @@ export interface Deps {
   keys: KeyStore;
   /** LL-9: device settings such as the model name. */
   settings: SettingsStore;
+  /** SE-8: Face ID or the passcode. */
+  auth: Authenticator;
   /** IN-9: barcode in, product out. */
   barcode: BarcodeSource;
   /** LL-10: builds the provider for a configuration (one adapter per provider). */

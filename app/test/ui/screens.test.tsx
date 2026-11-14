@@ -1,10 +1,12 @@
 /* eslint-disable @typescript-eslint/no-require-imports -- screens are loaded lazily, after the mocks below are in place */
 import React from 'react';
-import { ActionSheetIOS, Alert } from 'react-native';
+import { ActionSheetIOS, Alert, AppState } from 'react-native';
 import { unzipSync } from 'fflate';
 import { FakeLlm } from '../fakes/fakeLlm';
 import { AnalysisRunner } from '@/core/usecases/analysisRunner';
+import { AppLock } from '@/core/usecases/appLock';
 import type { FakeNotifier } from '../fakes/fakeNotifier';
+import type { FakeAuth } from '../fakes/fakeAuth';
 import { FakeBarcode } from '../fakes/fakeBarcode';
 import { unsavedForm } from '@/ui/formState';
 import type { LlmProvider } from '@/core/ports/llm';
@@ -78,6 +80,7 @@ const screens: [string, () => { default: React.ComponentType }][] = [
   ['settings suggestions', () => require('@/app/(tabs)/today/settings/suggestions')],
   ['settings reminders', () => require('@/app/(tabs)/today/settings/reminders')],
   ['settings ai', () => require('@/app/(tabs)/today/settings/ai')],
+  ['settings privacy', () => require('@/app/(tabs)/today/settings/privacy')],
   ['settings data', () => require('@/app/(tabs)/today/settings/data')],
   ['review', () => require('@/app/(tabs)/review/index')],
   ['doctor report', () => require('@/app/(tabs)/review/report')],
@@ -101,6 +104,7 @@ describe('screens render without crashing (NF-3)', () => {
       deps,
       fileShare: { saveAndShare: jest.fn(), pickFile: jest.fn(async () => null) },
       analysisRunner: new AnalysisRunner(deps),
+      appLock: new AppLock(deps),
     };
   });
 
@@ -134,7 +138,7 @@ type Deps = ReturnType<typeof makeDeps>;
 const scores = { severity: 1, itch: 2, pain: 3, dryness: 4, scaling: 5 };
 
 async function mount(load: () => { default: React.ComponentType }, deps: Deps, fileShare = { saveAndShare: jest.fn(async () => undefined), pickFile: jest.fn(async () => null) }) {
-  services.__state.current = { deps, fileShare, analysisRunner: new AnalysisRunner(deps) };
+  services.__state.current = { deps, fileShare, analysisRunner: new AnalysisRunner(deps), appLock: new AppLock(deps) };
   let tree!: ReactTestRenderer;
   await act(async () => {
     tree = create(React.createElement(load().default));
@@ -404,6 +408,7 @@ describe('navigation shell (UX-1, UX-2, UX-3, UX-6)', () => {
       [en.nav.logging, '/today/settings/logging'],
       [en.nav.suggestions, '/today/settings/suggestions'],
       [en.nav.reminders, '/today/settings/reminders'],
+      [en.nav.privacy, '/today/settings/privacy'],
       [en.nav.ai, '/today/settings/ai'],
       [en.nav.data, '/today/settings/data'],
     ] as const) {
@@ -986,7 +991,7 @@ describe('Reminder taps (SK-9)', () => {
   afterEach(() => jest.restoreAllMocks());
 
   async function mountLayout(deps: Deps) {
-    services.__state.current = { deps, fileShare: { saveAndShare: jest.fn(), pickFile: jest.fn() }, analysisRunner: new AnalysisRunner(deps) };
+    services.__state.current = { deps, fileShare: { saveAndShare: jest.fn(), pickFile: jest.fn() }, analysisRunner: new AnalysisRunner(deps), appLock: new AppLock(deps) };
     let tree!: ReactTestRenderer;
     await act(async () => {
       tree = create(React.createElement(require('@/app/_layout').default));
@@ -1053,7 +1058,7 @@ describe('Analysis running state (LL-12)', () => {
     const deps = nowDeps(llm);
     const prep = await prepared(deps);
     const runner = new AnalysisRunner(deps);
-    services.__state.current = { deps, fileShare: { saveAndShare: jest.fn(), pickFile: jest.fn() }, analysisRunner: runner };
+    services.__state.current = { deps, fileShare: { saveAndShare: jest.fn(), pickFile: jest.fn() }, analysisRunner: runner, appLock: new AppLock(deps) };
     let review!: ReactTestRenderer;
     await act(async () => {
       review = create(React.createElement(require('@/app/(tabs)/review/index').default));
@@ -1090,7 +1095,7 @@ describe('Analysis running state (LL-12)', () => {
     runner.markBackgrounded();
     await done;
     expect(runner.state.status).toBe('interrupted');
-    services.__state.current = { deps, fileShare: { saveAndShare: jest.fn(), pickFile: jest.fn() }, analysisRunner: runner };
+    services.__state.current = { deps, fileShare: { saveAndShare: jest.fn(), pickFile: jest.fn() }, analysisRunner: runner, appLock: new AppLock(deps) };
     let tree!: ReactTestRenderer;
     await act(async () => {
       tree = create(React.createElement(require('@/app/(tabs)/review/analysis').default));
@@ -1113,7 +1118,7 @@ describe('Analysis running state (LL-12)', () => {
     const deps = nowDeps({ completeJson: () => new Promise<{ text: string; model: string }>((resolve) => (release = resolve)) });
     const prep = await prepared(deps);
     const runner = new AnalysisRunner(deps);
-    services.__state.current = { deps, fileShare: { saveAndShare: jest.fn(), pickFile: jest.fn() }, analysisRunner: runner };
+    services.__state.current = { deps, fileShare: { saveAndShare: jest.fn(), pickFile: jest.fn() }, analysisRunner: runner, appLock: new AppLock(deps) };
     await act(async () => {
       create(React.createElement(require('@/app/_layout').default));
     });
@@ -1446,5 +1451,118 @@ describe('Photo selection for an export (EX-7, EX-8)', () => {
     await flush();
     const second = Object.keys(unzipSync((fileShare.saveAndShare.mock.calls[1] as unknown as [string, Uint8Array])[1])).filter((f) => f.startsWith('photos/'));
     expect(second).toHaveLength(2);
+  });
+});
+
+describe('App lock (SE-8)', () => {
+  let alert: jest.SpyInstance;
+  let appState: ((s: string) => void) | null;
+  beforeEach(() => {
+    alert = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    appState = null;
+    jest.spyOn(AppState, 'addEventListener').mockImplementation(((_type: string, handler: (s: string) => void) => {
+      appState = handler;
+      return { remove: jest.fn() };
+    }) as never);
+    mockRouter.push.mockClear();
+    mockRouter.navigate.mockClear();
+  });
+  afterEach(() => jest.restoreAllMocks());
+
+  async function mountLayout(deps: Deps, lock: AppLock) {
+    services.__state.current = { deps, fileShare: { saveAndShare: jest.fn(), pickFile: jest.fn() }, analysisRunner: new AnalysisRunner(deps), appLock: lock };
+    let tree!: ReactTestRenderer;
+    await act(async () => {
+      tree = create(React.createElement(require('@/app/_layout').default));
+    });
+    return tree;
+  }
+  const covered = (tree: ReactTestRenderer) => tree.root.findAll((n) => n.props.accessibilityViewIsModal === true).length > 0;
+
+  it('SE-8 the Privacy screen switches the lock on only after the prompt, and says why when it cannot', async () => {
+    const deps = nowDeps();
+    const lock = new AppLock(deps);
+    await lock.init();
+    services.__state.current = { deps, fileShare: { saveAndShare: jest.fn(), pickFile: jest.fn() }, analysisRunner: new AnalysisRunner(deps), appLock: lock };
+    let tree!: ReactTestRenderer;
+    await act(async () => {
+      tree = create(React.createElement(require('@/app/(tabs)/today/settings/privacy').default));
+    });
+    const auth = deps.auth as unknown as FakeAuth;
+    auth.hasLock = false;
+    await toggle(tree, en.lock.switch);
+    expect(alert.mock.calls.at(-1)![0]).toBe(en.errors.lock_unavailable);
+    auth.hasLock = true;
+    auth.passes = false;
+    await toggle(tree, en.lock.switch);
+    expect(alert.mock.calls.at(-1)![0]).toBe(en.errors.lock_failed);
+    expect(await deps.settings.get('appLockEnabled')).toBeNull();
+    auth.passes = true;
+    await toggle(tree, en.lock.switch);
+    expect(auth.prompts.at(-1)).toBe(en.lock.turnOn);
+    expect(await deps.settings.get('appLockEnabled')).toBe('1');
+    expect(tree.root.findAll((n) => n.props.accessibilityLabel === en.lock.switch && n.props.value === true).length).toBeGreaterThan(0);
+  });
+
+  it('SE-8 a cold start with the lock on shows the cover and asks once; Unlock after a cancelled prompt works', async () => {
+    const deps = nowDeps();
+    await deps.settings.set('appLockEnabled', '1');
+    const lock = new AppLock(deps);
+    await lock.init();
+    const auth = deps.auth as unknown as FakeAuth;
+    auth.passes = false;
+    const tree = await mountLayout(deps, lock);
+    await flush();
+    expect(hasText(tree, en.lock.locked)).toBe(true);
+    expect(auth.prompts).toEqual([en.lock.reason]); // one prompt, not one per render
+    auth.passes = true;
+    await press(tree, en.lock.unlock);
+    await flush();
+    expect(lock.locked).toBe(false);
+    expect(hasText(tree, en.lock.locked)).toBe(false);
+  });
+
+  it('SE-8 while the app is not in the foreground a cover hides the diary, and a long absence locks it', async () => {
+    const deps = nowDeps();
+    const lock = new AppLock(deps);
+    await lock.init();
+    await lock.setEnabled(true, 'on');
+    let now = Date.now();
+    deps.clock = { now: () => new Date(now), timeZone: () => 'Europe/Warsaw' };
+    const tree = await mountLayout(deps, lock);
+    expect(covered(tree)).toBe(false);
+    await act(async () => appState!('inactive'));
+    expect(covered(tree)).toBe(true); // the app switcher shows the cover, not the diary
+    await act(async () => appState!('active'));
+    expect(covered(tree)).toBe(false);
+    expect(lock.locked).toBe(false); // a short absence does not lock
+    (deps.auth as unknown as FakeAuth).passes = false; // the prompt on return is cancelled, so the cover stays
+    await act(async () => appState!('background'));
+    now += 61_000;
+    await act(async () => appState!('active'));
+    await flush();
+    expect(lock.locked).toBe(true);
+    expect(hasText(tree, en.lock.locked)).toBe(true);
+  });
+
+  it('SE-8 a reminder tap waits for the unlock before it opens anything', async () => {
+    const deps = nowDeps();
+    await deps.settings.set('appLockEnabled', '1');
+    const lock = new AppLock(deps);
+    await lock.init();
+    (deps.auth as unknown as FakeAuth).passes = false;
+    const tree = await mountLayout(deps, lock);
+    const notifier = deps.notifier as unknown as FakeNotifier;
+    let tapped!: Promise<void>;
+    await act(async () => {
+      tapped = notifier.tap({ id: 'backup', target: 'backup', deliveredAt: null });
+    });
+    expect(mockRouter.navigate).not.toHaveBeenCalled();
+    (deps.auth as unknown as FakeAuth).passes = true;
+    await press(tree, en.lock.unlock);
+    await act(async () => {
+      await tapped;
+    });
+    expect(mockRouter.navigate).toHaveBeenCalledWith({ pathname: '/today/settings/data' });
   });
 });

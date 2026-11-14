@@ -206,7 +206,9 @@
     "day_has_no_meals": "Na ten dzień nie ma posiłków. Potwierdź, aby mimo to zamknąć dzień.",
     "notifications_denied": "Powiadomienia są wyłączone dla tej aplikacji. Zezwól na nie w ustawieniach iPhone'a, aby dostawać przypomnienia.",
     "invalid_barcode": "To nie jest prawidłowy kod kreskowy. Sprawdź cyfry.",
-    "barcode_lookup_failed": "Nie udało się połączyć z bazą produktów. Wpisz produkt ręcznie."
+    "barcode_lookup_failed": "Nie udało się połączyć z bazą produktów. Wpisz produkt ręcznie.",
+    "lock_unavailable": "Najpierw ustaw kod lub Face ID na tym iPhonie.",
+    "lock_failed": "Nie udało się potwierdzić, że to Ty. Blokada nie została zmieniona."
   },
   "today": {
     "title": "Codzienna kontrola",
@@ -571,7 +573,8 @@
     "gear": "Ustawienia",
     "report": "Raport",
     "suggestions": "Podpowiedzi",
-    "timeline": "Oś czasu"
+    "timeline": "Oś czasu",
+    "privacy": "Prywatność"
   },
   "home": {
     "quickActions": "Szybkie akcje",
@@ -706,5 +709,14 @@
     "saveOnTap": "Zapis jednym dotknięciem",
     "saveOnTapHint": "Dotknięcie podpowiedzi alkoholu lub leku zapisuje ją od razu. Posiłki nigdy nie zapisują się dotknięciem.",
     "hint": "Podpowiedzi są liczone na tym telefonie z Twoich wpisów. Nic nie jest nigdzie wysyłane."
+  },
+  "lock": {
+    "reason": "Odblokuj dziennik",
+    "locked": "Nettle jest zablokowany",
+    "unlock": "Odblokuj",
+    "switch": "Blokada Face ID lub kodem",
+    "hint": "Blokuje aplikację przy uruchomieniu i po minucie w tle. Dziennik i tak zostaje na tym telefonie. W Expo Go system pyta o kod, bo Face ID wymaga osobnej aplikacji.",
+    "turnOn": "Włącz blokadę",
+    "turnOff": "Wyłącz blokadę"
   }
 }

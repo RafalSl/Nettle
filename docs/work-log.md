@@ -235,3 +235,8 @@ Newest entry last. One short entry per working session or meaningful step: what 
 ## 2026-11-14: single-photo selection for exports (branch feature/custom-photo-selection)
 - **Done:** EX-7. The photo selection of the custom export gained a "Pick photos" mode: every photo is listed with its area and time (sensitive ones marked), and only the picked ones go into the ZIP and the PDF (the core's `custom` mode already existed). A sensitive photo is included only when it is picked. 541 tests pass.
 - **Next:** the app lock (SE-8).
+
+## 2026-11-14: app lock (branch feature/app-lock)
+- **Done:** SE-8. `Authenticator` port (Face ID or the device passcode; `expo-local-authentication`, installed with `expo install`, plugin text in `app.json`), `AppLock` in the core (off by default, a setting that is not exported; locked at a cold start, after 60 seconds in the background; switching it on or off needs the prompt; a device with no passcode refuses; `whenUnlocked` for reminder taps). The root layout shows a cover while the app is locked or not in the foreground, so the app switcher never shows the diary, and prompts once when it comes back locked, with an Unlock button after a cancel. Settings has a Privacy row with the switch. 553 tests pass, iOS bundle builds.
+- **To verify on the phone:** the prompt, the cover in the app switcher, and Face ID in a standalone build (Expo Go asks for the passcode).
+- **Next:** reconcile the requirement and flow documents with what is built, and list what is left.

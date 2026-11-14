@@ -206,7 +206,9 @@
     "day_has_no_meals": "No meals are logged for this day. Confirm to close it anyway.",
     "notifications_denied": "Notifications are turned off for this app. Allow them in the iPhone settings to get reminders.",
     "invalid_barcode": "This is not a valid barcode. Check the digits.",
-    "barcode_lookup_failed": "The product database could not be reached. Enter the product by hand."
+    "barcode_lookup_failed": "The product database could not be reached. Enter the product by hand.",
+    "lock_unavailable": "Set a passcode or Face ID on this iPhone first.",
+    "lock_failed": "Could not confirm it is you. The lock was not changed."
   },
   "today": {
     "title": "Daily check-in",
@@ -571,7 +573,8 @@
     "gear": "Settings",
     "report": "Doctor report",
     "suggestions": "Suggestions",
-    "timeline": "Timeline"
+    "timeline": "Timeline",
+    "privacy": "Privacy"
   },
   "home": {
     "quickActions": "Quick actions",
@@ -706,5 +709,14 @@
     "saveOnTap": "Save on tap",
     "saveOnTapHint": "A tap on an alcohol or medication suggestion saves it at once. Meals never save on tap.",
     "hint": "Suggestions are worked out on this phone from your own entries. Nothing is sent anywhere."
+  },
+  "lock": {
+    "reason": "Unlock your diary",
+    "locked": "Nettle is locked",
+    "unlock": "Unlock",
+    "switch": "Lock with Face ID or passcode",
+    "hint": "Locks the app when it starts and after a minute in the background. Your diary stays on this phone either way. In Expo Go the system asks for the passcode, because Face ID needs a standalone build.",
+    "turnOn": "Turn on the lock",
+    "turnOff": "Turn off the lock"
   }
 }

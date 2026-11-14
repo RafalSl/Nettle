@@ -6,6 +6,7 @@ import { applyReminders, resolveReminderTap } from '@/core/usecases/reminders';
 import { reminderTexts, t } from '@/i18n';
 import { ServicesProvider, useServices } from '@/services';
 import { unsavedForm } from '@/ui/formState';
+import { LockOverlay } from '@/ui/LockOverlay';
 import { useAnalysisRun } from '@/ui/useAnalysisRun';
 
 /** SK-9: after start-up, make the scheduled reminders match the settings, the nail areas and the app language. */
@@ -41,19 +42,20 @@ function AnalysisWatcher() {
  * inside the services provider) and the root navigator is ready, so a cold start from a notification works.
  */
 function ReminderTaps() {
-  const { deps } = useServices();
+  const { deps, appLock } = useServices();
   const router = useRouter();
   const ready = !!useRootNavigationState()?.key;
   useEffect(() => {
     if (!ready) return;
     return deps.notifier.onTap(async (tap) => {
+      await appLock.whenUnlocked(); // SE-8: a tap waits for the unlock
       const action = await resolveReminderTap(deps, tap, { hasUnsavedForm: unsavedForm.current });
       if (!action) return;
       if (action.viaToday) router.navigate('/today');
       if (action.viaToday) router.push(action.route as never);
       else router.navigate(action.route as never);
     });
-  }, [deps, ready, router]);
+  }, [deps, appLock, ready, router]);
   return null;
 }
 
@@ -88,6 +90,7 @@ export default function RootLayout() {
         <Stack.Screen name="form/change" options={form(t('nav.change'))} />
         <Stack.Screen name="form/edit" options={form(t('edit.title'))} />
       </Stack>
+      <LockOverlay />
     </ServicesProvider>
   );
 }

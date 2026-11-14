@@ -120,7 +120,7 @@ describe('Anthropic adapter over fetch (LL-8, LL-10)', () => {
     text: async () => JSON.stringify({ model: 'claude-test', stop_reason: 'end_turn', content: [{ type: 'text', text: '{"a":1}' }], ...over }),
   });
   const fail = (status: number, type?: string) => ({ status, text: async () => JSON.stringify({ type: 'error', error: { type, message: 'm sk-synthetic-secret' } }) });
-  const noWait = () => jest.spyOn(globalThis, 'setTimeout').mockImplementation(((fn: () => void) => (fn(), 0)) as never);
+  const instant = { sleep: async () => undefined };
   afterEach(() => jest.restoreAllMocks());
 
   it('LL-1 sends one POST with the key in a header, the image as base64 and a JSON-schema answer format', async () => {
@@ -166,28 +166,92 @@ describe('Anthropic adapter over fetch (LL-8, LL-10)', () => {
   });
 
   it('LL-8 rate limits and server errors are retried twice, then reported', async () => {
-    noWait();
     let n = 0;
-    const provider = createAnthropicProvider(config, async () => (n++, fail(429, 'rate_limit_error')));
+    const provider = createAnthropicProvider(config, async () => (n++, fail(429, 'rate_limit_error')), instant);
     expect((await provider.completeJson(req).catch((e) => e)).code).toBe('llm_rate_limited');
     expect(n).toBe(3);
     let m = 0;
-    const flaky = createAnthropicProvider(config, async () => (++m < 3 ? fail(529, 'overloaded_error') : ok()));
+    const flaky = createAnthropicProvider(config, async () => (++m < 3 ? fail(529, 'overloaded_error') : ok()), instant);
     expect((await flaky.completeJson(req)).text).toBe('{"a":1}');
     expect(m).toBe(3);
   });
 
   it('LL-8 a lost connection is llm_network after the retries, with no details kept', async () => {
-    noWait();
     let n = 0;
-    const provider = createAnthropicProvider(config, async () => {
-      n++;
-      throw new Error('Network request failed for sk-synthetic-secret');
-    });
+    const provider = createAnthropicProvider(
+      config,
+      async () => {
+        n++;
+        throw new Error('Network request failed for sk-synthetic-secret');
+      },
+      instant,
+    );
     const error = await provider.completeJson(req).catch((e) => e);
     expect(error.code).toBe('llm_network');
     expect(error.message).not.toContain('sk-synthetic-secret');
     expect(n).toBe(3);
+  });
+
+  const hang = (calls: { n: number }) => (_url: string, init: { signal?: AbortSignal }) =>
+    new Promise<never>((_resolve, reject) => {
+      calls.n++;
+      init.signal?.addEventListener('abort', () => reject(new Error('aborted')));
+    });
+
+  it('LL-12 a request that times out is llm_timeout and is not retried', async () => {
+    const calls = { n: 0 };
+    const provider = createAnthropicProvider(config, hang(calls), { timeoutMs: 20, ...instant });
+    expect((await provider.completeJson(req).catch((e) => e)).code).toBe('llm_timeout');
+    expect(calls.n).toBe(1);
+  });
+
+  it('LL-12 Cancel ends the call at once, nothing is retried, and a cancelled signal sends nothing', async () => {
+    const calls = { n: 0 };
+    const ctl = new AbortController();
+    const provider = createAnthropicProvider(config, hang(calls), instant);
+    setTimeout(() => ctl.abort(), 10);
+    expect((await provider.completeJson({ ...req, signal: ctl.signal }).catch((e) => e)).code).toBe('llm_cancelled');
+    expect(calls.n).toBe(1);
+    expect((await provider.completeJson({ ...req, signal: ctl.signal }).catch((e) => e)).code).toBe('llm_cancelled');
+    expect(calls.n).toBe(1);
+  });
+
+  it('LL-12 Cancel during the pause before a retry stops the retry without waiting for the pause', async () => {
+    let n = 0;
+    const ctl = new AbortController();
+    const provider = createAnthropicProvider(config, async () => {
+      n++;
+      throw new Error('Network request failed');
+    });
+    setTimeout(() => ctl.abort(), 20);
+    const started = Date.now();
+    expect((await provider.completeJson({ ...req, signal: ctl.signal }).catch((e) => e)).code).toBe('llm_cancelled');
+    expect(n).toBe(1);
+    expect(Date.now() - started).toBeLessThan(400); // the first pause is 500 ms
+  });
+
+  it('LL-12 a 504 is a timeout and a body that fails to read is a network error; neither is retried', async () => {
+    expect(mapHttpError(504).code).toBe('llm_timeout');
+    let n = 0;
+    const slow = createAnthropicProvider(config, async () => (n++, fail(504, 'timeout_error')), instant);
+    expect((await slow.completeJson(req).catch((e) => e)).code).toBe('llm_timeout');
+    expect(n).toBe(1);
+    let m = 0;
+    const broken = createAnthropicProvider(
+      config,
+      async () => (
+        m++,
+        {
+          status: 200,
+          text: async (): Promise<string> => {
+            throw new Error('connection reset');
+          },
+        }
+      ),
+      instant,
+    );
+    expect((await broken.completeJson(req).catch((e) => e)).code).toBe('llm_network');
+    expect(m).toBe(1);
   });
 
   it('LL-8 refusals, cut-off and empty or unreadable answers are errors, never partial results', () => {

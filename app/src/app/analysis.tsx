@@ -1,7 +1,8 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, View } from 'react-native';
+import { NettleError } from '@/core/model/errors';
 import { localDateTime, localDay } from '@/core/model/time';
 import { RECORD_KINDS, type Analysis, type Photo } from '@/core/model/types';
 import type { Deps } from '@/core/usecases/deps';
@@ -29,6 +30,9 @@ async function loadScreenData(deps: Deps, dayFrom: string, dayTo: string) {
 const daysAgo = (n: number) => new Date(Date.now() - n * 24 * 3600 * 1000);
 
 /** LL-2 to LL-8: choose a date range and photos, review exactly what will be sent, then run and read the result. */
+/** m:ss */
+const clock = (seconds: number) => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+
 export default function AnalysisScreen() {
   const { deps } = useServices();
   const tz = deps.clock.timeZone();
@@ -37,6 +41,9 @@ export default function AnalysisScreen() {
   const [photos, setPhotos] = useState<{ photo: Photo; label: string }[]>([]);
   const [chosen, setChosen] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const [note, setNote] = useState<string | null>(null);
+  const controller = useRef<AbortController | null>(null);
   const [past, setPast] = useState<Analysis[]>([]);
   const [shown, setShown] = useState<Analysis | null>(null);
 
@@ -60,16 +67,31 @@ export default function AnalysisScreen() {
       return next;
     });
 
+  // LL-12: elapsed time while the request runs.
+  useEffect(() => {
+    if (!busy) return;
+    const started = Date.now();
+    const id = setInterval(() => setElapsed(Math.floor((Date.now() - started) / 1000)), 1000);
+    return () => clearInterval(id);
+  }, [busy]);
+
   async function run(prepared: PreparedAnalysis) {
+    const ctl = new AbortController();
+    controller.current = ctl;
+    setNote(null);
+    setElapsed(0);
     setBusy(true);
     try {
-      const analysis = await runAnalysis(deps, prepared);
+      const analysis = await runAnalysis(deps, prepared, ctl.signal);
       setShown(analysis);
       reload();
       Alert.alert(t('analysis.saved'));
     } catch (e) {
-      Alert.alert(errorMessage(e)); // LL-8: nothing was saved, nothing changed
+      // LL-8, LL-12: nothing was saved, nothing changed. A cancel is the user's own choice, so it is a note, not an alert.
+      if (e instanceof NettleError && e.code === 'llm_cancelled') setNote(errorMessage(e));
+      else Alert.alert(errorMessage(e));
     } finally {
+      controller.current = null;
       setBusy(false);
     }
   }
@@ -132,9 +154,14 @@ export default function AnalysisScreen() {
         <>
           <ActivityIndicator />
           <Hint>{t('analysis.running')}</Hint>
+          <Hint>{t('analysis.elapsed', { time: clock(elapsed) })}</Hint>
+          <Button title={t('analysis.cancelRun')} kind="secondary" onPress={() => controller.current?.abort()} />
         </>
       ) : (
-        <Button title={t('analysis.review')} onPress={review} />
+        <>
+          <Button title={t('analysis.review')} onPress={review} />
+          {note && <Hint>{note}</Hint>}
+        </>
       )}
 
       {shown && <AnalysisView analysis={shown} />}

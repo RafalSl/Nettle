@@ -3,6 +3,7 @@ import React from 'react';
 import { Alert } from 'react-native';
 import { unzipSync } from 'fflate';
 import { FakeLlm } from '../fakes/fakeLlm';
+import type { LlmProvider } from '@/core/ports/llm';
 import { logMeal } from '@/core/usecases/logMeal';
 import { logSkinEntry } from '@/core/usecases/skin';
 import { saveApiKey } from '@/core/usecases/llm';
@@ -102,7 +103,7 @@ const type = async (tree: ReactTestRenderer, placeholderOrLabel: string, value: 
 };
 const hasText = (tree: ReactTestRenderer, text: string) => JSON.stringify(tree.toJSON()).includes(text);
 /** Real time, like the app: the screens read today's date from the device clock. */
-const nowDeps = (llm = new FakeLlm()) => makeDeps(new MemoryRepo(), new Date().toISOString(), llm);
+const nowDeps = (llm: LlmProvider = new FakeLlm()) => makeDeps(new MemoryRepo(), new Date().toISOString(), llm);
 const toggle = async (tree: ReactTestRenderer, label: string) => {
   const node = tree.root.findAll((n) => n.props.accessibilityLabel === label && typeof n.props.onValueChange === 'function')[0];
   if (!node) throw new Error(`no switch "${label}"`);
@@ -275,6 +276,35 @@ describe('screen flows (NF-2, NF-3)', () => {
       await (confirm[2] as { text: string; onPress?: () => void }[]).find((b) => b.text === en.analysis.send)!.onPress!();
     });
     expect(alert.mock.calls.some((c) => c[0] === en.errors.llm_rate_limited)).toBe(true);
+    expect(await deps.repo.listRecords('analyses')).toEqual([]);
+  });
+
+  it('LL-12 the confirmation says the call is billed separately, and Cancel stops a running analysis and stores nothing', async () => {
+    const { NettleError } = require('@/core/model/errors');
+    const llm = {
+      completeJson: (req: { signal?: AbortSignal }) =>
+        new Promise<never>((_resolve, reject) => req.signal?.addEventListener('abort', () => reject(new NettleError('llm_cancelled')))),
+    };
+    const deps = nowDeps(llm);
+    await saveApiKey(deps, 'sk-synthetic-secret');
+    await logMeal(deps, { description: 'Synthetic meal', ingredients: [], at: new Date(Date.now() - 2 * 3600 * 1000) });
+    const { tree } = await mount(() => require('@/app/analysis'), deps);
+    await flush();
+    await press(tree, en.analysis.review);
+    const confirm = alert.mock.calls.find((c) => c[0] === en.analysis.confirmTitle)!;
+    expect(String(confirm[1])).toContain('bills this separately');
+    let running: unknown;
+    await act(async () => {
+      running = (confirm[2] as { text: string; onPress?: () => unknown }[]).find((b) => b.text === en.analysis.send)!.onPress!();
+    });
+    expect(hasText(tree, en.analysis.cancelRun)).toBe(true);
+    await press(tree, en.analysis.cancelRun);
+    await act(async () => {
+      await running;
+    });
+    expect(hasText(tree, en.errors.llm_cancelled)).toBe(true);
+    expect(hasText(tree, en.analysis.cancelRun)).toBe(false);
+    expect(alert.mock.calls.some((c) => c[0] === en.errors.llm_cancelled)).toBe(false);
     expect(await deps.repo.listRecords('analyses')).toEqual([]);
   });
 

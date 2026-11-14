@@ -27,13 +27,13 @@ Requirements and flows are in `docs/requirements.md`, `docs/ux-design.md` and `d
 
 **Intake**
 - Barcode (IN-2, IN-8, IN-9): needs an Open Food Facts adapter and a scan screen (`expo-camera` or `expo-barcode-scanner`; check Expo Go).
-- Recent and favorite meals (IN-7, v0.4 definition) with the choose and review phases, and suggestions (IN-14).
+- Recent and favorite meals (IN-7, v0.4 definition) with the choose and review phases: `rankSuggestions`, `mealHistory`, `alcoholHistory` and `medicationHistory` are built and tested (`core/model/suggestions.ts`); the form, favorites storage (a snapshot of description and ingredients, exported with the settings) and the suggestion settings are not.
 - Allergen suggestions from Open Food Facts or the LLM (only the ingredient-text helper exists).
 
 **Skin and health**
-- "No change" for nail entries, and for all areas at once.
+- "No change" for nail entries and for all areas: the core is built (`repeatNailEntry`, `repeatAllAreas`); no button yet.
 - Timeline per area with photos side by side (SK-8).
-- SK-2 unique area names (new error code); SK-11 empty-day confirmation.
+- SK-2 unique names and SK-11 empty-day confirmation are built (core and the current check-in screen). The duplicate check compares the English seed name of a predefined area, not its localized one.
 - SK-9 reminders: tap targets and the handled-notification marker. The reminders themselves are built (the nail reminder follows nail areas; weekday numbering is iOS, 1 = Sunday).
 
 **Navigation (UX-1 to UX-9)**
@@ -48,7 +48,7 @@ Requirements and flows are in `docs/requirements.md`, `docs/ux-design.md` and `d
 - Done: a timeout is never retried, the analysis screen shows elapsed time and Cancel (a cancel stores nothing), and both LLM confirmations carry the billing notice.
 
 **Export and import**
-- Date range picker for the export and "since last export" (EX-11). The core converts local days to UTC (`localDaysToRange`, `exportBundle({ days })`); the Data screen still exports everything.
+- Date range picker for the export (EX-11). The core converts local days to UTC (`localDaysToRange`, `exportBundle({ days })`) and has `sinceLastExport`, `markExported`, `backupCardDue` and the two presets (`core/usecases/backup.ts`, EX-14); the Data screen still exports everything and does not call `markExported`.
 - PDF report language should default to the app language (EX-3); the Data screen still starts on English (`reportLanguage`).
 - Import switch to restore entries skipped because of a tombstone (EX-10): the core is built (`applyImport(..., { restoreTombstoned })`, `preview.tombstones`), the Data screen has no switch yet. EX-14 Full backup preset.
 - Single-photo selection screens for export (EX-7) and for LLM runs; the core supports both, the screens offer all, none, non-sensitive and an area and date filter.

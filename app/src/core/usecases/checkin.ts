@@ -17,9 +17,18 @@ export interface CheckInInput {
   note?: string;
   /** SK-11: true closes the day, false reopens it, omitted leaves the mark as it is. */
   complete?: boolean;
+  /** SK-11: closing a day with no meals logged throws `day_has_no_meals` unless this is true. */
+  confirmEmptyDay?: boolean;
 }
 
 const SCORES = ['wellbeing', 'stress', 'sleep', 'abdominalPain'] as const;
+
+/** SK-11: closing a day with no meals asks first, because the analysis discounts incomplete days (LL-4). */
+async function assertDayHasMeals(deps: Deps, day: LocalDay, confirmed?: boolean): Promise<void> {
+  if (confirmed) return;
+  const any = (await deps.repo.listMeals()).some((m) => localDay(m.at.utc, m.at.tz) === day);
+  if (!any) throw new NettleError('day_has_no_meals', day);
+}
 
 /** SK-7: the check-in of one local day, or null. If a merge ever left two, the newest wins. */
 export async function getCheckIn(deps: Deps, day: LocalDay): Promise<CheckIn | null> {
@@ -50,6 +59,7 @@ export async function saveCheckIn(deps: Deps, input: CheckInInput): Promise<Chec
   const existing = await getCheckIn(deps, localDay(probe.utc, probe.tz));
   const at = input.at || !existing ? probe : existing.at;
   const day = localDay(at.utc, at.tz);
+  if (input.complete && !existing?.completedAt) await assertDayHasMeals(deps, day, input.confirmEmptyDay);
   const completedAt =
     input.complete === undefined ? (existing?.completedAt ?? null) : input.complete ? (existing?.completedAt ?? makeStamp(deps.clock)) : null;
   const record: CheckIn = {
@@ -70,9 +80,15 @@ export async function saveCheckIn(deps: Deps, input: CheckInInput): Promise<Chec
 }
 
 /** SK-11: mark a day complete or remove the mark. The check-in must exist. */
-export async function setDayComplete(deps: Deps, day: LocalDay, complete: boolean): Promise<CheckIn> {
+export async function setDayComplete(
+  deps: Deps,
+  day: LocalDay,
+  complete: boolean,
+  options: { confirmEmptyDay?: boolean } = {},
+): Promise<CheckIn> {
   const existing = await getCheckIn(deps, day);
   if (!existing) throw new NettleError('checkin_not_found', day);
+  if (complete && !existing.completedAt) await assertDayHasMeals(deps, day, options.confirmEmptyDay);
   const record = { ...existing, completedAt: complete ? (existing.completedAt ?? makeStamp(deps.clock)) : null };
   await deps.repo.putRecord('checkIns', record);
   return record;

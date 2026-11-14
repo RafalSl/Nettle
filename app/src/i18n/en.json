@@ -157,6 +157,8 @@
     "flare_overlap": "This time overlaps the previous or the next flare marker of this area.",
     "checkin_day_taken": "That day already has a check-in. Open it instead.",
     "meal_after_reaction": "A meal cannot be moved after its reaction.",
+    "duplicate_area_name": "An area with this name already exists.",
+    "day_has_no_meals": "No meals are logged for this day. Confirm to close it anyway.",
     "notifications_denied": "Notifications are turned off for this app. Allow them in the iPhone settings to get reminders."
   },
   "today": {
@@ -170,6 +172,7 @@
     "bloating": "Bloating",
     "tags": "Today",
     "saveClose": "Save and close the day",
+    "closeAnyway": "Close the day anyway",
     "dayComplete": "Day closed: everything for this day is logged.",
     "reopen": "Reopen day",
     "stoolTitle": "Stool",

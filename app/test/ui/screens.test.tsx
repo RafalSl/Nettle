@@ -396,6 +396,48 @@ describe('screen flows (NF-2, NF-3)', () => {
     expect(selected()).toHaveLength(3);
   });
 
+  it('SE-9, UX-6 Delete data names the counts in an action sheet, offers Export first, then asks a second time', async () => {
+    const deps = nowDeps();
+    await logMeal(deps, { description: 'Synthetic meal', ingredients: [] });
+    const sheets: { title?: string; options: string[] }[] = [];
+    const script = [0, 1, 0]; // Export first, then Delete, then confirm "Delete for good"
+    const sheet = jest.spyOn(ActionSheetIOS, 'showActionSheetWithOptions').mockImplementation((o, cb) => {
+      sheets.push({ title: o.title, options: o.options });
+      cb(script.shift() ?? o.options.length - 1);
+    });
+    jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    const { tree, fileShare } = await mount(() => require('@/app/(tabs)/today/settings/data'), deps);
+    await press(tree, en.delete.groups.food);
+    await press(tree, en.delete.button);
+    await flush();
+    expect(sheets).toHaveLength(3);
+    expect(sheets[0]!.options).toEqual([en.delete.exportFirst, en.delete.confirm, en.common.cancel]);
+    expect(sheets[0]!.title).toBe(en.delete.confirmTitle);
+    expect(fileShare.saveAndShare).toHaveBeenCalledTimes(1); // the export ran before anything was deleted
+    expect(sheets[2]!.title).toBe(en.delete.secondTitle);
+    expect(await deps.repo.listMeals()).toEqual([]);
+    sheet.mockRestore();
+  });
+
+  it('SE-9 cancelling at the first sheet, or at the second confirmation, deletes nothing', async () => {
+    for (const script of [[null], [1, null]]) {
+      const deps = nowDeps();
+      await logMeal(deps, { description: 'Synthetic meal', ingredients: [] });
+      const queue = [...script];
+      const sheet = jest.spyOn(ActionSheetIOS, 'showActionSheetWithOptions').mockImplementation((o, cb) => {
+        const next = queue.shift();
+        cb(next === null || next === undefined ? o.options.length - 1 : next);
+      });
+      jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+      const { tree } = await mount(() => require('@/app/(tabs)/today/settings/data'), deps);
+      await press(tree, en.delete.groups.food);
+      await press(tree, en.delete.button);
+      await flush();
+      expect(await deps.repo.listMeals()).toHaveLength(1);
+      sheet.mockRestore();
+    }
+  });
+
   it('EX-1, EX-9 the Data screen exports a ZIP with data.json and hands it to the share sheet', async () => {
     const deps = nowDeps();
     await logMeal(deps, { description: 'Synthetic meal', ingredients: ['a'] });
@@ -840,6 +882,32 @@ describe('Data and backup (EX-14, EX-10, EX-13)', () => {
     await flush();
     expect((await phoneB.repo.listMeals()).map((m) => m.id)).toEqual([meal.id]);
     expect(await phoneB.repo.listTombstones()).toEqual([]);
+  });
+});
+
+describe('Replace on import offers an export first (UX-6, UX-9)', () => {
+  afterEach(() => jest.restoreAllMocks());
+  it('UX-6 the Replace sheet has Export first before Replace, and replacing happens only after the person chooses it', async () => {
+    const source = nowDeps();
+    await logMeal(source, { description: 'Synthetic from file', ingredients: [], at: new Date(Date.now() - 3600_000) });
+    const backup = await exportBundle(source);
+    const target = nowDeps();
+    await logMeal(target, { description: 'Synthetic local', ingredients: [], at: new Date(Date.now() - 7200_000) });
+    const seen: string[][] = [];
+    const script = [0, 1]; // Export first, then Replace
+    jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    jest.spyOn(ActionSheetIOS, 'showActionSheetWithOptions').mockImplementation((o, cb) => {
+      seen.push(o.options);
+      cb(script.shift() ?? o.options.length - 1);
+    });
+    const { tree, fileShare } = await mount(() => require('@/app/(tabs)/today/settings/data'), target, { saveAndShare: jest.fn(async () => undefined), pickFile: jest.fn(async () => backup as unknown as null) });
+    await press(tree, en.data.importButton);
+    await flush();
+    await press(tree, en.data.replace);
+    await flush();
+    expect(seen).toEqual([[en.delete.exportFirst, en.data.replace, en.common.cancel], [en.delete.exportFirst, en.data.replace, en.common.cancel]]);
+    expect(fileShare.saveAndShare).toHaveBeenCalledTimes(1);
+    expect((await target.repo.listMeals()).map((m) => m.description)).toEqual(['Synthetic from file']);
   });
 });
 

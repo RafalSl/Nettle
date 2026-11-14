@@ -1411,3 +1411,40 @@ describe('Area timeline (SK-8)', () => {
     mockParams.current = {};
   });
 });
+
+describe('Photo selection for an export (EX-7, EX-8)', () => {
+  beforeEach(() => {
+    jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+  });
+  afterEach(() => jest.restoreAllMocks());
+
+  it('EX-7 the user picks single photos, sensitive ones only when picked, and only those go into the ZIP', async () => {
+    const deps = nowDeps();
+    const chin = await logSkinEntry(deps, { areaId: 'area-chin', scores, at: new Date('2026-01-10T08:00:00.000Z') });
+    const intimate = await logSkinEntry(deps, { areaId: 'area-intimate', scores, at: new Date('2026-01-11T08:00:00.000Z') });
+    await addPhoto(deps, { entryKind: 'skinEntry', entryId: chin.id, sourceUri: 'one' });
+    await addPhoto(deps, { entryKind: 'skinEntry', entryId: chin.id, sourceUri: 'two' });
+    await addPhoto(deps, { entryKind: 'skinEntry', entryId: intimate.id, sourceUri: 'three' }); // sensitive by the area default
+    const { tree, fileShare } = await mount(() => require('@/app/(tabs)/today/settings/data'), deps);
+    await flush();
+    await press(tree, en.exportPhotos.custom);
+    expect(hasText(tree, en.exportPhotos.customHint)).toBe(true);
+    const chips = () => [...new Set(tree.root.findAll((n) => typeof n.props.accessibilityLabel === 'string' && n.props.accessibilityState?.selected !== undefined && /\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(n.props.accessibilityLabel)).map((n) => n.props.accessibilityLabel as string))];
+    expect(chips()).toHaveLength(2); // the two chin photos share a label (same minute); the third is the sensitive one
+    const sensitiveLabel = chips().find((l) => l.includes(en.analysis.sensitiveMark))!;
+    expect(sensitiveLabel).toContain(en.areas['area-intimate']);
+    const plain = chips().filter((l) => !l.includes(en.analysis.sensitiveMark));
+    await press(tree, plain[0]!); // pick exactly one ordinary photo
+    await press(tree, en.data.exportButton);
+    await flush();
+    const bytes = (fileShare.saveAndShare.mock.calls[0] as unknown as [string, Uint8Array])[1];
+    const photos = Object.keys(unzipSync(bytes)).filter((f) => f.startsWith('photos/'));
+    expect(photos).toHaveLength(1);
+    // now add the sensitive one explicitly
+    await press(tree, sensitiveLabel);
+    await press(tree, en.data.exportButton);
+    await flush();
+    const second = Object.keys(unzipSync((fileShare.saveAndShare.mock.calls[1] as unknown as [string, Uint8Array])[1])).filter((f) => f.startsWith('photos/'));
+    expect(second).toHaveLength(2);
+  });
+});

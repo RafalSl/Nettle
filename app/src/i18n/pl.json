@@ -60,7 +60,25 @@
     "estimateAddPicked": "Dodaj wybrane",
     "estimateDismiss": "Odrzuć",
     "estimateRetry": "Spróbuj ponownie",
-    "estimateFailed": "Nic nie dodano."
+    "estimateFailed": "Nic nie dodano.",
+    "scan": "Skanuj kod kreskowy",
+    "scanTitle": "Skieruj aparat na kod kreskowy",
+    "scanCancel": "Wróć",
+    "scanPermission": "Skanowanie kodów wymaga aparatu.",
+    "scanAllow": "Zezwól na aparat",
+    "scanSettings": "Otwórz ustawienia",
+    "scanOrType": "Albo wpisz kod",
+    "scanCode": "Cyfry kodu",
+    "scanLookup": "Szukaj",
+    "scanLooking": "Szukam produktu…",
+    "scanNotFound": "Tego produktu nie ma w bazie. Wpisz go ręcznie.",
+    "scanIncomplete": "Baza nie ma składników tego produktu. Dodaj je ręcznie.",
+    "scanInStoreTitle": "Kod sklepowy",
+    "scanInStoreBody": "Ten numer sklepy nadają własnym produktom, więc ten sam kod może oznaczać różne produkty. Czy dopasowanie jest właściwe?",
+    "scanUse": "Użyj",
+    "scanFromDb": "Wypełniono z Open Food Facts. Sprawdź przed zapisem.",
+    "scanTagsHint": "Baza podaje alergeny: {{list}}. Nie są zaznaczone, dopóki ich nie zaznaczysz.",
+    "scanSelectTags": "Zaznacz alergeny z bazy"
   },
   "skin": {
     "title": "Dodaj stan skóry",
@@ -186,7 +204,9 @@
     "meal_after_reaction": "Posiłku nie można przesunąć na czas po jego reakcji.",
     "duplicate_area_name": "Miejsce o tej nazwie już istnieje.",
     "day_has_no_meals": "Na ten dzień nie ma posiłków. Potwierdź, aby mimo to zamknąć dzień.",
-    "notifications_denied": "Powiadomienia są wyłączone dla tej aplikacji. Zezwól na nie w ustawieniach iPhone'a, aby dostawać przypomnienia."
+    "notifications_denied": "Powiadomienia są wyłączone dla tej aplikacji. Zezwól na nie w ustawieniach iPhone'a, aby dostawać przypomnienia.",
+    "invalid_barcode": "To nie jest prawidłowy kod kreskowy. Sprawdź cyfry.",
+    "barcode_lookup_failed": "Nie udało się połączyć z bazą produktów. Wpisz produkt ręcznie."
   },
   "today": {
     "title": "Codzienna kontrola",

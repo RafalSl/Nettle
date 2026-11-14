@@ -5,6 +5,7 @@ import { unzipSync } from 'fflate';
 import { FakeLlm } from '../fakes/fakeLlm';
 import { AnalysisRunner } from '@/core/usecases/analysisRunner';
 import type { FakeNotifier } from '../fakes/fakeNotifier';
+import { FakeBarcode } from '../fakes/fakeBarcode';
 import { unsavedForm } from '@/ui/formState';
 import type { LlmProvider } from '@/core/ports/llm';
 import { logMeal } from '@/core/usecases/logMeal';
@@ -27,6 +28,8 @@ import { MemoryRepo } from '../fakes/memoryRepo';
 import { makeDeps } from '../helpers/fixtures';
 
 const mockRouter = { push: jest.fn(), back: jest.fn(), navigate: jest.fn() };
+const mockCamera: { props?: { onBarcodeScanned?: (e: { data: string }) => void } } = {};
+const mockPermission: { current: { granted: boolean; canAskAgain: boolean } | null } = { current: { granted: true, canAskAgain: true } };
 const mockParams: { current: Record<string, string> } = { current: {} };
 const mockScreen: { options?: { headerLeft?: () => React.ReactElement; headerRight?: () => React.ReactElement; gestureEnabled?: boolean } } = {};
 
@@ -49,6 +52,13 @@ jest.mock('expo-router', () => {
   };
 });
 jest.mock('@react-native-community/datetimepicker', () => () => null);
+jest.mock('expo-camera', () => ({
+  CameraView: (props: typeof mockCamera.props) => {
+    mockCamera.props = props;
+    return null;
+  },
+  useCameraPermissions: () => [mockPermission.current, jest.fn()],
+}));
 jest.mock('expo-keep-awake', () => ({ activateKeepAwakeAsync: jest.fn(async () => undefined), deactivateKeepAwake: jest.fn(async () => undefined) }));
 jest.mock('expo-image-picker', () => ({}));
 jest.mock('@/adapters/photos/pickPhotos', () => ({ pickPhotoUris: jest.fn(async () => []) }));
@@ -1234,5 +1244,128 @@ describe('Inline photo estimate (IN-3, LL-12, IN-10)', () => {
     });
     expect(aborted).toBe(true);
     expect(await deps.repo.listMeals()).toMatchObject([{ description: 'Synthetic dinner', ingredients: ['my own rice'] }]);
+  });
+});
+
+describe('Barcode in the meal form (IN-2, IN-8, IN-9, IN-10)', () => {
+  let alert: jest.SpyInstance;
+  beforeEach(() => {
+    alert = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    jest.spyOn(ActionSheetIOS, 'showActionSheetWithOptions').mockImplementation((_o, cb) => cb(0));
+    mockParams.current = {};
+    mockPermission.current = { granted: true, canAskAgain: true };
+    mockCamera.props = undefined;
+    mockRouter.back.mockClear();
+  });
+  afterEach(() => jest.restoreAllMocks());
+  const meal = () => require('@/app/form/meal');
+  const product = { barcode: '5900000000008', name: 'Synthetic yoghurt', ingredients: ['milk', 'cultures'], allergens: ['milk' as const] };
+  const header = async () => {
+    let rendered!: ReactTestRenderer;
+    await act(async () => {
+      rendered = create(mockScreen.options!.headerRight!());
+    });
+    const node = rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!;
+    await act(async () => {
+      await node.props.onPress();
+    });
+  };
+  async function open(products: Record<string, typeof product> = { '5900000000008': product }) {
+    const deps = nowDeps();
+    const fake = new FakeBarcode(products);
+    deps.barcode = fake;
+    const { tree } = await mount(meal, deps);
+    await flush();
+    await press(tree, en.meal.scan);
+    return { deps, tree, fake };
+  }
+  const values = (tree: ReactTestRenderer) => [...new Set(tree.root.findAll((n) => n.props.placeholder === en.meal.ingredientPlaceholder).map((n) => n.props.value))];
+
+  it('IN-2, IN-10 a typed code fills the review form; the database allergens are only suggested until the user selects them', async () => {
+    const { deps, tree } = await open();
+    await type(tree, en.meal.scanCode, '5900 0000 00008');
+    await press(tree, en.meal.scanLookup);
+    await flush();
+    expect(hasText(tree, en.meal.scanFromDb)).toBe(true);
+    expect(tree.root.findAll((n) => n.props.accessibilityLabel === en.meal.description && n.props.value === 'Synthetic yoghurt')).not.toHaveLength(0);
+    expect(values(tree)).toEqual(['milk', 'cultures']);
+    const milk = () => tree.root.findAll((n) => n.props.accessibilityLabel === en.allergens.milk && n.props.accessibilityState)[0]!.props.accessibilityState.selected;
+    expect(milk()).toBe(false);
+    expect(hasText(tree, en.meal.scanTagsHint.replace('{{list}}', en.allergens.milk))).toBe(true);
+    expect(await deps.repo.listMeals()).toEqual([]); // nothing saved by a lookup
+    await press(tree, en.meal.scanSelectTags);
+    expect(milk()).toBe(true);
+    await header();
+    await flush();
+    expect(await deps.repo.listMeals()).toMatchObject([{ description: 'Synthetic yoghurt', ingredients: ['milk', 'cultures'], allergens: ['milk'] }]);
+  });
+
+  it('IN-2 the camera reports a code once, even when it sees it many times', async () => {
+    const { tree, fake } = await open();
+    await act(async () => {
+      mockCamera.props!.onBarcodeScanned!({ data: '5900000000008' });
+      mockCamera.props!.onBarcodeScanned!({ data: '5900000000008' });
+    });
+    await flush();
+    expect(fake.lookups).toEqual(['5900000000008']);
+    expect(hasText(tree, en.meal.scanFromDb)).toBe(true);
+  });
+
+  it('IN-8 a code the database does not know, or a product without ingredients, leaves the form to manual entry', async () => {
+    const { tree } = await open({ '5900000000008': { ...product, ingredients: [] } });
+    await type(tree, en.meal.scanCode, '3017620422003');
+    await press(tree, en.meal.scanLookup);
+    await flush();
+    expect(hasText(tree, en.meal.scanNotFound)).toBe(true);
+    await press(tree, en.meal.changeMeal);
+    await press(tree, en.meal.scan);
+    await type(tree, en.meal.scanCode, '5900000000008');
+    await press(tree, en.meal.scanLookup);
+    await flush();
+    expect(hasText(tree, en.meal.scanIncomplete)).toBe(true);
+  });
+
+  it('IN-2 an in-store code asks the user to confirm the match, and Cancel returns to choosing', async () => {
+    const inStore = { ...product, barcode: '2000000000008' };
+    const { tree } = await open({ '2000000000008': inStore });
+    await type(tree, en.meal.scanCode, '2000000000008');
+    await press(tree, en.meal.scanLookup);
+    await flush();
+    expect(alert.mock.calls.at(-1)![0]).toBe(en.meal.scanInStoreTitle);
+    const buttons = alert.mock.calls.at(-1)![2] as { text: string; onPress?: () => void }[];
+    await act(async () => buttons.find((b) => b.text === en.common.cancel)!.onPress!());
+    expect(hasText(tree, en.meal.chooseTitle)).toBe(true);
+    await press(tree, en.meal.scan);
+    await type(tree, en.meal.scanCode, '2000000000008');
+    await press(tree, en.meal.scanLookup);
+    await flush();
+    await act(async () => (alert.mock.calls.at(-1)![2] as { text: string; onPress?: () => void }[]).find((b) => b.text === en.meal.scanUse)!.onPress!());
+    expect(hasText(tree, en.meal.scanFromDb)).toBe(true);
+  });
+
+  it('IN-2, IN-9 an invalid code is refused and the form stays in scanning; an unreachable database falls back to manual entry', async () => {
+    const { tree, fake } = await open();
+    await type(tree, en.meal.scanCode, '1234');
+    await press(tree, en.meal.scanLookup);
+    await flush();
+    expect(alert.mock.calls.some((c) => c[0] === en.errors.invalid_barcode)).toBe(true);
+    expect(hasText(tree, en.meal.scanOrType)).toBe(true);
+    fake.failing.add('3017620422003');
+    await type(tree, en.meal.scanCode, '3017620422003');
+    await press(tree, en.meal.scanLookup);
+    await flush();
+    expect(alert.mock.calls.some((c) => c[0] === en.errors.barcode_lookup_failed)).toBe(true);
+    expect(hasText(tree, en.meal.ingredients)).toBe(true); // the review form, empty
+  });
+
+  it('IN-2 without camera permission the form explains it, and the code can still be typed', async () => {
+    mockPermission.current = { granted: false, canAskAgain: false };
+    const { tree } = await open();
+    expect(hasText(tree, en.meal.scanPermission)).toBe(true);
+    expect(hasText(tree, en.meal.scanSettings)).toBe(true);
+    await type(tree, en.meal.scanCode, '5900000000008');
+    await press(tree, en.meal.scanLookup);
+    await flush();
+    expect(hasText(tree, en.meal.scanFromDb)).toBe(true);
   });
 });

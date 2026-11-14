@@ -9,6 +9,7 @@ import { SqliteRepo } from '@/adapters/storage/sqliteRepo';
 import { SqliteSettings } from '@/adapters/storage/sqliteSettings';
 import { expoPhotoStore } from '@/adapters/photos/expoPhotoStore';
 import { expoNotifier } from '@/adapters/notifications/expoNotifier';
+import { openFoodFacts } from '@/adapters/barcode/openFoodFacts';
 import { expoFileShare } from '@/adapters/share/expoFileShare';
 import { expoPdfRenderer } from '@/adapters/share/expoPdfRenderer';
 import type { FileShare } from '@/core/ports/platform';
@@ -49,6 +50,7 @@ export function ServicesProvider({ children }: { children: ReactNode }) {
           photos: expoPhotoStore,
           pdf: expoPdfRenderer,
           notifier: expoNotifier,
+          barcode: openFoodFacts,
           keys: secureStoreKeyStore,
           settings: new SqliteSettings(db),
           llmFor: createAnthropicProvider,

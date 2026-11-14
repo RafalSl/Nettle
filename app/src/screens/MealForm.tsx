@@ -8,12 +8,14 @@ import { mealHistory, rankSuggestions, type Suggestion } from '@/core/model/sugg
 import { atOnDay, localDay } from '@/core/model/time';
 import { ALLERGENS, type Allergen } from '@/core/model/types';
 import { estimateIngredients } from '@/core/usecases/llm';
+import { lookupProduct } from '@/core/usecases/barcode';
 import { logMeal } from '@/core/usecases/logMeal';
 import { getPreferences, toggleFavoriteMeal } from '@/core/usecases/preferences';
 import { pickPhotoUris } from '@/adapters/photos/pickPhotos';
 import { currentLanguage, errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
 import { confirmDestructive } from '@/ui/actionSheet';
+import { BarcodeScanner } from '@/ui/BarcodeScanner';
 import { FormModal } from '@/ui/FormModal';
 import { Button, Chips, Hint, Label, TimeField, styles } from '@/ui/components';
 
@@ -38,7 +40,11 @@ export const SLOW_ESTIMATE_MS = 30_000;
 export default function MealScreen() {
   const { deps } = useServices();
   const { day } = useLocalSearchParams<{ day?: string }>();
-  const [phase, setPhase] = useState<'choose' | 'review'>('choose');
+  const [phase, setPhase] = useState<'choose' | 'scan' | 'review'>('choose');
+  const [code, setCode] = useState('');
+  const [looking, setLooking] = useState(false);
+  // IN-2, IN-10: what a barcode lookup said, and the allergen tags it only suggests.
+  const [fromCode, setFromCode] = useState<{ note: string; tags: Allergen[] } | null>(null);
   const [meals, setMeals] = useState<ReturnType<typeof mealHistory>>([]);
   const [prefs, setPrefs] = useState<Preferences>(defaultPreferences());
   const [description, setDescription] = useState('');
@@ -93,7 +99,35 @@ export default function MealScreen() {
     setIngredients(draft.ingredients.length > 0 ? [...draft.ingredients] : ['']);
     setAllergens(new Set(draft.allergens)); // from the diary's history: visible and pre-selected, so confirmed
     setEdited(false);
+    setFromCode(null);
     setPhase('review');
+  }
+
+  /** IN-2, IN-8, IN-9: look the code up; whatever comes back only fills the review form, and manual entry is always possible. */
+  async function handleCode(raw: string) {
+    setLooking(true);
+    try {
+      const found = await lookupProduct(deps, raw);
+      const fill = () => {
+        const p = found.product;
+        review({ description: p?.name ?? '', ingredients: p?.ingredients ?? [], allergens: [] });
+        setFromCode({ note: !p ? t('meal.scanNotFound') : found.incomplete ? t('meal.scanIncomplete') : t('meal.scanFromDb'), tags: p?.allergens ?? [] });
+      };
+      if (found.product && found.inStore) {
+        // IN-2: an in-store code is ambiguous; the user confirms the match or enters the product by hand.
+        Alert.alert(t('meal.scanInStoreTitle'), t('meal.scanInStoreBody'), [
+          { text: t('common.cancel'), style: 'cancel', onPress: () => setPhase('choose') },
+          { text: t('meal.scanUse'), onPress: fill },
+        ]);
+      } else fill();
+    } catch (e) {
+      Alert.alert(errorMessage(e));
+      if (e instanceof NettleError && e.code === 'barcode_lookup_failed') {
+        review({ description: '', ingredients: [], allergens: [] }); // IN-8: the source is out of reach, so enter it by hand
+      }
+    } finally {
+      setLooking(false);
+    }
   }
 
   /** A new meal: just the typed description; nothing is pre-selected. */
@@ -183,10 +217,10 @@ export default function MealScreen() {
     }
   }
 
-  const missing = phase === 'choose' ? t('meal.reviewFirst') : description.trim() ? null : t('edit.description');
+  const missing = phase !== 'review' ? t('meal.reviewFirst') : description.trim() ? null : t('edit.description');
   return (
     <FormModal
-      dirty={phase === 'choose' ? description.trim().length > 0 : edited}
+      dirty={phase === 'review' ? edited : description.trim().length > 0}
       missing={missing}
       onSave={async () => {
         ctl.current?.abort(); // Save uses the fields as they are and drops a running estimate
@@ -209,11 +243,22 @@ export default function MealScreen() {
             </Pressable>
           ))}
           <Button title={t('meal.continue')} disabled={!description.trim()} onPress={newMeal} />
+          <Button kind="secondary" title={t('meal.scan')} onPress={() => setPhase('scan')} />
           <Hint>{t('meal.chooseHint')}</Hint>
+        </>
+      ) : phase === 'scan' ? (
+        <>
+          <BarcodeScanner onCode={(c) => void handleCode(c)} />
+          <Label>{t('meal.scanOrType')}</Label>
+          <TextInput style={styles.input} accessibilityLabel={t('meal.scanCode')} placeholder={t('meal.scanCode')} keyboardType="number-pad" value={code} onChangeText={setCode} />
+          <Button title={t('meal.scanLookup')} disabled={!code.trim() || looking} onPress={() => void handleCode(code)} />
+          {looking && <Hint>{t('meal.scanLooking')}</Hint>}
+          <Button kind="secondary" title={t('meal.scanCancel')} onPress={() => setPhase('choose')} />
         </>
       ) : (
         <>
           <Button kind="secondary" title={t('meal.changeMeal')} onPress={() => void changeMeal()} />
+          {fromCode && <Hint>{fromCode.note}</Hint>}
           <Label>{t('meal.description')}</Label>
           <TextInput style={styles.input} accessibilityLabel={t('meal.description')} value={description} onChangeText={touch(setDescription)} />
           <Button kind="secondary" title={isFavorite ? t('meal.unfavorite') : t('meal.favorite')} onPress={() => void star()} />
@@ -271,6 +316,12 @@ export default function MealScreen() {
               touch(setAllergens)(next);
             }}
           />
+          {fromCode && fromCode.tags.some((a) => !allergens.has(a)) && (
+            <>
+              <Hint>{t('meal.scanTagsHint', { list: fromCode.tags.map((a) => t(`allergens.${a}`)).join(', ') })}</Hint>
+              <Button kind="secondary" title={t('meal.scanSelectTags')} onPress={() => touch(setAllergens)(new Set([...allergens, ...fromCode.tags]))} />
+            </>
+          )}
           <Button kind="secondary" title={t('meal.suggestAllergens')} onPress={() => touch(setAllergens)(new Set(suggestAllergens(ingredients)))} />
           <Hint>{t('meal.allergensHint')}</Hint>
 

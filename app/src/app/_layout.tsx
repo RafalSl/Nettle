@@ -83,7 +83,9 @@ export default function RootLayout() {
         <Stack.Screen name="form/meal" options={form(t('nav.meal'))} />
         <Stack.Screen name="form/skin" options={form(t('nav.skin'))} />
         <Stack.Screen name="form/checkin" options={form(t('nav.checkin'))} />
-        <Stack.Screen name="form/intake" options={form(t('nav.intake'))} />
+        <Stack.Screen name="form/alcohol" options={form(t('nav.alcohol'))} />
+        <Stack.Screen name="form/medication" options={form(t('nav.medication'))} />
+        <Stack.Screen name="form/stool" options={form(t('nav.stool'))} />
         <Stack.Screen name="form/treatment" options={form(t('nav.treatment'))} />
         <Stack.Screen name="form/nails" options={form(t('nav.nails'))} />
         <Stack.Screen name="form/reaction" options={form(t('nav.reaction'))} />

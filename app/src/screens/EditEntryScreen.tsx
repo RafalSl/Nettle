@@ -21,6 +21,7 @@ import { LOG_KINDS, type LogRow } from '@/core/usecases/dayLog';
 import { areaLabel, itemLabel, t } from '@/i18n';
 import { useServices } from '@/services';
 import { FormModal, useField, useForm } from '@/ui/FormModal';
+import { PhotoStrip } from '@/ui/PhotoStrip';
 import { Chips, Hint, Label, OptionalScoreStepper, ScoreStepper, TimeField, styles } from '@/ui/components';
 
 type Rec<K extends LogKind> = Extract<LogRow, { kind: K }>['record'];
@@ -95,6 +96,8 @@ function SkinFields({ r, areas }: { r: Rec<'skinEntries'>; areas: SkinArea[] }) 
         <ScoreStepper key={k} label={t(`skin.scores.${k}`)} value={scores[k]} onChange={(v) => setScores({ ...scores, [k]: v })} />
       ))}
       <CommonFields c={c} original={r.at.utc} />
+      <Label>{t('edit.photos')}</Label>
+      <PhotoStrip entryKind="skinEntry" entryId={r.id} />
     </FormModal>
   );
 }
@@ -119,6 +122,8 @@ function NailFields({ r, areas }: { r: Rec<'nailEntries'>; areas: SkinArea[] }) 
       <Label>{t('more.nailExtent')}</Label>
       <Chips items={NAIL_EXTENTS.map((s) => ({ id: s, label: t(`nail.extents.${s}`) }))} selected={one(extent)} onToggle={setExtent} />
       <CommonFields c={c} original={r.at.utc} />
+      <Label>{t('edit.photos')}</Label>
+      <PhotoStrip entryKind="nailEntry" entryId={r.id} />
     </FormModal>
   );
 }

@@ -96,7 +96,10 @@
     "prefilled": "Scores start from the last entry for this area.",
     "flareStart": "Flare started",
     "flareEnd": "Flare ended",
-    "flareOpen": "A flare is open in this area."
+    "flareOpen": "A flare is open in this area.",
+    "noChangeAll": "No change for all areas",
+    "noChangeAllNeed": "These areas need a first entry: {{list}}.",
+    "noChangeAllDone": "{{n}} areas saved with no change."
   },
   "areas": {
     "area-chin": "Chin",
@@ -226,7 +229,11 @@
     "reopen": "Reopen day",
     "stoolTitle": "Stool",
     "stoolHint": "Bristol type 1 (hard lumps) to 7 (watery)",
-    "stoolAdd": "Add stool entry"
+    "stoolAdd": "Add stool entry",
+    "sameAsYesterday": "Same as yesterday",
+    "noYesterday": "There is no check-in for the day before.",
+    "markComplete": "Mark day complete",
+    "stoolSave": "Save stool entry"
   },
   "tags": {
     "tag-illness-or-infection": "Illness or infection",
@@ -574,7 +581,10 @@
     "report": "Doctor report",
     "suggestions": "Suggestions",
     "timeline": "Timeline",
-    "privacy": "Privacy"
+    "privacy": "Privacy",
+    "alcohol": "Alcohol",
+    "medication": "Medication",
+    "stool": "Stool"
   },
   "home": {
     "quickActions": "Quick actions",
@@ -594,7 +604,9 @@
     "moveUp": "Move up",
     "moveDown": "Move down",
     "hide": "Hide",
-    "show": "Show"
+    "show": "Show",
+    "moreAlcohol": "Alcohol",
+    "moreMedication": "Medication or supplement"
   },
   "review": {
     "empty": "Nothing to review yet. Entries you log on Today show up here.",
@@ -684,7 +696,13 @@
     "scores": "Scores",
     "bloating": "Bloating",
     "unavailable": "This entry can no longer be edited.",
-    "ingredientsHint": "Separate ingredients with commas."
+    "ingredientsHint": "Separate ingredients with commas.",
+    "meal": "a meal to react to",
+    "stage": "a stage",
+    "extent": "how much of the nail",
+    "area": "an area",
+    "photos": "Photos",
+    "type": "a stool type"
   },
   "doctor": {
     "range": "Period",

@@ -1,4 +1,13 @@
+/* eslint-disable @typescript-eslint/no-require-imports -- screens are loaded lazily, after the mocks below are in place */
 import React from 'react';
+import { Alert } from 'react-native';
+import { unzipSync } from 'fflate';
+import { FakeLlm } from '../fakes/fakeLlm';
+import { logMeal } from '@/core/usecases/logMeal';
+import { logSkinEntry } from '@/core/usecases/skin';
+import { saveApiKey } from '@/core/usecases/llm';
+import { localDay } from '@/core/model/time';
+import en from '@/i18n/en.json';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { MemoryRepo } from '../fakes/memoryRepo';
 import { makeDeps } from '../helpers/fixtures';
@@ -20,7 +29,6 @@ jest.mock('@/services', () => {
   return { __state: state, useServices: () => state.current, ServicesProvider: ({ children }: { children: unknown }) => children };
 });
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const services = require('@/services') as { __state: { current: unknown } };
 
 const screens: [string, () => { default: React.ComponentType }][] = [
@@ -68,14 +76,6 @@ describe('screens render without crashing (NF-3)', () => {
 });
 
 // ---- Interaction tests: tap through the real screens against in-memory services ----
-import { Alert } from 'react-native';
-import { unzipSync } from 'fflate';
-import { FakeLlm } from '../fakes/fakeLlm';
-import { logMeal } from '@/core/usecases/logMeal';
-import { logSkinEntry } from '@/core/usecases/skin';
-import { saveApiKey } from '@/core/usecases/llm';
-import { localDay } from '@/core/model/time';
-import en from '@/i18n/en.json';
 
 type Deps = ReturnType<typeof makeDeps>;
 const scores = { severity: 1, itch: 2, pain: 3, dryness: 4, scaling: 5 };

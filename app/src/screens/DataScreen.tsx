@@ -4,8 +4,10 @@ import { NettleError } from '@/core/model/errors';
 import type { Parts } from '@/core/model/types';
 import type { ImportMode } from '@/core/ports/storage';
 import { EXTRA_KINDS, LIST_KINDS } from '@/core/model/types';
-import { applyImport, exportBundle, previewImport, type ParsedImport } from '@/core/usecases/exchange';
-import { areaLabelIn, errorMessage, itemLabelIn, t, tIn } from '@/i18n';
+import { markExported, presetOptions } from '@/core/usecases/backup';
+import { applyImport, exportBundle, previewImport, type ExportOptions, type ParsedImport } from '@/core/usecases/exchange';
+import { areaLabelIn, currentLanguage, errorMessage, itemLabelIn, t, tIn } from '@/i18n';
+import { chooseAction } from '@/ui/actionSheet';
 import { useServices } from '@/services';
 import { DEFAULT_PHOTO_SELECTION, type PhotoSelection } from '@/core/export/photoSelection';
 import { PhotoSelectionField } from '@/ui/PhotoSelectionField';
@@ -38,7 +40,7 @@ export default function DataScreen() {
   const [exportParts, setExportParts] = useState<Parts>({ records: true, settings: true });
   const [csv, setCsv] = useState(false);
   const [report, setReport] = useState(false);
-  const [reportLanguage, setReportLanguage] = useState<'en' | 'pl'>('en');
+  const [reportLanguage, setReportLanguage] = useState<'en' | 'pl'>(currentLanguage());
   const [photoSelection, setPhotoSelection] = useState<PhotoSelection>(DEFAULT_PHOTO_SELECTION);
   const [pending, setPending] = useState<ParsedImport | null>(null);
   const [importParts, setImportParts] = useState<Parts>({ records: true, settings: true });
@@ -47,29 +49,19 @@ export default function DataScreen() {
   const [repeat, setRepeat] = useState('');
   const [locked, setLocked] = useState<Uint8Array | null>(null);
   const [filePassword, setFilePassword] = useState('');
+  const [restore, setRestore] = useState(false);
 
-  async function doExport() {
+  /** Builds the ZIP, hands it to the share sheet and, once that went through, remembers the export (EX-11, UX-2). */
+  async function share(prefix: string, options: ExportOptions) {
     try {
       if (password !== repeat) {
         Alert.alert(t('errors.password_mismatch'));
         return;
       }
       const stamp = deps.clock.now().toISOString().slice(0, 10);
-      const bytes = await exportBundle(deps, {
-        parts: exportParts,
-        password: password || undefined,
-        photos: photoSelection,
-        csv,
-        report: report
-          ? {
-              language: reportLanguage,
-              text: (key, vars) => tIn(reportLanguage, key, vars),
-              areaName: (a) => areaLabelIn(reportLanguage, a),
-              itemName: (i) => itemLabelIn(reportLanguage, i),
-            }
-          : undefined,
-      });
-      await fileShare.saveAndShare(`nettle-export-${stamp}.zip`, bytes, 'application/zip');
+      const bytes = await exportBundle(deps, { ...options, password: password || undefined });
+      await fileShare.saveAndShare(`${prefix}-${stamp}.zip`, bytes, 'application/zip');
+      await markExported(deps);
       setPassword('');
       setRepeat('');
     } catch (e) {
@@ -77,10 +69,29 @@ export default function DataScreen() {
     }
   }
 
+  /** EX-14: Full backup, records and settings with every photo. */
+  const doBackup = () => share('nettle-backup', presetOptions({ kind: 'backup' }));
+
+  const doExport = () =>
+    share('nettle-export', {
+      parts: exportParts,
+      photos: photoSelection,
+      csv,
+      report: report
+        ? {
+            language: reportLanguage,
+            text: (key, vars) => tIn(reportLanguage, key, vars),
+            areaName: (a) => areaLabelIn(reportLanguage, a),
+            itemName: (i) => itemLabelIn(reportLanguage, i),
+          }
+        : undefined,
+    });
+
   async function open(bytes: Uint8Array, pw?: string) {
     try {
       const parsed = await previewImport(deps, bytes, pw);
       setImportParts(parsed.preview.has);
+      setRestore(false);
       setPending(parsed);
       setLocked(null);
       setFilePassword('');
@@ -107,7 +118,7 @@ export default function DataScreen() {
   async function apply(mode: ImportMode) {
     if (!pending) return;
     try {
-      await applyImport(deps, pending, { mode, parts: importParts });
+      await applyImport(deps, pending, { mode, parts: importParts, restoreTombstoned: restore });
       setPending(null);
       Alert.alert(t('data.imported'));
     } catch (e) {
@@ -115,18 +126,48 @@ export default function DataScreen() {
     }
   }
 
-  function confirmReplace() {
-    Alert.alert(t('data.replaceConfirmTitle'), t('data.replaceConfirmBody'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      { text: t('data.replace'), style: 'destructive', onPress: () => apply('replace') },
-    ]);
+  /** UX-9: replacing is destructive, so it asks in an action sheet with Cancel last. */
+  async function confirmReplace() {
+    const choice = await chooseAction({
+      title: t('data.replaceConfirmTitle'),
+      message: t('data.replaceConfirmBody'),
+      actions: [{ label: t('data.replace'), destructive: true }],
+    });
+    if (choice === 0) await apply('replace');
   }
 
   const p = pending?.preview;
   const nothingToImport = !(importParts.records || importParts.settings);
   return (
     <Screen>
-      <Heading>{t('data.exportTitle')}</Heading>
+      <Heading>{t('data.backupTitle')}</Heading>
+      <Hint>{t('data.backupHint')}</Hint>
+      <Label>{t('data.passwordLabel')}</Label>
+      <TextInput
+        style={styles.input}
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+        autoCapitalize="none"
+        autoCorrect={false}
+        textContentType="none"
+      />
+      {password.length > 0 && (
+        <TextInput
+          style={styles.input}
+          placeholder={t('data.passwordRepeat')}
+          value={repeat}
+          onChangeText={setRepeat}
+          secureTextEntry
+          autoCapitalize="none"
+          autoCorrect={false}
+          textContentType="none"
+        />
+      )}
+      {password.length > 0 && <Hint>{t('data.passwordHint')}</Hint>}
+      <Button title={t('data.backupButton')} onPress={doBackup} />
+
+      <Heading>{t('data.customTitle')}</Heading>
       <Hint>{t('data.exportHint')}</Hint>
       <PartSwitch
         label={t('data.partRecords')}
@@ -155,29 +196,6 @@ export default function DataScreen() {
           />
         </>
       )}
-      <Label>{t('data.passwordLabel')}</Label>
-      <TextInput
-        style={styles.input}
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        autoCapitalize="none"
-        autoCorrect={false}
-        textContentType="none"
-      />
-      {password.length > 0 && (
-        <TextInput
-          style={styles.input}
-          placeholder={t('data.passwordRepeat')}
-          value={repeat}
-          onChangeText={setRepeat}
-          secureTextEntry
-          autoCapitalize="none"
-          autoCorrect={false}
-          textContentType="none"
-        />
-      )}
-      {password.length > 0 && <Hint>{t('data.passwordHint')}</Hint>}
       {(exportParts.records || exportParts.settings) && (
         <Button title={t('data.exportButton')} onPress={doExport} />
       )}
@@ -236,6 +254,11 @@ export default function DataScreen() {
               })}
             </Hint>
           )}
+          {p.tombstones.skipped > 0 && <Hint>{t('data.tombstoneSkipped', { n: p.tombstones.skipped })}</Hint>}
+          {p.tombstones.restorable > 0 && (
+            <PartSwitch label={t('data.tombstoneRestore')} value={restore} onChange={setRestore} />
+          )}
+          {p.tombstones.removesLocal > 0 && <Hint>{t('data.tombstoneRemoves', { n: p.tombstones.removesLocal })}</Hint>}
           <Label>{t('data.applyParts')}</Label>
           {p.has.records && (
             <PartSwitch

@@ -92,3 +92,25 @@ export async function treatmentShortcuts(deps: Deps): Promise<TreatmentShortcut[
     .slice(0, SHORTCUT_MAX)
     .map(({ treatmentId, areaIds, count }) => ({ treatmentId, areaIds, count }));
 }
+
+export interface DaySummary {
+  day: LocalDay;
+  entries: number;
+  complete: boolean;
+}
+
+/** UX-1: the days that have entries, newest first, for the Review list. Each day is the entry's own local day (NF-4). */
+export async function daysWithEntries(deps: Deps, limit = 60): Promise<DaySummary[]> {
+  const snap = await deps.repo.snapshot();
+  const days = new Map<LocalDay, DaySummary>();
+  for (const kind of LOG_KINDS) {
+    for (const r of snap[kind] as { at: Stamp; completedAt?: Stamp | null }[]) {
+      const day = localDay(r.at.utc, r.at.tz);
+      const cur = days.get(day) ?? { day, entries: 0, complete: false };
+      cur.entries++;
+      if (kind === 'checkIns' && r.completedAt) cur.complete = true;
+      days.set(day, cur);
+    }
+  }
+  return [...days.values()].sort((a, b) => b.day.localeCompare(a.day)).slice(0, limit);
+}

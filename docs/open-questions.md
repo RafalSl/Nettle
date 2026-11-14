@@ -9,6 +9,8 @@ Undecided items only. Decisions go into `docs/requirements.md` (canonical, edite
 3. **Unused template dependencies: prune when moving to a standalone build** (reanimated, gesture-handler, expo-image, expo-glass-effect, `@expo/ui`, ...). No effect in Expo Go.
 
 5. **Merge keeps local settings.** Importing into a fresh install with Merge skips the six pre-seeded predefined areas, so a renamed or archived predefined area from the file is not applied; use Replace (settings) to restore them. Revisit with EX-12 (newest wins) or adopt incoming values for areas still at factory state.
+9. **Expo Go checks for the new navigation (UX-1 to UX-3):** large titles, `expo-symbols`, the sheet grabber, the JS tab bar next to the iOS floating one, `formSheet` and `modal` presentation. The design does not depend on them.
+10. **Long LLM runs (LL-12):** the single request with a 10 minute timeout stays. If analyses time out in practice, decide between streaming (`expo/fetch`, unverified in Expo Go) and the Message Batches API.
 
 ## Accepted
 
@@ -18,7 +20,13 @@ Undecided items only. Decisions go into `docs/requirements.md` (canonical, edite
 
 - **Requirements v0.3 and later: what remains.**
   - Barcode (IN-2, IN-8, IN-9): not started. Needs the Open Food Facts adapter and a scan screen (`expo-camera` or `expo-barcode-scanner`, check Expo Go).
-  - Recent and favorite meals (IN-7): not started.
+  - Recent and favorite meals (IN-7), suggestions (IN-14): not started. Requirements v0.4 redefines IN-7 and adds IN-14; the design is in `docs/ux-design.md`.
+  - Navigation and screens (UX-1 to UX-9): not started. Two tabs (Today, Review), Settings behind a gear icon, modal forms, action sheets.
+  - PDF report language default (EX-3): the Data screen still starts on English (`reportLanguage`); change it to the app language.
+  - Import switch to restore entries skipped because of a tombstone (EX-10): not started.
+  - LL-12 and LL-5: the adapter retries a timed-out attempt and has no cancel signal; the analysis screen has no elapsed time or Cancel, no running card in Review, no billing notice. The meal photo estimate is not inline and editable yet (IN-3).
+  - IN-7 choose and review phases; SK-9 tap targets and the handled-notification marker; EX-14 Full backup preset; SK-2 unique area names (new error code); SK-11 empty-day confirmation; EN-1 cascades and edit rules: all not started. Flows in `docs/user-flows.md`.
+  - Edit and delete one entry (EN-1) and tombstones (EX-13): not started. Needs a `tombstones` table, a `tombstones` section in `data.json` and merge rules; `schema_version` stays 1.
   - Timeline per area with photos side by side (SK-8): not started.
   - Reminders (SK-9) are built; the nail reminder follows nail areas and the weekday numbering is iOS (1 = Sunday).
   - App lock with Face ID (SE-8): not started (`expo-local-authentication`).
@@ -39,6 +47,8 @@ Undecided items only. Decisions go into `docs/requirements.md` (canonical, edite
 - AI: a real key and one real analysis and photo-to-ingredients call; check the cost and the answer language (English and Polish).
 - Reminders: permission prompt, a daily reminder at a time a minute away, the weekly and monthly ones by changing the day.
 - Date pickers (check-in day, export photo filter, analysis range), the delete confirmation and "Export first".
+- Reminder taps (SK-9): schedule one a minute ahead and tap it from the lock screen and Notification Center, with the app open, in the background and killed; check that `notification.date` exists and that the form does not reopen on every launch. Also `expo-keep-awake` in Expo Go.
+- Language: Expo Go follows the device language (decided: no in-app setting, UX-7); check that the Polish strings appear when the device is set to Polish.
 
 ## Accepted
 

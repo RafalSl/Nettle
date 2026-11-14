@@ -18,7 +18,7 @@ import {
   type Stamp,
   type Tombstone,
 } from '@/core/model/types';
-import type { ExistingIds, ImportMode, StorageRepository } from '@/core/ports/storage';
+import type { ExistingIds, ImportMode, ImportTombstones, StorageRepository } from '@/core/ports/storage';
 import { EXTRA_TABLES } from './extraTables';
 import { migrate } from './migrations';
 import type { SqlDb, SqlValue } from './sqlDb';
@@ -400,10 +400,16 @@ export class SqliteRepo implements StorageRepository {
     return result;
   }
 
-  async importData(payload: Payload, mode: ImportMode) {
+  async importData(payload: Payload, mode: ImportMode, tombstones: ImportTombstones = {}) {
     const { records, settings } = payload;
     await this.db.transaction(async () => {
+      if (tombstones.remove) await this.deleteIn(tombstones.remove);
+      for (let i = 0; i < (tombstones.forget?.length ?? 0); i += 500) {
+        const chunk = tombstones.forget!.slice(i, i + 500);
+        await this.db.run(`DELETE FROM tombstone WHERE id IN (${chunk.map(() => '?').join(', ')})`, chunk);
+      }
       if (records && mode === 'replace') {
+        await this.db.exec('DELETE FROM tombstone;');
         // Reactions point at meals, so every flat record table is emptied before the meals go.
         for (const kind of EXTRA_KINDS) await this.db.exec(`DELETE FROM ${EXTRA_TABLES[kind].table};`);
         await this.db.exec('DELETE FROM skin_entry; DELETE FROM meal_ingredient; DELETE FROM meal;');
@@ -426,6 +432,14 @@ export class SqliteRepo implements StorageRepository {
         for (const kind of EXTRA_KINDS) {
           for (const r of records[kind]) await this.insertExtra(kind, r, true);
         }
+      }
+      for (const t of tombstones.store ?? []) {
+        await this.db.run('INSERT OR IGNORE INTO tombstone (id, kind, deleted_utc, deleted_tz) VALUES (?, ?, ?, ?)', [
+          t.id,
+          t.kind,
+          t.deletedAt.utc,
+          t.deletedAt.tz,
+        ]);
       }
       if (settings && mode === 'replace') {
         // Drop user areas and items the file does not have, unless a record still uses them. Predefined ones stay.

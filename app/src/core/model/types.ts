@@ -329,6 +329,8 @@ export interface Snapshot extends Records, Settings {}
 export interface Payload {
   records?: Records;
   settings?: Settings;
+  /** EX-13: tombstones of the records part (present when `records` is). */
+  tombstones?: Tombstone[];
 }
 
 /** Which parts to export or to apply. */

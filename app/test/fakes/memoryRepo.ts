@@ -18,7 +18,7 @@ import {
   type Stamp,
   type Tombstone,
 } from '@/core/model/types';
-import type { ExistingIds, ImportMode, StorageRepository } from '@/core/ports/storage';
+import type { ExistingIds, ImportMode, ImportTombstones, StorageRepository } from '@/core/ports/storage';
 
 const inRange = (utc: string, r?: DateRange) =>
   (!r?.from || utc >= r.from) && (!r?.to || utc <= r.to);
@@ -150,14 +150,20 @@ export class MemoryRepo implements StorageRepository {
     for (const kind of LIST_KINDS) result[kind] = new Set(this.items[kind].keys());
     return result;
   }
-  async importData({ records, settings }: Payload, mode: ImportMode) {
+  async importData({ records, settings }: Payload, mode: ImportMode, tombstones: ImportTombstones = {}) {
     // Work on copies so a failure leaves the store untouched (atomic).
     const meals = new Map(records && mode === 'replace' ? [] : this.meals);
     const entries = new Map(records && mode === 'replace' ? [] : this.entries);
+    const tombs = new Map(records && mode === 'replace' ? [] : this.tombstones);
     const areas = new Map(this.areas);
     const extra = Object.fromEntries(
       EXTRA_KINDS.map((k) => [k, new Map(records && mode === 'replace' ? [] : this.extra[k])]),
     ) as typeof this.extra;
+    for (const id of tombstones.remove?.meals ?? []) meals.delete(id);
+    for (const id of tombstones.remove?.skinEntries ?? []) entries.delete(id);
+    for (const kind of EXTRA_KINDS) for (const id of tombstones.remove?.[kind] ?? []) extra[kind].delete(id);
+    for (const id of tombstones.forget ?? []) tombs.delete(id);
+    for (const t of tombstones.store ?? []) if (!tombs.has(t.id)) tombs.set(t.id, clone(t));
     for (const a of settings?.skinAreas ?? []) {
       if (mode === 'replace' || !areas.has(a.id)) areas.set(a.id, clone(a));
     }
@@ -194,6 +200,7 @@ export class MemoryRepo implements StorageRepository {
     this.meals = meals;
     this.areas = areas;
     this.entries = entries;
+    this.tombstones = tombs;
     this.extra = extra;
     this.items = items;
     this.seed();

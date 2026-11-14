@@ -92,6 +92,7 @@ const RAW_RECORDS = {
   photos: [],
   analyses: [],
   flare_markers: [],
+  tombstones: [],
 };
 const RAW_SETTINGS = { skin_areas: [], daily_tags: [], treatments: [] };
 

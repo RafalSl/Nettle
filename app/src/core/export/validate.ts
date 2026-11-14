@@ -3,17 +3,19 @@ import {
   ALLERGENS,
   EXTRA_KINDS,
   LIST_KINDS,
+  RECORD_KINDS,
   type ListItem,
   type Meal,
   type Payload,
   type Records,
   type SkinArea,
   type SkinEntry,
+  type Tombstone,
 } from '../model/types';
 import { isScore } from '../usecases/skin';
 import { EXTRA_CODECS } from './extras';
 import { bad, bool, enumList, oneOf, isObj, list, nullableText, str, unique, utc, type Obj } from './guards';
-import { LIST_KEYS, SCHEMA_VERSION } from './schema';
+import { LIST_KEYS, recordWireKey, SCHEMA_VERSION } from './schema';
 
 const section = (o: Obj, k: string): Obj | null => {
   const v = o[k];
@@ -118,6 +120,16 @@ export function parseDataJson(raw: unknown): Payload {
       Object.assign(out, { [kind]: rows });
     }
     payload.records = out;
+    const kinds = new Map(RECORD_KINDS.map((k) => [recordWireKey(k), k]));
+    payload.tombstones = list(records, 'tombstones').map((o, i): Tombstone => {
+      const w = `records.tombstones[${i}]`;
+      return {
+        id: str(o, 'id', w),
+        kind: kinds.get(oneOf(o, 'kind', [...kinds.keys()], w))!,
+        deletedAt: { utc: utc(o, w), tz: str(o, 'tz', w) },
+      };
+    });
+    unique(payload.tombstones.map((t) => t.id), 'records.tombstones');
   }
 
   if (!payload.records && !payload.settings) return bad('no records or settings section');

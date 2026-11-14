@@ -1,4 +1,4 @@
-import { EXTRA_KINDS, LIST_KINDS, type DateRange, type Parts, type Snapshot } from '../model/types';
+import { EXTRA_KINDS, LIST_KINDS, type DateRange, type Parts, type RecordKind, type Snapshot, type Tombstone } from '../model/types';
 import { EXTRA_CODECS } from './extras';
 
 /** Bump on any breaking change to data.json (EX-1). */
@@ -50,11 +50,17 @@ export interface DataJson {
 /** Array name inside `settings` for each list kind. */
 export const LIST_KEYS = { dailyTags: 'daily_tags', treatments: 'treatments' } as const;
 
+/** Name of a record kind in data.json (the array name inside `records`), used by tombstones. */
+export const recordWireKey = (kind: RecordKind): string =>
+  kind === 'meals' ? 'meals' : kind === 'skinEntries' ? 'skin_entries' : EXTRA_CODECS[kind].key;
+
+/** `tombstones` are all of them, whatever the range: they are small and a merge elsewhere needs them (EX-13). */
 export function toDataJson(
   snap: Snapshot,
   range: DateRange,
   exportedAt: { utc: string; tz: string },
   parts: Parts,
+  tombstones: Tombstone[] = [],
 ): DataJson {
   return {
     schema_version: SCHEMA_VERSION,
@@ -82,6 +88,12 @@ export function toDataJson(
         ...Object.fromEntries(
           EXTRA_KINDS.map((k) => [EXTRA_CODECS[k].key, snap[k].map((r) => (EXTRA_CODECS[k].toJson as (r: unknown) => unknown)(r))]),
         ),
+        tombstones: tombstones.map((t) => ({
+          id: t.id,
+          kind: recordWireKey(t.kind),
+          utc: t.deletedAt.utc,
+          tz: t.deletedAt.tz,
+        })),
       },
     }),
     ...(parts.settings && {

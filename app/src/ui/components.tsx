@@ -26,18 +26,21 @@ export function Button({
   onPress,
   kind = 'primary',
   accessibilityLabel,
+  disabled = false,
 }: {
   title: string;
   onPress: () => void;
   kind?: 'primary' | 'secondary' | 'danger';
   accessibilityLabel?: string;
+  disabled?: boolean;
 }) {
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? title}
-      onPress={onPress}
-      style={({ pressed }) => [styles.button, styles[kind], pressed && { opacity: 0.6 }]}>
+      accessibilityState={{ disabled }}
+      onPress={disabled ? undefined : onPress}
+      style={({ pressed }) => [styles.button, styles[kind], (pressed || disabled) && { opacity: disabled ? 0.4 : 0.6 }]}>
       <Text style={[styles.buttonText, kind === 'secondary' && { color: '#208AEF' }]}>{title}</Text>
     </Pressable>
   );

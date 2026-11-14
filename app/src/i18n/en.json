@@ -530,5 +530,57 @@
     "empty": "Nothing to review yet. Entries you log on Today show up here.",
     "analysis": "AI analysis",
     "export": "Export and import"
+  },
+  "day": {
+    "previous": "Previous day",
+    "next": "Next day",
+    "today": "Today",
+    "empty": "Nothing logged on this day.",
+    "stool": "Stool",
+    "stoolTitle": "Stool type (saves now)",
+    "stoolType": "Type {{n}}",
+    "stoolEarlier": "Earlier…",
+    "shortcuts": "One-tap treatments",
+    "applied": "Applied",
+    "logTitle": "Log"
+  },
+  "log": {
+    "meal": "Meal",
+    "skin": "Skin",
+    "nail": "Nail",
+    "checkin": "Check-in",
+    "complete": "day complete",
+    "stool": "Stool type {{n}}",
+    "treatment": "{{name}} on {{areas}}",
+    "change": "{{action}} {{name}}",
+    "reaction": "Reaction: {{symptoms}}",
+    "alcohol": "{{drink}}, {{ml}} ml",
+    "medication": "{{name}}",
+    "flareStart": "Flare started: {{area}}",
+    "flareEnd": "Flare ended: {{area}}",
+    "scores": "severity {{severity}}, itch {{itch}}, pain {{pain}}",
+    "deleteTitle": "Delete this entry?",
+    "deleteAction": "Delete entry",
+    "also": "Also deletes {{list}}.",
+    "alsoNothing": "This cannot be undone here; restore it from a backup.",
+    "kinds": {
+      "reactions": "reactions",
+      "photos": "photos",
+      "flareMarkers": "flare end",
+      "meals": "meals",
+      "skinEntries": "entries",
+      "nailEntries": "entries"
+    }
+  },
+  "cards": {
+    "openFlare": "Flare open: {{area}}",
+    "endFlare": "End flare",
+    "notComplete": "This day is not marked complete.",
+    "openCheckin": "Open check-in",
+    "complete": "Day complete.",
+    "reopen": "Reopen",
+    "noExport": "No export yet. The diary exists only on this phone.",
+    "lastExport": "Last export {{days}} days ago.",
+    "openBackup": "Back up now"
   }
 }

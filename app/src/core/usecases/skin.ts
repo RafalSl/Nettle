@@ -100,6 +100,12 @@ export async function resetSkinAreaName(deps: Deps, id: string): Promise<void> {
   await deps.repo.upsertArea({ ...area, nameOverride: null });
 }
 
+/** SK-5: photos added to this area start as sensitive (or not). Existing photos keep their own flag. */
+export async function setAreaSensitiveDefault(deps: Deps, id: string, sensitiveDefault: boolean): Promise<void> {
+  const area = await findArea(deps, id);
+  await deps.repo.upsertArea({ ...area, sensitiveDefault });
+}
+
 export async function archiveSkinArea(deps: Deps, id: string, archived = true): Promise<void> {
   const area = await findArea(deps, id);
   if (!archived) await assertNameFree(deps, shownName(area), id); // unarchiving must not create a duplicate

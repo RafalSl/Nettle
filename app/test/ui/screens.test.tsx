@@ -66,6 +66,7 @@ jest.mock('expo-camera', () => ({
   },
   useCameraPermissions: () => [mockPermission.current, jest.fn()],
 }));
+jest.mock('expo-constants', () => ({ __esModule: true, default: { expoConfig: { version: '9.9.9' } } }));
 jest.mock('expo-keep-awake', () => ({ activateKeepAwakeAsync: jest.fn(async () => undefined), deactivateKeepAwake: jest.fn(async () => undefined) }));
 jest.mock('expo-image-picker', () => ({}));
 jest.mock('@/adapters/photos/pickPhotos', () => ({ pickPhotoUris: jest.fn(async () => []) }));
@@ -85,6 +86,7 @@ const screens: [string, () => { default: React.ComponentType }][] = [
   ['settings suggestions', () => require('@/app/(tabs)/today/settings/suggestions')],
   ['settings reminders', () => require('@/app/(tabs)/today/settings/reminders')],
   ['settings ai', () => require('@/app/(tabs)/today/settings/ai')],
+  ['settings about', () => require('@/app/(tabs)/today/settings/about')],
   ['settings areas', () => require('@/app/(tabs)/today/settings/areas')],
   ['settings favorites', () => require('@/app/(tabs)/today/settings/favorites')],
   ['form flare', () => require('@/app/form/flare')],
@@ -352,6 +354,29 @@ describe('screen flows (NF-2, NF-3)', () => {
     await press(tree, en.settings.defaultName);
     await flush();
     expect((await deps.repo.listAreas()).find((a) => a.id === 'area-behind-ears')!.nameOverride).toBeNull();
+  });
+
+  it('SK-5, UX-6 an area can start its photos as sensitive, and About shows the version and the limits of the app', async () => {
+    const deps = nowDeps();
+    const { tree } = await mount(() => require('@/app/(tabs)/today/settings/areas'), deps);
+    await flush();
+    await press(tree, 'Behind the ears');
+    const sw = () => tree.root.findAll((n) => n.props.accessibilityLabel === en.settings.sensitiveDefault && typeof n.props.onValueChange === 'function')[0]!;
+    expect(sw().props.value).toBe(false);
+    await act(async () => {
+      sw().props.onValueChange(true);
+    });
+    await flush();
+    expect((await deps.repo.listAreas()).find((a) => a.id === 'area-behind-ears')!.sensitiveDefault).toBe(true);
+    const entry = await logSkinEntry(deps, { areaId: 'area-behind-ears', scores });
+    await addPhoto(deps, { entryKind: 'skinEntry', entryId: entry.id, sourceUri: 'x' });
+    expect((await deps.repo.listRecords('photos'))[0]!.sensitive).toBe(true);
+    const about = await mount(() => require('@/app/(tabs)/today/settings/about'), deps);
+    expect(hasText(about.tree, en.about.version.replace('{{version}}', '9.9.9'))).toBe(true);
+    expect(hasText(about.tree, en.about.medical)).toBe(true);
+    const settings = await mount(() => require('@/app/(tabs)/today/settings/index'), deps);
+    await press(settings.tree, en.nav.about);
+    expect(mockRouter.push).toHaveBeenLastCalledWith('/today/settings/about');
   });
 
   it('IN-14, UX-6 Settings lists the favorites and removes one with a tap', async () => {

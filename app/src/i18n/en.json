@@ -608,6 +608,10 @@
     }
   },
   "settings": {
+    "sensitiveDefault": "New photos of this area are sensitive",
+    "photosTitle": "Photos",
+    "photosInfo": "Photos are stored in the app's private storage on this phone, never in the photo library, and EXIF data such as location is removed when they are saved. They leave the phone only in an export you share or in an AI run you confirm.",
+    "photosSensitive": "Sensitive photos are blurred in the app and left out of the Doctor report and AI runs unless you include them. Set an area's default in Skin and nail areas, or change a single photo.",
     "scoresTitle": "Daily check-in scores",
     "scoresHint": "A score that is off is not asked in the check-in and not recorded. Values already saved stay.",
     "skinAreas": "Skin areas",
@@ -622,7 +626,15 @@
     "favMedications": "Medications and supplements",
     "favRemove": "Remove favorite {{name}}"
   },
+  "about": {
+    "title": "About",
+    "version": "Version {{version}}",
+    "local": "Everything you log stays on this phone. There is no account, no cloud sync and no analytics. Data leaves only through an export you share or an AI run you confirm.",
+    "ai": "AI output (ingredient reads, allergen suggestions, summaries, analyses) is a tentative suggestion for you to review, and is marked as AI in exports.",
+    "medical": "This app is a diary, not a medical device. It never gives a diagnosis or medical advice; discuss what you see with a doctor."
+  },
   "nav": {
+    "about": "About",
     "flare": "Flare",
     "settings": "Settings",
     "more": "More",

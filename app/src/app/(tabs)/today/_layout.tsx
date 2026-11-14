@@ -25,6 +25,7 @@ export default function TodayStack() {
       <Stack.Screen name="settings/privacy" options={{ title: t('nav.privacy') }} />
       <Stack.Screen name="settings/reminders" options={{ title: t('nav.reminders') }} />
       <Stack.Screen name="settings/ai" options={{ title: t('nav.ai') }} />
+      <Stack.Screen name="settings/about" options={{ title: t('nav.about') }} />
       <Stack.Screen name="settings/data" options={{ title: t('nav.data') }} />
     </Stack>
   );

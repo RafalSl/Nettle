@@ -16,6 +16,7 @@ export default function SettingsScreen() {
       <NavRow title={t('nav.privacy')} onPress={() => router.push('/today/settings/privacy')} />
       <NavRow title={t('nav.ai')} onPress={() => router.push('/today/settings/ai')} />
       <NavRow title={t('nav.data')} onPress={() => router.push('/today/settings/data')} />
+      <NavRow title={t('nav.about')} onPress={() => router.push('/today/settings/about')} />
     </Screen>
   );
 }

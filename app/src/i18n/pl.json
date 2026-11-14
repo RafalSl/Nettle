@@ -52,7 +52,15 @@
     "hintDays": "{{n}} dni temu",
     "discardTitle": "Zmienić posiłek?",
     "discard": "Odrzuć zmiany",
-    "reviewHint": "Sprawdź składniki i alergeny przed zapisem."
+    "reviewHint": "Sprawdź składniki i alergeny przed zapisem.",
+    "estimating": "Szacuję składniki ze zdjęcia. Możesz dalej wpisywać posiłek.",
+    "estimateSlow": "Nadal pracuję, wpisuj dalej posiłek.",
+    "estimateCancel": "Anuluj",
+    "estimateAddAll": "Dodaj wszystkie",
+    "estimateAddPicked": "Dodaj wybrane",
+    "estimateDismiss": "Odrzuć",
+    "estimateRetry": "Spróbuj ponownie",
+    "estimateFailed": "Nic nie dodano."
   },
   "skin": {
     "title": "Dodaj stan skóry",

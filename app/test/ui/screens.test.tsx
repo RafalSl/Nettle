@@ -392,12 +392,12 @@ describe('screen flows (NF-2, NF-3)', () => {
     const { tree } = await mount(() => require('@/app/(tabs)/today/settings/ai'), deps);
     for (const label of Object.values(en.llm.action)) expect(hasText(tree, label)).toBe(true);
     const selected = () => tree.root.findAll((n) => n.props.accessibilityLabel === 'Haiku' && n.props.accessibilityState?.selected === true && typeof n.props.onPress === 'function');
-    expect(selected()).toHaveLength(4);
+    expect(selected()).toHaveLength(5);
     await press(tree, 'Sonnet'); // the first "Sonnet" chip belongs to the first action, the label scan
     await flush();
     expect(await deps.settings.get('llm_model.label_scan')).toBe('claude-sonnet-5-5');
     expect(await deps.settings.get('llm_model.analysis')).toBeNull();
-    expect(selected()).toHaveLength(3);
+    expect(selected()).toHaveLength(4);
   });
 
   it('SE-9, UX-6 Delete data names the counts in an action sheet, offers Export first, then asks a second time', async () => {
@@ -1576,6 +1576,45 @@ describe('Inline photo estimate (IN-3, LL-12, IN-10)', () => {
     });
     await flush();
     expect(llm.requests[0]!.system).toContain('["oat milk","rice"]');
+  });
+
+  it('IN-10, LL-5 the AI allergen suggestion names the ingredients it sends, and its tags stay unselected until selected', async () => {
+    const llm = new FakeLlm(['{"allergens":["milk","gluten"],"note":null}']);
+    const deps = nowDeps(llm);
+    await saveApiKey(deps, 'sk-synthetic-secret');
+    const { tree } = await mount(meal, deps);
+    await type(tree, en.meal.description, 'Synthetic pancake');
+    await press(tree, en.meal.continue);
+    await type(tree, en.meal.ingredientPlaceholder, 'butter');
+    await press(tree, en.meal.aiAllergens);
+    const [title, body, buttons] = alert.mock.calls.at(-1) as unknown as [string, string, { text: string; onPress?: () => unknown }[]];
+    expect(title).toBe(en.meal.aiAllergensConfirmTitle);
+    expect(body).toContain('bills this separately');
+    expect(body).toContain('• butter');
+    expect(llm.requests).toHaveLength(0);
+    await act(async () => {
+      void buttons.find((b) => b.text === en.meal.aiAllergensSend)!.onPress!();
+    });
+    await flush();
+    const selected = (label: string) => tree.root.findAll((n) => n.props.accessibilityLabel === label && n.props.accessibilityState)[0]!.props.accessibilityState.selected;
+    expect(selected(en.allergens.milk)).toBe(false);
+    expect(hasText(tree, en.meal.aiAllergensHint.replace('{{list}}', `${en.allergens.milk}, ${en.allergens.gluten}`))).toBe(true);
+    await press(tree, en.meal.scanSelectTags);
+    expect(selected(en.allergens.milk)).toBe(true);
+    expect(selected(en.allergens.gluten)).toBe(true);
+    expect(await deps.repo.listMeals()).toEqual([]);
+  });
+
+  it('IN-10 with no ingredients the AI allergen button asks for one and sends nothing', async () => {
+    const llm = new FakeLlm(['{"allergens":[],"note":null}']);
+    const deps = nowDeps(llm);
+    await saveApiKey(deps, 'sk-synthetic-secret');
+    const { tree } = await mount(meal, deps);
+    await type(tree, en.meal.description, 'Synthetic pancake');
+    await press(tree, en.meal.continue);
+    await press(tree, en.meal.aiAllergens);
+    expect(String(alert.mock.calls.at(-1)![0])).toBe(en.errors.no_ingredients);
+    expect(llm.requests).toHaveLength(0);
   });
 
   it('IN-3 the estimate arrives as a list to add all of or pick from, never replacing what was typed, with LLM tags unselected', async () => {

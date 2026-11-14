@@ -1,6 +1,6 @@
 # UX design: information architecture
 
-Status: accepted 2026-11-14, nothing built yet. Requirements are in `docs/requirements.md` (v0.4.2). Flows and edge cases: `docs/user-flows.md`. This file holds the screen map, the rules behind it and the HIG audit.
+Status: accepted 2026-11-14 and built (see `docs/open-questions.md`, "Status of the decided work", for what is still missing). Requirements are in `docs/requirements.md` (v0.4.2). Flows and edge cases: `docs/user-flows.md`. This file holds the screen map, the rules behind it and the HIG audit.
 
 ## Why
 
@@ -68,7 +68,7 @@ A pure core function `rankSuggestions(history, favorites, now, options)` over ex
 
 ## Editing, deleting, tombstones (EN-1, EX-13)
 
-Any entry can be edited or deleted from the day's log. A delete leaves a tombstone (id, kind, deletion time, nothing else), exported in `data.json` under `tombstones`. A merge import never restores a tombstoned id and applies incoming tombstones to local entries. Bulk delete (SE-9) leaves no tombstones so that a wipe followed by a restore works. A single entry deleted by mistake can be restored from a backup: the merge preview counts the entries skipped because of a tombstone and offers a switch to restore them anyway (EX-10); Replace restores everything in the file. Newest-wins merge for edits (EX-12) stays Later. `schema_version` stays 1 in development, so exports made before this section will not import.
+Any entry can be edited or deleted from the day's log. A delete leaves a tombstone (id, kind, deletion time, nothing else), exported in `data.json` under `tombstones`. A merge import never restores a tombstoned id and applies incoming tombstones to local entries. Bulk delete (SE-9) leaves no tombstones so that a wipe followed by a restore works. A single entry deleted by mistake can be restored from a backup: the merge preview counts the entries skipped because of a tombstone and offers a switch to restore them anyway (EX-10); Replace restores everything in the file. Newest-wins merge for edits (EX-12) stays Later. `schema_version` stays 1 in development, so exports made before this section will not import (decided: versioning starts after the first release).
 
 ## HIG audit (2026-11-14)
 

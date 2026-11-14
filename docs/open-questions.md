@@ -21,41 +21,31 @@ The file has four parts: undecided questions, accepted limits, decided work that
 - **Export memory.** Photos are read one at a time, but the whole ZIP is held in memory (about the sum of the photos). Fine for months of daily photos; watch it on a large archive.
 - **Backup exclusion of photos (SE-7).** Expo Go cannot mark files as excluded from iOS backup; revisit in a standalone build (`isExcludedFromBackup` through a config plugin or native code).
 
-## Decided, not built yet
+## Status of the decided work
 
-Requirements and flows are in `docs/requirements.md`, `docs/ux-design.md` and `docs/user-flows.md`.
+Requirements and flows are in `docs/requirements.md`, `docs/ux-design.md` and `docs/user-flows.md`. The information architecture (two tabs, Settings behind a gear, modal forms, action sheets, the tombstone model) is built; each line below says what exists and what does not. Everything marked built is covered by tests and bundles for iOS, but none of it has run on a device (see the checklist at the end).
 
-**Intake**
-- Barcode (IN-2, IN-8, IN-9) is built: a check-digit validated code (EAN-8, UPC-A, EAN-13, GTIN-14), the Open Food Facts adapter (v2, the User-Agent `Nettle/1.0 (private diary app)`, only the barcode leaves the phone), in-store codes (prefix 2) ask for confirmation, and a scan phase in the meal form with `expo-camera` plus a typed code. Not run on a phone: camera permission and scanning in Expo Go, and how good the data is for Polish products (the open question in requirements). Not built: favorites of packaged products, a retry after a failed lookup other than scanning again, a localized (Polish) ingredient text (the lookup asks for the default `ingredients_text`).
-- Recent and favorite meals (IN-7, v0.4 definition) with the choose and review phases: `rankSuggestions`, `mealHistory`, `alcoholHistory` and `medicationHistory` are built and tested (`core/model/suggestions.ts`); favorites (snapshots, refreshed when the meal is saved again), the suggestion settings and the quick-action layout are stored and travel in `settings.preferences` of `data.json` (merge keeps local ones, replace overwrites; core in `core/usecases/preferences.ts`, migration 12). Built on top: the two-phase meal form (suggestions and filtering in choose; a pick fills an editable review with history tags pre-selected; Change meal asks only after an edit; star a favorite; a new meal for a past day gets that day), the Suggestions settings screen, the quick-action Edit mode on Today (up and down buttons, hide; More stays) and alcohol and medication suggestions with "save on tap". Not built: ingredient chips with autocomplete, favorite stars for drinks and medications in the UI (the core has them).
-- Allergen suggestions from Open Food Facts or the LLM (only the ingredient-text helper exists).
+**Built since the IA (v0.4.2)**
+- Editing and deleting (EN-1, EX-13): `core/usecases/entries.ts`, tombstones (migration 11, the `records.tombstones` section of `data.json`), merge skips and applies them, the restore switch (EX-10) in the import preview. Today's log rows open an action sheet with Edit and Delete (cascades named); `form/edit` has one small form per kind on `FormModal`. Removing a photo leaves a tombstone too. `schema_version` stays 1 while prototyping, so exports made earlier do not import.
+- Navigation (UX-1 to UX-3, UX-9): Today and Review tabs with a stack each, Settings and More pushed inside Today, modal forms under `form/`, `chooseAction` and `confirmDestructive` action sheets.
+- Today (UX-2, UX-5): day switcher, quick actions with an Edit mode (up and down, hide; More stays), stool quick sheet, treatment shortcuts, cards (open flare, incomplete day, backup), the day's log.
+- Review (UX-1): Doctor report (EX-14), the days list, an Areas list with the per-area timeline (SK-8), AI analysis with a running card (LL-12).
+- Settings (UX-6): Logging (tags, treatments), Suggestions, Privacy (app lock), Reminders, AI analysis, Data and backup (Full backup preset, custom export with a photo picker, import with the tombstone switch, Delete data last).
+- Intake: two-phase meal form with suggestions and favorites (IN-7, IN-14), history tags pre-selected (IN-10), barcode scan and lookup (IN-2, IN-8, IN-9), inline editable photo estimate (IN-3), alcohol and medication suggestions with "save on tap". Preferences (favorites, suggestion settings, quick-action layout) travel in `settings.preferences`.
+- Skin and health core: unique area names (SK-2), no change for nails and all areas (SK-3, core only), empty-day confirmation (SK-11), reminder taps (SK-9).
+- LLM: elapsed time, Cancel, billing notice, no retry of a timeout, the run in `AnalysisRunner` (survives leaving the screen, interrupted state with retry, keep-awake).
+- Security: app lock (SE-8) with `expo-local-authentication`.
 
-**Skin and health**
-- "No change" for nail entries and for all areas: the core is built (`repeatNailEntry`, `repeatAllAreas`); no button yet.
-- Timeline per area (SK-8) is built: Review lists the areas that have entries, and an area opens a day-by-day timeline with each entry's scores or nail stage beside its photos (sensitive ones blurred until tapped) and the flare markers. Not built: a side-by-side comparison of two chosen photos, and trend charts.
-- SK-2 unique names and SK-11 empty-day confirmation are built (core and the current check-in screen). The duplicate check compares the English seed name of a predefined area, not its localized one.
-- SK-9 reminder taps are built in code (`resolveReminderTap`, `Notifier.onTap`, the root layout listener; the check-in form takes a `day` parameter) but not run on a device. Only forms on `FormModal` (meal, edit) report unsaved changes, so a tap can still replace an old-style form (skin, nails, intake) that has typed text. With the app lock (SE-8) a tap should wait until unlock. The reminders themselves are built (the nail reminder follows nail areas; weekday numbering is iOS, 1 = Sunday).
-
-**Navigation (UX-1 to UX-9)**
-- Built: two tabs (Today, Review) with a stack each, Settings and More pushed inside the Today stack (tab bar stays), gear icon, every entry form a modal route under `form/` with Cancel on the leading edge; Metro bundles it. Today is built (day switcher, quick-action grid, stool quick sheet, treatment shortcuts, cards for an open flare, an incomplete day and the backup, the day's log with Delete in an action sheet naming the cascade). Editing works from a log row (`form/edit`, one small form per kind on the unified `FormModal`: Cancel and Save in the header, Save disabled with what is missing, Discard Changes sheet). Not built: the highlighted new row, quick-action Edit mode (reorder and hide), the date jump, the unified form for creating entries (only editing uses `FormModal`; the create forms still have their own Save buttons), action sheets elsewhere (bulk delete and replace still use `Alert`), the "Earlier…" stool form (it opens the check-in), forms defaulting to the chosen past day (only the quick logging does), the Review timelines per area (SK-8), the Settings groups Privacy and About, large titles, tab icons. Flare start and end are still on the Skin form, not in the More list.
-
-**Editing and deleting (EN-1, EX-13)**
-- Core, storage, `data.json` and merge are built (`core/usecases/entries.ts`, migration 11, the `tombstones` section of `records`). Not built: the screens (tap a log row, Edit or Delete, action sheet from `previewEntryDelete`) and the import switch in the UI. `schema_version` stays 1 while prototyping, so exports made before the `tombstones` section do not import.
-
-**LLM (LL-5, LL-12, IN-3)**
-- Built: the meal photo estimate runs inline in the review phase (the form stays editable), says it is still working and offers Cancel after 30 seconds, arrives as a list to add all of or pick from (added names are ordinary editable rows; typed text is never replaced; LLM allergen tags stay unselected), and a failure adds nothing and offers a retry. Saving or leaving the form aborts it.
-- Built: the analysis run lives in `AnalysisRunner` (not in a screen), so leaving the screen does not stop it; Review shows a running, ready, interrupted or failed card; the root layout keeps the screen awake during a run (`expo-keep-awake`, unverified in Expo Go) and tells the runner when the app is left; an interrupted or failed run offers a one-tap retry of the same request.
-- Done: a timeout is never retried, the analysis screen shows elapsed time and Cancel (a cancel stores nothing), and both LLM confirmations carry the billing notice.
-
-**Export and import**
-- Date range picker for the export (EX-11): the Doctor report offers presets only; the custom export on the Data screen still exports everything.
-- PDF report language should default to the app language (EX-3); the Data screen still starts on English (`reportLanguage`).
-- Built: the import preview counts entries a tombstone skips or deletes, with the restore switch (EX-10); the Full backup preset and the Doctor report (Review) with a period (since the last export, 30 or 90 days, everything), counts, sensitive photos off by default and a report language that defaults to the app language; `markExported` runs after every share. Not built: a free date range picker for the report, "export first" before Replace and Delete data.
-- Single-photo selection (EX-7): the custom export has a "Pick photos" mode (photos listed by area and time, sensitive ones marked, included only when picked) and the analysis screen already picks single photos. Not built: thumbnails in the list (it is a list of labels).
-- Newest-wins merge (EX-12, Later): needs modified timestamps and a schema version bump. Today the daily check-in and a photo's sensitive flag are edited in place, and a merge cannot tell which version is newer.
-
-**Security**
-- App lock (SE-8) is built (`AppLock` in the core, `expo-local-authentication`, the cover in the root layout, a switch under Settings, Privacy): off by default; when on it locks at a cold start and after a minute in the background, covers the app while it is not in the foreground, waits for the unlock before a reminder tap, and needs the prompt to switch it on or off. Not run on a phone, and Face ID itself does not work in Expo Go (the system asks for the passcode there); it needs a standalone build. The "Privacy and photos" group has only the lock so far.
+**Not built**
+- *Create forms.* Only editing, the meal form and the settings use `FormModal`. The skin, nail, treatment, intake, change, reaction and check-in forms still have their own Save buttons and no discard guard, and a reminder tap can replace one that has typed text. Forms other than the meal form do not default to a chosen past day (only the quick logging does). Flare start and end are on the Skin form, not in the More list.
+- *Check-in (SK-7).* "Same as yesterday", and the Settings screen that switches check-in scores off, are not built.
+- *No change buttons (SK-3).* The core has `repeatNailEntry` and `repeatAllAreas`; the Skin form has no button for nails or for all areas.
+- *Settings.* Missing groups and screens: skin and nail areas (rename, archive; only the nail form adds areas), Favorites, the photo options of Privacy and photos, About. Delete data, Replace and bulk delete still use `Alert` and do not offer an export first.
+- *Today.* The highlighted new row, the date jump, the "Earlier…" stool form (it opens the check-in), the first-run empty states beyond text.
+- *Intake details.* Ingredient chips with autocomplete, favorite stars for drinks and medications in the UI (the core has them), LLM allergen suggestions, favorites for scanned products, a Polish ingredient text from the database.
+- *Export and import.* A free date range picker for the report and the custom export, "export first" before Replace and Delete data, newest-wins merge (EX-12, Later: needs modified timestamps and a schema bump).
+- *Review.* A side-by-side comparison of two photos, trend charts.
+- *Other.* The accessibility pass (UX-8, deferred), polishing Polish strings, pruning unused template dependencies.
 
 ## To verify on the phone
 
@@ -66,6 +56,8 @@ Nothing below has run on a device.
 - **Photos:** camera and library permission prompts and multi-select; thumbnails; blur on sensitive photos; EXIF and location removed from a photo taken with location on (re-encoded by `expo-image-manipulator`). The permission texts in `app.json` apply to the standalone build only.
 - **Export:** photos, CSV and PDF; that `expo-print` paginates a long report, renders the inline SVG and images, A4 size; AES export speed with many photos.
 - **AI:** a real key, one analysis and one photo-to-ingredients call; the cost and the answer language (English and Polish).
+- **App lock (SE-8):** the prompt (Expo Go asks for the passcode; Face ID needs a standalone build), the cover in the app switcher, locking after a minute away, a reminder tap while locked.
+- **Barcode (IN-2):** camera permission and scanning a real product in Expo Go; how many of the Polish products you buy Open Food Facts knows.
 - **Reminders:** permission prompt; a daily reminder a minute away; weekly and monthly ones by changing the day. Taps (SK-9): from the lock screen and Notification Center, with the app open, in the background and killed; check that `notification.date` exists and the form does not reopen on every launch. Also `expo-keep-awake` in Expo Go.
 - **Date pickers:** check-in day, export photo filter, analysis range; the delete confirmation and "Export first".
 - **Language:** Expo Go follows the device language (decided: no in-app setting, UX-7); the Polish strings appear when the device is set to Polish.

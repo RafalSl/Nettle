@@ -1,6 +1,8 @@
 import { NettleError } from '../model/errors';
-import type { ReminderSpec } from '../ports/notifier';
+import { localDay } from '../model/time';
+import type { ReminderSpec, ReminderTap } from '../ports/notifier';
 import type { Deps } from './deps';
+import { getCheckIn } from './checkin';
 import { listActiveAreas } from './skin';
 
 /** SK-9 and the monthly backup nudge (Data, privacy and security): what the user switched on. */
@@ -86,4 +88,48 @@ export async function saveReminderSettings(deps: Deps, next: ReminderSettings, t
   }
   await deps.settings.set(KEY, JSON.stringify(next));
   await applyReminders(deps, texts);
+}
+
+/** SK-9: where a tap leads. `viaToday` opens the Today tab first, so closing the form lands there. */
+export interface TapAction {
+  route: { pathname: string; params?: Record<string, string> };
+  viaToday: boolean;
+}
+
+const TAP_MARKER = 'lastReminderTap';
+
+/**
+ * SK-9: what to do with a tap on a reminder. The target comes from a fixed list and is never a URL. Returns null
+ * when nothing should happen: a repeat of a tap already handled (Expo returns the last response again at launch),
+ * an unknown target, or a form with unsaved changes (the cards on Today cover it). A tap is marked handled even
+ * when it does nothing, so it is handled once per reminder.
+ *
+ * - checkin: the check-in form for the day the reminder was delivered; just Today when that day is complete.
+ * - nails: the nail update form; just Today when no nail area remains.
+ * - backup: Data and backup; it never exports by itself.
+ */
+export async function resolveReminderTap(
+  deps: Deps,
+  tap: ReminderTap,
+  options: { hasUnsavedForm: boolean },
+): Promise<TapAction | null> {
+  const marker = `${tap.id}|${tap.deliveredAt?.getTime() ?? 0}`;
+  if ((await deps.settings.get(TAP_MARKER)) === marker) return null;
+  await deps.settings.set(TAP_MARKER, marker);
+  if (options.hasUnsavedForm) return null;
+  const today: TapAction = { route: { pathname: '/today' }, viaToday: false };
+  switch (tap.target) {
+    case 'checkin': {
+      const at = tap.deliveredAt ?? deps.clock.now();
+      const day = localDay(at.toISOString(), deps.clock.timeZone());
+      if ((await getCheckIn(deps, day))?.completedAt) return today;
+      return { route: { pathname: '/form/checkin', params: { day } }, viaToday: true };
+    }
+    case 'nails':
+      return (await listActiveAreas(deps, 'nail')).length > 0 ? { route: { pathname: '/form/nails' }, viaToday: true } : today;
+    case 'backup':
+      return { route: { pathname: '/today/settings/data' }, viaToday: false };
+    default:
+      return null;
+  }
 }

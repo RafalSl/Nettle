@@ -1,9 +1,10 @@
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useRootNavigationState, useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { Pressable, Text } from 'react-native';
-import { applyReminders } from '@/core/usecases/reminders';
+import { applyReminders, resolveReminderTap } from '@/core/usecases/reminders';
 import { reminderTexts, t } from '@/i18n';
 import { ServicesProvider, useServices } from '@/services';
+import { unsavedForm } from '@/ui/formState';
 
 /** SK-9: after start-up, make the scheduled reminders match the settings, the nail areas and the app language. */
 function ReminderSync() {
@@ -11,6 +12,27 @@ function ReminderSync() {
   useEffect(() => {
     applyReminders(deps, reminderTexts()).catch(() => undefined); // reminders are a convenience; never block the app
   }, [deps]);
+  return null;
+}
+
+/**
+ * SK-9: a tap on a reminder opens its target. It starts listening only once the database is open (this sits
+ * inside the services provider) and the root navigator is ready, so a cold start from a notification works.
+ */
+function ReminderTaps() {
+  const { deps } = useServices();
+  const router = useRouter();
+  const ready = !!useRootNavigationState()?.key;
+  useEffect(() => {
+    if (!ready) return;
+    return deps.notifier.onTap(async (tap) => {
+      const action = await resolveReminderTap(deps, tap, { hasUnsavedForm: unsavedForm.current });
+      if (!action) return;
+      if (action.viaToday) router.navigate('/today');
+      if (action.viaToday) router.push(action.route as never);
+      else router.navigate(action.route as never);
+    });
+  }, [deps, ready, router]);
   return null;
 }
 
@@ -31,6 +53,7 @@ export default function RootLayout() {
   return (
     <ServicesProvider>
       <ReminderSync />
+      <ReminderTaps />
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="form/meal" options={form(t('nav.meal'))} />

@@ -4,10 +4,12 @@ import {
   DEFAULT_REMINDERS,
   loadReminderSettings,
   plannedReminders,
+  resolveReminderTap,
   saveReminderSettings,
   type ReminderSettings,
   type ReminderTexts,
 } from '@/core/usecases/reminders';
+import { saveCheckIn } from '@/core/usecases/checkin';
 import { addArea, archiveSkinArea } from '@/core/usecases/skin';
 import { FakeNotifier } from './fakes/fakeNotifier';
 import { MemoryRepo } from './fakes/memoryRepo';
@@ -115,5 +117,54 @@ describe('reminders (SK-9)', () => {
     await addArea(deps, 'Synthetic thumb', 'nail');
     const planned = await plannedReminders(deps, texts);
     expect(JSON.stringify(planned)).not.toContain('Synthetic thumb');
+  });
+});
+
+describe('reminder taps (SK-9)', () => {
+  const at = new Date('2026-01-10T20:00:00.000Z');
+  const tap = (target: unknown, deliveredAt: Date | null = at) => ({ id: String(target), target, deliveredAt });
+
+  it('SK-9 check-in: the form for the delivery day, or just Today when that day is complete', async () => {
+    const deps = makeDeps(new MemoryRepo());
+    expect(await resolveReminderTap(deps, tap('checkin'), { hasUnsavedForm: false })).toEqual({
+      route: { pathname: '/form/checkin', params: { day: '2026-01-10' } },
+      viaToday: true,
+    });
+    await saveCheckIn(deps, { at, confirmEmptyDay: true, complete: true });
+    expect(await resolveReminderTap(deps, tap('checkin', new Date('2026-01-10T20:00:01.000Z')), { hasUnsavedForm: false })).toEqual({
+      route: { pathname: '/today' },
+      viaToday: false,
+    });
+  });
+
+  it('SK-9 nails: the nail form while a nail area exists, otherwise just Today', async () => {
+    const deps = makeDeps(new MemoryRepo());
+    expect((await resolveReminderTap(deps, tap('nails'), { hasUnsavedForm: false }))?.route.pathname).toBe('/today');
+    await addArea(deps, 'Synthetic thumb', 'nail');
+    expect(await resolveReminderTap(deps, tap('nails', new Date('2026-01-17T10:00:00.000Z')), { hasUnsavedForm: false })).toEqual({
+      route: { pathname: '/form/nails' },
+      viaToday: true,
+    });
+  });
+
+  it('SK-9 backup opens Data and backup; an unknown target, a URL or an object opens nothing', async () => {
+    const deps = makeDeps(new MemoryRepo());
+    expect((await resolveReminderTap(deps, tap('backup'), { hasUnsavedForm: false }))?.route.pathname).toBe('/today/settings/data');
+    for (const [i, target] of ['https://example.invalid/', '/form/skin', { x: 1 }, undefined, 'Backup'].entries()) {
+      expect(await resolveReminderTap(deps, { id: `n${i}`, target, deliveredAt: at }, { hasUnsavedForm: false })).toBeNull();
+    }
+  });
+
+  it('SK-9 a tap is handled once, even when it did nothing because a form had unsaved changes', async () => {
+    const deps = makeDeps(new MemoryRepo());
+    expect(await resolveReminderTap(deps, tap('backup'), { hasUnsavedForm: true })).toBeNull();
+    expect(await resolveReminderTap(deps, tap('backup'), { hasUnsavedForm: false })).toBeNull(); // already handled
+    expect(await resolveReminderTap(deps, tap('backup', new Date('2026-02-01T10:00:00.000Z')), { hasUnsavedForm: false })).not.toBeNull(); // the next one
+  });
+
+  it('SK-9 the scheduled reminders carry only their own id as the target', async () => {
+    const deps = makeDeps(new MemoryRepo());
+    await saveReminderSettings(deps, { ...DEFAULT_REMINDERS, checkIn: { enabled: true, hour: 21, minute: 0 }, backup: { enabled: true, day: 1, hour: 10, minute: 0 } }, texts);
+    expect((deps.notifier as unknown as { scheduled: { id: string }[] }).scheduled.map((s) => s.id)).toEqual(['checkin', 'backup']);
   });
 });

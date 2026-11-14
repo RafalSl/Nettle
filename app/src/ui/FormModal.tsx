@@ -1,8 +1,9 @@
 import { Stack, useRouter } from 'expo-router';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Alert, Pressable, Text } from 'react-native';
 import { errorMessage, t } from '@/i18n';
 import { confirmDestructive } from '@/ui/actionSheet';
+import { unsavedForm } from '@/ui/formState';
 import { Hint, Screen } from '@/ui/components';
 
 /** Tracks whether the user changed anything, for the discard guard (UX-3). */
@@ -35,6 +36,12 @@ export function FormModal({
   children: ReactNode;
 }) {
   const router = useRouter();
+  useEffect(() => {
+    unsavedForm.current = dirty;
+    return () => {
+      unsavedForm.current = false;
+    };
+  }, [dirty]);
   async function save() {
     try {
       await onSave();

@@ -11,8 +11,21 @@ export interface ReminderSpec {
   when: ReminderWhen;
 }
 
+/** SK-9: a tap on a reminder. `target` is the untrusted `data.target` of the notification, `deliveredAt` its delivery time when known. */
+export interface ReminderTap {
+  /** The notification's identifier (the reminder id). */
+  id: string;
+  target: unknown;
+  deliveredAt: Date | null;
+}
+
 /** SK-9: local notifications only (no push, no server). Texts never contain diary data. */
 export interface Notifier {
+  /**
+   * Calls `handler` for every tap on a reminder, including the one that launched the app, and clears the stored
+   * last response after the handler returned. Returns the unsubscribe function.
+   */
+  onTap(handler: (tap: ReminderTap) => void | Promise<void>): () => void;
   /** Asks the user for permission if needed; true when reminders may be shown. */
   requestPermission(): Promise<boolean>;
   /** Cancels every reminder the app scheduled and schedules exactly these. */

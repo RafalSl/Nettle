@@ -52,7 +52,7 @@ Status: accepted 2026-11-14, nothing built yet. Requirements: `docs/requirements
 | Meal photo result | A banner with the suggested ingredients: Add all, pick items, or Dismiss. Added items are normal chips, so they can be renamed and removed, and the user's own can be added. Never overwrites typed text. LLM allergen tags stay unselected. |
 | Save or leave the form while waiting | Save uses the fields as they are and drops the estimate. Leaving aborts it. |
 
-Code to change: the adapter retries a timed-out attempt (up to 3 times 10 minutes), the analysis screen has no Cancel, and the confirmation says nothing about billing. Streaming (`expo/fetch`, unverified) or the Message Batches API are options if long runs time out in practice; neither is planned.
+Built: a timeout is never retried (so a call can no longer run about 30 minutes), the analysis screen has elapsed time and Cancel, and both confirmations say the call is billed separately. Still to build: the inline photo estimate with Cancel, keep-awake, the running card in Review and the interrupted state with retry. Streaming (`expo/fetch`, unverified) or the Message Batches API are options if long runs time out in practice; neither is planned.
 
 ## Notification taps (SK-9)
 

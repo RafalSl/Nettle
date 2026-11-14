@@ -1740,3 +1740,25 @@ describe('Create forms on the unified modal (UX-3)', () => {
     expect(mockRouter.back).not.toHaveBeenCalled();
   });
 });
+
+describe('Today log order (UX-2, UX-5)', () => {
+  it('UX-5 the log shows the newest entry first, so a just-saved entry is in view', async () => {
+    jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    const deps = nowDeps();
+    await logMeal(deps, { description: 'Synthetic first meal', ingredients: [], at: new Date(Date.now() - 3 * 3600_000) });
+    await logMeal(deps, { description: 'Synthetic second meal', ingredients: [], at: new Date(Date.now() - 2 * 3600_000) });
+    await logStool(deps, { bristol: 4, at: new Date(Date.now() - 3600_000) });
+    const { tree } = await mount(() => require('@/app/(tabs)/today/index'), deps);
+    await flush();
+    const text = JSON.stringify(tree.toJSON());
+    const at = (s: string) => text.indexOf(s);
+    expect(at(en.log.stool.replace('{{n}}', '4'))).toBeLessThan(at('Synthetic second meal'));
+    expect(at('Synthetic second meal')).toBeLessThan(at('Synthetic first meal'));
+    jest.restoreAllMocks();
+  });
+  it('UX-3 scroll views leave room for the navigation header instead of sliding under it', async () => {
+    const { tree } = await mount(() => require('@/app/(tabs)/review/index'), nowDeps());
+    const scroll = tree.root.findAll((n) => n.props.contentInsetAdjustmentBehavior !== undefined)[0];
+    expect(scroll?.props.contentInsetAdjustmentBehavior).toBe('automatic');
+  });
+});

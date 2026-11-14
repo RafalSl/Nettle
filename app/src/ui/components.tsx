@@ -4,7 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { t } from '@/i18n';
 
 export const Screen = ({ children }: { children: ReactNode }) => (
-  <ScrollView contentContainerStyle={styles.screen} keyboardShouldPersistTaps="handled">
+  <ScrollView contentContainerStyle={styles.screen} contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled">
     {children}
   </ScrollView>
 );

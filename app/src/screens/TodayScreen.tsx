@@ -250,9 +250,10 @@ export default function TodayScreen() {
         </Card>
       )}
 
+      {/* The core lists the day oldest first; the log shows the newest entry on top, so a new one is in view. */}
       <Heading>{t('day.logTitle')}</Heading>
       {rows.length === 0 && <Hint>{t('day.empty')}</Hint>}
-      {rows.map((row) => {
+      {[...rows].reverse().map((row) => {
         const { title, detail } = describeRow(row, ctx);
         const time = localDateTime(row.at.utc, row.at.tz).slice(11);
         return (

@@ -19,7 +19,9 @@ export class MemoryPhotoStore implements PhotoStore {
     return this.put(new TextEncoder().encode(sourceUri));
   }
   async compress(sourceUri: string) {
-    return new TextEncoder().encode(sourceUri);
+    // A stored photo's uri gives back its content, like re-reading and shrinking the real file.
+    const stored = sourceUri.startsWith('memory://') ? this.files.get(sourceUri.slice('memory://'.length)) : undefined;
+    return stored ? stored.slice() : new TextEncoder().encode(sourceUri);
   }
   async saveBytes(bytes: Uint8Array) {
     return this.put(bytes.slice());

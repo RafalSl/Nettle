@@ -36,3 +36,17 @@ export function itemLabel(item: { id: string; name: string; predefined: boolean;
 export function currentLanguage(): 'en' | 'pl' {
   return i18n.locale.startsWith('pl') ? 'pl' : 'en';
 }
+
+/** EX-3: text in a chosen language, independent of the app language (the report language is chosen at export time). */
+export const tIn = (language: 'en' | 'pl', key: string, options?: Record<string, string | number>): string =>
+  i18n.t(key, { ...options, locale: language });
+
+/** Area and list item names in a chosen language (same rule as `areaLabel` and `itemLabel`). */
+export const areaLabelIn = (
+  language: 'en' | 'pl',
+  area: { id: string; name: string; predefined: boolean; nameOverride: string | null },
+): string => area.nameOverride ?? (area.predefined ? tIn(language, `areas.${area.id}`) : area.name);
+export const itemLabelIn = (
+  language: 'en' | 'pl',
+  item: { id: string; name: string; predefined: boolean; nameOverride: string | null },
+): string => item.nameOverride ?? (item.predefined ? tIn(language, `tags.${item.id}`) : item.name);

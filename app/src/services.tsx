@@ -9,6 +9,7 @@ import { SqliteRepo } from '@/adapters/storage/sqliteRepo';
 import { SqliteSettings } from '@/adapters/storage/sqliteSettings';
 import { expoPhotoStore } from '@/adapters/photos/expoPhotoStore';
 import { expoFileShare } from '@/adapters/share/expoFileShare';
+import { expoPdfRenderer } from '@/adapters/share/expoPdfRenderer';
 import type { FileShare } from '@/core/ports/platform';
 import type { Deps } from '@/core/usecases/deps';
 import { t } from '@/i18n';
@@ -42,6 +43,7 @@ export function ServicesProvider({ children }: { children: ReactNode }) {
           ids: randomUUID,
           randomBytes: getRandomBytes,
           photos: expoPhotoStore,
+          pdf: expoPdfRenderer,
           keys: secureStoreKeyStore,
           settings: new SqliteSettings(db),
           llmFor: createAnthropicProvider,

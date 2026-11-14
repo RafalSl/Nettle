@@ -1,10 +1,13 @@
 import { packBundle, unpackBundle } from '../export/bundle';
+import { csvPath, toCsv } from '../export/csv';
+import { buildReportHtml, type ReportInput } from '../export/report';
+import { bytesToBase64 } from '../util/base64';
 import { DEFAULT_PHOTO_SELECTION, planPhotoNames, selectPhotos, type PhotoSelection } from '../export/photoSelection';
 import { toDataJson } from '../export/schema';
 import { NettleError } from '../model/errors';
 import { localDaysToRange, makeStamp } from '../model/time';
 import { recordRefs } from '../model/refs';
-import { EXTRA_KINDS, LIST_KINDS, type DateRange, type Parts, type Payload, type Records } from '../model/types';
+import { EXTRA_KINDS, LIST_KINDS, RECORD_KINDS, type DateRange, type Parts, type Payload, type Records } from '../model/types';
 import type { CollectionKey, ImportMode } from '../ports/storage';
 import type { Deps } from './deps';
 
@@ -18,7 +21,14 @@ export interface ExportOptions {
   password?: string;
   /** EX-7: which photos to include; the default leaves out sensitive ones. Photos belong to records, so they need `parts.records`. */
   photos?: PhotoSelection;
+  /** EX-5: also write one CSV file per table of data.json. */
+  csv?: boolean;
+  /** EX-3, EX-4: also write report.pdf in this language; the photo selection above applies to it too (EX-8). */
+  report?: Pick<ReportInput, 'language' | 'text' | 'areaName' | 'itemName'>;
 }
+
+/** Width of the photos in the PDF, in pixels: small enough to keep the report light. */
+const REPORT_PHOTO_EDGE = 500;
 
 /** EX-1: a snapshot of the chosen range as a ZIP with data.json, records, settings or both. */
 export async function exportBundle(deps: Deps, options: ExportOptions = {}): Promise<Uint8Array> {
@@ -48,13 +58,43 @@ export async function exportBundle(deps: Deps, options: ExportOptions = {}): Pro
       snapshot.photos.push({ ...p, file: path });
     }
   }
-  return packBundle(
-    toDataJson(snapshot, range, makeStamp(deps.clock), parts),
-    files,
-    options.password,
-    deps.randomBytes,
-  );
+  const data = toDataJson(snapshot, range, makeStamp(deps.clock), parts);
+
+  if (options.csv) {
+    for (const section of [data.records, data.settings]) {
+      for (const [name, rows] of Object.entries(section ?? {})) {
+        files[csvPath(name)] = new TextEncoder().encode(toCsv(rows as Record<string, never>[]));
+      }
+    }
+  }
+
+  if (options.report) {
+    const thumbnails = new Map<string, string>();
+    // The snapshot's photo `file` is already the ZIP path; the stored file comes from the original record.
+    const originals = new Map((await deps.repo.listRecords('photos')).map((x) => [x.id, x]));
+    for (const p of snapshot.photos) {
+      const original = originals.get(p.id);
+      if (!original) continue;
+      const jpeg = await deps.photos.compress(deps.photos.uri(original.file), REPORT_PHOTO_EDGE);
+      thumbnails.set(p.id, `data:image/jpeg;base64,${bytesToBase64(jpeg)}`);
+    }
+    const html = buildReportHtml({
+      ...options.report,
+      records: parts.records ? snapshot : emptyRecords(),
+      skinAreas: snapshot.skinAreas,
+      dailyTags: snapshot.dailyTags,
+      treatments: snapshot.treatments,
+      photos: thumbnails,
+      range: data.range,
+      exportedAt: data.exported_at,
+    });
+    files['report.pdf'] = await deps.pdf.renderHtml(html);
+  }
+
+  return packBundle(data, files, options.password, deps.randomBytes);
 }
+
+const emptyRecords = (): Records => Object.fromEntries(RECORD_KINDS.map((k) => [k, []])) as unknown as Records;
 
 /** Row counts per collection (zero for a collection the file lacks). */
 export type PartCounts = Record<CollectionKey, number>;

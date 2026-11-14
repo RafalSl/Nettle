@@ -1,4 +1,4 @@
-import type { AlcoholEntry, MedicationEntry, Meal } from './types';
+import type { Drink, MedicationEntry, Meal } from './types';
 
 /** IN-14: one earlier use of something the user logs often. `key` is its identity, `payload` what a pick fills in. */
 export interface HistoryItem<T> {
@@ -99,11 +99,14 @@ export function rankSuggestions<T>(
 export const mealHistory = (meals: readonly Meal[]): HistoryItem<Meal>[] =>
   meals.map((m) => ({ key: normalizeText(m.description), label: m.description, at: m.at.utc, payload: m }));
 
-/** IN-14: an alcohol suggestion is a drink with its amount. */
-export const alcoholHistory = (entries: readonly AlcoholEntry[]): HistoryItem<AlcoholEntry>[] =>
+/** IN-14: a drink is identified by its name and amount (the alcohol switch is part of what a pick fills in). */
+export const drinkKey = (e: Pick<Drink, 'name' | 'amountMl'>): string => `${normalizeText(e.name)}|${e.amountMl}`;
+
+/** IN-14: a drink suggestion is a drink with its amount. */
+export const drinkHistory = (entries: readonly Drink[]): HistoryItem<Drink>[] =>
   entries.map((e) => ({
-    key: `${normalizeText(e.drink)}|${e.amountMl}`,
-    label: `${e.drink} ${e.amountMl} ml`,
+    key: drinkKey(e),
+    label: `${e.name} ${e.amountMl} ml`,
     at: e.at.utc,
     payload: e,
   }));

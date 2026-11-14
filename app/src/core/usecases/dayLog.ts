@@ -13,7 +13,7 @@ export const LOG_KINDS = [
   'treatmentApplications',
   'changeEvents',
   'reactions',
-  'alcoholEntries',
+  'drinks',
   'medicationEntries',
   'flareMarkers',
 ] as const;

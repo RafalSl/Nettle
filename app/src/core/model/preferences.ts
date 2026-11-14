@@ -9,8 +9,11 @@ export interface FavoriteMeal {
 }
 export interface FavoriteDrink {
   key: string;
-  drink: string;
+  name: string;
   amountMl: number;
+  alcohol: boolean;
+  ingredients: string[];
+  allergens: Allergen[];
 }
 export interface FavoriteMedication {
   key: string;
@@ -22,7 +25,7 @@ export interface FavoriteMedication {
 export const WINDOW_DAYS = [7, 14, 30, 60] as const;
 export type WindowDays = (typeof WINDOW_DAYS)[number];
 
-/** IN-14 settings: rows shown, look-back window, and "save on tap" (alcohol and medication only, never meals). */
+/** IN-14 settings: rows shown, look-back window, and "save on tap" (drinks and medication only, never meals). */
 export interface SuggestionSettings {
   rows: number;
   windowDays: WindowDays;
@@ -39,7 +42,7 @@ export interface QuickActionLayout {
 
 /** EX-1: preferences travel in the settings part of an export. The API key never does. */
 export interface Preferences {
-  favorites: { meals: FavoriteMeal[]; alcohol: FavoriteDrink[]; medications: FavoriteMedication[] };
+  favorites: { meals: FavoriteMeal[]; drinks: FavoriteDrink[]; medications: FavoriteMedication[] };
   suggestions: SuggestionSettings;
   quickActions: QuickActionLayout;
 }
@@ -47,7 +50,7 @@ export interface Preferences {
 export const MAX_SUGGESTION_ROWS = 20;
 
 export const DEFAULT_PREFERENCES: Preferences = {
-  favorites: { meals: [], alcohol: [], medications: [] },
+  favorites: { meals: [], drinks: [], medications: [] },
   suggestions: { rows: 5, windowDays: 30, saveOnTap: false },
   quickActions: { order: [...QUICK_ACTIONS], hidden: [] },
 };

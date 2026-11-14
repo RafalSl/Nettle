@@ -153,12 +153,19 @@ export interface Reaction {
   note: string | null;
 }
 
-/** IN-4: a drink with its type (beer, wine, ...) and amount in millilitres. */
-export interface AlcoholEntry {
+/**
+ * IN-4: any beverage with its amount in millilitres. `alcohol` marks alcoholic drinks so the report and the
+ * analysis can treat them separately; ingredients and allergen tags (IN-10) are optional, as on a meal.
+ */
+export interface Drink {
   id: string;
   at: Stamp;
-  drink: string;
+  name: string;
   amountMl: number;
+  alcohol: boolean;
+  ingredients: string[];
+  /** IN-10: confirmed by the user, never saved straight from a suggestion. */
+  allergens: Allergen[];
   note: string | null;
 }
 
@@ -261,7 +268,7 @@ export interface Records {
   treatmentApplications: TreatmentApplication[];
   changeEvents: ChangeEvent[];
   reactions: Reaction[];
-  alcoholEntries: AlcoholEntry[];
+  drinks: Drink[];
   medicationEntries: MedicationEntry[];
   photos: Photo[];
   analyses: Analysis[];
@@ -293,7 +300,7 @@ export const EXTRA_KINDS: readonly ExtraKind[] = [
   'treatmentApplications',
   'changeEvents',
   'reactions',
-  'alcoholEntries',
+  'drinks',
   'medicationEntries',
   'photos',
   'analyses',

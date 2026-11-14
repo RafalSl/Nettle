@@ -4,7 +4,7 @@ import { Switch, Text, TextInput, View } from 'react-native';
 import { ALLERGENS, CHANGE_ACTIONS, CHANGE_CATEGORIES, MEDICATION_CATEGORIES, NAIL_EXTENTS, NAIL_STAGES, SCORE_KEYS, SYMPTOMS } from '@/core/model/types';
 import type { Allergen, ListItem, MedicationCategory, RecordKind, SkinArea } from '@/core/model/types';
 import {
-  editAlcohol,
+  editDrink,
   editChangeEvent,
   editCheckIn,
   editFlareMarker,
@@ -21,6 +21,7 @@ import { LOG_KINDS, type LogRow } from '@/core/usecases/dayLog';
 import { areaLabel, itemLabel, t } from '@/i18n';
 import { useServices } from '@/services';
 import { FormModal, useField, useForm } from '@/ui/FormModal';
+import { DrinkFields, draftFromDrink, drinkInput, drinkMissing, type DrinkDraft } from '@/ui/DrinkFields';
 import { PhotoStrip } from '@/ui/PhotoStrip';
 import { Chips, Hint, Label, OptionalScoreStepper, ScoreStepper, TimeField, styles } from '@/ui/components';
 
@@ -227,17 +228,14 @@ function ReactionFields({ r }: { r: Rec<'reactions'> }) {
   );
 }
 
-function AlcoholFields({ r }: { r: Rec<'alcoholEntries'> }) {
+function DrinkEdit({ r }: { r: Rec<'drinks'> }) {
   const { deps } = useServices();
   const f = useForm();
   const c = useCommon(r.note, f.touch);
-  const [drink, setDrink] = useField(r.drink, f.touch);
-  const [amount, setAmount] = useField(String(r.amountMl), f.touch);
-  const missing = !drink.trim() ? t('edit.drink') : !(Number(amount) > 0) ? t('edit.amount') : null;
+  const [draft, setDraft] = useField<DrinkDraft>(draftFromDrink(r), f.touch);
   return (
-    <FormModal dirty={f.dirty} missing={missing} onSave={async () => void (await editAlcohol(deps, r.id, { drink, amountMl: Number(amount), note: c.note, at: c.at ?? undefined }))}>
-      <TextInput style={styles.input} placeholder={t('more.alcoholDrink')} value={drink} onChangeText={setDrink} />
-      <TextInput style={styles.input} placeholder={t('more.alcoholAmount')} keyboardType="number-pad" value={amount} onChangeText={setAmount} />
+    <FormModal dirty={f.dirty} missing={drinkMissing(draft)} onSave={async () => void (await editDrink(deps, r.id, { ...drinkInput(draft), note: c.note, at: c.at ?? undefined }))}>
+      <DrinkFields draft={draft} onChange={setDraft} />
       <CommonFields c={c} original={r.at.utc} />
     </FormModal>
   );
@@ -317,7 +315,7 @@ export default function EditEntryScreen() {
       return <TreatmentFields r={row.record} areas={usable(areas, row.record.areaIds)} treatments={usable(treatments, [row.record.treatmentId])} />;
     case 'changeEvents': return <ChangeFields r={row.record} />;
     case 'reactions': return <ReactionFields r={row.record} />;
-    case 'alcoholEntries': return <AlcoholFields r={row.record} />;
+    case 'drinks': return <DrinkEdit r={row.record} />;
     case 'medicationEntries': return <MedicationFields r={row.record} />;
     case 'flareMarkers': return <FlareFields r={row.record} />;
   }

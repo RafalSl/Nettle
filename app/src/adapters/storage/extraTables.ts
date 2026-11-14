@@ -1,9 +1,10 @@
 import { analysisResultFromJson, analysisResultToJson } from '@/core/llm/analysisResult';
 import type {
+  Allergen,
   FlareKind,
   FlareMarker,
   Analysis,
-  AlcoholEntry,
+  Drink,
   Photo,
   PhotoEntryKind,
   MedicationCategory,
@@ -145,15 +146,18 @@ const reaction: ExtraTable<Reaction> = {
   }),
 };
 
-const alcohol: ExtraTable<AlcoholEntry> = {
-  table: 'alcohol_entry',
-  columns: ['drink', 'amount_ml', 'note'],
-  toValues: (e) => [e.drink, e.amountMl, e.note],
+const drink: ExtraTable<Drink> = {
+  table: 'drink',
+  columns: ['name', 'amount_ml', 'alcohol', 'ingredients_json', 'allergens_json', 'note'],
+  toValues: (e) => [e.name, e.amountMl, +e.alcohol, JSON.stringify(e.ingredients), JSON.stringify(e.allergens), e.note],
   fromRow: (r) => ({
     id: r.id as string,
     at: { utc: r.ts_utc as string, tz: r.tz as string },
-    drink: r.drink as string,
+    name: r.name as string,
     amountMl: r.amount_ml as number,
+    alcohol: !!r.alcohol,
+    ingredients: JSON.parse(r.ingredients_json as string) as string[],
+    allergens: JSON.parse(r.allergens_json as string) as Allergen[],
     note: r.note as string | null,
   }),
 };
@@ -224,7 +228,7 @@ export const EXTRA_TABLES: { [K in ExtraKind]: ExtraTable<Records[K][number]> } 
   treatmentApplications: treatmentApplication,
   changeEvents: changeEvent,
   reactions: reaction,
-  alcoholEntries: alcohol,
+  drinks: drink,
   medicationEntries: medication,
   photos: photo,
   analyses: analysis,

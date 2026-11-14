@@ -68,9 +68,9 @@ describe.each(repos)('preferences (%s)', (_name, make) => {
 
   it('IN-14 favorite drinks are identified by name and amount', async () => {
     const deps = makeDeps(await make());
-    expect(await toggleFavoriteDrink(deps, { drink: 'Synthetic beer', amountMl: 500 })).toBe(true);
-    expect(await toggleFavoriteDrink(deps, { drink: 'synthetic BEER', amountMl: 330 })).toBe(true);
-    expect((await getPreferences(deps)).favorites.alcohol.map((a) => a.amountMl)).toEqual([500, 330]);
+    expect(await toggleFavoriteDrink(deps, { name: 'Synthetic beer', amountMl: 500, alcohol: true, ingredients: [], allergens: [] })).toBe(true);
+    expect(await toggleFavoriteDrink(deps, { name: 'synthetic BEER', amountMl: 330, alcohol: true, ingredients: [], allergens: [] })).toBe(true);
+    expect((await getPreferences(deps)).favorites.drinks.map((a) => a.amountMl)).toEqual([500, 330]);
   });
 
   it('UX-2 quick actions move with up and down, can be hidden, and More cannot be hidden', async () => {
@@ -120,7 +120,7 @@ describe.each(repos)('preferences (%s)', (_name, make) => {
       { ...good, suggestions: { ...good.suggestions, window_days: 10 } },
       { ...good, quick_actions: { order: ['meal', 'meal'], hidden: [] } },
       { ...good, quick_actions: { order: ['nope'], hidden: [] } },
-      { ...good, favorites: { ...good.favorites, alcohol: [{ key: 'k', drink: 'x', amount_ml: -5 }] } },
+      { ...good, favorites: { ...good.favorites, drinks: [{ key: 'k', name: 'x', amount_ml: -5, alcohol: false, ingredients: [], allergens: [] }] } },
     ]) {
       expect(() => parsePreferences(bad)).toThrow(NettleError);
     }

@@ -13,6 +13,8 @@ export interface LlmRequest {
   /** JSON Schema the answer must follow. */
   schema: Record<string, unknown>;
   maxTokens: number;
+  /** LL-12: aborting it cancels the call; the adapter then throws `llm_cancelled` and nothing is retried. */
+  signal?: AbortSignal;
 }
 
 export interface LlmResponse {

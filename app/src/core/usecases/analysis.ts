@@ -84,9 +84,11 @@ export async function prepareAnalysis(deps: Deps, sel: AnalysisSelection): Promi
  * unless the answer is complete and valid, so a failure (no network, invalid key, rate limit, spend cap,
  * refusal, unreadable answer) loses no data and leaves the diary as it was.
  */
-export async function runAnalysis(deps: Deps, prepared: PreparedAnalysis): Promise<Analysis> {
+export async function runAnalysis(deps: Deps, prepared: PreparedAnalysis, signal?: AbortSignal): Promise<Analysis> {
   const { provider } = await currentProvider(deps);
-  const response = await provider.completeJson(prepared.request);
+  const response = await provider.completeJson(signal ? { ...prepared.request, signal } : prepared.request);
+  // LL-12: Cancel stores nothing, even when the answer arrived at the same moment.
+  if (signal?.aborted) throw new NettleError('llm_cancelled');
   const result = analysisResultFromJson(parseJson(response.text));
   if (!result) throw new NettleError('llm_bad_response');
   const analysis: Analysis = {

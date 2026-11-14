@@ -247,6 +247,19 @@ describe.each(repos)('prepare and run an analysis (%s)', (_name, make) => {
     expect(llm.requests).toHaveLength(0);
   });
 
+  it('LL-12 a cancelled run stores nothing, even when the answer arrives at the same moment, and the signal reaches the provider', async () => {
+    const { deps } = await diary(make);
+    const prepared = await prepareAnalysis(deps, sel);
+    const ctl = new AbortController();
+    const answering = { completeJson: async () => (ctl.abort(), { text: VALID_ANSWER, model: 'fake-model' }) };
+    expect(await code(runAnalysis({ ...deps, llmFor: () => answering }, prepared, ctl.signal))).toBe('llm_cancelled');
+    expect(await listAnalyses(deps)).toEqual([]);
+    const seen: (AbortSignal | undefined)[] = [];
+    const watching = { completeJson: async (r: { signal?: AbortSignal }) => (seen.push(r.signal), { text: VALID_ANSWER, model: 'fake-model' }) };
+    await runAnalysis({ ...deps, llmFor: () => watching }, prepared, new AbortController().signal);
+    expect(seen[0]).toBeDefined();
+  });
+
   it('LL-9 the prepared request names the model from the setting', async () => {
     const { deps } = await diary(make);
     await deps.settings.set('llm_model', 'claude-sonnet-5-5');

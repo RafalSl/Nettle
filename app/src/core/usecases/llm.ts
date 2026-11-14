@@ -45,10 +45,10 @@ export async function currentProvider(deps: Deps): Promise<{ provider: LlmProvid
  */
 export async function estimateIngredients(
   deps: Deps,
-  input: { image: LlmImage; language: Language },
+  input: { image: LlmImage; language: Language; signal?: AbortSignal },
 ): Promise<IngredientEstimate> {
   const { provider } = await currentProvider(deps);
   const prompt = ingredientsPrompt(input.language);
-  const response = await provider.completeJson({ ...prompt, images: [input.image] });
+  const response = await provider.completeJson({ ...prompt, images: [input.image], ...(input.signal ? { signal: input.signal } : {}) });
   return parseIngredientEstimate(response.text);
 }

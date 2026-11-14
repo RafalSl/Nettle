@@ -26,12 +26,33 @@ export function mapHttpError(status: number, errorType?: string): NettleError {
   if (status === 403 || errorType === 'permission_error') return new NettleError('llm_permission');
   if (status === 404 || errorType === 'not_found_error') return new NettleError('llm_model_not_found');
   if (status === 429 || errorType === 'rate_limit_error') return new NettleError('llm_rate_limited');
+  if (status === 504 || errorType === 'timeout_error') return new NettleError('llm_timeout');
   if (status >= 500) return new NettleError('llm_unavailable');
   return new NettleError('llm_failed');
 }
 
-const retryable = (status: number) => status === 408 || status === 409 || status === 429 || status >= 500;
-const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+/** LL-12: a 504 means the request already ran for a long time, so repeating it would only double the wait. */
+const retryable = (status: number) => status === 408 || status === 409 || status === 429 || (status >= 500 && status !== 504);
+
+/** Waits `ms`, or less when `signal` is aborted, so Cancel does not wait for a retry pause. */
+const sleep = (ms: number, signal?: AbortSignal) =>
+  new Promise<void>((resolve) => {
+    if (signal?.aborted) return resolve();
+    const done = () => {
+      clearTimeout(timer);
+      signal?.removeEventListener('abort', done);
+      resolve();
+    };
+    const timer = setTimeout(done, ms);
+    signal?.addEventListener('abort', done);
+  });
+
+export interface AnthropicOptions {
+  /** Overall limit for one attempt; a test shortens it. */
+  timeoutMs?: number;
+  /** The pause between retries; a test makes it instant. */
+  sleep?: (ms: number, signal?: AbortSignal) => Promise<void>;
+}
 
 /** The request body for one JSON-schema answer, with optional images (LL-1, LL-6). */
 export function buildBody(model: string, req: LlmRequest) {
@@ -66,7 +87,17 @@ export function readResponse(json: unknown): LlmResponse {
   return { text, model: typeof r.model === 'string' ? r.model : 'unknown' };
 }
 
-export function createAnthropicProvider(config: LlmConfig, fetchImpl: FetchLike = fetch as unknown as FetchLike): LlmProvider {
+/**
+ * LL-8, LL-12: one POST. Only a lost connection (never a timeout, a cancel or a failed body read) and a 408, 409,
+ * 429 or 5xx response other than 504 are retried, at most twice. A timeout or a cancel ends the call at once.
+ */
+export function createAnthropicProvider(
+  config: LlmConfig,
+  fetchImpl: FetchLike = fetch as unknown as FetchLike,
+  options: AnthropicOptions = {},
+): LlmProvider {
+  const timeoutMs = options.timeoutMs ?? TIMEOUT_MS;
+  const pause = options.sleep ?? sleep;
   return {
     async completeJson(req: LlmRequest): Promise<LlmResponse> {
       const body = JSON.stringify(buildBody(config.model, req));
@@ -76,21 +107,38 @@ export function createAnthropicProvider(config: LlmConfig, fetchImpl: FetchLike 
         'anthropic-version': API_VERSION,
       };
       for (let attempt = 0; ; attempt++) {
+        if (req.signal?.aborted) throw new NettleError('llm_cancelled');
         const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+        let timedOut = false;
+        const timer = setTimeout(() => {
+          timedOut = true;
+          controller.abort();
+        }, timeoutMs);
+        const onCancel = () => controller.abort();
+        req.signal?.addEventListener('abort', onCancel);
+        /** Why the attempt ended when the network is not the reason. */
+        const stopped = () => (req.signal?.aborted ? new NettleError('llm_cancelled') : timedOut ? new NettleError('llm_timeout') : null);
         try {
           let res;
           try {
             res = await fetchImpl(ENDPOINT, { method: 'POST', headers, body, signal: controller.signal });
           } catch {
-            // No connection, DNS or TLS failure, or the timeout above. Details are not kept: they are not needed and could echo the request.
+            // No connection, DNS or TLS failure, a cancel or the timeout above. Details are not kept: they are not needed and could echo the request.
+            const reason = stopped();
+            if (reason) throw reason;
             if (attempt < MAX_RETRIES) {
-              await sleep(500 * 2 ** attempt);
+              await pause(500 * 2 ** attempt, req.signal);
               continue;
             }
             throw new NettleError('llm_network');
           }
-          const raw = await res.text();
+          let raw: string;
+          try {
+            raw = await res.text();
+          } catch {
+            // The request already ran, so it is not repeated (a retry could be billed twice).
+            throw stopped() ?? new NettleError('llm_network');
+          }
           let parsed: unknown = null;
           try {
             parsed = JSON.parse(raw);
@@ -99,13 +147,14 @@ export function createAnthropicProvider(config: LlmConfig, fetchImpl: FetchLike 
           }
           if (res.status >= 200 && res.status < 300) return readResponse(parsed);
           if (retryable(res.status) && attempt < MAX_RETRIES) {
-            await sleep(500 * 2 ** attempt);
+            await pause(500 * 2 ** attempt, req.signal);
             continue;
           }
           const errorType = (parsed as { error?: { type?: string } } | null)?.error?.type;
           throw mapHttpError(res.status, errorType);
         } finally {
           clearTimeout(timer);
+          req.signal?.removeEventListener('abort', onCancel);
         }
       }
     },

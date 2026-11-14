@@ -48,6 +48,8 @@ export const ERROR_CODES = [
   'llm_refused',
   'llm_bad_response',
   'llm_failed',
+  'llm_cancelled',
+  'llm_timeout',
   'analysis_too_large',
   'analysis_no_data',
   'too_many_photos',

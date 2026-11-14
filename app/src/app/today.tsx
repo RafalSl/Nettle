@@ -1,6 +1,7 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, Pressable, Text, TextInput, View } from 'react-native';
+import { NettleError } from '@/core/model/errors';
 import { localDay } from '@/core/model/time';
 import type { ListItem, OptionalScore, StoolEntry } from '@/core/model/types';
 import { getCheckIn, logStool, saveCheckIn, setDayComplete } from '@/core/usecases/checkin';
@@ -65,12 +66,18 @@ export default function TodayScreen() {
     set('tags', next);
   };
 
-  async function save(complete?: boolean) {
+  async function save(complete?: boolean, confirmEmptyDay?: boolean) {
     try {
-      await saveCheckIn(deps, { ...fields, tags: [...fields.tags], at: at ?? undefined, complete });
+      await saveCheckIn(deps, { ...fields, tags: [...fields.tags], at: at ?? undefined, complete, confirmEmptyDay });
       load();
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      // SK-11: a day with no meals logged is closed only after the user confirms.
+      if (e instanceof NettleError && e.code === 'day_has_no_meals') {
+        Alert.alert(errorMessage(e), undefined, [
+          { text: t('common.cancel'), style: 'cancel' },
+          { text: t('today.closeAnyway'), onPress: () => void save(complete, true) },
+        ]);
+      } else Alert.alert(errorMessage(e));
     }
   }
 

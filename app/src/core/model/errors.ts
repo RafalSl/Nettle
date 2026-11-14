@@ -59,6 +59,8 @@ export const ERROR_CODES = [
   'flare_overlap',
   'checkin_day_taken',
   'meal_after_reaction',
+  'duplicate_area_name',
+  'day_has_no_meals',
   'notifications_denied',
   'empty_name',
   'no_previous_entry',

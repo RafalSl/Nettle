@@ -112,7 +112,7 @@ describe.each(repos)('editing and deleting one entry (%s)', (_name, make) => {
     const a = await saveCheckIn(deps, { at: d('2026-01-14T10:00:00.000Z'), wellbeing: 5 });
     const b = await saveCheckIn(deps, { at: d('2026-01-15T10:00:00.000Z'), wellbeing: 6 });
     expect(await code(editCheckIn(deps, b.id, { at: d('2026-01-14T18:00:00.000Z'), wellbeing: 6 }))).toBe('checkin_day_taken');
-    const edited = await editCheckIn(deps, a.id, { wellbeing: 2, tags: [], complete: true });
+    const edited = await editCheckIn(deps, a.id, { wellbeing: 2, tags: [], complete: true, confirmEmptyDay: true });
     expect(edited).toMatchObject({ id: a.id, day: a.day, wellbeing: 2 });
     expect(edited.completedAt).not.toBeNull();
     expect(await repo.listRecords('checkIns')).toHaveLength(2);

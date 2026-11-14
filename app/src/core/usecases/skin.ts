@@ -53,6 +53,7 @@ export async function listActiveAreas(deps: Deps, kind?: AreaKind): Promise<Skin
 export async function addArea(deps: Deps, name: string, kind: AreaKind = 'skin'): Promise<SkinArea> {
   const trimmed = name.trim();
   if (!trimmed) throw new NettleError('empty_area_name');
+  await assertNameFree(deps, trimmed);
   const area: SkinArea = {
     id: deps.ids(),
     kind,
@@ -66,6 +67,15 @@ export async function addArea(deps: Deps, name: string, kind: AreaKind = 'skin')
   return area;
 }
 
+const shownName = (a: SkinArea) => a.nameOverride ?? a.name;
+const sameName = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
+
+/** SK-2: active area names are unique, compared without regard to case. `exceptId` is the area being changed. */
+async function assertNameFree(deps: Deps, name: string, exceptId?: string): Promise<void> {
+  const taken = (await deps.repo.listAreas()).some((a) => !a.archived && a.id !== exceptId && sameName(shownName(a), name));
+  if (taken) throw new NettleError('duplicate_area_name', name);
+}
+
 async function findArea(deps: Deps, id: string): Promise<SkinArea> {
   const area = (await deps.repo.listAreas()).find((a) => a.id === id);
   if (!area) throw new NettleError('unknown_area', id);
@@ -77,6 +87,7 @@ export async function renameSkinArea(deps: Deps, id: string, name: string): Prom
   const trimmed = name.trim();
   if (!trimmed) throw new NettleError('empty_area_name');
   const area = await findArea(deps, id);
+  if (!area.archived) await assertNameFree(deps, trimmed, id);
   await deps.repo.upsertArea(
     area.predefined ? { ...area, nameOverride: trimmed } : { ...area, name: trimmed },
   );
@@ -85,11 +96,13 @@ export async function renameSkinArea(deps: Deps, id: string, name: string): Prom
 /** Back to the localized default name for a predefined area. */
 export async function resetSkinAreaName(deps: Deps, id: string): Promise<void> {
   const area = await findArea(deps, id);
+  if (!area.archived) await assertNameFree(deps, area.name, id);
   await deps.repo.upsertArea({ ...area, nameOverride: null });
 }
 
 export async function archiveSkinArea(deps: Deps, id: string, archived = true): Promise<void> {
   const area = await findArea(deps, id);
+  if (!archived) await assertNameFree(deps, shownName(area), id); // unarchiving must not create a duplicate
   await deps.repo.upsertArea({ ...area, archived });
 }
 
@@ -132,4 +145,37 @@ export async function repeatSkinEntry(deps: Deps, areaId: string, at?: Date): Pr
   const scores = await lastSkinScores(deps, areaId);
   if (!scores) throw new NettleError('no_previous_entry', areaId);
   return logSkinEntry(deps, { areaId, scores, at });
+}
+
+/** SK-3 "no change" for a nail area: a new entry with the area's last stage and extent. */
+export async function repeatNailEntry(deps: Deps, areaId: string, at?: Date): Promise<NailEntry> {
+  const last = (await deps.repo.listRecords('nailEntries')).find((e) => e.areaId === areaId); // newest first
+  if (!last) throw new NettleError('no_previous_entry', areaId);
+  return logNailEntry(deps, { areaId, stage: last.stage, extent: last.extent, at });
+}
+
+export interface RepeatAllResult {
+  saved: (SkinEntry | NailEntry)[];
+  /** Active areas that have no earlier entry, so they need a first one. */
+  needFirstEntry: SkinArea[];
+}
+
+/**
+ * SK-3 "no change for all areas": saves one entry per active area (skin and nail) that has an earlier entry,
+ * all at the same time, and lists the areas that still need a first entry.
+ */
+export async function repeatAllAreas(deps: Deps, at?: Date): Promise<RepeatAllResult> {
+  const result: RepeatAllResult = { saved: [], needFirstEntry: [] };
+  const when = at ?? deps.clock.now();
+  for (const area of await listActiveAreas(deps)) {
+    try {
+      result.saved.push(
+        area.kind === 'nail' ? await repeatNailEntry(deps, area.id, when) : await repeatSkinEntry(deps, area.id, when),
+      );
+    } catch (e) {
+      if (e instanceof NettleError && e.code === 'no_previous_entry') result.needFirstEntry.push(area);
+      else throw e;
+    }
+  }
+  return result;
 }

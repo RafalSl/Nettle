@@ -1,3 +1,4 @@
+import { logMeal } from '@/core/usecases/logMeal';
 import { NettleError } from '@/core/model/errors';
 import { localDay } from '@/core/model/time';
 import { getCheckIn, logStool, saveCheckIn, setDayComplete } from '@/core/usecases/checkin';
@@ -82,13 +83,24 @@ describe('daily check-in (SK-7, SK-11)', () => {
 
   it('SK-11 closes a day, keeps the mark across saves unless told otherwise, and removes it', async () => {
     const deps = makeDeps(new MemoryRepo());
-    const saved = await saveCheckIn(deps, { at: noon, wellbeing: 5, complete: true });
+    const saved = await saveCheckIn(deps, { at: noon, wellbeing: 5, complete: true, confirmEmptyDay: true });
     expect(saved.completedAt).not.toBeNull();
     expect((await saveCheckIn(deps, { at: noon, wellbeing: 6 })).completedAt).toEqual(saved.completedAt);
     expect((await setDayComplete(deps, '2026-01-15', false)).completedAt).toBeNull();
-    expect((await setDayComplete(deps, '2026-01-15', true)).completedAt).not.toBeNull();
+    expect((await setDayComplete(deps, '2026-01-15', true, { confirmEmptyDay: true })).completedAt).not.toBeNull();
     expect((await saveCheckIn(deps, { at: noon, complete: false })).completedAt).toBeNull();
     expect(await code(setDayComplete(deps, '2026-02-01', true))).toBe('checkin_not_found');
+  });
+
+  it('SK-11 closing a day with no meals needs confirmation; a day with a meal closes at once', async () => {
+    const deps = makeDeps(new MemoryRepo());
+    expect(await code(saveCheckIn(deps, { at: noon, wellbeing: 5, complete: true }))).toBe('day_has_no_meals');
+    expect(await getCheckIn(deps, '2026-01-15')).toBeNull(); // nothing saved by the refused call
+    await saveCheckIn(deps, { at: noon, wellbeing: 5 });
+    expect(await code(setDayComplete(deps, '2026-01-15', true))).toBe('day_has_no_meals');
+    await logMeal(deps, { description: 'Synthetic soup', ingredients: [], at: noon });
+    expect((await setDayComplete(deps, '2026-01-15', true)).completedAt).not.toBeNull();
+    expect(await code(setDayComplete(deps, '2026-01-15', false))).toBe('no error'); // reopening never asks
   });
 
   it('SK-7 stool entries take Bristol types 1-7, several per day', async () => {

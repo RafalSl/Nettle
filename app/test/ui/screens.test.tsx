@@ -155,6 +155,10 @@ describe('screen flows (NF-2, NF-3)', () => {
     await press(tree, `${en.common.increase} ${en.today.wellbeing}`);
     await press(tree, en.today.saveClose);
     await flush();
+    // SK-11: no meals are logged for the day, so the screen asks before closing it.
+    const buttons = alert.mock.calls.at(-1)![2] as { text: string; onPress?: () => void }[];
+    await act(async () => buttons.find((b) => b.text === en.today.closeAnyway)!.onPress!());
+    await flush();
     const [checkIn] = await deps.repo.listRecords('checkIns');
     expect(checkIn).toMatchObject({ wellbeing: 1, stress: null, day: localDay(deps.clock.now().toISOString(), deps.clock.timeZone()) });
     expect(checkIn!.completedAt).not.toBeNull();

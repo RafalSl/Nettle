@@ -157,6 +157,8 @@
     "flare_overlap": "Ta godzina nakłada się na poprzedni lub następny znacznik rzutu w tym miejscu.",
     "checkin_day_taken": "Ten dzień ma już wpis dzienny. Otwórz go zamiast tego.",
     "meal_after_reaction": "Posiłku nie można przesunąć na czas po jego reakcji.",
+    "duplicate_area_name": "Miejsce o tej nazwie już istnieje.",
+    "day_has_no_meals": "Na ten dzień nie ma posiłków. Potwierdź, aby mimo to zamknąć dzień.",
     "notifications_denied": "Powiadomienia są wyłączone dla tej aplikacji. Zezwól na nie w ustawieniach iPhone'a, aby dostawać przypomnienia."
   },
   "today": {
@@ -170,6 +172,7 @@
     "bloating": "Wzdęcia",
     "tags": "Dziś",
     "saveClose": "Zapisz i zamknij dzień",
+    "closeAnyway": "Zamknij dzień mimo to",
     "dayComplete": "Dzień zamknięty: wszystko z tego dnia jest zapisane.",
     "reopen": "Otwórz dzień ponownie",
     "stoolTitle": "Stolec",

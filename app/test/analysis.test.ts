@@ -58,7 +58,7 @@ async function diary(make: () => Promise<StorageRepository>, llm = new FakeLlm([
   await logReaction(deps, { mealId: m1.id, symptoms: ['hives'], at: at('2026-01-10T12:00:00.000Z') });
   const cream = await addListItem(deps, 'treatments', 'Synthetic cream');
   await applyTreatment(deps, { treatmentId: cream.id, areaIds: ['area-chin'], at: at('2026-01-12T21:00:00.000Z') });
-  await saveCheckIn(deps, { at: at('2026-01-12T21:30:00.000Z'), wellbeing: 4, stress: 8, tags: ['tag-antibiotics'], complete: true });
+  await saveCheckIn(deps, { at: at('2026-01-12T21:30:00.000Z'), wellbeing: 4, stress: 8, tags: ['tag-antibiotics'], complete: true, confirmEmptyDay: true });
   await saveCheckIn(deps, { at: at('2026-01-13T21:30:00.000Z'), wellbeing: 5 }); // open day
   await logChangeEvent(deps, { action: 'started', category: 'medication', name: 'Synthetic antibiotic', at: at('2025-12-30T09:00:00.000Z') });
   await logMedication(deps, { category: 'supplement', name: 'Synthetic vitamin', at: at('2025-12-28T09:00:00.000Z') });

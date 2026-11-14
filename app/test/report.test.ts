@@ -73,7 +73,7 @@ async function diary() {
     nail: await p('nailEntry', n1.id, 'nail-photo', '2026-01-12T08:05:00.000Z'),
   };
   await markFlare(deps, { areaId: 'area-chin', kind: 'start', at: at('2026-01-10T20:00:00.000Z') });
-  await saveCheckIn(deps, { at: at('2026-01-12T21:00:00.000Z'), wellbeing: 5, stress: 2, bloating: true, tags: ['tag-travel'], complete: true });
+  await saveCheckIn(deps, { at: at('2026-01-12T21:00:00.000Z'), wellbeing: 5, stress: 2, bloating: true, tags: ['tag-travel'], complete: true, confirmEmptyDay: true });
   await logStool(deps, { bristol: 6, at: at('2026-01-12T07:00:00.000Z') });
   const cream = await addListItem(deps, 'treatments', 'Synthetic cream');
   await applyTreatment(deps, { treatmentId: cream.id, areaIds: ['area-chin'], at: at('2026-01-13T21:00:00.000Z') });

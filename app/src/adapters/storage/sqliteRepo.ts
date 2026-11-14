@@ -1,6 +1,6 @@
 import { PREDEFINED_AREAS } from '@/core/model/areas';
 import { PREDEFINED_ITEMS } from '@/core/model/lists';
-import type { Preferences } from '@/core/model/preferences';
+import { defaultPreferences, type Preferences } from '@/core/model/preferences';
 import { recordRefs } from '@/core/model/refs';
 import {
   EXTRA_KINDS,
@@ -371,7 +371,18 @@ export class SqliteRepo implements StorageRepository {
 
   async getPreferences(): Promise<Preferences | null> {
     const [row] = await this.db.all<{ json: string }>('SELECT json FROM preference WHERE id = 1');
-    return row ? (JSON.parse(row.json) as Preferences) : null;
+    if (!row) return null;
+    // Preferences saved before a setting existed lack it: fill the gaps from the defaults.
+    const saved = JSON.parse(row.json) as Partial<Preferences>;
+    const d = defaultPreferences();
+    return {
+      ...d,
+      ...saved,
+      favorites: { ...d.favorites, ...saved.favorites },
+      suggestions: { ...d.suggestions, ...saved.suggestions },
+      quickActions: { ...d.quickActions, ...saved.quickActions },
+      checkInScores: { ...d.checkInScores, ...saved.checkInScores },
+    };
   }
 
   async setPreferences(p: Preferences) {

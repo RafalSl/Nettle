@@ -347,3 +347,8 @@ Newest entry last. One short entry per working session or meaningful step: what 
 ## 2026-11-14: trend chart and photo comparison (branch feature/review-compare-trends)
 - **Done:** SK-8, UX-1. The area timeline has a score chart and a two-photo comparison. 653 tests pass; the iOS bundle builds.
 - **Left (not built):** first-run empty states beyond text, check-in trend charts, newest-wins merge (EX-12), the accessibility pass (UX-8), the Polish string review, pruning unused template dependencies, and the phone check of everything.
+
+## 2026-11-14: fix crash on Today check-in (stale preferences)
+- Tapping "Reopen day" / "Finish day" crashed `CheckInForm`: preferences stored before `checkInScores` existed had no such field, so `scoresOn[k]` threw.
+- `SqliteRepo.getPreferences` now fills any missing setting from the defaults (nested groups too). Test added (650 total).
+- Next: phone verification checklist.

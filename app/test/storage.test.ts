@@ -27,6 +27,17 @@ describe('sqlite migrations', () => {
     expect(v?.user_version).toBe(MIGRATIONS.length);
   });
 
+  it('NF-3 preferences saved before a setting existed get its default instead of undefined', async () => {
+    const db = createNodeSqliteDb();
+    const repo = await SqliteRepo.open(db);
+    await db.run('INSERT INTO preference (id, json) VALUES (1, ?)', [JSON.stringify({ dayStartHour: 3, favorites: { meals: [] } })]);
+    const p = await repo.getPreferences();
+    expect(p?.dayStartHour).toBe(3);
+    expect(p?.checkInScores).toEqual({ wellbeing: true, stress: true, sleep: true, abdominalPain: true });
+    expect(p?.favorites.drinks).toEqual([]);
+    expect(p?.suggestions.rows).toBe(5);
+  });
+
   it('NF-3 upgrades an existing version-1 database in place and keeps its data', async () => {
     const db = createNodeSqliteDb();
     await db.exec('PRAGMA foreign_keys = ON');

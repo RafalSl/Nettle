@@ -44,6 +44,11 @@ export default function SuggestionSettingsScreen() {
         <Switch value={s.saveOnTap} onValueChange={(saveOnTap) => void change({ saveOnTap })} accessibilityLabel={t('sugg.saveOnTap')} />
       </View>
       <Hint>{t('sugg.saveOnTapHint')}</Hint>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Text style={styles.rowText}>{t('sugg.knownNames')}</Text>
+        <Switch value={s.knownNames} onValueChange={(knownNames) => void change({ knownNames })} accessibilityLabel={t('sugg.knownNames')} />
+      </View>
+      <Hint>{t('sugg.knownNamesHint')}</Hint>
     </Screen>
   );
 }

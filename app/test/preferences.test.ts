@@ -39,7 +39,7 @@ describe.each(repos)('preferences (%s)', (_name, make) => {
 
   it('IN-14 suggestion settings are validated and stored', async () => {
     const deps = makeDeps(await make());
-    expect(await updateSuggestionSettings(deps, { rows: 8, windowDays: 14, saveOnTap: true })).toEqual({ rows: 8, windowDays: 14, saveOnTap: true });
+    expect(await updateSuggestionSettings(deps, { rows: 8, windowDays: 14, saveOnTap: true })).toEqual({ rows: 8, windowDays: 14, saveOnTap: true, knownNames: false });
     expect((await getPreferences(deps)).suggestions.rows).toBe(8);
     expect(await code(updateSuggestionSettings(deps, { rows: 0 }))).toBe('invalid_value');
     expect(await code(updateSuggestionSettings(deps, { rows: 21 }))).toBe('invalid_value');

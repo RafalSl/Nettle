@@ -35,6 +35,8 @@ export interface SuggestionSettings {
   rows: number;
   windowDays: WindowDays;
   saveOnTap: boolean;
+  /** IN-3: the meal photo prompt prefers ingredient names already used in the diary (off by default). */
+  knownNames: boolean;
 }
 
 /** UX-2: the quick actions Today can show; the layout is order plus the hidden ones. */
@@ -58,7 +60,7 @@ export const MAX_SUGGESTION_ROWS = 20;
 
 export const DEFAULT_PREFERENCES: Preferences = {
   favorites: { meals: [], drinks: [], medications: [] },
-  suggestions: { rows: 5, windowDays: 30, saveOnTap: false },
+  suggestions: { rows: 5, windowDays: 30, saveOnTap: false, knownNames: false },
   quickActions: { order: [...QUICK_ACTIONS], hidden: [] },
   dayStartHour: 0,
 };

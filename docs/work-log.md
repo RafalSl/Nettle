@@ -290,3 +290,7 @@ Newest entry last. One short entry per working session or meaningful step: what 
 - **Done:** LL-14, EX-3, EX-4, LL-9. New record kind `reportSummaries` with its table (migration 15), codec and delete group; prompt `summary-1`; `core/usecases/summary.ts`; `ReportSummaryPanel` on the Doctor report screen (billing confirmation listing what is sent, no photos, elapsed time, Cancel, review and edit, "Use in the report"); the PDF opens with the kept text under the AI label and a note when it was edited. Changing the period or the language remounts the panel (a new summary is needed) and `exportBundle` refuses a stale `summaryId`. 612 tests pass.
 - **Trade-off:** the run lives in the screen, not in the `AnalysisRunner`, so leaving the screen cancels it (nothing is stored); an analysis survives that.
 - **Next:** leftovers from earlier work (see "Not built" in `docs/open-questions.md`).
+
+## 2026-11-14: known-names setting (branch feature/known-names)
+- **Done:** IN-3, LL-5. A setting (off by default, Suggestions screen) lets the meal photo prompt prefer ingredient names already used in the diary; only names are sent, and the billing confirmation states how many. Prompt `ingredients-2`. 615 tests pass.
+- **Next:** flare start and end in More (SK-6).

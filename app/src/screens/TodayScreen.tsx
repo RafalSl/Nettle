@@ -1,4 +1,4 @@
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Pressable, Text, View } from 'react-native';
 import { addDays, atOnDay, localDateTime, localDay } from '@/core/model/time';
@@ -18,6 +18,9 @@ import { Button, Heading, Hint, Label, Screen, styles } from '@/ui/components';
 /** IN-11: a shortcut chip is disabled this long after a tap so a double tap cannot log twice. */
 const SHORTCUT_LOCK_MS = 3000;
 
+/** A "YYYY-MM-DD" route parameter, or null. */
+const validDay = (v: unknown): string | null => (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null);
+
 const Card = ({ children }: { children: React.ReactNode }) => (
   <View style={{ borderWidth: 1, borderColor: '#9993', borderRadius: 10, padding: 12, gap: 8 }}>{children}</View>
 );
@@ -31,7 +34,11 @@ const Card = ({ children }: { children: React.ReactNode }) => (
 export default function TodayScreen() {
   const { deps } = useServices();
   const router = useRouter();
-  const [chosen, setChosen] = useState<string | null>(null);
+  const { day: dayParam } = useLocalSearchParams<{ day?: string }>();
+  // A day picked on this screen wins until the route parameter (from the Review days list) changes again.
+  const [pick, setPick] = useState<{ param: string | undefined; day: string | null } | null>(null);
+  const chosen = pick && pick.param === dayParam ? pick.day : validDay(dayParam);
+  const setChosen = (d: string | null) => setPick({ param: dayParam, day: d });
   const [rows, setRows] = useState<LogRow[]>([]);
   const [ctx, setCtx] = useState<{ areas: SkinArea[]; treatments: ListItem[] }>({ areas: [], treatments: [] });
   const [status, setStatus] = useState<DayStatus | null>(null);
@@ -45,7 +52,7 @@ export default function TodayScreen() {
   // After midnight an unchosen day moves on by itself: `today` is read again on every render and focus.
   const now = deps.clock.now();
   const today = localDay(now.toISOString(), deps.clock.timeZone());
-  const day = chosen ?? today;
+  const day = chosen && chosen < today ? chosen : today; // a chosen day is never in the future
   const isToday = day === today;
   const atNow = () => atOnDay(day, deps.clock.now(), deps.clock.timeZone());
 

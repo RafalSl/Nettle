@@ -87,7 +87,14 @@
     "passwordHint": "Szyfruje plik ZIP algorytmem AES-256. Użyj długiej frazy (co najmniej 12 znaków). Zapomnianego hasła nie da się odzyskać. Nazwy plików pozostają widoczne, a do otwarcia pliku potrzebne jest narzędzie, np. 7-Zip.",
     "unlockTitle": "Ten plik jest chroniony hasłem",
     "unlockPassword": "Hasło do pliku",
-    "unlockButton": "Odblokuj"
+    "unlockButton": "Odblokuj",
+    "backupTitle": "Pełna kopia",
+    "backupHint": "Wpisy i ustawienia ze wszystkimi zdjęciami, także wrażliwymi, w jednym pliku ZIP. Użyj jej do kopii zapasowej lub przeniesienia na inny telefon. Każdy, kto otworzy plik, przeczyta Twój dziennik.",
+    "backupButton": "Utwórz pełną kopię",
+    "customTitle": "Eksport do wyboru",
+    "tombstoneSkipped": "{{n}} wpisów z tego pliku usunięto na tym telefonie lub w pliku, więc scalanie je pomija.",
+    "tombstoneRestore": "Przywróć te usunięte na tym telefonie",
+    "tombstoneRemoves": "{{n}} wpisów na tym telefonie usunięto w tym pliku, więc scalanie usuwa je też tutaj."
   },
   "errors": {
     "generic": "Coś poszło nie tak.",
@@ -511,7 +518,8 @@
     "ai": "Analiza AI",
     "data": "Dane i kopia",
     "analysis": "Analiza AI",
-    "gear": "Ustawienia"
+    "gear": "Ustawienia",
+    "report": "Raport"
   },
   "home": {
     "quickActions": "Szybkie akcje",
@@ -529,7 +537,12 @@
   "review": {
     "empty": "Na razie nie ma czego przeglądać. Wpisy dodane w Dziś pojawią się tutaj.",
     "analysis": "Analiza AI",
-    "export": "Eksport i import"
+    "export": "Eksport i import",
+    "report": "Raport dla lekarza",
+    "days": "Dni",
+    "dayRow": "{{day}}: {{n}} wpisów",
+    "dayComplete": "zamknięty",
+    "noDays": "Nie zapisano jeszcze żadnego dnia."
   },
   "day": {
     "previous": "Poprzedni dzień",
@@ -600,5 +613,19 @@
     "bloating": "Wzdęcia",
     "unavailable": "Tego wpisu nie można już edytować.",
     "ingredientsHint": "Oddziel składniki przecinkami."
+  },
+  "doctor": {
+    "range": "Okres",
+    "since": "Od ostatniego eksportu",
+    "last30": "Ostatnie 30 dni",
+    "last90": "Ostatnie 90 dni",
+    "all": "Wszystko",
+    "counts": "{{entries}} wpisów i {{photos}} zdjęć w tym okresie.",
+    "sensitive": "Dołącz zdjęcia wrażliwe ({{n}})",
+    "sensitiveHint": "Domyślnie wyłączone. Zdjęcia wrażliwe opuszczają telefon tylko po włączeniu tej opcji.",
+    "language": "Język raportu",
+    "empty": "W tym okresie nie ma nic do wyeksportowania.",
+    "button": "Utwórz raport dla lekarza",
+    "hint": "Raport PDF z surowymi danymi, dla lekarza. Tylko wpisy; pełną kopię zrobisz w Danych i kopii."
   }
 }

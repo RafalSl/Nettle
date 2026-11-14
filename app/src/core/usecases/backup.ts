@@ -1,6 +1,8 @@
-import { localDay } from '../model/time';
+import { NettleError } from '../model/errors';
+import { localDay, localDaysToRange } from '../model/time';
 import type { PhotoSelection } from '../export/photoSelection';
 import type { Deps } from './deps';
+import { LOG_KINDS } from './dayLog';
 import type { ExportOptions } from './exchange';
 
 const LAST_EXPORT = 'lastExportAt';
@@ -56,4 +58,22 @@ export function presetOptions(preset: ExportPreset): ExportOptions {
     report: preset.report,
     csv: preset.csv,
   };
+}
+
+export interface ReportPreview {
+  /** Diary entries in the period (photos and AI analyses are counted apart or not at all). */
+  entries: number;
+  photos: number;
+  sensitivePhotos: number;
+}
+
+/** EX-14: what a Doctor report for these local days would hold, so the screen can show counts before sharing. */
+export async function reportPreview(deps: Deps, days: { from?: string; to?: string }): Promise<ReportPreview> {
+  const range = localDaysToRange(days.from, days.to, deps.clock.timeZone());
+  if (!range) throw new NettleError('invalid_range');
+  const snap = await deps.repo.snapshot(range);
+  const entries = LOG_KINDS.reduce((n, k) => n + snap[k].length, 0);
+  const ids = new Set([...snap.skinEntries, ...snap.nailEntries].map((e) => e.id));
+  const photos = (await deps.repo.listRecords('photos')).filter((p) => ids.has(p.entryId));
+  return { entries, photos: photos.length, sensitivePhotos: photos.filter((p) => p.sensitive).length };
 }

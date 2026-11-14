@@ -8,6 +8,9 @@ import { logMeal } from '@/core/usecases/logMeal';
 import { addArea, logNailEntry, logSkinEntry } from '@/core/usecases/skin';
 import { logStool, saveCheckIn } from '@/core/usecases/checkin';
 import { logAlcohol, logMedication } from '@/core/usecases/intake';
+import { addPhoto } from '@/core/usecases/photos';
+import { applyImport, exportBundle, previewImport } from '@/core/usecases/exchange';
+import { deleteEntry } from '@/core/usecases/entries';
 import { applyTreatment, logChangeEvent, logReaction } from '@/core/usecases/events';
 import { addListItem } from '@/core/usecases/lists';
 import { markFlare } from '@/core/usecases/flares';
@@ -18,7 +21,7 @@ import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { MemoryRepo } from '../fakes/memoryRepo';
 import { makeDeps } from '../helpers/fixtures';
 
-const mockRouter = { push: jest.fn(), back: jest.fn() };
+const mockRouter = { push: jest.fn(), back: jest.fn(), navigate: jest.fn() };
 const mockParams: { current: Record<string, string> } = { current: {} };
 const mockScreen: { options?: { headerLeft?: () => React.ReactElement; headerRight?: () => React.ReactElement; gestureEnabled?: boolean } } = {};
 
@@ -59,6 +62,7 @@ const screens: [string, () => { default: React.ComponentType }][] = [
   ['settings ai', () => require('@/app/(tabs)/today/settings/ai')],
   ['settings data', () => require('@/app/(tabs)/today/settings/data')],
   ['review', () => require('@/app/(tabs)/review/index')],
+  ['doctor report', () => require('@/app/(tabs)/review/report')],
   ['analysis', () => require('@/app/(tabs)/review/analysis')],
   ['form meal', () => require('@/app/form/meal')],
   ['form skin', () => require('@/app/form/skin')],
@@ -630,5 +634,137 @@ describe('Edit entry (EN-1, UX-3)', () => {
     const { tree } = await mount(edit, nowDeps());
     await flush();
     expect(hasText(tree, en.edit.unavailable)).toBe(true);
+  });
+});
+
+describe('Data and backup (EX-14, EX-10, EX-13)', () => {
+  beforeEach(() => {
+    jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+  });
+  afterEach(() => jest.restoreAllMocks());
+  const data = () => require('@/app/(tabs)/today/settings/data');
+
+  it('EX-14, EX-11 the full backup holds records, settings and sensitive photos, and remembers the export', async () => {
+    const deps = nowDeps();
+    const entry = await logSkinEntry(deps, { areaId: 'area-intimate', scores });
+    await addPhoto(deps, { entryKind: 'skinEntry', entryId: entry.id, sourceUri: 'secret' });
+    const { tree, fileShare } = await mount(data, deps);
+    expect(await deps.settings.get('lastExportAt')).toBeNull();
+    await press(tree, en.data.backupButton);
+    await flush();
+    const [name, bytes] = fileShare.saveAndShare.mock.calls[0] as unknown as [string, Uint8Array];
+    expect(name).toMatch(/^nettle-backup-\d{4}-\d{2}-\d{2}\.zip$/);
+    const files = Object.keys(unzipSync(bytes));
+    expect(files).toContain('data.json');
+    expect(files.some((f) => f.startsWith('photos/'))).toBe(true);
+    expect(await deps.settings.get('lastExportAt')).not.toBeNull();
+  });
+
+  it('EX-3 the report language starts as the app language', async () => {
+    const { tree } = await mount(data, nowDeps());
+    await toggle(tree, en.export.report);
+    const english = tree.root.findAll((n) => n.props.accessibilityLabel === en.export.english)[0]!;
+    expect(english.props.accessibilityState).toMatchObject({ selected: true });
+  });
+
+  it('EX-10, EX-13 the import preview counts tombstone skips, and the switch restores what this phone deleted', async () => {
+    const phoneA = nowDeps();
+    const meal = await logMeal(phoneA, { description: 'Synthetic oats', ingredients: [], at: new Date(Date.now() - 3600_000) });
+    const backup = await exportBundle(phoneA);
+    const phoneB = nowDeps();
+    await applyImport(phoneB, await previewImport(phoneB, backup), { mode: 'replace', parts: { records: true, settings: true } });
+    await deleteEntry(phoneB, 'meals', meal.id);
+    const { tree } = await mount(data, phoneB, { saveAndShare: jest.fn(async () => undefined), pickFile: jest.fn(async () => backup as unknown as null) });
+    await press(tree, en.data.importButton);
+    await flush();
+    expect(hasText(tree, en.data.tombstoneSkipped.replace('{{n}}', '1'))).toBe(true);
+    await press(tree, en.data.merge);
+    await flush();
+    expect(await phoneB.repo.listMeals()).toEqual([]); // skipped
+
+    await press(tree, en.data.importButton);
+    await flush();
+    await toggle(tree, en.data.tombstoneRestore);
+    await press(tree, en.data.merge);
+    await flush();
+    expect((await phoneB.repo.listMeals()).map((m) => m.id)).toEqual([meal.id]);
+    expect(await phoneB.repo.listTombstones()).toEqual([]);
+  });
+});
+
+describe('Review (UX-1, EX-14)', () => {
+  beforeEach(() => {
+    jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    mockRouter.push.mockClear();
+    mockRouter.navigate.mockClear();
+    mockParams.current = {};
+  });
+  afterEach(() => jest.restoreAllMocks());
+
+  it('UX-1 the days list shows logged days newest first and opens one on Today', async () => {
+    const deps = nowDeps();
+    await logMeal(deps, { description: 'Synthetic oats', ingredients: [], at: new Date('2026-01-10T08:00:00.000Z') });
+    await logMeal(deps, { description: 'Synthetic soup', ingredients: [], at: new Date('2026-01-12T08:00:00.000Z') });
+    await logStool(deps, { bristol: 4, at: new Date('2026-01-12T09:00:00.000Z') });
+    const { tree } = await mount(() => require('@/app/(tabs)/review/index'), deps);
+    await flush();
+    const first = en.review.dayRow.replace('{{day}}', '2026-01-12').replace('{{n}}', '2');
+    expect(JSON.stringify(tree.toJSON()).indexOf(first)).toBeGreaterThan(-1);
+    await press(tree, first);
+    expect(mockRouter.navigate).toHaveBeenLastCalledWith({ pathname: '/today', params: { day: '2026-01-12' } });
+    await press(tree, en.review.report);
+    expect(mockRouter.push).toHaveBeenLastCalledWith('/review/report');
+  });
+
+  it('UX-1 an empty Review explains why', async () => {
+    const { tree } = await mount(() => require('@/app/(tabs)/review/index'), nowDeps());
+    await flush();
+    expect(hasText(tree, en.review.noDays)).toBe(true);
+  });
+
+  it('UX-2 Today opens the day given in the route parameter', async () => {
+    const deps = nowDeps();
+    await logMeal(deps, { description: 'Synthetic old meal', ingredients: [], at: new Date('2026-01-10T08:00:00.000Z') });
+    mockParams.current = { day: '2026-01-10' };
+    const { tree } = await mount(() => require('@/app/(tabs)/today/index'), deps);
+    await flush();
+    expect(hasText(tree, 'Synthetic old meal')).toBe(true);
+    expect(hasText(tree, '2026-01-10')).toBe(true);
+  });
+
+  it('EX-14, EX-7 the doctor report counts the period, leaves sensitive photos out until asked, and remembers the export', async () => {
+    const deps = nowDeps();
+    const entry = await logSkinEntry(deps, { areaId: 'area-intimate', scores, at: new Date(Date.now() - 86_400_000) });
+    await addPhoto(deps, { entryKind: 'skinEntry', entryId: entry.id, sourceUri: 'secret' });
+    const { tree, fileShare } = await mount(() => require('@/app/(tabs)/review/report'), deps);
+    await flush();
+    expect(hasText(tree, en.doctor.counts.replace('{{entries}}', '1').replace('{{photos}}', '1'))).toBe(true);
+    await press(tree, en.doctor.button);
+    await flush();
+    const [name, bytes] = fileShare.saveAndShare.mock.calls[0] as unknown as [string, Uint8Array];
+    expect(name).toMatch(/^nettle-report-/);
+    const files = Object.keys(unzipSync(bytes));
+    expect(files).toEqual(expect.arrayContaining(['data.json', 'report.pdf']));
+    expect(files.some((f) => f.startsWith('photos/'))).toBe(false); // sensitive photo left out
+    expect(await deps.settings.get('lastExportAt')).not.toBeNull();
+    await toggle(tree, en.doctor.sensitive.replace('{{n}}', '1'));
+    await press(tree, en.doctor.button);
+    await flush();
+    const second = Object.keys(unzipSync((fileShare.saveAndShare.mock.calls[1] as unknown as [string, Uint8Array])[1]));
+    expect(second.some((f) => f.startsWith('photos/'))).toBe(true);
+  });
+
+  it('EX-14 with nothing in the period the button is disabled and says why; after an export "since last export" is the default', async () => {
+    const deps = nowDeps();
+    const { tree } = await mount(() => require('@/app/(tabs)/review/report'), deps);
+    await flush();
+    expect(hasText(tree, en.doctor.empty)).toBe(true);
+    const button = tree.root.findAll((n) => n.props.accessibilityLabel === en.doctor.button && n.props.accessibilityState)[0]!;
+    expect(button.props.accessibilityState.disabled).toBe(true);
+    expect(hasText(tree, en.doctor.since)).toBe(false);
+    await deps.settings.set('lastExportAt', new Date().toISOString());
+    const again = await mount(() => require('@/app/(tabs)/review/report'), deps);
+    await flush();
+    expect(again.tree.root.findAll((n) => n.props.accessibilityLabel === en.doctor.since && n.props.accessibilityState?.selected)).not.toHaveLength(0);
   });
 });

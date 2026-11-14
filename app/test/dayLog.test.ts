@@ -1,6 +1,8 @@
 import { atOnDay, localDay } from '@/core/model/time';
 import { archiveListItem, addListItem } from '@/core/usecases/lists';
-import { dayLog, dayStatus, treatmentShortcuts } from '@/core/usecases/dayLog';
+import { dayLog, dayStatus, daysWithEntries, treatmentShortcuts } from '@/core/usecases/dayLog';
+import { reportPreview } from '@/core/usecases/backup';
+import { addPhoto } from '@/core/usecases/photos';
 import { saveCheckIn, logStool } from '@/core/usecases/checkin';
 import { applyTreatment, logReaction } from '@/core/usecases/events';
 import { logMeal } from '@/core/usecases/logMeal';
@@ -89,5 +91,31 @@ describe('entries on a chosen day (UX-2)', () => {
     const at = atOnDay('2026-01-10', now, tz);
     expect(localDay(at.toISOString(), tz)).toBe('2026-01-10');
     expect(at.toISOString()).toBe('2026-01-10T22:45:00.000Z');
+  });
+});
+
+describe('days list and report preview (UX-1, EX-14)', () => {
+  it('UX-1 lists the days with entries newest first, with a count and the complete mark', async () => {
+    const deps = makeDeps(new MemoryRepo());
+    await logMeal(deps, { description: 'Synthetic oats', ingredients: [], at: d('2026-01-10T08:00:00.000Z') });
+    await logMeal(deps, { description: 'Synthetic soup', ingredients: [], at: d('2026-01-12T08:00:00.000Z') });
+    await saveCheckIn(deps, { at: d('2026-01-12T20:00:00.000Z'), complete: true });
+    expect(await daysWithEntries(deps)).toEqual([
+      { day: '2026-01-12', entries: 2, complete: true },
+      { day: '2026-01-10', entries: 1, complete: false },
+    ]);
+    expect(await daysWithEntries(deps, 1)).toHaveLength(1);
+  });
+
+  it('EX-14 the report preview counts entries and photos of the period, and the sensitive ones apart', async () => {
+    const deps = makeDeps(new MemoryRepo());
+    const inside = await logSkinEntry(deps, { areaId: 'area-intimate', scores, at: d('2026-01-12T08:00:00.000Z') });
+    const outside = await logSkinEntry(deps, { areaId: 'area-chin', scores, at: d('2026-02-12T08:00:00.000Z') });
+    await addPhoto(deps, { entryKind: 'skinEntry', entryId: inside.id, sourceUri: 'a' });
+    await addPhoto(deps, { entryKind: 'skinEntry', entryId: inside.id, sourceUri: 'b', sensitive: false });
+    await addPhoto(deps, { entryKind: 'skinEntry', entryId: outside.id, sourceUri: 'c' });
+    expect(await reportPreview(deps, { from: '2026-01-01', to: '2026-01-31' })).toEqual({ entries: 1, photos: 2, sensitivePhotos: 1 });
+    expect(await reportPreview(deps, {})).toMatchObject({ entries: 2, photos: 3 });
+    await expect(reportPreview(deps, { from: 'nope' })).rejects.toThrow();
   });
 });

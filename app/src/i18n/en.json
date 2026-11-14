@@ -87,7 +87,14 @@
     "passwordHint": "Encrypts the ZIP with AES-256. Use a long passphrase (at least 12 characters). A forgotten password cannot be recovered. File names stay visible, and opening the file needs a tool such as 7-Zip.",
     "unlockTitle": "This file is password protected",
     "unlockPassword": "File password",
-    "unlockButton": "Unlock"
+    "unlockButton": "Unlock",
+    "backupTitle": "Full backup",
+    "backupHint": "Records and settings with all photos, sensitive ones included, in one ZIP. Use it to back up or to move to another phone. Anyone who opens the file can read your diary.",
+    "backupButton": "Create full backup",
+    "customTitle": "Custom export",
+    "tombstoneSkipped": "{{n}} entries in this file were deleted on this phone or in the file, so merge skips them.",
+    "tombstoneRestore": "Restore the ones deleted on this phone",
+    "tombstoneRemoves": "{{n}} entries on this phone were deleted in this file, so merge deletes them here too."
   },
   "errors": {
     "generic": "Something went wrong.",
@@ -511,7 +518,8 @@
     "ai": "AI analysis",
     "data": "Data & backup",
     "analysis": "AI analysis",
-    "gear": "Settings"
+    "gear": "Settings",
+    "report": "Doctor report"
   },
   "home": {
     "quickActions": "Quick actions",
@@ -529,7 +537,12 @@
   "review": {
     "empty": "Nothing to review yet. Entries you log on Today show up here.",
     "analysis": "AI analysis",
-    "export": "Export and import"
+    "export": "Export and import",
+    "report": "Doctor report",
+    "days": "Days",
+    "dayRow": "{{day}}: {{n}} entries",
+    "dayComplete": "complete",
+    "noDays": "No days logged yet."
   },
   "day": {
     "previous": "Previous day",
@@ -600,5 +613,19 @@
     "bloating": "Bloating",
     "unavailable": "This entry can no longer be edited.",
     "ingredientsHint": "Separate ingredients with commas."
+  },
+  "doctor": {
+    "range": "Period",
+    "since": "Since last export",
+    "last30": "Last 30 days",
+    "last90": "Last 90 days",
+    "all": "Everything",
+    "counts": "{{entries}} entries and {{photos}} photos in this period.",
+    "sensitive": "Include sensitive photos ({{n}})",
+    "sensitiveHint": "Off by default. Sensitive photos leave the phone only when you turn this on.",
+    "language": "Report language",
+    "empty": "Nothing to export in this period.",
+    "button": "Create doctor report",
+    "hint": "A PDF report with the raw data, for a doctor. Records only; use Data and backup for a full backup."
   }
 }

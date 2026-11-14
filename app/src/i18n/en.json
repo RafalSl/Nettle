@@ -417,7 +417,10 @@
     "limits": "What the data cannot show",
     "suggestions": "Ideas",
     "meta": "{{date}} · {{from}} to {{to}} · {{model}} · prompt {{prompt}}",
-    "noHypotheses": "No pattern stands out."
+    "noHypotheses": "No pattern stands out.",
+    "interrupted": "The analysis was interrupted when the app was left. Nothing was saved.",
+    "retry": "Try again",
+    "failedNote": "Nothing was saved."
   },
   "report": {
     "title": "Skin and health diary: report",
@@ -566,7 +569,11 @@
     "days": "Days",
     "dayRow": "{{day}}: {{n}} entries",
     "dayComplete": "complete",
-    "noDays": "No days logged yet."
+    "noDays": "No days logged yet.",
+    "runRunning": "Analysis running",
+    "runReady": "Analysis ready",
+    "runInterrupted": "Analysis interrupted, nothing saved",
+    "runFailed": "Analysis failed, nothing saved"
   },
   "day": {
     "previous": "Previous day",

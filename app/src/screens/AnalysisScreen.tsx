@@ -1,15 +1,16 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, View } from 'react-native';
 import { NettleError } from '@/core/model/errors';
 import { localDateTime, localDay } from '@/core/model/time';
 import { RECORD_KINDS, type Analysis, type Photo } from '@/core/model/types';
 import type { Deps } from '@/core/usecases/deps';
-import { listAnalyses, prepareAnalysis, runAnalysis, type PreparedAnalysis } from '@/core/usecases/analysis';
+import { listAnalyses, prepareAnalysis } from '@/core/usecases/analysis';
 import { areaLabel, currentLanguage, errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
 import { AnalysisView } from '@/ui/AnalysisView';
+import { useAnalysisRun } from '@/ui/useAnalysisRun';
 import { Button, Chips, Heading, Hint, Label, Screen, styles } from '@/ui/components';
 
 /** Earlier analyses, and the photos taken in the chosen days with a label for each. */
@@ -40,10 +41,9 @@ export default function AnalysisScreen() {
   const [to, setTo] = useState(() => new Date());
   const [photos, setPhotos] = useState<{ photo: Photo; label: string }[]>([]);
   const [chosen, setChosen] = useState<Set<string>>(new Set());
-  const [busy, setBusy] = useState(false);
+  const { analysisRunner: runner } = useServices();
+  const run = useAnalysisRun();
   const [elapsed, setElapsed] = useState(0);
-  const [note, setNote] = useState<string | null>(null);
-  const controller = useRef<AbortController | null>(null);
   const [past, setPast] = useState<Analysis[]>([]);
   const [shown, setShown] = useState<Analysis | null>(null);
 
@@ -67,34 +67,22 @@ export default function AnalysisScreen() {
       return next;
     });
 
-  // LL-12: elapsed time while the request runs.
+  // LL-12: elapsed time while the request runs. The run itself lives in the runner, so it goes on when this screen is left.
+  const startedAt = run.status === 'running' ? run.startedAt : null;
   useEffect(() => {
-    if (!busy) return;
-    const started = Date.now();
-    const id = setInterval(() => setElapsed(Math.floor((Date.now() - started) / 1000)), 1000);
+    if (startedAt === null) return;
+    const tick = () => setElapsed(Math.floor((Date.now() - startedAt) / 1000));
+    const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [busy]);
+  }, [startedAt]);
 
-  async function run(prepared: PreparedAnalysis) {
-    const ctl = new AbortController();
-    controller.current = ctl;
-    setNote(null);
-    setElapsed(0);
-    setBusy(true);
-    try {
-      const analysis = await runAnalysis(deps, prepared, ctl.signal);
-      setShown(analysis);
-      reload();
-      Alert.alert(t('analysis.saved'));
-    } catch (e) {
-      // LL-8, LL-12: nothing was saved, nothing changed. A cancel is the user's own choice, so it is a note, not an alert.
-      if (e instanceof NettleError && e.code === 'llm_cancelled') setNote(errorMessage(e));
-      else Alert.alert(errorMessage(e));
-    } finally {
-      controller.current = null;
-      setBusy(false);
-    }
-  }
+  // A finished run shows its result here; the stored list refreshes, and leaving the screen clears the Review card.
+  const finished = run.status === 'ready' ? run.analysis : null;
+  useEffect(() => {
+    if (finished) reload();
+  }, [finished, reload]);
+  useFocusEffect(useCallback(() => () => runner.dismiss(), [runner]));
+  const shownNow = finished ?? shown;
 
   async function review() {
     try {
@@ -118,7 +106,7 @@ export default function AnalysisScreen() {
       ];
       Alert.alert(t('analysis.confirmTitle'), lines.join('\n'), [
         { text: t('analysis.cancel'), style: 'cancel' },
-        { text: t('analysis.send'), onPress: () => run(prepared) },
+        { text: t('analysis.send'), onPress: () => runner.start(prepared) },
       ]);
     } catch (e) {
       Alert.alert(errorMessage(e));
@@ -150,21 +138,24 @@ export default function AnalysisScreen() {
         />
       )}
 
-      {busy ? (
+      {run.status === 'running' ? (
         <>
           <ActivityIndicator />
           <Hint>{t('analysis.running')}</Hint>
           <Hint>{t('analysis.elapsed', { time: clock(elapsed) })}</Hint>
-          <Button title={t('analysis.cancelRun')} kind="secondary" onPress={() => controller.current?.abort()} />
+          <Button title={t('analysis.cancelRun')} kind="secondary" onPress={() => runner.cancel()} />
         </>
       ) : (
         <>
+          {run.status === 'interrupted' && <Hint>{t('analysis.interrupted')}</Hint>}
+          {run.status === 'failed' && <Hint>{`${errorMessage(run.error)} ${t('analysis.failedNote')}`}</Hint>}
+          {run.status === 'cancelled' && <Hint>{errorMessage(new NettleError('llm_cancelled'))}</Hint>}
+          {(run.status === 'interrupted' || run.status === 'failed') && <Button title={t('analysis.retry')} onPress={() => void runner.retry()} />}
           <Button title={t('analysis.review')} onPress={review} />
-          {note && <Hint>{note}</Hint>}
         </>
       )}
 
-      {shown && <AnalysisView analysis={shown} />}
+      {shownNow && <AnalysisView analysis={shownNow} />}
 
       <Heading>{t('analysis.past')}</Heading>
       {past.length === 0 && <Hint>{t('analysis.none')}</Hint>}

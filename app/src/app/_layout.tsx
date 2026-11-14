@@ -1,10 +1,12 @@
 import { Stack, useRootNavigationState, useRouter } from 'expo-router';
+import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { useEffect } from 'react';
-import { Pressable, Text } from 'react-native';
+import { AppState, Pressable, Text } from 'react-native';
 import { applyReminders, resolveReminderTap } from '@/core/usecases/reminders';
 import { reminderTexts, t } from '@/i18n';
 import { ServicesProvider, useServices } from '@/services';
 import { unsavedForm } from '@/ui/formState';
+import { useAnalysisRun } from '@/ui/useAnalysisRun';
 
 /** SK-9: after start-up, make the scheduled reminders match the settings, the nail areas and the app language. */
 function ReminderSync() {
@@ -12,6 +14,25 @@ function ReminderSync() {
   useEffect(() => {
     applyReminders(deps, reminderTexts()).catch(() => undefined); // reminders are a convenience; never block the app
   }, [deps]);
+  return null;
+}
+
+/**
+ * LL-12: the screen stays awake while an analysis runs, and the runner is told when the app is left, so a request
+ * that did not survive shows "interrupted" with a one-tap retry instead of a vague failure.
+ */
+function AnalysisWatcher() {
+  const { analysisRunner } = useServices();
+  const running = useAnalysisRun().status === 'running';
+  useEffect(() => {
+    if (!running) return;
+    void activateKeepAwakeAsync('analysis').catch(() => undefined);
+    const sub = AppState.addEventListener('change', (state) => state !== 'active' && analysisRunner.markBackgrounded());
+    return () => {
+      sub.remove();
+      void deactivateKeepAwake('analysis').catch(() => undefined);
+    };
+  }, [running, analysisRunner]);
   return null;
 }
 
@@ -54,6 +75,7 @@ export default function RootLayout() {
     <ServicesProvider>
       <ReminderSync />
       <ReminderTaps />
+      <AnalysisWatcher />
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="form/meal" options={form(t('nav.meal'))} />

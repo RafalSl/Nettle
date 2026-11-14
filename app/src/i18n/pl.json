@@ -417,7 +417,10 @@
     "limits": "Czego dane nie pokazują",
     "suggestions": "Pomysły",
     "meta": "{{date}} · {{from}} do {{to}} · {{model}} · prompt {{prompt}}",
-    "noHypotheses": "Nic nie wyróżnia się jako wzorzec."
+    "noHypotheses": "Nic nie wyróżnia się jako wzorzec.",
+    "interrupted": "Analiza została przerwana po opuszczeniu aplikacji. Nic nie zapisano.",
+    "retry": "Spróbuj ponownie",
+    "failedNote": "Nic nie zapisano."
   },
   "report": {
     "title": "Dziennik skóry i zdrowia: raport",
@@ -566,7 +569,11 @@
     "days": "Dni",
     "dayRow": "{{day}}: {{n}} wpisów",
     "dayComplete": "zamknięty",
-    "noDays": "Nie zapisano jeszcze żadnego dnia."
+    "noDays": "Nie zapisano jeszcze żadnego dnia.",
+    "runRunning": "Analiza trwa",
+    "runReady": "Analiza gotowa",
+    "runInterrupted": "Analiza przerwana, nic nie zapisano",
+    "runFailed": "Analiza nie powiodła się, nic nie zapisano"
   },
   "day": {
     "previous": "Poprzedni dzień",

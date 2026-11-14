@@ -13,11 +13,14 @@ import { expoFileShare } from '@/adapters/share/expoFileShare';
 import { expoPdfRenderer } from '@/adapters/share/expoPdfRenderer';
 import type { FileShare } from '@/core/ports/platform';
 import type { Deps } from '@/core/usecases/deps';
+import { AnalysisRunner } from '@/core/usecases/analysisRunner';
 import { t } from '@/i18n';
 
 export interface Services {
   deps: Deps;
   fileShare: FileShare;
+  /** LL-12: the analysis run lives here, not in a screen, so it survives leaving the screen. */
+  analysisRunner: AnalysisRunner;
 }
 
 const Ctx = createContext<Services | null>(null);
@@ -51,7 +54,7 @@ export function ServicesProvider({ children }: { children: ReactNode }) {
           llmFor: createAnthropicProvider,
           clock: { now: () => new Date(), timeZone: () => getCalendars()[0]?.timeZone ?? 'UTC' },
         };
-        if (!cancelled) setServices({ deps, fileShare: expoFileShare });
+        if (!cancelled) setServices({ deps, fileShare: expoFileShare, analysisRunner: new AnalysisRunner(deps) });
       } catch {
         // Deliberately no error details: they could include user data.
         if (!cancelled) setFailed(true);

@@ -44,7 +44,7 @@ Requirements and flows are in `docs/requirements.md`, `docs/ux-design.md` and `d
 
 **LLM (LL-5, LL-12, IN-3)**
 - The meal photo estimate is not inline and editable yet and has no Cancel button (the cancel signal already reaches `estimateIngredients`).
-- No keep-awake during an analysis, no running card in Review, no interrupted state with a one-tap retry.
+- Built: the analysis run lives in `AnalysisRunner` (not in a screen), so leaving the screen does not stop it; Review shows a running, ready, interrupted or failed card; the root layout keeps the screen awake during a run (`expo-keep-awake`, unverified in Expo Go) and tells the runner when the app is left; an interrupted or failed run offers a one-tap retry of the same request.
 - Done: a timeout is never retried, the analysis screen shows elapsed time and Cancel (a cancel stores nothing), and both LLM confirmations carry the billing notice.
 
 **Export and import**

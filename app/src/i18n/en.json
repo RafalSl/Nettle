@@ -633,6 +633,12 @@
     "ai": "AI output (ingredient reads, allergen suggestions, summaries, analyses) is a tentative suggestion for you to review, and is marked as AI in exports.",
     "medical": "This app is a diary, not a medical device. It never gives a diagnosis or medical advice; discuss what you see with a doctor."
   },
+  "range": {
+    "from": "From",
+    "to": "To",
+    "invalid": "The first day is after the last day.",
+    "limit": "Only a date range"
+  },
   "nav": {
     "about": "About",
     "flare": "Flare",
@@ -799,6 +805,7 @@
     "since": "Since last export",
     "last30": "Last 30 days",
     "last90": "Last 90 days",
+    "custom": "Choose dates",
     "all": "Everything",
     "counts": "{{entries}} entries and {{photos}} photos in this period.",
     "sensitive": "Include sensitive photos ({{n}})",

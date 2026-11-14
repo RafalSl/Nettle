@@ -335,3 +335,7 @@ Newest entry last. One short entry per working session or meaningful step: what 
 
 ## 2026-11-14: highlighted new row (branch feature/new-row-highlight)
 - **Done:** UX-2. New rows on Today are tinted for 3 seconds. The "Earlier…" stool form was already built; the open-questions note was stale and is fixed. 641 tests pass.
+
+## 2026-11-14: date range pickers (branch feature/date-range-picker)
+- **Done:** EX-1, EX-11, EX-14. A free range for the Doctor report and the custom export. 643 tests pass.
+- **Next:** ingredient autocomplete and favorites for scanned products.

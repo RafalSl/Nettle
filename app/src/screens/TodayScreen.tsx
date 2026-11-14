@@ -78,6 +78,7 @@ export default function TodayScreen() {
           setHighlight(new Set(fresh));
           clearTimeout(highlightTimer.current);
           highlightTimer.current = setTimeout(() => setHighlight(new Set()), HIGHLIGHT_MS);
+          (highlightTimer.current as { unref?: () => void }).unref?.(); // never keeps a test or a process alive
         }
       }
       seenIds.current = { day, ids: new Set(next.map((r) => r.id)), loaded: true };

@@ -4,7 +4,8 @@
     "skin": "Skóra",
     "data": "Dane",
     "today": "Dziś",
-    "more": "Więcej"
+    "more": "Więcej",
+    "analysis": "Analiza AI"
   },
   "common": {
     "save": "Zapisz",
@@ -141,7 +142,10 @@
     "llm_model_not_found": "Nie znaleziono takiego modelu. Sprawdź ustawienie modelu.",
     "llm_refused": "Model odmówił wykonania tego zapytania.",
     "llm_bad_response": "Nie udało się odczytać odpowiedzi. Nic nie zapisano.",
-    "llm_failed": "Zapytanie nie powiodło się. Nic nie zapisano."
+    "llm_failed": "Zapytanie nie powiodło się. Nic nie zapisano.",
+    "analysis_too_large": "Ten zakres dat jest za duży do wysłania. Wybierz krótszy.",
+    "analysis_no_data": "W tym zakresie dat nic nie zapisano.",
+    "too_many_photos": "Za dużo zdjęć na jedno uruchomienie. Wybierz mniej."
   },
   "today": {
     "title": "Codzienna kontrola",
@@ -284,7 +288,8 @@
     "groups": {
       "food": "Jedzenie i przyjmowane substancje (posiłki, reakcje, alkohol, leki)",
       "skin": "Skóra i paznokcie (wpisy, zdjęcia, zastosowane zabiegi)",
-      "health": "Codzienne kontrole, stolec i zmiany"
+      "health": "Codzienne kontrole, stolec i zmiany",
+      "ai": "Analizy AI"
     },
     "limit": "Tylko zakres dat",
     "from": "Od",
@@ -307,7 +312,8 @@
       "treatmentApplications": "zastosowane zabiegi: {{n}}",
       "checkIns": "codzienne kontrole: {{n}}",
       "stoolEntries": "wpisy o stolcu: {{n}}",
-      "changeEvents": "zmiany: {{n}}"
+      "changeEvents": "zmiany: {{n}}",
+      "analyses": "analizy AI: {{n}}"
     }
   },
   "exportPhotos": {
@@ -333,5 +339,47 @@
     "modelSave": "Zapisz model",
     "modelHint": "Zostaw puste, aby użyć domyślnego.",
     "saved": "Zapisano"
+  },
+  "analysis": {
+    "open": "Analiza AI mojego dziennika",
+    "title": "Analiza AI",
+    "disclaimer": "Wygenerowane przez AI, wstępne. To możliwe wzorce do omówienia z lekarzem, nie diagnoza ani porada medyczna.",
+    "from": "Od",
+    "to": "Do",
+    "photos": "Zdjęcia",
+    "photosHint": "Zdjęcia nie są wysyłane, dopóki ich nie wybierzesz. Wrażliwe są oznaczone.",
+    "sensitiveMark": "wrażliwe",
+    "photosNone": "Brak zdjęć w tym zakresie.",
+    "review": "Sprawdź, co zostanie wysłane",
+    "confirmTitle": "Wysłać to do Anthropic?",
+    "confirmIntro": "Te dane opuszczają telefon i są wysyłane przez internet do Anthropic z użyciem Twojego klucza API. Kosztuje to na Twoim koncie. Nic nie zostanie wysłane bez Twojego potwierdzenia.",
+    "range": "Dni: od {{from}} do {{to}} ({{days}} dni, {{complete}} oznaczonych jako zamknięte)",
+    "lookback": "Dla kontekstu dołączono też: {{n}} wcześniejszych dni z chorobą, stresem, snem, lekami i zmianami.",
+    "model": "Model: {{model}}",
+    "size": "Około {{n}} znaków tekstu",
+    "photoLine": "Zdjęcie: {{label}}",
+    "photoLineSensitive": "Zdjęcie (wrażliwe): {{label}}",
+    "send": "Wyślij i analizuj",
+    "cancel": "Anuluj",
+    "running": "Analizuję… to może potrwać kilka minut.",
+    "saved": "Zapisano razem z analizą. Twoje wpisy nie zostały zmienione.",
+    "past": "Wcześniejsze analizy",
+    "none": "Brak analiz.",
+    "view": "Otwórz",
+    "summary": "Podsumowanie",
+    "hypotheses": "Możliwe wzorce",
+    "evidence": "Dowody",
+    "counter": "Przeciw",
+    "uncertainty": "Niepewność",
+    "lag": "Typowe opóźnienie: około {{h}} godz.",
+    "strength": {
+      "weak": "słaba",
+      "moderate": "umiarkowana"
+    },
+    "order": "Kolejność i czas",
+    "limits": "Czego dane nie pokazują",
+    "suggestions": "Pomysły",
+    "meta": "{{date}} · {{from}} do {{to}} · {{model}} · prompt {{prompt}}",
+    "noHypotheses": "Nic nie wyróżnia się jako wzorzec."
   }
 }

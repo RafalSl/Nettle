@@ -192,6 +192,51 @@ export interface Photo {
   file: string;
 }
 
+/** LL-4: hypotheses are never stronger than "moderate". */
+export const HYPOTHESIS_STRENGTHS = ['weak', 'moderate'] as const;
+export type HypothesisStrength = (typeof HYPOTHESIS_STRENGTHS)[number];
+
+/** LL-4: one tentative hypothesis with the data behind it and its uncertainty. */
+export interface Hypothesis {
+  title: string;
+  explanation: string;
+  evidence: string[];
+  counterEvidence: string[];
+  uncertainty: string;
+  /** Typical delay between the possible trigger and the reaction, in hours, when the data suggests one. */
+  lagHours: number | null;
+  strength: HypothesisStrength;
+}
+
+/** LL-2, LL-4: what the model said. Always presented as AI-generated and tentative. */
+export interface AnalysisResult {
+  summary: string;
+  hypotheses: Hypothesis[];
+  /** LL-2: order and lag between flare start, digestive changes and nail changes. */
+  orderAndLag: string;
+  /** LL-4: what the data cannot answer. */
+  dataLimits: string[];
+  suggestions: string[];
+}
+
+/**
+ * LL-7: one analysis run, stored as its own object. Raw entries are never modified. `at` is the run date;
+ * `dayFrom` and `dayTo` are the local days analysed.
+ */
+export interface Analysis {
+  id: string;
+  at: Stamp;
+  dayFrom: LocalDay;
+  dayTo: LocalDay;
+  /** The model that answered, as reported by the provider. */
+  model: string;
+  promptVersion: string;
+  language: 'en' | 'pl';
+  /** What was sent: record counts by kind, plus `days`, `completeDays` and `photos`. */
+  counts: Record<string, number>;
+  result: AnalysisResult;
+}
+
 /** What the user logged (EX-1 "records"). */
 export interface Records {
   meals: Meal[];
@@ -205,6 +250,7 @@ export interface Records {
   alcoholEntries: AlcoholEntry[];
   medicationEntries: MedicationEntry[];
   photos: Photo[];
+  analyses: Analysis[];
 }
 
 /** Every record collection, in the order they are listed in `Records`. */
@@ -225,6 +271,7 @@ export const EXTRA_KINDS: readonly ExtraKind[] = [
   'alcoholEntries',
   'medicationEntries',
   'photos',
+  'analyses',
 ];
 
 /**

@@ -64,3 +64,24 @@ export function localDaysToRange(from: string | undefined, to: string | undefine
   if (t !== undefined) range.to = new Date(startOfLocalDayMs(t + 24 * 3600 * 1000, tz) - 1).toISOString();
   return range;
 }
+
+/** "YYYY-MM-DD HH:mm" of an instant in an IANA timezone, for showing local times to the model and the user. */
+export function localDateTime(utc: string, tz: string): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: tz,
+    hourCycle: 'h23',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).formatToParts(new Date(utc));
+  const get = (type: string) => parts.find((p) => p.type === type)!.value;
+  return `${get('year')}-${get('month')}-${get('day')} ${get('hour')}:${get('minute')}`;
+}
+
+/** The calendar day `n` days after (or before, when negative) a "YYYY-MM-DD" day. Returns null for an invalid day. */
+export function addDays(day: string, n: number): string | null {
+  const ms = dayToMs(day);
+  return ms === null ? null : new Date(ms + n * 24 * 3600 * 1000).toISOString().slice(0, 10);
+}

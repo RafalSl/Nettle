@@ -1,4 +1,6 @@
+import { analysisResultFromJson, analysisResultToJson } from '@/core/llm/analysisResult';
 import type {
+  Analysis,
   AlcoholEntry,
   Photo,
   PhotoEntryKind,
@@ -182,6 +184,24 @@ const photo: ExtraTable<Photo> = {
   }),
 };
 
+const analysis: ExtraTable<Analysis> = {
+  table: 'analysis',
+  columns: ['day_from', 'day_to', 'model', 'prompt_version', 'language', 'counts_json', 'result_json'],
+  toValues: (a) => [a.dayFrom, a.dayTo, a.model, a.promptVersion, a.language, JSON.stringify(a.counts), JSON.stringify(analysisResultToJson(a.result))],
+  fromRow: (r) => ({
+    id: r.id as string,
+    at: { utc: r.ts_utc as string, tz: r.tz as string },
+    dayFrom: r.day_from as string,
+    dayTo: r.day_to as string,
+    model: r.model as string,
+    promptVersion: r.prompt_version as string,
+    language: r.language as 'en' | 'pl',
+    counts: JSON.parse(r.counts_json as string) as Record<string, number>,
+    // Written by this app from a validated result, so the shape is known.
+    result: analysisResultFromJson(JSON.parse(r.result_json as string))!,
+  }),
+};
+
 export const EXTRA_TABLES: { [K in ExtraKind]: ExtraTable<Records[K][number]> } = {
   nailEntries: nail,
   checkIns: checkIn,
@@ -192,4 +212,5 @@ export const EXTRA_TABLES: { [K in ExtraKind]: ExtraTable<Records[K][number]> } 
   alcoholEntries: alcohol,
   medicationEntries: medication,
   photos: photo,
+  analyses: analysis,
 };

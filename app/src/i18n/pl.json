@@ -414,9 +414,14 @@
     "keyField": "Klucz API",
     "keySave": "Zapisz klucz",
     "keyDelete": "Usuń klucz",
-    "modelField": "Nazwa modelu",
-    "modelSave": "Zapisz model",
-    "modelHint": "Zostaw puste, aby użyć domyślnego.",
+    "modelsTitle": "Modele",
+    "modelsHint": "Każda akcja AI ma własny model. Domyślnie Haiku 5.5: szybki i tani. Większy model kosztuje więcej za jedno uruchomienie.",
+    "action": {
+      "label_scan": "Skan etykiety",
+      "meal_photo": "Zdjęcie posiłku",
+      "analysis": "Analiza AI",
+      "report_summary": "Podsumowanie raportu"
+    },
     "saved": "Zapisano"
   },
   "analysis": {

@@ -1,7 +1,7 @@
 import type { Authenticator } from '../ports/auth';
 import type { BarcodeSource } from '../ports/barcode';
 import type { KeyStore } from '../ports/keystore';
-import type { LlmConfig, LlmProvider } from '../ports/llm';
+import type { LlmConfig, LlmProvider, ModelChoice } from '../ports/llm';
 import type { Notifier } from '../ports/notifier';
 import type { SettingsStore } from '../ports/settings';
 import type { Clock, IdGenerator, PdfRenderer, PhotoStore, RandomBytes } from '../ports/platform';
@@ -27,4 +27,6 @@ export interface Deps {
   barcode: BarcodeSource;
   /** LL-10: builds the provider for a configuration (one adapter per provider). */
   llmFor: (config: LlmConfig) => LlmProvider;
+  /** LL-9, LL-10: the models the provider adapter offers for the per-action setting. */
+  llmModels: readonly ModelChoice[];
 }

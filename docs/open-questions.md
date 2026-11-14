@@ -34,13 +34,13 @@ Requirements and flows are in `docs/requirements.md`, `docs/ux-design.md` and `d
 - Intake: two-phase meal form with suggestions and favorites (IN-7, IN-14), history tags pre-selected (IN-10), barcode scan and lookup (IN-2, IN-8, IN-9), inline editable photo estimate (IN-3), alcohol and medication suggestions with "save on tap". Preferences (favorites, suggestion settings, quick-action layout) travel in `settings.preferences`.
 - Drinks (IN-4, IN-10, IN-14): `Drink` replaces `AlcoholEntry` (migration 13): any beverage with an alcohol switch, optional ingredients and allergen tags; More lists "Drink"; suggestions and favorites carry the whole snapshot; report, analysis input and `data.json` (`drinks`) follow.
 - Sources (IN-2, IN-16): `barcode` and `source` (typed, Open Food Facts, label scan, photo estimate; edited flag; model, time and prompt version for the two AI sources) on meals, drinks and favorites (migration 14, `data.json`). A scanned code is looked up in the diary first (`findInHistory`), then Open Food Facts; the drink form scans too. The entry row shows the source, the PDF marks AI-read intake with a legend (EX-4), the analysis input carries `ingredients_source` (prompt `analysis-2`). The label scan itself (IN-15) is not built, so `label_scan` is never produced yet.
+- Model per action (LL-9): `LLM_ACTIONS` (label scan, meal photo, analysis, report summary), one setting `llm_model.<action>` each, chosen from the list the provider adapter offers (`ANTHROPIC_MODELS`, Haiku 5.5 first and the default); Settings, AI analysis has a chip row per action. The old single `llm_model` setting is ignored. Label scan and report summary have a setting but no action yet.
 - Skin and health: unique area names (SK-2), no change for nails and all areas (SK-3), empty-day confirmation (SK-11), reminder taps (SK-9), "Same as yesterday" (SK-7).
 - LLM: elapsed time, Cancel, billing notice, no retry of a timeout, the run in `AnalysisRunner` (survives leaving the screen, interrupted state with retry, keep-awake).
 - Security: app lock (SE-8) with `expo-local-authentication`.
 
 **Decided in v0.5, not built**
 - Label scan (IN-15, LL-13): capture, the image-to-ingredients port shared with the meal photo, the review banner, and deleting the temporary label photo when the form closes.
-- Model per action (LL-9): the model setting is one value today; it becomes one per action in Settings, AI analysis, with Haiku 5.5 as the default.
 - Today log cap (UX-2): the latest 8 entries and the "Show all (n)" row.
 - Day start (NF-7): one setting, one `localDay` function with the start hour, used by the log, check-in, timelines, suggestions, export and analysis ranges.
 - Report summary (LL-14, EX-3): a new action and model setting, an input builder shared with the analysis, review and edit before the PDF, stored like an analysis.

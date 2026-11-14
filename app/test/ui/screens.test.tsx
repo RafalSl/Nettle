@@ -299,6 +299,19 @@ describe('screen flows (NF-2, NF-3)', () => {
     expect(hasText(tree, en.llm.keySaved)).toBe(true);
   });
 
+  it('LL-9 the AI settings list a model choice per action, defaulting to the first offered model', async () => {
+    const deps = nowDeps();
+    const { tree } = await mount(() => require('@/app/(tabs)/today/settings/ai'), deps);
+    for (const label of Object.values(en.llm.action)) expect(hasText(tree, label)).toBe(true);
+    const selected = () => tree.root.findAll((n) => n.props.accessibilityLabel === 'Haiku' && n.props.accessibilityState?.selected === true && typeof n.props.onPress === 'function');
+    expect(selected()).toHaveLength(4);
+    await press(tree, 'Sonnet'); // the first "Sonnet" chip belongs to the first action, the label scan
+    await flush();
+    expect(await deps.settings.get('llm_model.label_scan')).toBe('claude-sonnet-5-5');
+    expect(await deps.settings.get('llm_model.analysis')).toBeNull();
+    expect(selected()).toHaveLength(3);
+  });
+
   it('EX-1, EX-9 the Data screen exports a ZIP with data.json and hands it to the share sheet', async () => {
     const deps = nowDeps();
     await logMeal(deps, { description: 'Synthetic meal', ingredients: ['a'] });

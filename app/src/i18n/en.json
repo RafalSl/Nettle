@@ -36,7 +36,23 @@
     "photoConfirmBody": "The photo is sent over the internet to Anthropic to guess the ingredients. Nothing is saved from the answer until you review it. Anthropic bills this separately to your API account (a small amount); a Claude subscription does not cover it.",
     "photoSend": "Send photo",
     "suggested": "Suggested ingredients. Check and edit them before saving.",
-    "unsure": "Unsure about: {{text}}"
+    "unsure": "Unsure about: {{text}}",
+    "chooseTitle": "Choose or type a meal",
+    "chooseHint": "Pick an earlier meal to fill the form, or type a new one and continue. Nothing is saved until you save.",
+    "suggestions": "Suggestions",
+    "continue": "Continue",
+    "changeMeal": "Change meal",
+    "reviewFirst": "a meal to review",
+    "favorite": "Favorite",
+    "unfavorite": "Remove favorite",
+    "hintFavorite": "★",
+    "hintCount": "×{{n}}",
+    "hintToday": "today",
+    "hintYesterday": "yesterday",
+    "hintDays": "{{n}} days ago",
+    "discardTitle": "Change the meal?",
+    "discard": "Discard edits",
+    "reviewHint": "Check the ingredients and allergen tags before saving."
   },
   "skin": {
     "title": "Log skin status",
@@ -519,7 +535,8 @@
     "data": "Data & backup",
     "analysis": "AI analysis",
     "gear": "Settings",
-    "report": "Doctor report"
+    "report": "Doctor report",
+    "suggestions": "Suggestions"
   },
   "home": {
     "quickActions": "Quick actions",
@@ -532,7 +549,14 @@
     "moreReaction": "Reaction after a meal",
     "moreNails": "Nail update",
     "moreChange": "Started or stopped",
-    "flareHint": "Flare start or end is on the Skin form."
+    "flareHint": "Flare start or end is on the Skin form.",
+    "stool": "Stool",
+    "edit": "Edit",
+    "done": "Done",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "hide": "Hide",
+    "show": "Show"
   },
   "review": {
     "empty": "Nothing to review yet. Entries you log on Today show up here.",
@@ -627,5 +651,15 @@
     "empty": "Nothing to export in this period.",
     "button": "Create doctor report",
     "hint": "A PDF report with the raw data, for a doctor. Records only; use Data and backup for a full backup."
+  },
+  "sugg": {
+    "rows": "Rows shown",
+    "more": "More rows",
+    "fewer": "Fewer rows",
+    "window": "Look-back window",
+    "days": "{{n}} days",
+    "saveOnTap": "Save on tap",
+    "saveOnTapHint": "A tap on an alcohol or medication suggestion saves it at once. Meals never save on tap.",
+    "hint": "Suggestions are worked out on this phone from your own entries. Nothing is sent anywhere."
   }
 }

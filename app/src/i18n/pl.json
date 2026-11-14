@@ -36,7 +36,23 @@
     "photoConfirmBody": "Zdjęcie zostanie wysłane przez internet do Anthropic, aby odgadnąć składniki. Nic z odpowiedzi nie zostanie zapisane, dopóki jej nie sprawdzisz. Anthropic rozlicza to osobno na Twoim koncie API (niewielka kwota); subskrypcja Claude tego nie obejmuje.",
     "photoSend": "Wyślij zdjęcie",
     "suggested": "Proponowane składniki. Sprawdź je i popraw przed zapisem.",
-    "unsure": "Niepewne: {{text}}"
+    "unsure": "Niepewne: {{text}}",
+    "chooseTitle": "Wybierz lub wpisz posiłek",
+    "chooseHint": "Wybierz wcześniejszy posiłek, aby wypełnić formularz, albo wpisz nowy i przejdź dalej. Nic nie jest zapisywane, dopóki nie zapiszesz.",
+    "suggestions": "Podpowiedzi",
+    "continue": "Dalej",
+    "changeMeal": "Zmień posiłek",
+    "reviewFirst": "posiłku do sprawdzenia",
+    "favorite": "Ulubiony",
+    "unfavorite": "Usuń z ulubionych",
+    "hintFavorite": "★",
+    "hintCount": "×{{n}}",
+    "hintToday": "dziś",
+    "hintYesterday": "wczoraj",
+    "hintDays": "{{n}} dni temu",
+    "discardTitle": "Zmienić posiłek?",
+    "discard": "Odrzuć zmiany",
+    "reviewHint": "Sprawdź składniki i alergeny przed zapisem."
   },
   "skin": {
     "title": "Dodaj stan skóry",
@@ -519,7 +535,8 @@
     "data": "Dane i kopia",
     "analysis": "Analiza AI",
     "gear": "Ustawienia",
-    "report": "Raport"
+    "report": "Raport",
+    "suggestions": "Podpowiedzi"
   },
   "home": {
     "quickActions": "Szybkie akcje",
@@ -532,7 +549,14 @@
     "moreReaction": "Reakcja po posiłku",
     "moreNails": "Aktualizacja paznokci",
     "moreChange": "Rozpoczęte lub zakończone",
-    "flareHint": "Początek i koniec rzutu są w formularzu Skóra."
+    "flareHint": "Początek i koniec rzutu są w formularzu Skóra.",
+    "stool": "Stolec",
+    "edit": "Edytuj",
+    "done": "Gotowe",
+    "moveUp": "W górę",
+    "moveDown": "W dół",
+    "hide": "Ukryj",
+    "show": "Pokaż"
   },
   "review": {
     "empty": "Na razie nie ma czego przeglądać. Wpisy dodane w Dziś pojawią się tutaj.",
@@ -627,5 +651,15 @@
     "empty": "W tym okresie nie ma nic do wyeksportowania.",
     "button": "Utwórz raport dla lekarza",
     "hint": "Raport PDF z surowymi danymi, dla lekarza. Tylko wpisy; pełną kopię zrobisz w Danych i kopii."
+  },
+  "sugg": {
+    "rows": "Liczba wierszy",
+    "more": "Więcej wierszy",
+    "fewer": "Mniej wierszy",
+    "window": "Okres wstecz",
+    "days": "{{n}} dni",
+    "saveOnTap": "Zapis jednym dotknięciem",
+    "saveOnTapHint": "Dotknięcie podpowiedzi alkoholu lub leku zapisuje ją od razu. Posiłki nigdy nie zapisują się dotknięciem.",
+    "hint": "Podpowiedzi są liczone na tym telefonie z Twoich wpisów. Nic nie jest nigdzie wysyłane."
   }
 }

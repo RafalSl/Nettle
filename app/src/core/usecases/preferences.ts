@@ -37,7 +37,7 @@ const toggle = <T extends { key: string }>(list: T[], item: T): T[] =>
   list.some((x) => x.key === item.key) ? list.filter((x) => x.key !== item.key) : [...list, item];
 
 /** IN-14: star or unstar a meal. The favorite is a snapshot of description, ingredients and allergen tags. */
-export async function toggleFavoriteMeal(deps: Deps, meal: Meal): Promise<boolean> {
+export async function toggleFavoriteMeal(deps: Deps, meal: Pick<Meal, 'description' | 'ingredients' | 'allergens'>): Promise<boolean> {
   const key = normalizeText(meal.description);
   const prefs = await change(deps, (p) => {
     p.favorites.meals = toggle(p.favorites.meals, { key, description: meal.description, ingredients: [...meal.ingredients], allergens: [...meal.allergens] });

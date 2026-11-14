@@ -11,6 +11,7 @@ import { logAlcohol, logMedication } from '@/core/usecases/intake';
 import { addPhoto } from '@/core/usecases/photos';
 import { applyImport, exportBundle, previewImport } from '@/core/usecases/exchange';
 import { deleteEntry } from '@/core/usecases/entries';
+import { toggleFavoriteDrink, toggleFavoriteMeal, updateSuggestionSettings } from '@/core/usecases/preferences';
 import { applyTreatment, logChangeEvent, logReaction } from '@/core/usecases/events';
 import { addListItem } from '@/core/usecases/lists';
 import { markFlare } from '@/core/usecases/flares';
@@ -58,6 +59,7 @@ const screens: [string, () => { default: React.ComponentType }][] = [
   ['more', () => require('@/app/(tabs)/today/more')],
   ['settings', () => require('@/app/(tabs)/today/settings/index')],
   ['settings logging', () => require('@/app/(tabs)/today/settings/logging')],
+  ['settings suggestions', () => require('@/app/(tabs)/today/settings/suggestions')],
   ['settings reminders', () => require('@/app/(tabs)/today/settings/reminders')],
   ['settings ai', () => require('@/app/(tabs)/today/settings/ai')],
   ['settings data', () => require('@/app/(tabs)/today/settings/data')],
@@ -153,7 +155,7 @@ describe('screen flows (NF-2, NF-3)', () => {
 
   it('every screen shows its title from the English strings', async () => {
     const titles: [() => { default: React.ComponentType }, string][] = [
-      [() => require('@/app/form/meal'), en.meal.title],
+      [() => require('@/app/form/meal'), en.meal.chooseTitle],
       [() => require('@/app/form/checkin'), en.today.title],
       [() => require('@/app/form/skin'), en.skin.title],
       [() => require('@/app/form/nails'), en.more.nailTitle],
@@ -164,21 +166,6 @@ describe('screen flows (NF-2, NF-3)', () => {
       const { tree } = await mount(load, nowDeps());
       expect(hasText(tree, title)).toBe(true);
     }
-  });
-
-  it('IN-1 typing a meal and pressing Save stores it and shows it under Recent', async () => {
-    const deps = nowDeps();
-    const { tree } = await mount(() => require('@/app/form/meal'), deps);
-    await type(tree, en.meal.ingredientPlaceholder, 'Synthetic oats');
-    await type(tree, 'Meal description', 'x').catch(() => undefined);
-    const description = tree.root.findAll((n) => n.props.onChangeText && n.props.value === '' && n.props.placeholder === undefined)[0]!;
-    await act(async () => description.props.onChangeText('Synthetic breakfast'));
-    await press(tree, en.common.save);
-    await flush();
-    const meals = await deps.repo.listMeals();
-    expect(meals).toHaveLength(1);
-    expect(meals[0]).toMatchObject({ description: 'Synthetic breakfast', ingredients: ['Synthetic oats'] });
-    expect(hasText(tree, 'Synthetic breakfast')).toBe(true);
   });
 
   it('SK-7, SK-11 the check-in saves, closes the day, and can be reopened', async () => {
@@ -397,6 +384,7 @@ describe('navigation shell (UX-1, UX-2, UX-3, UX-6)', () => {
     const settings = await mount(() => require('@/app/(tabs)/today/settings/index'), nowDeps());
     for (const [label, href] of [
       [en.nav.logging, '/today/settings/logging'],
+      [en.nav.suggestions, '/today/settings/suggestions'],
       [en.nav.reminders, '/today/settings/reminders'],
       [en.nav.ai, '/today/settings/ai'],
       [en.nav.data, '/today/settings/data'],
@@ -766,5 +754,206 @@ describe('Review (UX-1, EX-14)', () => {
     const again = await mount(() => require('@/app/(tabs)/review/report'), deps);
     await flush();
     expect(again.tree.root.findAll((n) => n.props.accessibilityLabel === en.doctor.since && n.props.accessibilityState?.selected)).not.toHaveLength(0);
+  });
+});
+
+describe('Meal form (IN-1, IN-7, IN-10, IN-14, UX-3)', () => {
+  let sheet: jest.SpyInstance;
+  beforeEach(() => {
+    sheet = jest.spyOn(ActionSheetIOS, 'showActionSheetWithOptions').mockImplementation((_o, cb) => cb(0));
+    jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    mockRouter.back.mockClear();
+    mockParams.current = {};
+    mockScreen.options = undefined;
+  });
+  afterEach(() => jest.restoreAllMocks());
+  const meal = () => require('@/app/form/meal');
+  const header = async (side: 'headerLeft' | 'headerRight', label: string) => {
+    let rendered!: ReactTestRenderer;
+    await act(async () => {
+      rendered = create(mockScreen.options![side]!());
+    });
+    const node = rendered.root.findAll((n) => n.props.accessibilityLabel === label && typeof n.props.onPress === 'function')[0]!;
+    await act(async () => {
+      await node.props.onPress();
+    });
+    return node.props.accessibilityState as { disabled?: boolean } | undefined;
+  };
+
+  it('IN-1, IN-7 a new meal is typed in the choose phase, reviewed, and saved only with Save', async () => {
+    const deps = nowDeps();
+    const { tree } = await mount(meal, deps);
+    await flush();
+    expect((await header('headerRight', en.common.save))?.disabled).toBe(true); // nothing to save in the choose phase
+    await type(tree, en.meal.description, 'Synthetic breakfast');
+    await press(tree, en.meal.continue);
+    await type(tree, en.meal.ingredientPlaceholder, 'Synthetic oats');
+    expect(await deps.repo.listMeals()).toEqual([]);
+    await header('headerRight', en.common.save);
+    await flush();
+    expect(await deps.repo.listMeals()).toMatchObject([{ description: 'Synthetic breakfast', ingredients: ['Synthetic oats'], allergens: [] }]);
+    expect(mockRouter.back).toHaveBeenCalledTimes(1);
+  });
+
+  it('IN-7, IN-10, IN-14 a suggestion fills the review with its latest ingredients and tags and saves a new, independent entry', async () => {
+    const deps = nowDeps();
+    const old = await logMeal(deps, { description: 'Synthetic porridge', ingredients: ['oats', 'milk'], allergens: ['milk'], at: new Date(Date.now() - 2 * 86_400_000) });
+    await logMeal(deps, { description: 'Synthetic soup', ingredients: ['leeks'], at: new Date(Date.now() - 3 * 86_400_000) });
+    const { tree } = await mount(meal, deps);
+    await flush();
+    expect(hasText(tree, en.meal.hintDays.replace('{{n}}', '2'))).toBe(true);
+    await press(tree, 'Synthetic porridge');
+    expect(hasText(tree, 'oats')).toBe(true);
+    const milk = tree.root.findAll((n) => n.props.accessibilityLabel === en.allergens.milk && n.props.accessibilityState)[0]!;
+    expect(milk.props.accessibilityState.selected).toBe(true); // from the diary's history: visible and pre-selected
+    await header('headerRight', en.common.save);
+    await flush();
+    const saved = await deps.repo.listMeals();
+    expect(saved).toHaveLength(3);
+    const fresh = saved.find((m) => m.id !== old.id && m.description === 'Synthetic porridge')!;
+    expect(fresh).toMatchObject({ ingredients: ['oats', 'milk'], allergens: ['milk'] });
+    expect(saved.find((m) => m.id === old.id)).toEqual(old);
+  });
+
+  it('IN-14 typing filters the whole history, and a favorite is listed first', async () => {
+    const deps = nowDeps();
+    for (const [i, name] of ['Synthetic eggs', 'Synthetic rice', 'Synthetic ricotta'].entries()) {
+      await logMeal(deps, { description: name, ingredients: [], at: new Date(Date.now() - (i + 1) * 3600_000) });
+    }
+    await toggleFavoriteMeal(deps, { description: 'Synthetic rice', ingredients: [], allergens: [] });
+    const { tree } = await mount(meal, deps);
+    await flush();
+    const labels = () => [...new Set(tree.root.findAll((n) => n.props.accessibilityRole === 'button' && typeof n.props.accessibilityLabel === 'string' && n.props.accessibilityLabel.startsWith('Synthetic')).map((n) => n.props.accessibilityLabel as string))];
+    expect(labels()[0]).toBe('Synthetic rice');
+    await type(tree, en.meal.description, 'ric');
+    expect(labels()).toEqual(['Synthetic rice', 'Synthetic ricotta']);
+  });
+
+  it('IN-7, UX-9 Change meal returns to choose, and asks first only when something was edited', async () => {
+    const deps = nowDeps();
+    await logMeal(deps, { description: 'Synthetic porridge', ingredients: ['oats'], at: new Date(Date.now() - 3600_000) });
+    const { tree } = await mount(meal, deps);
+    await flush();
+    await press(tree, 'Synthetic porridge');
+    await press(tree, en.meal.changeMeal);
+    expect(sheet).not.toHaveBeenCalled();
+    expect(hasText(tree, en.meal.chooseTitle)).toBe(true);
+    await press(tree, 'Synthetic porridge');
+    await type(tree, en.meal.ingredientPlaceholder, 'changed');
+    sheet.mockImplementation((_o, cb) => cb(1)); // keep editing
+    await press(tree, en.meal.changeMeal);
+    expect(hasText(tree, en.meal.chooseTitle)).toBe(false);
+    sheet.mockImplementation((_o, cb) => cb(0)); // discard
+    await press(tree, en.meal.changeMeal);
+    expect((sheet.mock.calls[0] as [{ options: string[] }])[0].options).toEqual([en.meal.discard, en.common.cancel]);
+    expect(hasText(tree, en.meal.chooseTitle)).toBe(true);
+  });
+
+  it('IN-14 starring a meal in the review phase stores a favorite snapshot', async () => {
+    const deps = nowDeps();
+    const { tree } = await mount(meal, deps);
+    await type(tree, en.meal.description, 'Synthetic breakfast');
+    await press(tree, en.meal.continue);
+    await press(tree, en.meal.favorite);
+    await flush();
+    expect((await deps.repo.getPreferences())!.favorites.meals).toMatchObject([{ key: 'synthetic breakfast', description: 'Synthetic breakfast' }]);
+    expect(hasText(tree, en.meal.unfavorite)).toBe(true);
+  });
+
+  it('UX-2 opened for a past day, a new meal defaults to the current clock time on that day', async () => {
+    const deps = nowDeps();
+    mockParams.current = { day: '2026-01-10' };
+    const { tree } = await mount(meal, deps);
+    await type(tree, en.meal.description, 'Synthetic old breakfast');
+    await press(tree, en.meal.continue);
+    await header('headerRight', en.common.save);
+    await flush();
+    const [saved] = await deps.repo.listMeals();
+    expect(localDay(saved!.at.utc, saved!.at.tz)).toBe('2026-01-10');
+  });
+});
+
+describe('Suggestion settings and quick-action layout (IN-14, UX-2, UX-6)', () => {
+  beforeEach(() => {
+    jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+  });
+  afterEach(() => jest.restoreAllMocks());
+
+  it('IN-14 the Suggestions screen shows the defaults and stores rows, window and save on tap', async () => {
+    const deps = nowDeps();
+    const { tree } = await mount(() => require('@/app/(tabs)/today/settings/suggestions'), deps);
+    await flush();
+    expect(hasText(tree, '5')).toBe(true);
+    await press(tree, en.sugg.more);
+    await press(tree, en.sugg.days.replace('{{n}}', '14'));
+    await toggle(tree, en.sugg.saveOnTap);
+    await flush();
+    expect((await deps.repo.getPreferences())!.suggestions).toEqual({ rows: 6, windowDays: 14, saveOnTap: true });
+  });
+
+  it('UX-2 Edit mode on Today moves and hides quick actions with buttons, and the grid follows', async () => {
+    const deps = nowDeps();
+    const { tree } = await mount(() => require('@/app/(tabs)/today/index'), deps);
+    await flush();
+    const grid = () => tree.root.findAll((n) => n.props.accessibilityRole === 'button' && [en.home.meal, en.home.skin, en.home.treatment, en.home.checkin, en.day.stool, en.home.more].includes(n.props.accessibilityLabel)).map((n) => n.props.accessibilityLabel as string);
+    expect([...new Set(grid())].slice(0, 2)).toEqual([en.home.meal, en.home.skin]);
+    await press(tree, en.home.edit);
+    await press(tree, `${en.home.moveUp} ${en.home.checkin}`);
+    await press(tree, `${en.home.hide} ${en.day.stool}`);
+    expect(tree.root.findAll((n) => n.props.accessibilityLabel === `${en.home.hide} ${en.home.more}`)).toHaveLength(0); // More stays
+    await press(tree, en.home.done);
+    await flush();
+    expect([...new Set(grid())]).toEqual([en.home.meal, en.home.skin, en.home.checkin, en.home.treatment, en.home.more]);
+    expect((await deps.repo.getPreferences())!.quickActions.hidden).toEqual(['stool']);
+  });
+});
+
+describe('Alcohol and medication suggestions (IN-14, UX-5)', () => {
+  beforeEach(() => {
+    jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+  });
+  afterEach(() => jest.restoreAllMocks());
+  const intake = () => require('@/app/form/intake');
+  const at = (h: number) => new Date(Date.now() - h * 3600_000);
+
+  it('IN-14 a suggestion fills the form and saves nothing while "save on tap" is off', async () => {
+    const deps = nowDeps();
+    await logAlcohol(deps, { drink: 'Synthetic beer', amountMl: 500, at: at(30) });
+    await logAlcohol(deps, { drink: 'Synthetic beer', amountMl: 500, at: at(10) });
+    await logMedication(deps, { category: 'supplement', name: 'Synthetic vitamin', dose: '1 tablet', at: at(5) });
+    const { tree } = await mount(intake, deps);
+    await flush();
+    expect(hasText(tree, 'Synthetic beer 500 ml ×2')).toBe(true);
+    await press(tree, 'Synthetic beer 500 ml');
+    const drink = tree.root.findAll((n) => n.props.placeholder === en.more.alcoholDrink)[0]!;
+    expect(drink.props.value).toBe('Synthetic beer');
+    await press(tree, 'Synthetic vitamin 1 tablet');
+    expect(tree.root.findAll((n) => n.props.placeholder === en.more.medName)[0]!.props.value).toBe('Synthetic vitamin');
+    expect(await deps.repo.listRecords('alcoholEntries')).toHaveLength(2);
+    expect(await deps.repo.listRecords('medicationEntries')).toHaveLength(1);
+  });
+
+  it('UX-5 with "save on tap" a suggestion saves at once, as a new entry', async () => {
+    const deps = nowDeps();
+    await logAlcohol(deps, { drink: 'Synthetic beer', amountMl: 500, at: at(10) });
+    await logMedication(deps, { category: 'medication', name: 'Synthetic pill', at: at(5) });
+    await updateSuggestionSettings(deps, { saveOnTap: true });
+    const { tree } = await mount(intake, deps);
+    await flush();
+    await press(tree, 'Synthetic beer 500 ml');
+    await press(tree, 'Synthetic pill');
+    await flush();
+    expect((await deps.repo.listRecords('alcoholEntries')).map((e) => e.amountMl)).toEqual([500, 500]);
+    expect(await deps.repo.listRecords('medicationEntries')).toHaveLength(2);
+  });
+
+  it('IN-14 favorites come first, even without history', async () => {
+    const deps = nowDeps();
+    await logAlcohol(deps, { drink: 'Synthetic beer', amountMl: 500, at: at(10) });
+    await toggleFavoriteDrink(deps, { drink: 'Synthetic wine', amountMl: 150 });
+    const { tree } = await mount(intake, deps);
+    await flush();
+    const labels = [...new Set(tree.root.findAll((n) => n.props.accessibilityRole === 'button' && /ml$/.test(n.props.accessibilityLabel ?? '')).map((n) => n.props.accessibilityLabel as string))];
+    expect(labels).toEqual(['Synthetic wine 150 ml', 'Synthetic beer 500 ml']);
   });
 });

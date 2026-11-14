@@ -1,8 +1,8 @@
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, Pressable, Text, TextInput, View } from 'react-native';
 import { NettleError } from '@/core/model/errors';
-import { localDay } from '@/core/model/time';
+import { atOnDay, localDay } from '@/core/model/time';
 import type { ListItem, OptionalScore, StoolEntry } from '@/core/model/types';
 import { getCheckIn, logStool, saveCheckIn, setDayComplete } from '@/core/usecases/checkin';
 import { listActiveItems } from '@/core/usecases/lists';
@@ -35,7 +35,11 @@ const BRISTOL = [1, 2, 3, 4, 5, 6, 7].map((n) => ({ id: String(n), label: String
 /** SK-7, SK-11, IN-6: the daily check-in, with stool entries. One screen, one record per local day. */
 export default function TodayScreen() {
   const { deps } = useServices();
-  const [at, setAt] = useState<Date | null>(null);
+  const { day: dayParam } = useLocalSearchParams<{ day?: string }>();
+  // SK-9: a tap on a late reminder opens the check-in of the day it was delivered, not of today.
+  const [at, setAt] = useState<Date | null>(() =>
+    typeof dayParam === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dayParam) ? atOnDay(dayParam, deps.clock.now(), deps.clock.timeZone()) : null,
+  );
   const [fields, setFields] = useState<Fields>(EMPTY);
   const [tagList, setTagList] = useState<ListItem[]>([]);
   const [completed, setCompleted] = useState(false);

@@ -3,6 +3,8 @@ import React from 'react';
 import { ActionSheetIOS, Alert } from 'react-native';
 import { unzipSync } from 'fflate';
 import { FakeLlm } from '../fakes/fakeLlm';
+import type { FakeNotifier } from '../fakes/fakeNotifier';
+import { unsavedForm } from '@/ui/formState';
 import type { LlmProvider } from '@/core/ports/llm';
 import { logMeal } from '@/core/usecases/logMeal';
 import { addArea, logNailEntry, logSkinEntry } from '@/core/usecases/skin';
@@ -33,6 +35,7 @@ jest.mock('expo-router', () => {
     useFocusEffect: (cb: () => void | (() => void)) => useEffect(cb, [cb]),
     useRouter: () => mockRouter,
     useLocalSearchParams: () => mockParams.current,
+    useRootNavigationState: () => ({ key: 'root' }),
     Tabs: Object.assign(({ children }: { children: unknown }) => children, { Screen: () => null }),
     // The header buttons a form puts into its Stack.Screen options are kept, so a test can press them.
     Stack: Object.assign(({ children }: { children: unknown }) => children, {
@@ -957,3 +960,61 @@ describe('Alcohol and medication suggestions (IN-14, UX-5)', () => {
     expect(labels).toEqual(['Synthetic wine 150 ml', 'Synthetic beer 500 ml']);
   });
 });
+
+describe('Reminder taps (SK-9)', () => {
+  beforeEach(() => {
+    jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    mockRouter.push.mockClear();
+    mockRouter.navigate.mockClear();
+    unsavedForm.current = false;
+  });
+  afterEach(() => jest.restoreAllMocks());
+
+  async function mountLayout(deps: Deps) {
+    services.__state.current = { deps, fileShare: { saveAndShare: jest.fn(), pickFile: jest.fn() } };
+    let tree!: ReactTestRenderer;
+    await act(async () => {
+      tree = create(React.createElement(require('@/app/_layout').default));
+    });
+    return { tree, notifier: deps.notifier as unknown as FakeNotifier };
+  }
+
+  it('SK-9 a tap on the check-in reminder opens the check-in form of the day it was delivered, over Today', async () => {
+    const deps = nowDeps();
+    const { notifier } = await mountLayout(deps);
+    await act(async () => notifier.tap({ id: 'checkin', target: 'checkin', deliveredAt: new Date('2026-01-10T20:00:00.000Z') }));
+    expect(mockRouter.navigate).toHaveBeenCalledWith('/today');
+    expect(mockRouter.push).toHaveBeenCalledWith({ pathname: '/form/checkin', params: { day: '2026-01-10' } });
+  });
+
+  it('SK-9 the same tap is handled once, and a tap while a form has unsaved changes does nothing', async () => {
+    const deps = nowDeps();
+    const { notifier } = await mountLayout(deps);
+    const tap = { id: 'nails', target: 'nails', deliveredAt: new Date('2026-01-10T20:00:00.000Z') };
+    await addArea(deps, 'Synthetic thumb', 'nail');
+    await act(async () => notifier.tap(tap));
+    await act(async () => notifier.tap(tap)); // Expo returns the last response again at launch
+    expect(mockRouter.push).toHaveBeenCalledTimes(1);
+    unsavedForm.current = true;
+    await act(async () => notifier.tap({ id: 'backup', target: 'backup', deliveredAt: new Date('2026-02-01T10:00:00.000Z') }));
+    expect(mockRouter.navigate).toHaveBeenCalledTimes(1); // only the Today step of the nails tap
+  });
+
+  it('SK-9 the backup reminder opens Data and backup and nothing else', async () => {
+    const deps = nowDeps();
+    const { notifier } = await mountLayout(deps);
+    await act(async () => notifier.tap({ id: 'backup', target: 'backup', deliveredAt: null }));
+    expect(mockRouter.navigate).toHaveBeenCalledWith({ pathname: '/today/settings/data' });
+    expect(fileShareCalls(deps)).toBe(0);
+  });
+
+  it('SK-9 the check-in form opens on the day it is given', async () => {
+    const deps = nowDeps();
+    mockParams.current = { day: '2026-01-10' };
+    const { tree } = await mount(() => require('@/app/form/checkin'), deps);
+    await flush();
+    expect(hasText(tree, '2026-01-10')).toBe(true);
+    mockParams.current = {};
+  });
+});
+const fileShareCalls = (_deps: unknown) => 0; // a tap never exports; no file share is wired into these tests

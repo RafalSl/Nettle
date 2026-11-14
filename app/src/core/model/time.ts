@@ -8,12 +8,25 @@ export function makeStamp(clock: Clock, at?: Date): Stamp {
   return { utc: (at ?? clock.now()).toISOString(), tz: clock.timeZone() };
 }
 
+/** Wall-clock parts of an instant in an IANA timezone. Built from named parts, so it does not depend on a locale's date format. */
+function wallParts(utc: string, tz: string) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: tz,
+    hourCycle: 'h23',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).formatToParts(new Date(utc));
+  const get = (type: string) => parts.find((p) => p.type === type)!.value.padStart(2, '0');
+  return { y: get('year').padStart(4, '0'), mo: get('month'), d: get('day'), h: get('hour') === '24' ? '00' : get('hour'), mi: get('minute') };
+}
+
 /** SK-7 / SK-11: the local calendar day of an instant in an IANA timezone, as "YYYY-MM-DD". */
 export function localDay(utc: string, tz: string): string {
-  // The en-CA locale formats dates as YYYY-MM-DD.
-  return new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).format(
-    new Date(utc),
-  );
+  const { y, mo, d } = wallParts(utc, tz);
+  return `${y}-${mo}-${d}`;
 }
 
 const DAY = /^(\d{4})-(\d{2})-(\d{2})$/;
@@ -67,17 +80,8 @@ export function localDaysToRange(from: string | undefined, to: string | undefine
 
 /** "YYYY-MM-DD HH:mm" of an instant in an IANA timezone, for showing local times to the model and the user. */
 export function localDateTime(utc: string, tz: string): string {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: tz,
-    hourCycle: 'h23',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).formatToParts(new Date(utc));
-  const get = (type: string) => parts.find((p) => p.type === type)!.value;
-  return `${get('year')}-${get('month')}-${get('day')} ${get('hour')}:${get('minute')}`;
+  const { y, mo, d, h, mi } = wallParts(utc, tz);
+  return `${y}-${mo}-${d} ${h}:${mi}`;
 }
 
 /** The calendar day `n` days after (or before, when negative) a "YYYY-MM-DD" day. Returns null for an invalid day. */

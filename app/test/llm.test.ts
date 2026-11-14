@@ -1,5 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk';
-import { mapAnthropicError } from '@/adapters/llm/anthropicProvider';
+import { buildBody, createAnthropicProvider, mapHttpError, readResponse } from '@/adapters/llm/anthropicProvider';
 import { SqliteSettings } from '@/adapters/storage/sqliteSettings';
 import { SqliteRepo } from '@/adapters/storage/sqliteRepo';
 import { ingredientsPrompt } from '@/core/llm/prompts';
@@ -113,21 +112,99 @@ describe('ingredient estimate (LL-1, IN-3)', () => {
   });
 });
 
-describe('Anthropic error mapping (LL-8)', () => {
-  const api = (status: number, type?: string) =>
-    Anthropic.APIError.generate(status, { type: 'error', error: { type: type ?? 'x', message: 'm' } }, 'm', new Headers());
+describe('Anthropic adapter over fetch (LL-8, LL-10)', () => {
+  const config = { provider: 'anthropic' as const, model: 'claude-test', apiKey: 'sk-synthetic-secret' };
+  const req = { system: 'sys', user: 'usr', schema: { type: 'object' }, maxTokens: 100, images: [image] };
+  const ok = (over: object = {}) => ({
+    status: 200,
+    text: async () => JSON.stringify({ model: 'claude-test', stop_reason: 'end_turn', content: [{ type: 'text', text: '{"a":1}' }], ...over }),
+  });
+  const fail = (status: number, type?: string) => ({ status, text: async () => JSON.stringify({ type: 'error', error: { type, message: 'm sk-synthetic-secret' } }) });
+  const noWait = () => jest.spyOn(globalThis, 'setTimeout').mockImplementation(((fn: () => void) => (fn(), 0)) as never);
+  afterEach(() => jest.restoreAllMocks());
 
-  it('maps each failure to a stable code without leaking details', () => {
-    const codeOf = (e: unknown) => mapAnthropicError(e).code;
-    expect(codeOf(api(401, 'authentication_error'))).toBe('llm_invalid_key');
-    expect(codeOf(api(403, 'permission_error'))).toBe('llm_permission');
-    expect(codeOf(api(404, 'not_found_error'))).toBe('llm_model_not_found');
-    expect(codeOf(api(429, 'rate_limit_error'))).toBe('llm_rate_limited');
-    expect(codeOf(api(402, 'billing_error'))).toBe('llm_billing');
-    expect(codeOf(api(529, 'overloaded_error'))).toBe('llm_unavailable');
-    expect(codeOf(api(500, 'api_error'))).toBe('llm_unavailable');
-    expect(codeOf(new Anthropic.APIConnectionError({ message: 'offline' }))).toBe('llm_network');
-    expect(codeOf(new Error('boom'))).toBe('llm_failed');
-    expect(mapAnthropicError(new Error('sk-secret-123')).message).not.toContain('sk-secret');
+  it('LL-1 sends one POST with the key in a header, the image as base64 and a JSON-schema answer format', async () => {
+    const calls: { url: string; init: { headers: Record<string, string>; body: string } }[] = [];
+    const provider = createAnthropicProvider(config, async (url, init) => (calls.push({ url, init }), ok()));
+    expect(await provider.completeJson(req)).toEqual({ text: '{"a":1}', model: 'claude-test' });
+    expect(calls).toHaveLength(1);
+    expect(calls[0]!.url).toBe('https://api.anthropic.com/v1/messages');
+    expect(calls[0]!.init.headers['x-api-key']).toBe('sk-synthetic-secret');
+    expect(calls[0]!.init.headers['anthropic-version']).toBe('2026-10-21');
+    expect(calls[0]!.init.body).not.toContain('sk-synthetic-secret'); // the key is never in the body
+    const body = JSON.parse(calls[0]!.init.body);
+    expect(body).toMatchObject({ model: 'claude-test', max_tokens: 100, system: 'sys', output_config: { format: { type: 'json_schema', schema: { type: 'object' } } } });
+    expect(body.messages[0].content[0]).toEqual({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: 'AQID' } });
+    expect(body.messages[0].content[1]).toEqual({ type: 'text', text: 'usr' });
+  });
+
+  it('LL-8 maps each failure to a stable code and never leaks the key', () => {
+    const codeOf = (status: number, type?: string) => mapHttpError(status, type).code;
+    expect(codeOf(401, 'authentication_error')).toBe('llm_invalid_key');
+    expect(codeOf(403, 'permission_error')).toBe('llm_permission');
+    expect(codeOf(404, 'not_found_error')).toBe('llm_model_not_found');
+    expect(codeOf(429, 'rate_limit_error')).toBe('llm_rate_limited');
+    expect(codeOf(402, 'billing_error')).toBe('llm_billing');
+    expect(codeOf(529, 'overloaded_error')).toBe('llm_unavailable');
+    expect(codeOf(500, 'api_error')).toBe('llm_unavailable');
+    expect(codeOf(400, 'invalid_request_error')).toBe('llm_failed');
+  });
+
+  it.each([
+    [401, 'authentication_error', 'llm_invalid_key'],
+    [402, 'billing_error', 'llm_billing'],
+    [404, 'not_found_error', 'llm_model_not_found'],
+    [400, 'invalid_request_error', 'llm_failed'],
+  ])('LL-8 HTTP %i is not retried and becomes %s → %s', async (status, type, expected) => {
+    let n = 0;
+    const provider = createAnthropicProvider(config, async () => (n++, fail(status, type)));
+    const error = await provider.completeJson(req).catch((e) => e);
+    expect(error).toBeInstanceOf(NettleError);
+    expect(error.code).toBe(expected);
+    expect(error.message).not.toContain('sk-synthetic-secret');
+    expect(n).toBe(1);
+  });
+
+  it('LL-8 rate limits and server errors are retried twice, then reported', async () => {
+    noWait();
+    let n = 0;
+    const provider = createAnthropicProvider(config, async () => (n++, fail(429, 'rate_limit_error')));
+    expect((await provider.completeJson(req).catch((e) => e)).code).toBe('llm_rate_limited');
+    expect(n).toBe(3);
+    let m = 0;
+    const flaky = createAnthropicProvider(config, async () => (++m < 3 ? fail(529, 'overloaded_error') : ok()));
+    expect((await flaky.completeJson(req)).text).toBe('{"a":1}');
+    expect(m).toBe(3);
+  });
+
+  it('LL-8 a lost connection is llm_network after the retries, with no details kept', async () => {
+    noWait();
+    let n = 0;
+    const provider = createAnthropicProvider(config, async () => {
+      n++;
+      throw new Error('Network request failed for sk-synthetic-secret');
+    });
+    const error = await provider.completeJson(req).catch((e) => e);
+    expect(error.code).toBe('llm_network');
+    expect(error.message).not.toContain('sk-synthetic-secret');
+    expect(n).toBe(3);
+  });
+
+  it('LL-8 refusals, cut-off and empty or unreadable answers are errors, never partial results', () => {
+    expect(() => readResponse({ stop_reason: 'refusal', content: [] })).toThrow('llm_refused');
+    expect(() => readResponse({ stop_reason: 'max_tokens', content: [{ type: 'text', text: '{' }] })).toThrow('llm_bad_response');
+    expect(() => readResponse({ stop_reason: 'end_turn', content: [] })).toThrow('llm_bad_response');
+    expect(() => readResponse(null)).toThrow('llm_bad_response');
+    expect(() => readResponse({ content: 'x' })).toThrow('llm_bad_response');
+    expect(readResponse({ stop_reason: 'end_turn', model: 'm', content: [{ type: 'thinking' }, { type: 'text', text: 'a' }, { type: 'text', text: 'b' }] })).toEqual({ text: 'ab', model: 'm' });
+  });
+
+  it('LL-8 a 200 response that is not JSON is llm_bad_response', async () => {
+    const provider = createAnthropicProvider(config, async () => ({ status: 200, text: async () => '<html>' }));
+    expect((await provider.completeJson(req).catch((e) => e)).code).toBe('llm_bad_response');
+  });
+
+  it('LL-6 builds a text-only body when there are no images', () => {
+    expect(buildBody('m', { ...req, images: undefined }).messages[0]!.content).toEqual([{ type: 'text', text: 'usr' }]);
   });
 });

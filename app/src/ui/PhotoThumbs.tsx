@@ -5,7 +5,7 @@ import { t } from '@/i18n';
 import { useServices } from '@/services';
 
 /** SK-5, SK-8: read-only thumbnails; sensitive photos stay blurred until tapped. */
-export function PhotoThumbs({ photos }: { photos: Photo[] }) {
+export function PhotoThumbs({ photos, onPick, picked }: { photos: Photo[]; /** Compare mode: a tap picks the photo instead of showing it. */ onPick?: (photo: Photo) => void; picked?: ReadonlySet<string> }) {
   const { deps } = useServices();
   const [shown, setShown] = useState<Set<string>>(new Set());
   if (photos.length === 0) return null;
@@ -17,9 +17,10 @@ export function PhotoThumbs({ photos }: { photos: Photo[] }) {
           <Pressable
             key={p.id}
             accessibilityRole="button"
-            accessibilityLabel={hidden ? t('photos.tapToShow') : p.at.utc}
-            onPress={() => setShown((s) => new Set(s).add(p.id))}>
-            <Image source={{ uri: deps.photos.uri(p.file) }} blurRadius={hidden ? 30 : 0} style={{ width: 88, height: 88 }} />
+            accessibilityLabel={onPick ? `${t('review.pick')} ${p.at.utc}` : hidden ? t('photos.tapToShow') : p.at.utc}
+            accessibilityState={onPick ? { selected: picked?.has(p.id) ?? false } : undefined}
+            onPress={() => (onPick ? onPick(p) : setShown((s) => new Set(s).add(p.id)))}>
+            <Image source={{ uri: deps.photos.uri(p.file) }} blurRadius={hidden ? 30 : 0} style={[{ width: 88, height: 88 }, picked?.has(p.id) && { borderWidth: 3, borderColor: '#3b82f6' }]} />
           </Pressable>
         );
       })}

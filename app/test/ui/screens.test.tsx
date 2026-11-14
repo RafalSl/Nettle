@@ -1869,6 +1869,15 @@ describe('Barcode in the meal form (IN-2, IN-8, IN-9, IN-10)', () => {
     expect(await deps.repo.listMeals()).toMatchObject([{ description: 'Synthetic yoghurt', ingredients: ['milk', 'cultures'], allergens: ['milk'], barcode: '5900000000008', source: { kind: 'open_food_facts', edited: false, llm: null } }]);
   });
 
+  it('IN-2 a Polish translation from the database is shown with a warning to check it against the pack', async () => {
+    const { tree } = await open({ '5900000000008': { ...product, translated: true } as typeof product });
+    await type(tree, en.meal.scanCode, '5900000000008');
+    await press(tree, en.meal.scanLookup);
+    await flush();
+    expect(hasText(tree, en.meal.scanFromDbTranslated)).toBe(true);
+    expect(hasText(tree, en.meal.scanFromDb)).toBe(false);
+  });
+
   it('IN-16 changing a filled list before saving marks the entry edited', async () => {
     const { deps, tree } = await open();
     await type(tree, en.meal.scanCode, '5900000000008');

@@ -318,3 +318,7 @@ Newest entry last. One short entry per working session or meaningful step: what 
 
 ## 2026-11-14: AI allergen suggestion (branch feature/allergen-suggestion)
 - **Done:** IN-10, LL-5, LL-9. New LLM action `allergen_suggest` with its own model setting; a button on the meal and drink forms sends the ingredient names (text only) after a confirmation that lists them, and the answer only suggests tags. 632 tests pass.
+
+## 2026-11-14: Polish ingredient text (branch feature/polish-ingredients)
+- **Done:** IN-2. Open Food Facts lookups prefer `ingredients_text_pl`; a translation (product not entered in Polish) carries a warning on the meal and drink forms. 633 tests pass.
+- **Next:** cache of AI allergen suggestions.

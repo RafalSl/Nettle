@@ -46,6 +46,7 @@ Requirements and flows are in `docs/requirements.md`, `docs/ux-design.md` and `d
 - Export first (UX-6, SE-9): Replace (import) and Delete data are action sheets with "Export first" above the destructive action; choosing it makes a full backup (no password) and asks again. Delete data then asks a second time ("Delete for good"). Shared helper `confirmWithExport` and `exportEverything` (`ui/exportFirst.ts`).
 - Date jump (UX-2): the day heading on Today opens an inline date picker (no future dates); a pick shows that day, today returns to the live day.
 - AI allergen suggestion (IN-10, LL-5, LL-9): action `allergen_suggest` (own model setting), prompt `allergens-1`, `suggestAllergensWithAi` (names only, no photo). A button on the meal and drink forms shows the ingredient names in the billing confirmation, runs inline with Cancel, and returns suggested tags that stay unselected until "Select the listed allergens". Nothing is stored by the call.
+- Polish ingredient text (IN-2): the Open Food Facts adapter also asks for `ingredients_text_pl` and `lang`, prefers the Polish text and marks it `translated` when the product was entered in another language; the form then says to check it against the pack. Coverage of Polish products is unmeasured (phone checklist).
 - Skin and health: unique area names (SK-2), no change for nails and all areas (SK-3), empty-day confirmation (SK-11), reminder taps (SK-9), "Same as yesterday" (SK-7).
 - LLM: elapsed time, Cancel, billing notice, no retry of a timeout, the run in `AnalysisRunner` (survives leaving the screen, interrupted state with retry, keep-awake).
 - Security: app lock (SE-8) with `expo-local-authentication`.
@@ -58,7 +59,7 @@ Requirements and flows are in `docs/requirements.md`, `docs/ux-design.md` and `d
 - *No change buttons (SK-3).* Built on the Skin form (all areas) and the nail form (one nail); the Skin form's single-area button existed.
 - *Settings.* Missing groups and screens: the photo options of Privacy and photos, About.
 - *Today.* The highlighted new row, the "Earlier…" stool form (it opens the check-in), the first-run empty states beyond text.
-- *Intake details.* Ingredient chips with autocomplete, favorites for scanned products, a Polish ingredient text from the database.
+- *Intake details.* Ingredient chips with autocomplete, favorites for scanned products.
 - *Export and import.* A free date range picker for the report and the custom export, newest-wins merge (EX-12, Later: needs modified timestamps and a schema bump).
 - *Review.* A side-by-side comparison of two photos, trend charts.
 - *Other.* The accessibility pass (UX-8, deferred), polishing Polish strings, pruning unused template dependencies.

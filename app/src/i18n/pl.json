@@ -92,6 +92,7 @@
     "scanInStoreTitle": "Kod sklepowy",
     "scanInStoreBody": "Ten numer sklepy nadają własnym produktom, więc ten sam kod może oznaczać różne produkty. Czy dopasowanie jest właściwe?",
     "scanUse": "Użyj",
+    "scanFromDbTranslated": "Wypełniono z Open Food Facts. Składniki to polskie tłumaczenie etykiety z bazy, więc sprawdź je z opakowaniem.",
     "scanFromDb": "Wypełniono z Open Food Facts. Sprawdź przed zapisem.",
     "scanFromHistory": "Wypełniono z dziennika: ten kod ostatnio zapisano {{date}}. Składniki i alergeny są takie, jakie wtedy potwierdzono.",
     "scanTagsHint": "Baza podaje alergeny: {{list}}. Nie są zaznaczone, dopóki ich nie zaznaczysz.",

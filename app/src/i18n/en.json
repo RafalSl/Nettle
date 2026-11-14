@@ -92,6 +92,7 @@
     "scanInStoreTitle": "In-store code",
     "scanInStoreBody": "This number is used by shops for their own products, so the same code can mean different products. Is the match right?",
     "scanUse": "Use it",
+    "scanFromDbTranslated": "Filled from Open Food Facts. The ingredients are the database's Polish translation of the label, so check them against the pack.",
     "scanFromDb": "Filled from Open Food Facts. Check it before saving.",
     "scanFromHistory": "Filled from your diary: this code was last logged on {{date}}. The ingredients and tags are the ones you confirmed then.",
     "scanTagsHint": "The database lists these allergens: {{list}}. They are not selected until you select them.",

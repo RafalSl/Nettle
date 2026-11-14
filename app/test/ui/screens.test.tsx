@@ -264,16 +264,30 @@ describe('screen flows (NF-2, NF-3)', () => {
     expect(entries.map((e) => e.scores)).toEqual([scores, scores]);
   });
 
-  it('SK-6 a flare can be started and then ended from the skin screen', async () => {
+  it('SK-6 a flare is started and then ended from More, the kind following the area', async () => {
     const deps = nowDeps();
-    const { tree } = await mount(() => require('@/app/form/skin'), deps);
+    const save = async () => {
+      let rendered!: ReactTestRenderer;
+      await act(async () => {
+        rendered = create(mockScreen.options!.headerRight!());
+      });
+      await act(async () => {
+        await rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!.props.onPress();
+      });
+      await flush();
+    };
+    const first = await mount(() => require('@/app/form/flare'), deps);
     await flush();
-    await press(tree, en.skin.flareStart);
+    expect(hasText(first.tree, en.more.flareWillStart)).toBe(true);
+    await save();
+    const second = await mount(() => require('@/app/form/flare'), deps);
     await flush();
-    expect(hasText(tree, en.skin.flareOpen)).toBe(true);
-    await press(tree, en.skin.flareEnd);
-    await flush();
+    expect(hasText(second.tree, en.more.flareWillEnd)).toBe(true);
+    await save();
     expect((await deps.repo.listRecords('flareMarkers')).map((m) => m.kind).sort()).toEqual(['end', 'start']);
+    const more = await mount(() => require('@/app/(tabs)/today/more'), deps);
+    await press(more.tree, en.home.moreFlare);
+    expect(mockRouter.push).toHaveBeenLastCalledWith('/form/flare');
   });
 
   it('SK-10, IN-11 the More screen adds a nail and saves a treatment', async () => {

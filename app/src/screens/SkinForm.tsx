@@ -2,7 +2,6 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, TextInput } from 'react-native';
 import { SCORE_KEYS, type SkinArea, type SkinScores } from '@/core/model/types';
-import { markFlare, openFlareAreas } from '@/core/usecases/flares';
 import { lastSkinScores, listActiveAreas, logSkinEntry, repeatAllAreas, repeatSkinEntry } from '@/core/usecases/skin';
 import { areaLabel, errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
@@ -15,7 +14,7 @@ const ZERO: SkinScores = { severity: 0, itch: 0, pain: 0, dryness: 0, scaling: 0
 /**
  * SK-1 to SK-3, SK-6: a per-area entry with five separate 0-10 scores, prefilled from the area's last values.
  * "No change" saves it in one tap, and "No change for all areas" saves every area that has an earlier entry.
- * Flare start and end act at once. Photos are added from the entry in the day's log.
+ * Flare start and end are in More (SK-6). Photos are added from the entry in the day's log.
  */
 export default function SkinForm() {
   const { deps } = useServices();
@@ -26,12 +25,10 @@ export default function SkinForm() {
   const [scores, setScores] = useState<SkinScores>(ZERO);
   const [note, setNote] = useField('', f.touch);
   const [hasLast, setHasLast] = useState(false);
-  const [flareOpen, setFlareOpen] = useState<Set<string>>(new Set());
   const time = useFormTime(f.touch);
 
   const reload = useCallback(() => {
     listActiveAreas(deps, 'skin').then(setAreas);
-    openFlareAreas(deps).then(setFlareOpen);
   }, [deps]);
   useFocusEffect(reload);
   const selected = areaId && areas.some((a) => a.id === areaId) ? areaId : (areas[0]?.id ?? null);
@@ -81,14 +78,6 @@ export default function SkinForm() {
         </>
       )}
       <Button kind="secondary" title={t('skin.noChangeAll')} onPress={() => void noChangeAll()} />
-      {selected && flareOpen.has(selected) ? (
-        <>
-          <Hint>{t('skin.flareOpen')}</Hint>
-          <Button kind="secondary" title={t('skin.flareEnd')} onPress={() => void act(() => markFlare(deps, { areaId: selected, kind: 'end', at: time.atForSave }), false)} />
-        </>
-      ) : (
-        <Button kind="secondary" title={t('skin.flareStart')} onPress={() => void act(() => markFlare(deps, { areaId: selected!, kind: 'start', at: time.atForSave }), false)} />
-      )}
       <Hint>{t('skin.scale')}</Hint>
       {hasLast && <Hint>{t('skin.prefilled')}</Hint>}
       {SCORE_KEYS.map((k) => (

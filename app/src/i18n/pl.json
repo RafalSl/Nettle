@@ -259,6 +259,9 @@
   },
   "more": {
     "nailTitle": "Paznokcie",
+    "flareOpenMark": "otwarty",
+    "flareWillStart": "Zapis oznacza początek rzutu w tym miejscu.",
+    "flareWillEnd": "Zapis oznacza koniec otwartego rzutu w tym miejscu.",
     "nailAreaName": "Nowy paznokieć (np. lewy kciuk)",
     "nailAddArea": "Dodaj paznokieć",
     "nailNone": "Najpierw dodaj paznokieć.",
@@ -589,6 +592,7 @@
     }
   },
   "nav": {
+    "flare": "Rzut",
     "settings": "Ustawienia",
     "more": "Więcej",
     "meal": "Posiłek",
@@ -625,7 +629,7 @@
     "moreReaction": "Reakcja po posiłku",
     "moreNails": "Aktualizacja paznokci",
     "moreChange": "Rozpoczęte lub zakończone",
-    "flareHint": "Początek i koniec rzutu są w formularzu Skóra.",
+    "moreFlare": "Początek lub koniec rzutu",
     "stool": "Stolec",
     "edit": "Edytuj",
     "done": "Gotowe",

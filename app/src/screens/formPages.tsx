@@ -1,5 +1,6 @@
 import { ChangeEventSection, ReactionSection } from '@/ui/EventSections';
 import { DrinkSection, MedicationSection } from '@/ui/IntakeSection';
+import { FlareSection } from '@/ui/FlareSection';
 import { NailSection } from '@/ui/NailSection';
 import { TreatmentSection } from '@/ui/TreatmentSection';
 
@@ -10,3 +11,4 @@ export const TreatmentForm = TreatmentSection;
 export const NailForm = NailSection;
 export const ChangeForm = ChangeEventSection;
 export const ReactionForm = ReactionSection;
+export const FlareForm = FlareSection;

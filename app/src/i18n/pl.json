@@ -153,6 +153,10 @@
     "too_many_photos": "Za dużo zdjęć na jedno uruchomienie. Wybierz mniej.",
     "flare_already_started": "Dla tego miejsca zaznaczono już początek rzutu.",
     "flare_not_started": "Dla tego miejsca nie zaznaczono początku rzutu.",
+    "flare_end_before_start": "Rzut nie może skończyć się przed początkiem.",
+    "flare_overlap": "Ta godzina nakłada się na poprzedni lub następny znacznik rzutu w tym miejscu.",
+    "checkin_day_taken": "Ten dzień ma już wpis dzienny. Otwórz go zamiast tego.",
+    "meal_after_reaction": "Posiłku nie można przesunąć na czas po jego reakcji.",
     "notifications_denied": "Powiadomienia są wyłączone dla tej aplikacji. Zezwól na nie w ustawieniach iPhone'a, aby dostawać przypomnienia."
   },
   "today": {

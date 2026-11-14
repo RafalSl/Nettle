@@ -13,13 +13,16 @@ import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { MemoryRepo } from '../fakes/memoryRepo';
 import { makeDeps } from '../helpers/fixtures';
 
+const mockRouter = { push: jest.fn(), back: jest.fn() };
+
 // Native modules and the router are replaced; everything else (screens, components, i18n, use cases) is real.
 jest.mock('expo-router', () => {
   const { useEffect } = jest.requireActual('react');
   return {
     useFocusEffect: (cb: () => void | (() => void)) => useEffect(cb, [cb]),
-    useRouter: () => ({ push: jest.fn() }),
+    useRouter: () => mockRouter,
     Tabs: Object.assign(({ children }: { children: unknown }) => children, { Screen: () => null }),
+    Stack: Object.assign(({ children }: { children: unknown }) => children, { Screen: () => null }),
   };
 });
 jest.mock('@react-native-community/datetimepicker', () => () => null);
@@ -32,13 +35,25 @@ jest.mock('@/services', () => {
 
 const services = require('@/services') as { __state: { current: unknown } };
 
+// The route files themselves, so the wiring from route to screen is tested too (UX-1, UX-3).
 const screens: [string, () => { default: React.ComponentType }][] = [
-  ['meal (index)', () => require('@/app/index')],
-  ['today', () => require('@/app/today')],
-  ['skin', () => require('@/app/skin')],
-  ['more', () => require('@/app/more')],
-  ['data', () => require('@/app/data')],
-  ['analysis', () => require('@/app/analysis')],
+  ['today', () => require('@/app/(tabs)/today/index')],
+  ['more', () => require('@/app/(tabs)/today/more')],
+  ['settings', () => require('@/app/(tabs)/today/settings/index')],
+  ['settings logging', () => require('@/app/(tabs)/today/settings/logging')],
+  ['settings reminders', () => require('@/app/(tabs)/today/settings/reminders')],
+  ['settings ai', () => require('@/app/(tabs)/today/settings/ai')],
+  ['settings data', () => require('@/app/(tabs)/today/settings/data')],
+  ['review', () => require('@/app/(tabs)/review/index')],
+  ['analysis', () => require('@/app/(tabs)/review/analysis')],
+  ['form meal', () => require('@/app/form/meal')],
+  ['form skin', () => require('@/app/form/skin')],
+  ['form checkin', () => require('@/app/form/checkin')],
+  ['form intake', () => require('@/app/form/intake')],
+  ['form treatment', () => require('@/app/form/treatment')],
+  ['form nails', () => require('@/app/form/nails')],
+  ['form reaction', () => require('@/app/form/reaction')],
+  ['form change', () => require('@/app/form/change')],
 ];
 
 const textOf = (r: ReactTestRenderer): string => JSON.stringify(r.toJSON());
@@ -63,7 +78,7 @@ describe('screens render without crashing (NF-3)', () => {
     await act(async () => tree.unmount());
   });
 
-  it('the root layout declares every tab screen it lists', () => {
+  it('the root layout loads', () => {
     jest.isolateModules(() => {
       jest.doMock('@/adapters/storage/expoSqliteDb', () => ({ openExpoSqlite: jest.fn() }));
       jest.doMock('@/adapters/keystore/secureStoreKeyStore', () => ({ secureStoreKeyStore: {} }));
@@ -120,12 +135,12 @@ describe('screen flows (NF-2, NF-3)', () => {
 
   it('every screen shows its title from the English strings', async () => {
     const titles: [() => { default: React.ComponentType }, string][] = [
-      [() => require('@/app/index'), en.meal.title],
-      [() => require('@/app/today'), en.today.title],
-      [() => require('@/app/skin'), en.skin.title],
-      [() => require('@/app/more'), en.more.nailTitle],
-      [() => require('@/app/data'), en.data.exportTitle],
-      [() => require('@/app/analysis'), en.analysis.title],
+      [() => require('@/app/form/meal'), en.meal.title],
+      [() => require('@/app/form/checkin'), en.today.title],
+      [() => require('@/app/form/skin'), en.skin.title],
+      [() => require('@/app/form/nails'), en.more.nailTitle],
+      [() => require('@/app/(tabs)/today/settings/data'), en.data.exportTitle],
+      [() => require('@/app/(tabs)/review/analysis'), en.analysis.title],
     ];
     for (const [load, title] of titles) {
       const { tree } = await mount(load, nowDeps());
@@ -135,7 +150,7 @@ describe('screen flows (NF-2, NF-3)', () => {
 
   it('IN-1 typing a meal and pressing Save stores it and shows it under Recent', async () => {
     const deps = nowDeps();
-    const { tree } = await mount(() => require('@/app/index'), deps);
+    const { tree } = await mount(() => require('@/app/form/meal'), deps);
     await type(tree, en.meal.ingredientPlaceholder, 'Synthetic oats');
     await type(tree, 'Meal description', 'x').catch(() => undefined);
     const description = tree.root.findAll((n) => n.props.onChangeText && n.props.value === '' && n.props.placeholder === undefined)[0]!;
@@ -150,7 +165,7 @@ describe('screen flows (NF-2, NF-3)', () => {
 
   it('SK-7, SK-11 the check-in saves, closes the day, and can be reopened', async () => {
     const deps = nowDeps();
-    const { tree } = await mount(() => require('@/app/today'), deps);
+    const { tree } = await mount(() => require('@/app/form/checkin'), deps);
     await press(tree, `${en.common.increase} ${en.today.wellbeing}`);
     await press(tree, `${en.common.increase} ${en.today.wellbeing}`);
     await press(tree, en.today.saveClose);
@@ -171,7 +186,7 @@ describe('screen flows (NF-2, NF-3)', () => {
   it('SK-3 the skin screen starts from the last scores and "No change" saves a copy', async () => {
     const deps = nowDeps();
     await logSkinEntry(deps, { areaId: 'area-behind-ears', scores }); // the first area is preselected
-    const { tree } = await mount(() => require('@/app/skin'), deps);
+    const { tree } = await mount(() => require('@/app/form/skin'), deps);
     await flush();
     await press(tree, en.skin.noChange);
     await flush();
@@ -182,7 +197,7 @@ describe('screen flows (NF-2, NF-3)', () => {
 
   it('SK-6 a flare can be started and then ended from the skin screen', async () => {
     const deps = nowDeps();
-    const { tree } = await mount(() => require('@/app/skin'), deps);
+    const { tree } = await mount(() => require('@/app/form/skin'), deps);
     await flush();
     await press(tree, en.skin.flareStart);
     await flush();
@@ -194,11 +209,12 @@ describe('screen flows (NF-2, NF-3)', () => {
 
   it('SK-10, IN-11 the More screen adds a nail and saves a treatment', async () => {
     const deps = nowDeps();
-    const { tree } = await mount(() => require('@/app/more'), deps);
-    await type(tree, en.more.nailAreaName, 'Synthetic thumb');
-    await press(tree, en.more.nailAddArea);
-    await type(tree, en.more.treatmentNew, 'Synthetic cream');
-    await press(tree, en.more.treatmentAdd);
+    const nails = await mount(() => require('@/app/form/nails'), deps);
+    await type(nails.tree, en.more.nailAreaName, 'Synthetic thumb');
+    await press(nails.tree, en.more.nailAddArea);
+    const treatment = await mount(() => require('@/app/form/treatment'), deps);
+    await type(treatment.tree, en.more.treatmentNew, 'Synthetic cream');
+    await press(treatment.tree, en.more.treatmentAdd);
     await flush();
     expect((await deps.repo.listAreas()).some((a) => a.kind === 'nail' && a.name === 'Synthetic thumb')).toBe(true);
     expect((await deps.repo.listItems('treatments')).map((t) => t.name)).toEqual(['Synthetic cream']);
@@ -206,7 +222,7 @@ describe('screen flows (NF-2, NF-3)', () => {
 
   it('SE-2 the key is saved to the key store, cleared from the field and never shown', async () => {
     const deps = nowDeps();
-    const { tree } = await mount(() => require('@/app/data'), deps);
+    const { tree } = await mount(() => require('@/app/(tabs)/today/settings/ai'), deps);
     await type(tree, en.llm.keyField, 'sk-synthetic-secret');
     await press(tree, en.llm.keySave);
     await flush();
@@ -218,7 +234,7 @@ describe('screen flows (NF-2, NF-3)', () => {
   it('EX-1, EX-9 the Data screen exports a ZIP with data.json and hands it to the share sheet', async () => {
     const deps = nowDeps();
     await logMeal(deps, { description: 'Synthetic meal', ingredients: ['a'] });
-    const { tree, fileShare } = await mount(() => require('@/app/data'), deps);
+    const { tree, fileShare } = await mount(() => require('@/app/(tabs)/today/settings/data'), deps);
     await press(tree, en.data.exportButton);
     await flush();
     expect(fileShare.saveAndShare).toHaveBeenCalledTimes(1);
@@ -231,7 +247,7 @@ describe('screen flows (NF-2, NF-3)', () => {
   it('EX-3, EX-5 turning on CSV and the PDF report adds those files to the export', async () => {
     const deps = nowDeps();
     await logMeal(deps, { description: 'Synthetic meal', ingredients: ['a'] });
-    const { tree, fileShare } = await mount(() => require('@/app/data'), deps);
+    const { tree, fileShare } = await mount(() => require('@/app/(tabs)/today/settings/data'), deps);
     await toggle(tree, en.export.csv);
     await toggle(tree, en.export.report);
     await press(tree, en.data.exportButton);
@@ -247,7 +263,7 @@ describe('screen flows (NF-2, NF-3)', () => {
     const deps = nowDeps(llm);
     await saveApiKey(deps, 'sk-synthetic-secret');
     await logMeal(deps, { description: 'Synthetic meal', ingredients: ['a'], at: new Date(Date.now() - 2 * 3600 * 1000) });
-    const { tree } = await mount(() => require('@/app/analysis'), deps);
+    const { tree } = await mount(() => require('@/app/(tabs)/review/analysis'), deps);
     await flush();
     await press(tree, en.analysis.review);
     await flush();
@@ -272,7 +288,7 @@ describe('screen flows (NF-2, NF-3)', () => {
     const deps = nowDeps(llm);
     await saveApiKey(deps, 'sk-synthetic-secret');
     await logMeal(deps, { description: 'Synthetic meal', ingredients: [], at: new Date(Date.now() - 2 * 3600 * 1000) });
-    const { tree } = await mount(() => require('@/app/analysis'), deps);
+    const { tree } = await mount(() => require('@/app/(tabs)/review/analysis'), deps);
     await flush();
     await press(tree, en.analysis.review);
     const confirm = alert.mock.calls.find((c) => c[0] === en.analysis.confirmTitle)!;
@@ -292,7 +308,7 @@ describe('screen flows (NF-2, NF-3)', () => {
     const deps = nowDeps(llm);
     await saveApiKey(deps, 'sk-synthetic-secret');
     await logMeal(deps, { description: 'Synthetic meal', ingredients: [], at: new Date(Date.now() - 2 * 3600 * 1000) });
-    const { tree } = await mount(() => require('@/app/analysis'), deps);
+    const { tree } = await mount(() => require('@/app/(tabs)/review/analysis'), deps);
     await flush();
     await press(tree, en.analysis.review);
     const confirm = alert.mock.calls.find((c) => c[0] === en.analysis.confirmTitle)!;
@@ -314,7 +330,7 @@ describe('screen flows (NF-2, NF-3)', () => {
 
   it('SK-9 the reminders section saves a daily reminder, and a refused permission leaves the switch off', async () => {
     const deps = nowDeps();
-    const { tree } = await mount(() => require('@/app/more'), deps);
+    const { tree } = await mount(() => require('@/app/(tabs)/today/settings/reminders'), deps);
     await toggle(tree, en.reminders.checkIn);
     await flush();
     expect((deps.notifier as unknown as { scheduled: { id: string }[] }).scheduled.map((s) => s.id)).toEqual(['checkin']);
@@ -322,10 +338,72 @@ describe('screen flows (NF-2, NF-3)', () => {
 
     const refused = nowDeps();
     (refused.notifier as unknown as { granted: boolean }).granted = false;
-    const second = await mount(() => require('@/app/more'), refused);
+    const second = await mount(() => require('@/app/(tabs)/today/settings/reminders'), refused);
     await toggle(second.tree, en.reminders.backup);
     await flush();
     expect(alert.mock.calls.some((c) => c[0] === en.errors.notifications_denied)).toBe(true);
     expect(second.tree.root.findAll((n) => n.props.accessibilityLabel === en.reminders.backup && n.props.value === true)).toHaveLength(0);
+  });
+});
+
+describe('navigation shell (UX-1, UX-2, UX-3, UX-6)', () => {
+  beforeEach(() => {
+    mockRouter.push.mockClear();
+  });
+
+  it('UX-2 Today offers the quick actions, each opening its modal form or the More list', async () => {
+    const { tree } = await mount(() => require('@/app/(tabs)/today/index'), nowDeps());
+    for (const [label, href] of [
+      [en.home.meal, '/form/meal'],
+      [en.home.skin, '/form/skin'],
+      [en.home.treatment, '/form/treatment'],
+      [en.home.checkin, '/form/checkin'],
+      [en.home.more, '/today/more'],
+    ] as const) {
+      await press(tree, label);
+      expect(mockRouter.push).toHaveBeenLastCalledWith(href);
+    }
+  });
+
+  it('UX-2 More lists the rarer entries and UX-6 Settings lists its groups, each a pushed screen', async () => {
+    const more = await mount(() => require('@/app/(tabs)/today/more'), nowDeps());
+    for (const [label, href] of [
+      [en.home.moreIntake, '/form/intake'],
+      [en.home.moreReaction, '/form/reaction'],
+      [en.home.moreNails, '/form/nails'],
+      [en.home.moreChange, '/form/change'],
+    ] as const) {
+      await press(more.tree, label);
+      expect(mockRouter.push).toHaveBeenLastCalledWith(href);
+    }
+    const settings = await mount(() => require('@/app/(tabs)/today/settings/index'), nowDeps());
+    for (const [label, href] of [
+      [en.nav.logging, '/today/settings/logging'],
+      [en.nav.reminders, '/today/settings/reminders'],
+      [en.nav.ai, '/today/settings/ai'],
+      [en.nav.data, '/today/settings/data'],
+    ] as const) {
+      await press(settings.tree, label);
+      expect(mockRouter.push).toHaveBeenLastCalledWith(href);
+    }
+  });
+
+  it('UX-1 every screen a layout declares has a route file, and titles stay under 15 characters', () => {
+    const fs = require('fs') as typeof import('fs');
+    const path = require('path') as typeof import('path');
+    const root = path.join(__dirname, '../../src/app');
+    const layouts = ['_layout.tsx', '(tabs)/_layout.tsx', '(tabs)/today/_layout.tsx', '(tabs)/review/_layout.tsx'];
+    for (const layout of layouts) {
+      const dir = path.dirname(path.join(root, layout));
+      const names = [...fs.readFileSync(path.join(root, layout), 'utf8').matchAll(/<(?:Stack|Tabs)\.Screen name="([^"]+)"/g)].map((m) => m[1]!);
+      for (const name of names) {
+        const ok = ['.tsx', '/index.tsx'].some((ext) => fs.existsSync(path.join(dir, name + ext))) || fs.existsSync(path.join(dir, name, '_layout.tsx'));
+        expect(`${layout}: ${name} ${ok}`).toBe(`${layout}: ${name} true`);
+      }
+    }
+    for (const key of ['settings', 'more', 'meal', 'skin', 'checkin', 'intake', 'treatment', 'nails', 'reaction', 'change', 'logging', 'reminders', 'ai', 'data'] as const) {
+      expect(en.nav[key].length).toBeLessThan(15);
+    }
+    expect(Object.keys(en.tabs)).toEqual(['today', 'review']);
   });
 });

@@ -1,11 +1,7 @@
 {
   "tabs": {
-    "meal": "Meal",
-    "skin": "Skin",
-    "data": "Data",
     "today": "Today",
-    "more": "More",
-    "analysis": "AI analysis"
+    "review": "Review"
   },
   "common": {
     "save": "Save",
@@ -498,5 +494,41 @@
       "backupTitle": "Back up your diary",
       "backupBody": "Export your diary from the Data tab and keep the file safe."
     }
+  },
+  "nav": {
+    "settings": "Settings",
+    "more": "More",
+    "meal": "Meal",
+    "skin": "Skin update",
+    "checkin": "Check-in",
+    "intake": "Alcohol, meds",
+    "treatment": "Treatment",
+    "nails": "Nails",
+    "reaction": "Reaction",
+    "change": "Start or stop",
+    "logging": "Logging",
+    "reminders": "Reminders",
+    "ai": "AI analysis",
+    "data": "Data & backup",
+    "analysis": "AI analysis",
+    "gear": "Settings"
+  },
+  "home": {
+    "quickActions": "Quick actions",
+    "meal": "Meal",
+    "skin": "Skin",
+    "treatment": "Treatment",
+    "checkin": "Check-in",
+    "more": "More",
+    "moreIntake": "Alcohol, medication or supplement",
+    "moreReaction": "Reaction after a meal",
+    "moreNails": "Nail update",
+    "moreChange": "Started or stopped",
+    "flareHint": "Flare start or end is on the Skin form."
+  },
+  "review": {
+    "empty": "Nothing to review yet. Entries you log on Today show up here.",
+    "analysis": "AI analysis",
+    "export": "Export and import"
   }
 }

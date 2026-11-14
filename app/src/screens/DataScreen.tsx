@@ -1,4 +1,3 @@
-import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Switch, Text, TextInput, View } from 'react-native';
 import { NettleError } from '@/core/model/errors';
@@ -10,7 +9,6 @@ import { areaLabelIn, errorMessage, itemLabelIn, t, tIn } from '@/i18n';
 import { useServices } from '@/services';
 import { DEFAULT_PHOTO_SELECTION, type PhotoSelection } from '@/core/export/photoSelection';
 import { PhotoSelectionField } from '@/ui/PhotoSelectionField';
-import { LlmSettingsSection } from '@/ui/LlmSettingsSection';
 import { DeleteSection } from '@/ui/DeleteSection';
 import { Button, Chips, Heading, Hint, Label, Screen, styles } from '@/ui/components';
 
@@ -37,7 +35,6 @@ const sumOf = (counts: Record<string, number>, keys: readonly string[]) => keys.
 /** EX-1 export and EX-10 import (preview, choose parts, then merge or replace). */
 export default function DataScreen() {
   const { deps, fileShare } = useServices();
-  const router = useRouter();
   const [exportParts, setExportParts] = useState<Parts>({ records: true, settings: true });
   const [csv, setCsv] = useState(false);
   const [report, setReport] = useState(false);
@@ -263,8 +260,6 @@ export default function DataScreen() {
           <Button kind="secondary" title={t('common.cancel')} onPress={() => setPending(null)} />
         </>
       )}
-      <Button title={t('analysis.open')} onPress={() => router.push('/analysis')} />
-      <LlmSettingsSection />
       <DeleteSection />
     </Screen>
   );

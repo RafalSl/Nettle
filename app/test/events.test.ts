@@ -1,7 +1,7 @@
 import { NettleError } from '@/core/model/errors';
 import { suggestAllergens } from '@/core/model/allergens';
 import { ALLERGENS } from '@/core/model/types';
-import { logAlcohol, logMedication } from '@/core/usecases/intake';
+import { logDrink, logMedication } from '@/core/usecases/intake';
 import { applyTreatment, logChangeEvent, logReaction } from '@/core/usecases/events';
 import { addListItem, archiveListItem } from '@/core/usecases/lists';
 import { logMeal } from '@/core/usecases/logMeal';
@@ -108,11 +108,21 @@ describe('alcohol and medications (IN-4, IN-5)', () => {
   it('IN-4 logs a drink with type and amount in ml and rejects bad input', async () => {
     const repo = new MemoryRepo();
     const deps = makeDeps(repo);
-    const e = await logAlcohol(deps, { drink: ' Synthetic beer ', amountMl: 500, at: new Date('2026-01-15T18:00:00.000Z') });
-    expect(e).toMatchObject({ drink: 'Synthetic beer', amountMl: 500, note: null });
-    expect(await repo.listRecords('alcoholEntries')).toEqual([e]);
-    expect(await code(logAlcohol(deps, { drink: ' ', amountMl: 100 }))).toBe('empty_name');
-    for (const bad of [0, -5, 2.5, NaN]) expect(await code(logAlcohol(deps, { drink: 'x', amountMl: bad }))).toBe('invalid_amount');
+    const e = await logDrink(deps, { name: ' Synthetic beer ', amountMl: 500, at: new Date('2026-01-15T18:00:00.000Z') });
+    expect(e).toMatchObject({ name: 'Synthetic beer', amountMl: 500, note: null });
+    expect(await repo.listRecords('drinks')).toEqual([e]);
+    expect(await code(logDrink(deps, { name: ' ', amountMl: 100 }))).toBe('empty_name');
+    for (const bad of [0, -5, 2.5, NaN]) expect(await code(logDrink(deps, { name: 'x', amountMl: bad }))).toBe('invalid_amount');
+  });
+
+  it('IN-4 and IN-10 a drink may be non-alcoholic and carry ingredients and allergen tags', async () => {
+    const repo = new MemoryRepo();
+    const deps = makeDeps(repo);
+    const coffee = await logDrink(deps, { name: 'Synthetic coffee', amountMl: 200, ingredients: [' coffee ', '', 'milk'], allergens: ['milk', 'milk'] });
+    expect(coffee).toMatchObject({ alcohol: false, ingredients: ['coffee', 'milk'], allergens: ['milk'] });
+    const beer = await logDrink(deps, { name: 'Synthetic beer', amountMl: 500, alcohol: true });
+    expect(beer).toMatchObject({ alcohol: true, ingredients: [], allergens: [] });
+    expect(await code(logDrink(deps, { name: 'x', amountMl: 1, allergens: ['gold' as never] }))).toBe('invalid_value');
   });
 
   it('IN-5 logs a medication or supplement with an optional dose', async () => {

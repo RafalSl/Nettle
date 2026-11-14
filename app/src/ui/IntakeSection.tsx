@@ -2,13 +2,14 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, Pressable, Text, TextInput } from 'react-native';
 import { defaultPreferences, type Preferences } from '@/core/model/preferences';
-import { alcoholHistory, medicationHistory, rankSuggestions, type Suggestion } from '@/core/model/suggestions';
-import { MEDICATION_CATEGORIES, type MedicationCategory } from '@/core/model/types';
-import { logAlcohol, logMedication } from '@/core/usecases/intake';
+import { drinkHistory, medicationHistory, rankSuggestions, type Suggestion } from '@/core/model/suggestions';
+import { MEDICATION_CATEGORIES, type Drink, type MedicationCategory } from '@/core/model/types';
+import { logDrink, logMedication } from '@/core/usecases/intake';
 import { getPreferences } from '@/core/usecases/preferences';
 import { errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
 import { FormModal, useField, useForm } from '@/ui/FormModal';
+import { DrinkFields, draftFromDrink, drinkInput, drinkMissing, emptyDrinkDraft, type DrinkDraft } from '@/ui/DrinkFields';
 import { useFormTime } from '@/ui/useFormTime';
 import { Chips, Label, TimeField, styles } from '@/ui/components';
 
@@ -31,53 +32,53 @@ function useSuggestions<P>(load: (deps: ReturnType<typeof useServices>['deps'], 
   return { list, saveOnTap: prefs.suggestions.saveOnTap };
 }
 
-/** IN-4: a drink and its amount in millilitres. */
-export function AlcoholSection() {
+/** IN-4, IN-10: a drink with an alcohol switch and optional ingredients and allergen tags. */
+export function DrinkSection() {
   const { deps } = useServices();
   const router = useRouter();
   const f = useForm();
-  const [drink, setDrink] = useField('', f.touch);
-  const [amount, setAmount] = useField('', f.touch);
+  const [draft, setDraft] = useField<DrinkDraft>(emptyDrinkDraft(), f.touch);
   const time = useFormTime(f.touch);
-  const { list, saveOnTap } = useSuggestions<{ drink: string; amountMl: number }>(async (d, p) => {
+  const { list, saveOnTap } = useSuggestions<DrinkSnapshot>(async (d, p) => {
     const options = { rows: p.suggestions.rows, windowDays: p.suggestions.windowDays };
+    const snap = (x: DrinkSnapshot): DrinkSnapshot => ({ name: x.name, amountMl: x.amountMl, alcohol: x.alcohol, ingredients: x.ingredients, allergens: x.allergens });
     return rankSuggestions(
-      alcoholHistory(await d.repo.listRecords('alcoholEntries')).map((h) => ({ ...h, payload: { drink: h.payload.drink, amountMl: h.payload.amountMl } })),
-      p.favorites.alcohol.map((x) => ({ key: x.key, label: `${x.drink} ${x.amountMl} ml`, payload: { drink: x.drink, amountMl: x.amountMl } })),
+      drinkHistory(await d.repo.listRecords('drinks')).map((h) => ({ ...h, payload: snap(h.payload) })),
+      p.favorites.drinks.map((x) => ({ key: x.key, label: `${x.name} ${x.amountMl} ml`, payload: snap(x) })),
       d.clock.now(),
       options,
     );
   });
 
-  async function pick(s: { drink: string; amountMl: number }) {
+  // IN-10: a pick comes from the diary's own history, so its tags are shown pre-selected and count as confirmed.
+  async function pick(s: DrinkSnapshot) {
     if (!saveOnTap) {
-      setDrink(s.drink);
-      setAmount(String(s.amountMl));
+      setDraft(draftFromDrink(s));
       return;
     }
     try {
-      await logAlcohol(deps, { drink: s.drink, amountMl: s.amountMl, at: time.atForSave });
+      await logDrink(deps, { ...s, at: time.atForSave });
       router.back();
     } catch (e) {
       Alert.alert(errorMessage(e));
     }
   }
 
-  const missing = !drink.trim() ? t('edit.drink') : !(Number(amount) > 0) ? t('edit.amount') : null;
   return (
-    <FormModal dirty={f.dirty} missing={missing} onSave={async () => void (await logAlcohol(deps, { drink, amountMl: Number(amount), at: time.atForSave }))}>
+    <FormModal dirty={f.dirty} missing={drinkMissing(draft)} onSave={async () => void (await logDrink(deps, { ...drinkInput(draft), at: time.atForSave }))}>
       {list.length > 0 && <Label>{t('meal.suggestions')}</Label>}
       {list.map((s) => (
         <Pressable key={s.key} accessibilityRole="button" accessibilityLabel={s.label} onPress={() => void pick(s.payload)} style={{ paddingVertical: 8 }}>
           <Text style={styles.rowText}>{rowText(s)}</Text>
         </Pressable>
       ))}
-      <TextInput style={styles.input} accessibilityLabel={t('more.alcoholDrink')} placeholder={t('more.alcoholDrink')} value={drink} onChangeText={setDrink} />
-      <TextInput style={styles.input} accessibilityLabel={t('more.alcoholAmount')} placeholder={t('more.alcoholAmount')} keyboardType="number-pad" value={amount} onChangeText={setAmount} />
+      <DrinkFields draft={draft} onChange={setDraft} />
       <TimeField value={time.value} onChange={time.set} />
     </FormModal>
   );
 }
+
+type DrinkSnapshot = Pick<Drink, 'name' | 'amountMl' | 'alcohol' | 'ingredients' | 'allergens'>;
 
 /** IN-5: a medication or supplement with an optional dose. */
 export function MedicationSection() {

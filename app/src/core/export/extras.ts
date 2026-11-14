@@ -1,9 +1,10 @@
 import {
+  ALLERGENS,
   CHANGE_ACTIONS,
   FLARE_KINDS,
   type FlareMarker,
   MEDICATION_CATEGORIES,
-  type AlcoholEntry,
+  type Drink,
   type Analysis,
   type Photo,
   type MedicationEntry,
@@ -160,17 +161,33 @@ const reaction: Codec<Reaction> = {
   },
 };
 
-const alcohol: Codec<AlcoholEntry> = {
-  key: 'alcohol_entries',
-  toJson: (e) => ({ id: e.id, utc: e.at.utc, tz: e.at.tz, drink: e.drink, amount_ml: e.amountMl, note: e.note }),
+const drink: Codec<Drink> = {
+  key: 'drinks',
+  toJson: (e) => ({
+    id: e.id,
+    utc: e.at.utc,
+    tz: e.at.tz,
+    name: e.name,
+    amount_ml: e.amountMl,
+    alcohol: e.alcohol,
+    ingredients: [...e.ingredients],
+    allergens: [...e.allergens],
+    note: e.note,
+  }),
   parse: (o, w) => {
     const ml = o.amount_ml;
     if (typeof ml !== 'number' || !Number.isInteger(ml) || ml <= 0) bad(`${w}.amount_ml`);
+    if (typeof o.alcohol !== 'boolean') bad(`${w}.alcohol`);
+    const ing = o.ingredients;
+    if (!Array.isArray(ing) || ing.some((x) => typeof x !== 'string')) bad(`${w}.ingredients`);
     return {
       id: str(o, 'id', w),
       at: { utc: utc(o, w), tz: str(o, 'tz', w) },
-      drink: str(o, 'drink', w),
+      name: str(o, 'name', w),
       amountMl: ml as number,
+      alcohol: o.alcohol as boolean,
+      ingredients: ing as string[],
+      allergens: enumList(o, 'allergens', ALLERGENS, w),
       note: nullableText(o, 'note', w),
     };
   },
@@ -278,7 +295,7 @@ export const EXTRA_CODECS: { [K in ExtraKind]: Codec<Records[K][number]> } = {
   treatmentApplications: treatmentApplication,
   changeEvents: changeEvent,
   reactions: reaction,
-  alcoholEntries: alcohol,
+  drinks: drink,
   medicationEntries: medication,
   photos: photo,
   analyses: analysis,

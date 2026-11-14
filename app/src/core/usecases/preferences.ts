@@ -8,8 +8,8 @@ import {
   type QuickAction,
   type SuggestionSettings,
 } from '../model/preferences';
-import { normalizeText } from '../model/suggestions';
-import type { AlcoholEntry, Meal, MedicationEntry } from '../model/types';
+import { drinkKey, normalizeText } from '../model/suggestions';
+import type { Drink, Meal, MedicationEntry } from '../model/types';
 import type { Deps } from './deps';
 
 /** The stored preferences, or the defaults while the user never changed any. */
@@ -24,7 +24,7 @@ async function change(deps: Deps, edit: (p: Preferences) => void): Promise<Prefe
   return prefs;
 }
 
-/** IN-14: rows 1 to 20, a window of 7, 14, 30 or 60 days, and "save on tap" (alcohol and medication only). */
+/** IN-14: rows 1 to 20, a window of 7, 14, 30 or 60 days, and "save on tap" (drinks and medication only). */
 export async function updateSuggestionSettings(deps: Deps, patch: Partial<SuggestionSettings>): Promise<SuggestionSettings> {
   if (patch.rows !== undefined && (!Number.isInteger(patch.rows) || patch.rows < 1 || patch.rows > MAX_SUGGESTION_ROWS)) {
     throw new NettleError('invalid_value', 'rows');
@@ -45,12 +45,31 @@ export async function toggleFavoriteMeal(deps: Deps, meal: Pick<Meal, 'descripti
   return prefs.favorites.meals.some((m) => m.key === key);
 }
 
-export async function toggleFavoriteDrink(deps: Deps, e: Pick<AlcoholEntry, 'drink' | 'amountMl'>): Promise<boolean> {
-  const key = `${normalizeText(e.drink)}|${e.amountMl}`;
+/** IN-14: a favorite drink is a snapshot of name, amount, alcohol switch, ingredients and allergen tags. */
+const drinkSnapshot = (e: Pick<Drink, 'name' | 'amountMl' | 'alcohol' | 'ingredients' | 'allergens'>) => ({
+  key: drinkKey(e),
+  name: e.name,
+  amountMl: e.amountMl,
+  alcohol: e.alcohol,
+  ingredients: [...e.ingredients],
+  allergens: [...e.allergens],
+});
+
+export async function toggleFavoriteDrink(deps: Deps, e: Pick<Drink, 'name' | 'amountMl' | 'alcohol' | 'ingredients' | 'allergens'>): Promise<boolean> {
+  const snap = drinkSnapshot(e);
   const prefs = await change(deps, (p) => {
-    p.favorites.alcohol = toggle(p.favorites.alcohol, { key, drink: e.drink, amountMl: e.amountMl });
+    p.favorites.drinks = toggle(p.favorites.drinks, snap);
   });
-  return prefs.favorites.alcohol.some((m) => m.key === key);
+  return prefs.favorites.drinks.some((m) => m.key === snap.key);
+}
+
+/** Like `refreshFavoriteMeal`: a saved drink that is a favorite updates the snapshot, otherwise nothing is touched. */
+export async function refreshFavoriteDrink(deps: Deps, drink: Drink): Promise<void> {
+  const snap = drinkSnapshot(drink);
+  const prefs = await deps.repo.getPreferences();
+  if (!prefs?.favorites.drinks.some((m) => m.key === snap.key)) return;
+  prefs.favorites.drinks = prefs.favorites.drinks.map((m) => (m.key === snap.key ? snap : m));
+  await deps.repo.setPreferences(prefs);
 }
 
 export async function toggleFavoriteMedication(deps: Deps, e: Pick<MedicationEntry, 'category' | 'name' | 'dose'>): Promise<boolean> {

@@ -207,6 +207,20 @@ export const MIGRATIONS: string[] = [
     json TEXT NOT NULL
   );
   `,
+  // IN-4: alcohol entries become drinks (any beverage) with an alcohol switch, ingredients and allergen tags.
+  // Existing rows were all alcoholic. Tombstones follow the new kind name; the old favorite drinks (a different
+  // shape) are dropped, since only prototype data exists.
+  `
+  ALTER TABLE alcohol_entry RENAME TO drink;
+  ALTER TABLE drink RENAME COLUMN drink TO name;
+  ALTER TABLE drink ADD COLUMN alcohol INTEGER NOT NULL DEFAULT 1 CHECK (alcohol IN (0, 1));
+  ALTER TABLE drink ADD COLUMN ingredients_json TEXT NOT NULL DEFAULT '[]';
+  ALTER TABLE drink ADD COLUMN allergens_json TEXT NOT NULL DEFAULT '[]';
+  DROP INDEX alcohol_entry_ts;
+  CREATE INDEX drink_ts ON drink (ts_utc);
+  UPDATE tombstone SET kind = 'drinks' WHERE kind = 'alcoholEntries';
+  UPDATE preference SET json = json_set(json_remove(json, '$.favorites.alcohol'), '$.favorites.drinks', json('[]'));
+  `,
 ];
 
 export async function migrate(db: SqlDb): Promise<void> {

@@ -66,7 +66,7 @@ export const noExtra = {
   treatmentApplications: [],
   changeEvents: [],
   reactions: [],
-  alcoholEntries: [],
+  drinks: [],
   medicationEntries: [],
   photos: [],
   analyses: [],

@@ -2,7 +2,7 @@ import { planEntryDeletion } from '../model/deletion';
 import { NettleError } from '../model/errors';
 import { localDay, makeStamp } from '../model/time';
 import type {
-  AlcoholEntry,
+  Drink,
   CheckIn,
   FlareMarker,
   Meal,
@@ -21,7 +21,7 @@ import type { StorageRepository } from '../ports/storage';
 import { logStool, validCheckInTags, type CheckInInput } from './checkin';
 import type { Deps } from './deps';
 import { applyTreatment, logChangeEvent, logReaction, type ApplyTreatmentInput, type ChangeEventInput, type ReactionInput } from './events';
-import { logAlcohol, logMedication } from './intake';
+import { logDrink, logMedication, type LogDrinkInput } from './intake';
 import { logMeal, type LogMealInput } from './logMeal';
 import { logNailEntry, logSkinEntry, type LogNailEntryInput, type LogSkinEntryInput } from './skin';
 
@@ -99,13 +99,13 @@ export async function editStool(deps: Deps, id: string, input: { bristol: number
   return logStool(editing(deps, id, { at: keepAt(orig, input.at) }), input);
 }
 
-export async function editAlcohol(
+export async function editDrink(
   deps: Deps,
   id: string,
-  input: { drink: string; amountMl: number; at?: Date; note?: string },
-): Promise<AlcoholEntry> {
-  const orig = (await getEntry(deps, 'alcoholEntries', id)) as AlcoholEntry;
-  return logAlcohol(editing(deps, id, { at: keepAt(orig, input.at) }), input);
+  input: LogDrinkInput,
+): Promise<Drink> {
+  const orig = (await getEntry(deps, 'drinks', id)) as Drink;
+  return logDrink(editing(deps, id, { at: keepAt(orig, input.at) }), input);
 }
 
 export async function editMedication(

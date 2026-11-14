@@ -150,7 +150,7 @@ export function buildReportHtml(input: ReportInput): string {
     out.push(table([tx('report.date'), tx('report.bristol')], stool.map((s) => [when(s.at), s.bristol])));
   }
 
-  // Treatments, change events, medication, alcohol
+  // Treatments, change events, medication
   const apps = byTime(r.treatmentApplications);
   if (apps.length > 0) {
     out.push(`<h2>${esc(tx('report.treatments'))}</h2>`);
@@ -169,10 +169,10 @@ export function buildReportHtml(input: ReportInput): string {
 
   // Intake log (IN-1, IN-4, IN-10, IN-13)
   const meals = byTime(r.meals);
-  if (meals.length > 0 || r.alcoholEntries.length > 0) {
+  if (meals.length > 0 || r.drinks.length > 0) {
     out.push(`<h2>${esc(tx('report.intake'))}</h2>`);
     out.push(table([tx('report.date'), tx('report.meal'), tx('report.ingredients'), tx('report.allergens')], meals.map((m) => [when(m.at), m.description, m.ingredients.join(', '), m.allergens.map((a) => tx(`allergens.${a}`)).join(', ')])));
-    out.push(table([tx('report.date'), tx('report.drink'), 'ml'], byTime(r.alcoholEntries).map((a) => [when(a.at), a.drink, a.amountMl])));
+    out.push(table([tx('report.date'), tx('report.drink'), 'ml', tx('report.alcohol'), tx('report.ingredients'), tx('report.allergens')], byTime(r.drinks).map((a) => [when(a.at), a.name, a.amountMl, a.alcohol ? '✓' : '', a.ingredients.join(', '), a.allergens.map((x) => tx(`allergens.${x}`)).join(', ')])));
   }
   const reactions = byTime(r.reactions);
   if (reactions.length > 0) {

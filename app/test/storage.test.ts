@@ -104,11 +104,26 @@ describe('sqlite migrations', () => {
     ).rejects.toThrow();
   });
 
+  it('IN-4 migration 13 turns alcohol entries into alcoholic drinks and renames their tombstones', async () => {
+    const db = createNodeSqliteDb();
+    for (const [i, sql] of MIGRATIONS.slice(0, 12).entries()) {
+      await db.exec(sql);
+      await db.exec(`PRAGMA user_version = ${i + 1}`);
+    }
+    await db.run(`INSERT INTO alcohol_entry (id, ts_utc, tz, drink, amount_ml) VALUES ('d1', '2026-01-01T00:00:00.000Z', 'UTC', 'beer', 500)`);
+    await db.run(`INSERT INTO tombstone (id, kind, deleted_utc, deleted_tz) VALUES ('t1', 'alcoholEntries', '2026-01-02T00:00:00.000Z', 'UTC')`);
+    const repo = await SqliteRepo.open(db);
+    expect(await repo.listRecords('drinks')).toEqual([
+      { id: 'd1', at: { utc: '2026-01-01T00:00:00.000Z', tz: 'UTC' }, name: 'beer', amountMl: 500, alcohol: true, ingredients: [], allergens: [], note: null },
+    ]);
+    expect((await db.all<{ kind: string }>('SELECT kind FROM tombstone')).map((r) => r.kind)).toEqual(['drinks']);
+  });
+
   it('IN-4 and IN-5 enforce amount and category in the database itself', async () => {
     const db = createNodeSqliteDb();
     await SqliteRepo.open(db);
     await expect(
-      db.run(`INSERT INTO alcohol_entry (id, ts_utc, tz, drink, amount_ml) VALUES ('x', '2026-01-01T00:00:00.000Z', 'UTC', 'beer', 0)`),
+      db.run(`INSERT INTO drink (id, ts_utc, tz, name, amount_ml) VALUES ('x', '2026-01-01T00:00:00.000Z', 'UTC', 'beer', 0)`),
     ).rejects.toThrow();
     await expect(
       db.run(`INSERT INTO medication_entry (id, ts_utc, tz, category, name) VALUES ('x', '2026-01-01T00:00:00.000Z', 'UTC', 'herb', 'n')`),

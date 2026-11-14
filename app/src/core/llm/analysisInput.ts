@@ -99,8 +99,8 @@ export function buildAnalysisInput(src: AnalysisSource, dayFrom: string, dayTo: 
   for (const m of src.meals) {
     add('meals', dayOf(m.at), 'meals', { time: time(m.at.utc, m.at.tz), description: m.description, ingredients: m.ingredients, allergens: m.allergens, ...(m.note ? { note: m.note } : {}) });
   }
-  for (const a of src.alcoholEntries) {
-    add('alcoholEntries', dayOf(a.at), 'alcohol', { time: time(a.at.utc, a.at.tz), drink: a.drink, ml: a.amountMl });
+  for (const a of src.drinks) {
+    add('drinks', dayOf(a.at), 'drinks', { time: time(a.at.utc, a.at.tz), name: a.name, ml: a.amountMl, alcohol: a.alcohol, ...(a.ingredients.length ? { ingredients: a.ingredients } : {}), ...(a.allergens.length ? { allergens: a.allergens } : {}), ...(a.note ? { note: a.note } : {}) });
   }
   for (const t of src.treatmentApplications) {
     add('treatmentApplications', dayOf(t.at), 'treatments', { time: time(t.at.utc, t.at.tz), name: treatmentName.get(t.treatmentId) ?? t.treatmentId, areas: t.areaIds.map((id) => areaName.get(id) ?? id) });

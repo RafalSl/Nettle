@@ -32,12 +32,12 @@ Requirements and flows are in `docs/requirements.md`, `docs/ux-design.md` and `d
 - Review (UX-1): Doctor report (EX-14), the days list, an Areas list with the per-area timeline (SK-8), AI analysis with a running card (LL-12).
 - Settings (UX-6): Logging (tags, treatments), Suggestions, Privacy (app lock), Reminders, AI analysis, Data and backup (Full backup preset, custom export with a photo picker, import with the tombstone switch, Delete data last).
 - Intake: two-phase meal form with suggestions and favorites (IN-7, IN-14), history tags pre-selected (IN-10), barcode scan and lookup (IN-2, IN-8, IN-9), inline editable photo estimate (IN-3), alcohol and medication suggestions with "save on tap". Preferences (favorites, suggestion settings, quick-action layout) travel in `settings.preferences`.
+- Drinks (IN-4, IN-10, IN-14): `Drink` replaces `AlcoholEntry` (migration 13): any beverage with an alcohol switch, optional ingredients and allergen tags; More lists "Drink"; suggestions and favorites carry the whole snapshot; report, analysis input and `data.json` (`drinks`) follow.
 - Skin and health: unique area names (SK-2), no change for nails and all areas (SK-3), empty-day confirmation (SK-11), reminder taps (SK-9), "Same as yesterday" (SK-7).
 - LLM: elapsed time, Cancel, billing notice, no retry of a timeout, the run in `AnalysisRunner` (survives leaving the screen, interrupted state with retry, keep-awake).
 - Security: app lock (SE-8) with `expo-local-authentication`.
 
 **Decided in v0.5, not built**
-- Drinks (IN-4): the alcohol form and `AlcoholEntry` become a drink with an alcohol switch and optional ingredients and allergens (a storage migration); More lists "Drink"; suggestions and the allergen tags cover drinks (IN-10, IN-14).
 - Label scan (IN-15, LL-13): capture, the image-to-ingredients port shared with the meal photo, the review banner, and deleting the temporary label photo when the form closes.
 - Model per action (LL-9): the model setting is one value today; it becomes one per action in Settings, AI analysis, with Haiku 5.5 as the default.
 - Today log cap (UX-2): the latest 8 entries and the "Show all (n)" row.

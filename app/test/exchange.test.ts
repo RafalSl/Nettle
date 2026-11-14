@@ -61,7 +61,7 @@ async function seeded(make: () => Promise<StorageRepository>) {
     name: 'Synthetic shampoo',
     note: null,
   });
-  await repo.addRecord('alcoholEntries', { id: 'al1', at: { utc: '2026-01-12T19:00:00.000Z', tz: TZ }, drink: 'Synthetic beer', amountMl: 500, note: null });
+  await repo.addRecord('drinks', { id: 'al1', at: { utc: '2026-01-12T19:00:00.000Z', tz: TZ }, name: 'Synthetic beer', amountMl: 500, alcohol: true, ingredients: [], allergens: [], note: null });
   await repo.addRecord('medicationEntries', { id: 'md1', at: { utc: '2026-01-12T08:00:00.000Z', tz: TZ }, category: 'supplement', name: 'Synthetic vitamin', dose: '1 tablet', note: null });
   await repo.addRecord('reactions', {
     id: 'r1',
@@ -89,7 +89,7 @@ const RAW_RECORDS = {
   treatment_applications: [],
   change_events: [],
   reactions: [],
-  alcohol_entries: [],
+  drinks: [],
   medication_entries: [],
   photos: [],
   analyses: [],
@@ -202,7 +202,7 @@ describe('data.json validation of check-ins, stool and tags (SK-7, SK-11, IN-6)'
 
 describe('data.json validation of alcohol and medication entries (IN-4, IN-5)', () => {
   const at = { utc: '2026-01-10T20:00:00.000Z', tz: 'Europe/Warsaw' };
-  const alcohol = { id: 'al1', utc: at.utc, tz: at.tz, drink: 'x', amount_ml: 330, note: null };
+  const alcohol = { id: 'al1', utc: at.utc, tz: at.tz, name: 'x', amount_ml: 330, alcohol: false, ingredients: [], allergens: [], note: null };
   const med = { id: 'md1', utc: at.utc, tz: at.tz, category: 'medication', name: 'x', dose: null, note: null };
   const err = (r: object) => {
     try {
@@ -214,8 +214,8 @@ describe('data.json validation of alcohol and medication entries (IN-4, IN-5)', 
   };
 
   it('accepts valid entries and rejects bad amounts and categories', () => {
-    expect(err({ alcohol_entries: [alcohol], medication_entries: [med] })).toBe('no error');
-    for (const ml of [0, -1, 2.5, '330']) expect(err({ alcohol_entries: [{ ...alcohol, amount_ml: ml }] })).toBe('import_invalid_data');
+    expect(err({ drinks: [alcohol], medication_entries: [med] })).toBe('no error');
+    for (const ml of [0, -1, 2.5, '330']) expect(err({ drinks: [{ ...alcohol, amount_ml: ml }] })).toBe('import_invalid_data');
     expect(err({ medication_entries: [{ ...med, category: 'herb' }] })).toBe('import_invalid_data');
     expect(err({ medication_entries: [{ ...med, name: '' }] })).toBe('import_invalid_data');
   });
@@ -299,7 +299,7 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
       treatmentApplications: 1,
       changeEvents: 1,
       reactions: 1,
-      alcoholEntries: 1,
+      drinks: 1,
       medicationEntries: 1,
       photos: 0,
       analyses: 0,
@@ -339,7 +339,7 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
       treatmentApplications: 0,
       changeEvents: 0,
       reactions: 0,
-      alcoholEntries: 0,
+      drinks: 0,
       medicationEntries: 0,
       photos: 0,
       analyses: 0,
@@ -357,7 +357,7 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
       treatmentApplications: 1,
       changeEvents: 1,
       reactions: 1,
-      alcoholEntries: 1,
+      drinks: 1,
       medicationEntries: 1,
       photos: 0,
       analyses: 0,

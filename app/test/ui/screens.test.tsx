@@ -13,7 +13,7 @@ import type { LlmProvider } from '@/core/ports/llm';
 import { logMeal } from '@/core/usecases/logMeal';
 import { addArea, logNailEntry, logSkinEntry } from '@/core/usecases/skin';
 import { logStool, saveCheckIn } from '@/core/usecases/checkin';
-import { logAlcohol, logMedication } from '@/core/usecases/intake';
+import { logDrink, logMedication } from '@/core/usecases/intake';
 import { addPhoto } from '@/core/usecases/photos';
 import { applyImport, exportBundle, previewImport } from '@/core/usecases/exchange';
 import { deleteEntry } from '@/core/usecases/entries';
@@ -88,7 +88,7 @@ const screens: [string, () => { default: React.ComponentType }][] = [
   ['form meal', () => require('@/app/form/meal')],
   ['form skin', () => require('@/app/form/skin')],
   ['form checkin', () => require('@/app/form/checkin')],
-  ['form alcohol', () => require('@/app/form/alcohol')],
+  ['form alcohol', () => require('@/app/form/drink')],
   ['form medication', () => require('@/app/form/medication')],
   ['form stool', () => require('@/app/form/stool')],
   ['form treatment', () => require('@/app/form/treatment')],
@@ -437,7 +437,7 @@ describe('navigation shell (UX-1, UX-2, UX-3, UX-6)', () => {
   it('UX-2 More lists the rarer entries and UX-6 Settings lists its groups, each a pushed screen', async () => {
     const more = await mount(() => require('@/app/(tabs)/today/more'), nowDeps());
     for (const [label, href] of [
-      [en.home.moreAlcohol, '/form/alcohol'],
+      [en.home.moreDrink, '/form/drink'],
       [en.home.moreMedication, '/form/medication'],
       [en.home.moreReaction, '/form/reaction'],
       [en.home.moreNails, '/form/nails'],
@@ -664,7 +664,7 @@ describe('Edit entry (EN-1, UX-3)', () => {
       ['treatmentApplications', (await applyTreatment(deps, { treatmentId: cream.id, areaIds: ['area-chin'], at })).id],
       ['changeEvents', (await logChangeEvent(deps, { action: 'started', category: 'product', name: 'Synthetic soap', at })).id],
       ['reactions', (await logReaction(deps, { mealId: meal.id, symptoms: ['hives'], at: new Date(at.getTime() + 600_000) })).id],
-      ['alcoholEntries', (await logAlcohol(deps, { drink: 'Synthetic beer', amountMl: 500, at })).id],
+      ['drinks', (await logDrink(deps, { name: 'Synthetic beer', amountMl: 500, at })).id],
       ['medicationEntries', (await logMedication(deps, { category: 'medication', name: 'Synthetic pill', at })).id],
       ['flareMarkers', (await markFlare(deps, { areaId: 'area-neck', kind: 'start', at })).id],
     ];
@@ -677,7 +677,7 @@ describe('Edit entry (EN-1, UX-3)', () => {
       await header('headerRight', en.common.save);
       await flush();
       expect(mockRouter.back).toHaveBeenCalledTimes(1);
-      const all = [...(await deps.repo.listMeals()), ...(await deps.repo.listSkinEntries()), ...(await deps.repo.listRecords('nailEntries')), ...(await deps.repo.listRecords('checkIns')), ...(await deps.repo.listRecords('stoolEntries')), ...(await deps.repo.listRecords('treatmentApplications')), ...(await deps.repo.listRecords('changeEvents')), ...(await deps.repo.listRecords('reactions')), ...(await deps.repo.listRecords('alcoholEntries')), ...(await deps.repo.listRecords('medicationEntries')), ...(await deps.repo.listRecords('flareMarkers'))];
+      const all = [...(await deps.repo.listMeals()), ...(await deps.repo.listSkinEntries()), ...(await deps.repo.listRecords('nailEntries')), ...(await deps.repo.listRecords('checkIns')), ...(await deps.repo.listRecords('stoolEntries')), ...(await deps.repo.listRecords('treatmentApplications')), ...(await deps.repo.listRecords('changeEvents')), ...(await deps.repo.listRecords('reactions')), ...(await deps.repo.listRecords('drinks')), ...(await deps.repo.listRecords('medicationEntries')), ...(await deps.repo.listRecords('flareMarkers'))];
       expect(all.filter((r) => r.id === id)).toHaveLength(1);
       expect(all).toHaveLength(ids.length);
     }
@@ -980,32 +980,32 @@ describe('Alcohol and medication suggestions (IN-14, UX-5)', () => {
     jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
   });
   afterEach(() => jest.restoreAllMocks());
-  const alcohol = () => require('@/app/form/alcohol');
+  const alcohol = () => require('@/app/form/drink');
   const medication = () => require('@/app/form/medication');
   const at = (h: number) => new Date(Date.now() - h * 3600_000);
 
   it('IN-14 a suggestion fills the form and saves nothing while "save on tap" is off', async () => {
     const deps = nowDeps();
-    await logAlcohol(deps, { drink: 'Synthetic beer', amountMl: 500, at: at(30) });
-    await logAlcohol(deps, { drink: 'Synthetic beer', amountMl: 500, at: at(10) });
+    await logDrink(deps, { name: 'Synthetic beer', amountMl: 500, at: at(30) });
+    await logDrink(deps, { name: 'Synthetic beer', amountMl: 500, at: at(10) });
     await logMedication(deps, { category: 'supplement', name: 'Synthetic vitamin', dose: '1 tablet', at: at(5) });
     const { tree } = await mount(alcohol, deps);
     await flush();
     expect(hasText(tree, 'Synthetic beer 500 ml ×2')).toBe(true);
     await press(tree, 'Synthetic beer 500 ml');
-    const drink = tree.root.findAll((n) => n.props.placeholder === en.more.alcoholDrink)[0]!;
+    const drink = tree.root.findAll((n) => n.props.placeholder === en.more.drinkName)[0]!;
     expect(drink.props.value).toBe('Synthetic beer');
     const meds = await mount(medication, deps);
     await flush();
     await press(meds.tree, 'Synthetic vitamin 1 tablet');
     expect(meds.tree.root.findAll((n) => n.props.placeholder === en.more.medName)[0]!.props.value).toBe('Synthetic vitamin');
-    expect(await deps.repo.listRecords('alcoholEntries')).toHaveLength(2);
+    expect(await deps.repo.listRecords('drinks')).toHaveLength(2);
     expect(await deps.repo.listRecords('medicationEntries')).toHaveLength(1);
   });
 
   it('UX-5 with "save on tap" a suggestion saves at once, as a new entry', async () => {
     const deps = nowDeps();
-    await logAlcohol(deps, { drink: 'Synthetic beer', amountMl: 500, at: at(10) });
+    await logDrink(deps, { name: 'Synthetic beer', amountMl: 500, at: at(10) });
     await logMedication(deps, { category: 'medication', name: 'Synthetic pill', at: at(5) });
     await updateSuggestionSettings(deps, { saveOnTap: true });
     const { tree } = await mount(alcohol, deps);
@@ -1016,14 +1016,14 @@ describe('Alcohol and medication suggestions (IN-14, UX-5)', () => {
     await press(meds.tree, 'Synthetic pill');
     await flush();
     expect(mockRouter.back).toHaveBeenCalledTimes(2); // a tap that saves closes the form
-    expect((await deps.repo.listRecords('alcoholEntries')).map((e) => e.amountMl)).toEqual([500, 500]);
+    expect((await deps.repo.listRecords('drinks')).map((e) => e.amountMl)).toEqual([500, 500]);
     expect(await deps.repo.listRecords('medicationEntries')).toHaveLength(2);
   });
 
   it('IN-14 favorites come first, even without history', async () => {
     const deps = nowDeps();
-    await logAlcohol(deps, { drink: 'Synthetic beer', amountMl: 500, at: at(10) });
-    await toggleFavoriteDrink(deps, { drink: 'Synthetic wine', amountMl: 150 });
+    await logDrink(deps, { name: 'Synthetic beer', amountMl: 500, at: at(10) });
+    await toggleFavoriteDrink(deps, { name: 'Synthetic wine', amountMl: 150, alcohol: true, ingredients: [], allergens: [] });
     const { tree } = await mount(alcohol, deps);
     await flush();
     const labels = [...new Set(tree.root.findAll((n) => n.props.accessibilityRole === 'button' && /ml$/.test(n.props.accessibilityLabel ?? '')).map((n) => n.props.accessibilityLabel as string))];
@@ -1724,10 +1724,10 @@ describe('Create forms on the unified modal (UX-3)', () => {
   it('UX-3 a form with a change asks before Cancel throws it away, a clean one just closes', async () => {
     const sheet = jest.spyOn(ActionSheetIOS, 'showActionSheetWithOptions').mockImplementation((_o, cb) => cb(1));
     const deps = nowDeps();
-    const { tree } = await mount(() => require('@/app/form/alcohol'), deps);
+    const { tree } = await mount(() => require('@/app/form/drink'), deps);
     await flush();
     expect(mockScreen.options!.gestureEnabled).toBe(true);
-    await type(tree, en.more.alcoholDrink, 'Synthetic beer');
+    await type(tree, en.more.drinkName, 'Synthetic beer');
     expect(mockScreen.options!.gestureEnabled).toBe(false);
     let rendered!: ReactTestRenderer;
     await act(async () => {

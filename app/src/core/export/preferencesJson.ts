@@ -7,7 +7,7 @@ export function preferencesToJson(p: Preferences): Obj {
   return {
     favorites: {
       meals: p.favorites.meals.map((m) => ({ key: m.key, description: m.description, ingredients: [...m.ingredients], allergens: [...m.allergens] })),
-      alcohol: p.favorites.alcohol.map((a) => ({ key: a.key, drink: a.drink, amount_ml: a.amountMl })),
+      drinks: p.favorites.drinks.map((a) => ({ key: a.key, name: a.name, amount_ml: a.amountMl, alcohol: a.alcohol, ingredients: [...a.ingredients], allergens: [...a.allergens] })),
       medications: p.favorites.medications.map((m) => ({ key: m.key, category: m.category, name: m.name, dose: m.dose })),
     },
     suggestions: { rows: p.suggestions.rows, window_days: p.suggestions.windowDays, save_on_tap: p.suggestions.saveOnTap },
@@ -29,17 +29,24 @@ export function parsePreferences(o: Obj, where = 'settings.preferences'): Prefer
     const w = `${where}.favorites.meals[${i}]`;
     return { key: str(m, 'key', w), description: str(m, 'description', w), ingredients: Array.isArray(m.ingredients) ? stringList(m, 'ingredients', w) : bad(`${w}.ingredients`), allergens: enumList(m, 'allergens', ALLERGENS, w) };
   });
-  const alcohol = list(fav, 'alcohol').map((a, i) => {
-    const w = `${where}.favorites.alcohol[${i}]`;
+  const drinks = list(fav, 'drinks').map((a, i) => {
+    const w = `${where}.favorites.drinks[${i}]`;
     const ml = a.amount_ml;
-    return { key: str(a, 'key', w), drink: str(a, 'drink', w), amountMl: typeof ml === 'number' && Number.isInteger(ml) && ml > 0 ? ml : bad(`${w}.amount_ml`) };
+    return {
+      key: str(a, 'key', w),
+      name: str(a, 'name', w),
+      amountMl: typeof ml === 'number' && Number.isInteger(ml) && ml > 0 ? ml : bad(`${w}.amount_ml`),
+      alcohol: bool(a, 'alcohol', w),
+      ingredients: Array.isArray(a.ingredients) ? stringList(a, 'ingredients', w) : bad(`${w}.ingredients`),
+      allergens: enumList(a, 'allergens', ALLERGENS, w),
+    };
   });
   const medications = list(fav, 'medications').map((m, i) => {
     const w = `${where}.favorites.medications[${i}]`;
     return { key: str(m, 'key', w), category: oneOf(m, 'category', MEDICATION_CATEGORIES, w), name: str(m, 'name', w), dose: nullableText(m, 'dose', w) };
   });
   unique(meals.map((m) => m.key), `${where}.favorites.meals`);
-  unique(alcohol.map((m) => m.key), `${where}.favorites.alcohol`);
+  unique(drinks.map((m) => m.key), `${where}.favorites.drinks`);
   unique(medications.map((m) => m.key), `${where}.favorites.medications`);
 
   const sg = obj(o, 'suggestions', where);
@@ -52,7 +59,7 @@ export function parsePreferences(o: Obj, where = 'settings.preferences'): Prefer
   const order = quickList(qa, 'order', `${where}.quick_actions`);
   const hidden = quickList(qa, 'hidden', `${where}.quick_actions`);
   return {
-    favorites: { meals, alcohol, medications },
+    favorites: { meals, drinks, medications },
     suggestions: { rows: rows as number, windowDays: windowDays as (typeof WINDOW_DAYS)[number], saveOnTap: bool(sg, 'save_on_tap', `${where}.suggestions`) },
     quickActions: { order, hidden },
   };

@@ -52,6 +52,8 @@ export const ERROR_CODES = [
   'llm_timeout',
   'analysis_too_large',
   'analysis_no_data',
+  'summary_empty',
+  'summary_mismatch',
   'too_many_photos',
   'flare_already_started',
   'flare_not_started',

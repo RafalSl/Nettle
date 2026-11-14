@@ -29,6 +29,13 @@ export function parseIngredientEstimate(text: string): IngredientEstimate {
   return { names, uncertainty: typeof unc === 'string' && unc.trim() ? unc.trim() : null };
 }
 
+/** LL-14: the summary text from the model's JSON; anything but a non-empty `summary` string is `llm_bad_response`. */
+export function parseSummary(text: string): string {
+  const o = parseJson(text);
+  if (!isObj(o) || typeof o.summary !== 'string' || !o.summary.trim()) throw new NettleError('llm_bad_response');
+  return o.summary.trim();
+}
+
 export interface LabelScan {
   /** As printed, in the label's language. Suggestions only: never saved until the user confirms (IN-15). */
   ingredients: string[];

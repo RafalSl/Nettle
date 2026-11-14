@@ -285,3 +285,8 @@ Newest entry last. One short entry per working session or meaningful step: what 
 - **Done:** NF-7, UX-2. `Preferences.dayStartHour` (0 to 6, exported with the settings), `DayStart` in `Deps`, and a start hour on `localDay`, `localDaysToRange` and `atOnDay`; all grouping sites use it. Logging settings has "Day starts at". `DayLog` is shared by Today (newest 8, "Show all (n)") and the new `review/day` screen; the Review days list opens that screen. 600 tests pass.
 - **Trade-off:** the setting is not versioned per entry, so changing it regroups the diary (as the requirement says); a saved check-in keeps its stored day.
 - **Next:** report summary (LL-14, EX-3).
+
+## 2026-11-14: report summary (branch feature/report-summary)
+- **Done:** LL-14, EX-3, EX-4, LL-9. New record kind `reportSummaries` with its table (migration 15), codec and delete group; prompt `summary-1`; `core/usecases/summary.ts`; `ReportSummaryPanel` on the Doctor report screen (billing confirmation listing what is sent, no photos, elapsed time, Cancel, review and edit, "Use in the report"); the PDF opens with the kept text under the AI label and a note when it was edited. Changing the period or the language remounts the panel (a new summary is needed) and `exportBundle` refuses a stale `summaryId`. 612 tests pass.
+- **Trade-off:** the run lives in the screen, not in the `AnalysisRunner`, so leaving the screen cancels it (nothing is stored); an analysis survives that.
+- **Next:** leftovers from earlier work (see "Not built" in `docs/open-questions.md`).

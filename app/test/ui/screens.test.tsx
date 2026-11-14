@@ -838,6 +838,67 @@ describe('Review (UX-1, EX-14)', () => {
     expect((await deps.repo.getPreferences())?.dayStartHour).toBe(3);
   });
 
+  it('LL-14, LL-5, LL-12 the doctor report writes a summary after the billing confirmation, lets the person edit it, and puts it in the PDF', async () => {
+    const answer = JSON.stringify({ summary: 'Synthetic AI narrative.' });
+    const deps = nowDeps(new FakeLlm([answer]));
+    await saveApiKey(deps, 'sk-synthetic-secret');
+    await logMeal(deps, { description: 'Synthetic soup', ingredients: ['soup'], at: new Date(Date.now() - 86_400_000) });
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    const { tree, fileShare } = await mount(() => require('@/app/(tabs)/review/report'), deps);
+    await flush();
+    await press(tree, en.doctor.summaryButton);
+    await flush();
+    const [title, body, buttons] = alert.mock.calls.at(-1) as unknown as [string, string, { text: string; onPress?: () => unknown }[]];
+    expect(title).toBe(en.doctor.summaryConfirmTitle);
+    expect(body).toContain('bills this separately'); // LL-5
+    expect(body).toContain(en.doctor.summaryNoPhotos);
+    await act(async () => {
+      void buttons.find((b) => b.text === en.doctor.summarySend)!.onPress!();
+    });
+    await flush();
+    expect(hasText(tree, en.doctor.summaryReview)).toBe(true);
+    const field = tree.root.findAll((n) => n.props.accessibilityLabel === en.doctor.summaryField && typeof n.props.onChangeText === 'function')[0]!;
+    expect(field.props.value).toBe('Synthetic AI narrative.');
+    expect(await deps.repo.listRecords('reportSummaries')).toEqual([]); // nothing stored before the person keeps it
+    await act(async () => {
+      field.props.onChangeText('Synthetic AI narrative, corrected.');
+    });
+    await press(tree, en.doctor.summaryUse);
+    await flush();
+    expect(hasText(tree, en.doctor.summaryIncluded)).toBe(true);
+    expect(await deps.repo.listRecords('reportSummaries')).toMatchObject([{ generated: 'Synthetic AI narrative.', text: 'Synthetic AI narrative, corrected.' }]);
+    await press(tree, en.doctor.button);
+    await flush();
+    const [, bytes] = fileShare.saveAndShare.mock.calls[0] as unknown as [string, Uint8Array];
+    expect(Object.keys(unzipSync(bytes))).toContain('report.pdf');
+    expect(new TextDecoder().decode(unzipSync(bytes)['report.pdf']!)).toContain('Synthetic AI narrative, corrected.');
+    alert.mockRestore();
+  });
+
+  it('LL-14 changing the period or the language drops the summary and asks for a new one', async () => {
+    const deps = nowDeps(new FakeLlm([JSON.stringify({ summary: 'Synthetic AI narrative.' })]));
+    await saveApiKey(deps, 'sk-synthetic-secret');
+    await logMeal(deps, { description: 'Synthetic soup', ingredients: ['soup'], at: new Date(Date.now() - 86_400_000) });
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    const { tree } = await mount(() => require('@/app/(tabs)/review/report'), deps);
+    await flush();
+    await press(tree, en.doctor.summaryButton);
+    await flush();
+    const buttons = alert.mock.calls.at(-1)![2] as { text: string; onPress?: () => unknown }[];
+    await act(async () => {
+      void buttons.find((b) => b.text === en.doctor.summarySend)!.onPress!();
+    });
+    await flush();
+    await press(tree, en.doctor.summaryUse);
+    await flush();
+    expect(hasText(tree, en.doctor.summaryIncluded)).toBe(true);
+    await press(tree, en.export.polish);
+    await flush();
+    expect(hasText(tree, en.doctor.summaryIncluded)).toBe(false);
+    expect(hasText(tree, en.doctor.summaryButton)).toBe(true);
+    alert.mockRestore();
+  });
+
   it('EX-14, EX-7 the doctor report counts the period, leaves sensitive photos out until asked, and remembers the export', async () => {
     const deps = nowDeps();
     const entry = await logSkinEntry(deps, { areaId: 'area-intimate', scores, at: new Date(Date.now() - 86_400_000) });

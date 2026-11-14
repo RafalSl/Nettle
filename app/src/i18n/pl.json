@@ -206,6 +206,8 @@
     "llm_failed": "Zapytanie nie powiodło się. Nic nie zapisano.",
     "analysis_too_large": "Ten zakres dat jest za duży do wysłania. Wybierz krótszy.",
     "analysis_no_data": "W tym zakresie dat nic nie zapisano.",
+    "summary_empty": "Podsumowanie jest puste. Napisz coś albo je odrzuć.",
+    "summary_mismatch": "To podsumowanie powstało dla innego okresu lub języka. Utwórz nowe.",
     "too_many_photos": "Za dużo zdjęć na jedno uruchomienie. Wybierz mniej.",
     "flare_already_started": "Dla tego miejsca zaznaczono już początek rzutu.",
     "flare_not_started": "Dla tego miejsca nie zaznaczono początku rzutu.",
@@ -371,7 +373,7 @@
       "food": "Jedzenie i przyjmowane substancje (posiłki, reakcje, napoje, leki)",
       "skin": "Skóra i paznokcie (wpisy, zdjęcia, zastosowane zabiegi)",
       "health": "Codzienne kontrole, stolec i zmiany",
-      "ai": "Analizy AI"
+      "ai": "Analizy AI i podsumowania raportu"
     },
     "limit": "Tylko zakres dat",
     "from": "Od",
@@ -396,6 +398,7 @@
       "stoolEntries": "wpisy o stolcu: {{n}}",
       "changeEvents": "zmiany: {{n}}",
       "analyses": "analizy AI: {{n}}",
+      "reportSummaries": "podsumowania raportu: {{n}}",
       "flareMarkers": "znaczniki rzutów: {{n}}"
     }
   },
@@ -530,6 +533,9 @@
     "allergens": "Alergeny",
     "drink": "Napój",
     "alcohol": "Alkohol",
+    "summaryTitle": "Podsumowanie (wygenerowane przez AI, sprawdzone przez osobę)",
+    "summaryMeta": "Napisano {{date}} · dni {{from}} do {{to}} · {{model}}",
+    "summaryEdited": "poprawione przez osobę po napisaniu",
     "aiMark": "AI",
     "aiMarkEdited": "AI, poprawione",
     "aiMarkLegend": "[AI]: składniki odczytał model AI ze zdjęcia, a osoba sprawdziła je i potwierdziła przed zapisem. [AI, poprawione]: osoba zmieniła je później.",
@@ -748,6 +754,20 @@
     "language": "Język raportu",
     "empty": "W tym okresie nie ma nic do wyeksportowania.",
     "button": "Utwórz raport dla lekarza",
+    "summaryButton": "Napisz podsumowanie z AI",
+    "summaryHint": "Opcjonalnie: krótkie podsumowanie tego okresu napisane przez AI otwiera raport. Sprawdzasz je i możesz poprawić, zanim trafi do raportu. Zdjęcia nie są wysyłane.",
+    "summaryConfirmTitle": "Wysłać to do Anthropic, żeby napisać podsumowanie?",
+    "summaryNoPhotos": "Zdjęcia nie są wysyłane.",
+    "summarySend": "Wyślij i napisz",
+    "summaryRunning": "Piszę podsumowanie… {{time}}",
+    "summaryCancel": "Anuluj",
+    "summaryFailed": "Nic nie zapisano. Możesz spróbować ponownie.",
+    "summaryReview": "Sprawdź podsumowanie. Możesz je dowolnie poprawić; nic nie zostanie zapisane, dopóki go nie użyjesz.",
+    "summaryField": "Tekst podsumowania",
+    "summaryUse": "Użyj w raporcie",
+    "summaryDiscard": "Odrzuć",
+    "summaryIncluded": "Raport otwiera to podsumowanie (wygenerowane przez AI, sprawdzone przez Ciebie):",
+    "summaryRemove": "Usuń z raportu",
     "hint": "Raport PDF z surowymi danymi, dla lekarza. Tylko wpisy; pełną kopię zrobisz w Danych i kopii."
   },
   "sugg": {

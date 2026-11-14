@@ -232,6 +232,23 @@ export const MIGRATIONS: string[] = [
   CREATE INDEX drink_barcode ON drink (barcode);
   UPDATE preference SET json = json_set(json, '$.favorites.meals', json('[]'), '$.favorites.drinks', json('[]'));
   `,
+  // LL-14: stored report summaries (the AI narrative a doctor report can open with).
+  `
+  CREATE TABLE report_summary (
+    id TEXT PRIMARY KEY,
+    ts_utc TEXT NOT NULL,
+    tz TEXT NOT NULL,
+    day_from TEXT NOT NULL,
+    day_to TEXT NOT NULL,
+    language TEXT NOT NULL CHECK (language IN ('en', 'pl')),
+    model TEXT NOT NULL,
+    prompt_version TEXT NOT NULL,
+    counts_json TEXT NOT NULL,
+    generated TEXT NOT NULL,
+    text TEXT NOT NULL
+  );
+  CREATE INDEX report_summary_ts ON report_summary (ts_utc);
+  `,
 ];
 
 export async function migrate(db: SqlDb): Promise<void> {

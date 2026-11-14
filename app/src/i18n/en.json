@@ -206,6 +206,8 @@
     "llm_failed": "The request failed. Nothing was saved.",
     "analysis_too_large": "That date range is too large to send. Choose a shorter range.",
     "analysis_no_data": "There is nothing logged in that date range.",
+    "summary_empty": "The summary is empty. Write something or discard it.",
+    "summary_mismatch": "That summary was made for another period or language. Make a new one.",
     "too_many_photos": "Too many photos for one run. Choose fewer.",
     "flare_already_started": "A flare is already marked as started for this area.",
     "flare_not_started": "No flare is marked as started for this area.",
@@ -371,7 +373,7 @@
       "food": "Food and intake (meals, reactions, drinks, medications)",
       "skin": "Skin and nails (entries, photos, treatments applied)",
       "health": "Daily check-ins, stool and changes",
-      "ai": "AI analyses"
+      "ai": "AI analyses and report summaries"
     },
     "limit": "Only a date range",
     "from": "From",
@@ -396,6 +398,7 @@
       "stoolEntries": "{{n}} stool entries",
       "changeEvents": "{{n}} change events",
       "analyses": "{{n}} AI analyses",
+      "reportSummaries": "{{n}} report summaries",
       "flareMarkers": "{{n}} flare markers"
     }
   },
@@ -530,6 +533,9 @@
     "allergens": "Allergens",
     "drink": "Drink",
     "alcohol": "Alcohol",
+    "summaryTitle": "Summary (AI-generated, reviewed by the person)",
+    "summaryMeta": "Written {{date}} · days {{from}} to {{to}} · {{model}}",
+    "summaryEdited": "edited by the person after it was written",
     "aiMark": "AI",
     "aiMarkEdited": "AI, edited",
     "aiMarkLegend": "[AI]: the ingredients were read by an AI model from a photo, and the person reviewed and confirmed them before saving. [AI, edited]: the person changed them afterwards.",
@@ -748,7 +754,21 @@
     "language": "Report language",
     "empty": "Nothing to export in this period.",
     "button": "Create doctor report",
-    "hint": "A PDF report with the raw data, for a doctor. Records only; use Data and backup for a full backup."
+    "hint": "A PDF report with the raw data, for a doctor. Records only; use Data and backup for a full backup.",
+    "summaryButton": "Write a summary with AI",
+    "summaryHint": "Optional: a short AI-written narrative of this period opens the report. You review and can edit it before it goes in. No photos are sent.",
+    "summaryConfirmTitle": "Send this to Anthropic to write a summary?",
+    "summaryNoPhotos": "No photos are sent.",
+    "summarySend": "Send and write",
+    "summaryRunning": "Writing the summary… {{time}}",
+    "summaryCancel": "Cancel",
+    "summaryFailed": "Nothing was saved. You can try again.",
+    "summaryReview": "Review the summary. Edit it as you like; nothing is saved until you use it.",
+    "summaryField": "Summary text",
+    "summaryUse": "Use in the report",
+    "summaryDiscard": "Discard",
+    "summaryIncluded": "The report opens with this summary (AI-generated, reviewed by you):",
+    "summaryRemove": "Remove from the report"
   },
   "sugg": {
     "rows": "Rows shown",

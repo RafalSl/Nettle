@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Alert, Switch, Text, View } from 'react-native';
 import { addDays, localDay } from '@/core/model/time';
+import type { ReportSummary } from '@/core/model/types';
 import { markExported, presetOptions, reportPreview, sinceLastExport, type ReportPreview } from '@/core/usecases/backup';
 import { exportBundle } from '@/core/usecases/exchange';
 import { areaLabelIn, currentLanguage, errorMessage, itemLabelIn, t, tIn } from '@/i18n';
 import { useServices } from '@/services';
+import { ReportSummaryPanel } from '@/ui/ReportSummaryPanel';
 import { Button, Chips, Hint, Label, Screen, styles } from '@/ui/components';
 
 type Period = 'since' | 'last30' | 'last90' | 'all';
@@ -21,6 +23,8 @@ export default function ReportScreen() {
   const [language, setLanguage] = useState<'en' | 'pl'>(currentLanguage());
   const [sensitive, setSensitive] = useState(false);
   const [preview, setPreview] = useState<ReportPreview | null>(null);
+  // LL-14: the reviewed AI summary to open the PDF with; it belongs to one period and language (the panel is keyed by both).
+  const [summary, setSummary] = useState<ReportSummary | null>(null);
 
   const today = localDay(deps.clock.now().toISOString(), deps.clock.timeZone(), deps.dayStart.get());
   const daysFor = async (p: Period): Promise<{ from?: string; to?: string }> => {
@@ -50,6 +54,7 @@ export default function ReportScreen() {
         kind: 'doctor',
         days: await daysFor(period),
         photos: { mode: sensitive ? 'all' : 'non_sensitive' },
+        ...(summary ? { summaryId: summary.id } : {}),
         report: {
           language,
           text: (key, vars) => tIn(language, key, vars),
@@ -91,6 +96,9 @@ export default function ReportScreen() {
         selected={new Set([language])}
         onToggle={(id) => setLanguage(id as 'en' | 'pl')}
       />
+      {!empty && preview !== null && (
+        <ReportSummaryPanel key={`${period}|${language}`} days={() => daysFor(period)} language={language} onChange={setSummary} />
+      )}
       <Button title={t('doctor.button')} disabled={preview === null || empty} onPress={create} />
     </Screen>
   );

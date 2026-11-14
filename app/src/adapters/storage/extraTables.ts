@@ -19,6 +19,7 @@ import type {
   NailStage,
   Reaction,
   Records,
+  ReportSummary,
   StoolEntry,
   Symptom,
   TreatmentApplication,
@@ -210,6 +211,24 @@ const analysis: ExtraTable<Analysis> = {
   }),
 };
 
+const reportSummary: ExtraTable<ReportSummary> = {
+  table: 'report_summary',
+  columns: ['day_from', 'day_to', 'language', 'model', 'prompt_version', 'counts_json', 'generated', 'text'],
+  toValues: (s) => [s.dayFrom, s.dayTo, s.language, s.model, s.promptVersion, JSON.stringify(s.counts), s.generated, s.text],
+  fromRow: (r) => ({
+    id: r.id as string,
+    at: { utc: r.ts_utc as string, tz: r.tz as string },
+    dayFrom: r.day_from as string,
+    dayTo: r.day_to as string,
+    language: r.language as 'en' | 'pl',
+    model: r.model as string,
+    promptVersion: r.prompt_version as string,
+    counts: JSON.parse(r.counts_json as string) as Record<string, number>,
+    generated: r.generated as string,
+    text: r.text as string,
+  }),
+};
+
 const flare: ExtraTable<FlareMarker> = {
   table: 'flare_marker',
   columns: ['area_id', 'kind', 'note'],
@@ -234,5 +253,6 @@ export const EXTRA_TABLES: { [K in ExtraKind]: ExtraTable<Records[K][number]> } 
   medicationEntries: medication,
   photos: photo,
   analyses: analysis,
+  reportSummaries: reportSummary,
   flareMarkers: flare,
 };

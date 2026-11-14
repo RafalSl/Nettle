@@ -19,6 +19,7 @@ import {
   type NailEntry,
   type Reaction,
   type Records,
+  type ReportSummary,
   type StoolEntry,
   type TreatmentApplication,
 } from '../model/types';
@@ -281,6 +282,44 @@ const analysis: Codec<Analysis> = {
   },
 };
 
+/** LL-14: stored report summaries travel in data.json with the text the person kept and the text the model wrote. */
+const reportSummary: Codec<ReportSummary> = {
+  key: 'report_summaries',
+  toJson: (s) => ({
+    id: s.id,
+    utc: s.at.utc,
+    tz: s.at.tz,
+    day_from: s.dayFrom,
+    day_to: s.dayTo,
+    language: s.language,
+    model: s.model,
+    prompt_version: s.promptVersion,
+    counts: s.counts,
+    generated: s.generated,
+    text: s.text,
+  }),
+  parse: (o, w) => {
+    const counts = o.counts;
+    if (typeof counts !== 'object' || counts === null || Array.isArray(counts) || Object.values(counts).some((n) => typeof n !== 'number')) bad(`${w}.counts`);
+    const day = (k: string) => {
+      const v = str(o, k, w);
+      return /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(Date.parse(v)) ? v : bad(`${w}.${k}`);
+    };
+    return {
+      id: str(o, 'id', w),
+      at: { utc: utc(o, w), tz: str(o, 'tz', w) },
+      dayFrom: day('day_from'),
+      dayTo: day('day_to'),
+      language: oneOf(o, 'language', ['en', 'pl'] as const, w),
+      model: str(o, 'model', w),
+      promptVersion: str(o, 'prompt_version', w),
+      counts: counts as Record<string, number>,
+      generated: str(o, 'generated', w),
+      text: str(o, 'text', w),
+    };
+  },
+};
+
 const flare: Codec<FlareMarker> = {
   key: 'flare_markers',
   toJson: (f) => ({ id: f.id, utc: f.at.utc, tz: f.at.tz, area_id: f.areaId, kind: f.kind, note: f.note }),
@@ -304,6 +343,7 @@ export const EXTRA_CODECS: { [K in ExtraKind]: Codec<Records[K][number]> } = {
   medicationEntries: medication,
   photos: photo,
   analyses: analysis,
+  reportSummaries: reportSummary,
   flareMarkers: flare,
 };
 

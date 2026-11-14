@@ -3,6 +3,7 @@ import React from 'react';
 import { ActionSheetIOS, Alert } from 'react-native';
 import { unzipSync } from 'fflate';
 import { FakeLlm } from '../fakes/fakeLlm';
+import { AnalysisRunner } from '@/core/usecases/analysisRunner';
 import type { FakeNotifier } from '../fakes/fakeNotifier';
 import { unsavedForm } from '@/ui/formState';
 import type { LlmProvider } from '@/core/ports/llm';
@@ -18,6 +19,7 @@ import { applyTreatment, logChangeEvent, logReaction } from '@/core/usecases/eve
 import { addListItem } from '@/core/usecases/lists';
 import { markFlare } from '@/core/usecases/flares';
 import { saveApiKey } from '@/core/usecases/llm';
+import { prepareAnalysis } from '@/core/usecases/analysis';
 import { localDay } from '@/core/model/time';
 import en from '@/i18n/en.json';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
@@ -47,6 +49,7 @@ jest.mock('expo-router', () => {
   };
 });
 jest.mock('@react-native-community/datetimepicker', () => () => null);
+jest.mock('expo-keep-awake', () => ({ activateKeepAwakeAsync: jest.fn(async () => undefined), deactivateKeepAwake: jest.fn(async () => undefined) }));
 jest.mock('expo-image-picker', () => ({}));
 jest.mock('@/adapters/photos/pickPhotos', () => ({ pickPhotoUris: jest.fn(async () => []) }));
 jest.mock('@/services', () => {
@@ -87,6 +90,7 @@ describe('screens render without crashing (NF-3)', () => {
     services.__state.current = {
       deps,
       fileShare: { saveAndShare: jest.fn(), pickFile: jest.fn(async () => null) },
+      analysisRunner: new AnalysisRunner(deps),
     };
   });
 
@@ -120,7 +124,7 @@ type Deps = ReturnType<typeof makeDeps>;
 const scores = { severity: 1, itch: 2, pain: 3, dryness: 4, scaling: 5 };
 
 async function mount(load: () => { default: React.ComponentType }, deps: Deps, fileShare = { saveAndShare: jest.fn(async () => undefined), pickFile: jest.fn(async () => null) }) {
-  services.__state.current = { deps, fileShare };
+  services.__state.current = { deps, fileShare, analysisRunner: new AnalysisRunner(deps) };
   let tree!: ReactTestRenderer;
   await act(async () => {
     tree = create(React.createElement(load().default));
@@ -303,7 +307,8 @@ describe('screen flows (NF-2, NF-3)', () => {
     await act(async () => {
       await (confirm[2] as { text: string; onPress?: () => void }[]).find((b) => b.text === en.analysis.send)!.onPress!();
     });
-    expect(alert.mock.calls.some((c) => c[0] === en.errors.llm_rate_limited)).toBe(true);
+    expect(hasText(tree, en.errors.llm_rate_limited)).toBe(true);
+    expect(hasText(tree, en.analysis.retry)).toBe(true);
     expect(await deps.repo.listRecords('analyses')).toEqual([]);
   });
 
@@ -971,7 +976,7 @@ describe('Reminder taps (SK-9)', () => {
   afterEach(() => jest.restoreAllMocks());
 
   async function mountLayout(deps: Deps) {
-    services.__state.current = { deps, fileShare: { saveAndShare: jest.fn(), pickFile: jest.fn() } };
+    services.__state.current = { deps, fileShare: { saveAndShare: jest.fn(), pickFile: jest.fn() }, analysisRunner: new AnalysisRunner(deps) };
     let tree!: ReactTestRenderer;
     await act(async () => {
       tree = create(React.createElement(require('@/app/_layout').default));
@@ -1018,3 +1023,100 @@ describe('Reminder taps (SK-9)', () => {
   });
 });
 const fileShareCalls = (_deps: unknown) => 0; // a tap never exports; no file share is wired into these tests
+
+describe('Analysis running state (LL-12)', () => {
+  beforeEach(() => {
+    jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+  });
+  afterEach(() => jest.restoreAllMocks());
+
+  const answer = JSON.stringify({ summary: 'Synthetic summary', hypotheses: [], order_and_lag: 'none', data_limits: [], suggestions: [] });
+  async function prepared(deps: Deps) {
+    await saveApiKey(deps, 'sk-synthetic-secret');
+    await logMeal(deps, { description: 'Synthetic meal', ingredients: [], at: new Date(Date.now() - 2 * 3600 * 1000) });
+    return prepareAnalysis(deps, { dayFrom: localDay(new Date(Date.now() - 86_400_000).toISOString(), deps.clock.timeZone()), dayTo: localDay(new Date().toISOString(), deps.clock.timeZone()), language: 'en', photoIds: [] });
+  }
+
+  it('LL-12 Review shows a running card and then a ready card for a run started anywhere, and the screen result clears it', async () => {
+    let release!: (r: { text: string; model: string }) => void;
+    const llm = { completeJson: () => new Promise<{ text: string; model: string }>((resolve) => (release = resolve)) };
+    const deps = nowDeps(llm);
+    const prep = await prepared(deps);
+    const runner = new AnalysisRunner(deps);
+    services.__state.current = { deps, fileShare: { saveAndShare: jest.fn(), pickFile: jest.fn() }, analysisRunner: runner };
+    let review!: ReactTestRenderer;
+    await act(async () => {
+      review = create(React.createElement(require('@/app/(tabs)/review/index').default));
+    });
+    expect(hasText(review, en.review.runRunning)).toBe(false);
+    let done!: Promise<void>;
+    await act(async () => {
+      done = runner.start(prep); // started from another screen, or after leaving this one
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    expect(hasText(review, en.review.runRunning)).toBe(true);
+    await act(async () => {
+      release({ text: answer, model: 'fake-model' });
+      await done;
+    });
+    expect(hasText(review, en.review.runReady)).toBe(true);
+    let screen!: ReactTestRenderer;
+    await act(async () => {
+      screen = create(React.createElement(require('@/app/(tabs)/review/analysis').default));
+    });
+    await flush();
+    expect(hasText(screen, 'Synthetic summary')).toBe(true);
+    await act(async () => screen.unmount()); // leaving the screen looks at the result
+    expect(hasText(review, en.review.runReady)).toBe(false);
+  });
+
+  it('LL-12 an interrupted run says nothing was saved and one tap retries the same request', async () => {
+    const { NettleError } = require('@/core/model/errors');
+    const llm = new FakeLlm([new NettleError('llm_network'), answer]);
+    const deps = nowDeps(llm);
+    const prep = await prepared(deps);
+    const runner = new AnalysisRunner(deps);
+    const done = runner.start(prep);
+    runner.markBackgrounded();
+    await done;
+    expect(runner.state.status).toBe('interrupted');
+    services.__state.current = { deps, fileShare: { saveAndShare: jest.fn(), pickFile: jest.fn() }, analysisRunner: runner };
+    let tree!: ReactTestRenderer;
+    await act(async () => {
+      tree = create(React.createElement(require('@/app/(tabs)/review/analysis').default));
+    });
+    await flush();
+    expect(hasText(tree, en.analysis.interrupted)).toBe(true);
+    expect(await deps.repo.listRecords('analyses')).toEqual([]);
+    await press(tree, en.analysis.retry);
+    await flush();
+    expect(llm.requests).toHaveLength(2);
+    expect(await deps.repo.listRecords('analyses')).toHaveLength(1);
+    expect(hasText(tree, 'Synthetic summary')).toBe(true);
+  });
+
+  it('LL-12 the root layout keeps the screen awake while a run is going and lets go when it ends', async () => {
+    const keepAwake = require('expo-keep-awake') as { activateKeepAwakeAsync: jest.Mock; deactivateKeepAwake: jest.Mock };
+    keepAwake.activateKeepAwakeAsync.mockClear();
+    keepAwake.deactivateKeepAwake.mockClear();
+    let release!: (r: { text: string; model: string }) => void;
+    const deps = nowDeps({ completeJson: () => new Promise<{ text: string; model: string }>((resolve) => (release = resolve)) });
+    const prep = await prepared(deps);
+    const runner = new AnalysisRunner(deps);
+    services.__state.current = { deps, fileShare: { saveAndShare: jest.fn(), pickFile: jest.fn() }, analysisRunner: runner };
+    await act(async () => {
+      create(React.createElement(require('@/app/_layout').default));
+    });
+    let done!: Promise<void>;
+    await act(async () => {
+      done = runner.start(prep);
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    expect(keepAwake.activateKeepAwakeAsync).toHaveBeenCalledWith('analysis');
+    await act(async () => {
+      release({ text: answer, model: 'fake-model' });
+      await done;
+    });
+    expect(keepAwake.deactivateKeepAwake).toHaveBeenCalledWith('analysis');
+  });
+});

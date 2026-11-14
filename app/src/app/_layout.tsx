@@ -11,6 +11,7 @@ export default function RootLayout() {
         <Tabs.Screen name="skin" options={{ title: t('tabs.skin') }} />
         <Tabs.Screen name="more" options={{ title: t('tabs.more') }} />
         <Tabs.Screen name="data" options={{ title: t('tabs.data') }} />
+        <Tabs.Screen name="analysis" options={{ title: t('tabs.analysis'), href: null }} />
       </Tabs>
     </ServicesProvider>
   );

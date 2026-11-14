@@ -4,7 +4,8 @@
     "skin": "Skóra",
     "data": "Dane",
     "today": "Dziś",
-    "more": "Więcej"
+    "more": "Więcej",
+    "analysis": "Analiza AI"
   },
   "common": {
     "save": "Zapisz",
@@ -338,5 +339,47 @@
     "modelSave": "Zapisz model",
     "modelHint": "Zostaw puste, aby użyć domyślnego.",
     "saved": "Zapisano"
+  },
+  "analysis": {
+    "open": "Analiza AI mojego dziennika",
+    "title": "Analiza AI",
+    "disclaimer": "Wygenerowane przez AI, wstępne. To możliwe wzorce do omówienia z lekarzem, nie diagnoza ani porada medyczna.",
+    "from": "Od",
+    "to": "Do",
+    "photos": "Zdjęcia",
+    "photosHint": "Zdjęcia nie są wysyłane, dopóki ich nie wybierzesz. Wrażliwe są oznaczone.",
+    "sensitiveMark": "wrażliwe",
+    "photosNone": "Brak zdjęć w tym zakresie.",
+    "review": "Sprawdź, co zostanie wysłane",
+    "confirmTitle": "Wysłać to do Anthropic?",
+    "confirmIntro": "Te dane opuszczają telefon i są wysyłane przez internet do Anthropic z użyciem Twojego klucza API. Kosztuje to na Twoim koncie. Nic nie zostanie wysłane bez Twojego potwierdzenia.",
+    "range": "Dni: od {{from}} do {{to}} ({{days}} dni, {{complete}} oznaczonych jako zamknięte)",
+    "lookback": "Dla kontekstu dołączono też: {{n}} wcześniejszych dni z chorobą, stresem, snem, lekami i zmianami.",
+    "model": "Model: {{model}}",
+    "size": "Około {{n}} znaków tekstu",
+    "photoLine": "Zdjęcie: {{label}}",
+    "photoLineSensitive": "Zdjęcie (wrażliwe): {{label}}",
+    "send": "Wyślij i analizuj",
+    "cancel": "Anuluj",
+    "running": "Analizuję… to może potrwać kilka minut.",
+    "saved": "Zapisano razem z analizą. Twoje wpisy nie zostały zmienione.",
+    "past": "Wcześniejsze analizy",
+    "none": "Brak analiz.",
+    "view": "Otwórz",
+    "summary": "Podsumowanie",
+    "hypotheses": "Możliwe wzorce",
+    "evidence": "Dowody",
+    "counter": "Przeciw",
+    "uncertainty": "Niepewność",
+    "lag": "Typowe opóźnienie: około {{h}} godz.",
+    "strength": {
+      "weak": "słaba",
+      "moderate": "umiarkowana"
+    },
+    "order": "Kolejność i czas",
+    "limits": "Czego dane nie pokazują",
+    "suggestions": "Pomysły",
+    "meta": "{{date}} · {{from}} do {{to}} · {{model}} · prompt {{prompt}}",
+    "noHypotheses": "Nic nie wyróżnia się jako wzorzec."
   }
 }

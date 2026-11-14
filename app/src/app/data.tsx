@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Switch, Text, TextInput, View } from 'react-native';
 import { NettleError } from '@/core/model/errors';
@@ -36,6 +37,7 @@ const sumOf = (counts: Record<string, number>, keys: readonly string[]) => keys.
 /** EX-1 export and EX-10 import (preview, choose parts, then merge or replace). */
 export default function DataScreen() {
   const { deps, fileShare } = useServices();
+  const router = useRouter();
   const [exportParts, setExportParts] = useState<Parts>({ records: true, settings: true });
   const [photoSelection, setPhotoSelection] = useState<PhotoSelection>(DEFAULT_PHOTO_SELECTION);
   const [pending, setPending] = useState<ParsedImport | null>(null);
@@ -229,6 +231,7 @@ export default function DataScreen() {
           <Button kind="secondary" title={t('common.cancel')} onPress={() => setPending(null)} />
         </>
       )}
+      <Button title={t('analysis.open')} onPress={() => router.push('/analysis')} />
       <LlmSettingsSection />
       <DeleteSection />
     </Screen>

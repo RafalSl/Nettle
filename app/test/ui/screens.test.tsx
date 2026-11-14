@@ -26,6 +26,7 @@ import { prepareAnalysis } from '@/core/usecases/analysis';
 import { localDay } from '@/core/model/time';
 import en from '@/i18n/en.json';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
+import { MemoryPhotoStore } from '../fakes/memoryPhotoStore';
 import { MemoryRepo } from '../fakes/memoryRepo';
 import { makeDeps } from '../helpers/fixtures';
 
@@ -1293,6 +1294,140 @@ describe('Inline photo estimate (IN-3, LL-12, IN-10)', () => {
     await flush();
     expect(hasText(tree, en.meal.estimateAddAll)).toBe(true);
     expect(llm.requests).toHaveLength(2);
+  });
+
+  const LABEL = JSON.stringify({ ingredients: ['mleko (3,2%)', 'cukier'], allergens: ['milk'], traces: ['peanuts'], text_read: 'Składniki: mleko, cukier. Może zawierać orzeszki ziemne.', note: 'The last line is cut off.' });
+
+  it('IN-15, LL-13, IN-16 a label scan shows the text read beside the list, suggests tags without selecting them, saves as a label_scan and deletes the photo', async () => {
+    const llm = new FakeLlm([LABEL]);
+    const deps = nowDeps(llm);
+    await saveApiKey(deps, 'sk-synthetic-secret');
+    const { tree } = await mount(meal, deps);
+    await type(tree, en.meal.description, 'Synthetic yoghurt');
+    await press(tree, en.meal.continue);
+    await press(tree, en.meal.fromLabel);
+    await act(async () => {
+      await buttonOf(en.photos.library).onPress();
+    });
+    expect(String(alert.mock.calls.at(-1)![1])).toContain('bills this separately'); // LL-5, before the photo is sent
+    expect(llm.requests).toHaveLength(0);
+    await act(async () => {
+      void buttonOf(en.meal.photoSend).onPress();
+    });
+    await flush();
+    expect(hasText(tree, en.meal.labelRead.replace('{{text}}', 'Składniki: mleko, cukier. Może zawierać orzeszki ziemne.'))).toBe(true);
+    expect(hasText(tree, en.meal.labelNote.replace('{{text}}', 'The last line is cut off.'))).toBe(true);
+    expect((deps.photos as MemoryPhotoStore).discarded).toEqual(['file:///synthetic-meal.jpg']); // the answer is in, the temporary photo is gone
+    await press(tree, en.meal.estimateAddAll);
+    const values = tree.root.findAll((n) => n.props.placeholder === en.meal.ingredientPlaceholder).map((n) => n.props.value);
+    expect([...new Set(values)]).toEqual(['mleko (3,2%)', 'cukier', '']); // text keeps the label's language
+    const selected = (label: string) => tree.root.findAll((n) => n.props.accessibilityLabel === label && n.props.accessibilityState)[0]!.props.accessibilityState.selected;
+    expect(selected(en.allergens.milk)).toBe(false);
+    await press(tree, en.meal.scanSelectTags);
+    expect(selected(en.allergens.milk)).toBe(true);
+    expect(selected(en.allergens.peanuts)).toBe(true);
+    expect(await deps.repo.listMeals()).toEqual([]); // nothing saved by the scan
+    let rendered!: ReactTestRenderer;
+    await act(async () => {
+      rendered = create(mockScreen.options!.headerRight!());
+    });
+    await act(async () => {
+      await rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!.props.onPress();
+    });
+    await flush();
+    const saved = (await deps.repo.listMeals())[0]!;
+    expect(saved).toMatchObject({ ingredients: ['mleko (3,2%)', 'cukier'], allergens: ['milk', 'peanuts'], source: { kind: 'label_scan', edited: false, llm: { model: 'fake-model', promptVersion: 'label-1' } } });
+  });
+
+  it('IN-15, LL-12 cancelling the label scan, or dismissing its answer, deletes the temporary photo and stores nothing', async () => {
+    const llm = new FakeLlm([LABEL]);
+    const deps = nowDeps(llm);
+    await saveApiKey(deps, 'sk-synthetic-secret');
+    const { tree } = await mount(meal, deps);
+    await type(tree, en.meal.description, 'Synthetic yoghurt');
+    await press(tree, en.meal.continue);
+    await press(tree, en.meal.fromLabel);
+    await act(async () => {
+      await buttonOf(en.photos.library).onPress();
+    });
+    await act(async () => {
+      await buttonOf(en.common.cancel).onPress(); // declined at the confirmation: nothing was sent
+    });
+    expect(llm.requests).toHaveLength(0);
+    expect((deps.photos as MemoryPhotoStore).discarded).toEqual(['file:///synthetic-meal.jpg']);
+    await press(tree, en.meal.fromLabel);
+    await act(async () => {
+      await buttonOf(en.photos.library).onPress();
+    });
+    await act(async () => {
+      void buttonOf(en.meal.photoSend).onPress();
+    });
+    await flush();
+    await press(tree, en.meal.estimateDismiss);
+    expect(hasText(tree, en.meal.estimateAddAll)).toBe(false);
+    expect(await deps.repo.listMeals()).toEqual([]);
+  });
+
+  it('IN-15, IN-4 a drink can be filled from a label scan too', async () => {
+    const deps = nowDeps(new FakeLlm([LABEL]));
+    await saveApiKey(deps, 'sk-synthetic-secret');
+    const { tree } = await mount(() => require('@/app/form/drink'), deps);
+    await type(tree, en.more.drinkName, 'Synthetic kefir');
+    await type(tree, en.more.drinkAmount, '250');
+    await press(tree, en.meal.fromLabel);
+    await act(async () => {
+      await buttonOf(en.photos.library).onPress();
+    });
+    await act(async () => {
+      void buttonOf(en.meal.photoSend).onPress();
+    });
+    await flush();
+    await press(tree, en.meal.estimateAddAll);
+    await press(tree, en.meal.scanSelectTags);
+    let rendered!: ReactTestRenderer;
+    await act(async () => {
+      rendered = create(mockScreen.options!.headerRight!());
+    });
+    await act(async () => {
+      await rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!.props.onPress();
+    });
+    await flush();
+    expect(await deps.repo.listRecords('drinks')).toMatchObject([
+      { name: 'Synthetic kefir', amountMl: 250, ingredients: ['mleko (3,2%)', 'cukier'], allergens: ['milk', 'peanuts'], source: { kind: 'label_scan', edited: false } },
+    ]);
+  });
+
+  it('IN-15 the barcode that failed stays on the entry, so the confirmed scan becomes its history hit', async () => {
+    const llm = new FakeLlm([LABEL]);
+    const deps = nowDeps(llm);
+    deps.barcode = new FakeBarcode({});
+    await saveApiKey(deps, 'sk-synthetic-secret');
+    const { tree } = await mount(meal, deps);
+    await press(tree, en.meal.scan);
+    await type(tree, en.meal.scanCode, '5900000000008');
+    await press(tree, en.meal.scanLookup);
+    await flush();
+    await type(tree, en.meal.description, 'Synthetic yoghurt');
+    await press(tree, en.meal.fromLabel);
+    await act(async () => {
+      await buttonOf(en.photos.library).onPress();
+    });
+    await act(async () => {
+      void buttonOf(en.meal.photoSend).onPress();
+    });
+    await flush();
+    await press(tree, en.meal.estimateAddAll);
+    let rendered!: ReactTestRenderer;
+    await act(async () => {
+      rendered = create(mockScreen.options!.headerRight!());
+    });
+    await act(async () => {
+      await rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!.props.onPress();
+    });
+    await flush();
+    expect(await deps.repo.listMeals()).toMatchObject([{ barcode: '5900000000008', source: { kind: 'label_scan' } }]);
+    const { lookupProduct } = require('@/core/usecases/barcode');
+    expect(await lookupProduct(deps, '5900000000008')).toMatchObject({ history: { name: 'Synthetic yoghurt', source: { kind: 'label_scan' } } });
   });
 
   it('IN-3, LL-12 saving while the estimate runs uses the fields as they are and aborts the request', async () => {

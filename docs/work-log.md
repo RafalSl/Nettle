@@ -275,3 +275,8 @@ Newest entry last. One short entry per working session or meaningful step: what 
 ## 2026-11-14: model per action (branch feature/model-per-action)
 - **Done:** LL-9, LL-10, UX-6. `core/llm/actions.ts`, `getModel`, `setModel` and `currentProvider` take the action; the list of models comes from the adapter through `deps.llmModels`; a stored model that is no longer offered falls back to Haiku 5.5. The AI settings screen shows a chip row per action. 580 tests pass.
 - **Next:** label scan (IN-15, LL-13).
+
+## 2026-11-14: label scan (branch feature/label-scan)
+- **Done:** IN-15, LL-13, LL-12, LL-5, IN-16. A label prompt (text as printed in the label's language, unreadable parts in `note`, the 14 allergen ids for declared allergens and "may contain" traces) and parser; `scanLabel` uses the `label_scan` model setting. The estimate machinery of the meal form moved into `useIngredientRun` and is shared with the drink form. The temporary photo is deleted through the new `PhotoStore.discardTemp`. Found on the way: the one-line ingredient fields split on every comma, which broke "mleko (3,2%)"; they now split outside brackets and between digits (also fixes the meal edit form). 590 tests pass.
+- **To verify on the phone:** a real label photo in Polish, the 30 second Cancel, and that the cache file is gone afterwards.
+- **Next:** day start (NF-7) and the Today log cap (UX-2).

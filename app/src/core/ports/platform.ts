@@ -25,6 +25,8 @@ export interface PhotoStore {
   saveFromUri(sourceUri: string): Promise<string>;
   /** Compress an image to JPEG bytes without storing it, for a one-off upload such as IN-3. */
   compress(sourceUri: string, maxEdge?: number): Promise<Uint8Array>;
+  /** IN-15: deletes a temporary image the user picked or took and that was not stored. Missing files are ignored. */
+  discardTemp(sourceUri: string): Promise<void>;
   /** Store already compressed JPEG bytes, for import (EX-10). Returns the key. */
   saveBytes(bytes: Uint8Array): Promise<string>;
   read(file: string): Promise<Uint8Array>;

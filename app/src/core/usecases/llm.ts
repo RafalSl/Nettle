@@ -1,7 +1,8 @@
-import { INGREDIENTS_PROMPT_VERSION, ingredientsPrompt } from '../llm/prompts';
+import { INGREDIENTS_PROMPT_VERSION, LABEL_PROMPT_VERSION, ingredientsPrompt, labelPrompt } from '../llm/prompts';
 import type { LlmProvenance } from '../model/source';
-import { parseIngredientEstimate, type IngredientEstimate } from '../llm/parse';
+import { parseIngredientEstimate, parseLabelScan, type IngredientEstimate, type LabelScan } from '../llm/parse';
 import { NettleError } from '../model/errors';
+import { ALLERGENS } from '../model/types';
 import { LLM_ACTIONS, type LlmAction } from '../llm/actions';
 import type { Language, LlmImage, LlmProvider, ModelChoice } from '../ports/llm';
 import type { Deps } from './deps';
@@ -62,4 +63,19 @@ export async function estimateIngredients(
   // IN-16: the model that answered, when, and which prompt asked.
   const provenance: LlmProvenance = { model: response.model, at: deps.clock.now().toISOString(), promptVersion: INGREDIENTS_PROMPT_VERSION };
   return { ...parseIngredientEstimate(response.text), provenance };
+}
+
+/**
+ * LL-13, IN-15: ask the model to read an ingredient label from a photo. The caller must have shown the LL-5
+ * confirmation; the result only fills a form for review, nothing is saved here.
+ */
+export async function scanLabel(
+  deps: Deps,
+  input: { image: LlmImage; language: Language; signal?: AbortSignal },
+): Promise<LabelScan & { provenance: LlmProvenance }> {
+  const { provider } = await currentProvider(deps, 'label_scan');
+  const prompt = labelPrompt(input.language, ALLERGENS);
+  const response = await provider.completeJson({ ...prompt, images: [input.image], ...(input.signal ? { signal: input.signal } : {}) });
+  const provenance: LlmProvenance = { model: response.model, at: deps.clock.now().toISOString(), promptVersion: LABEL_PROMPT_VERSION };
+  return { ...parseLabelScan(response.text), provenance };
 }

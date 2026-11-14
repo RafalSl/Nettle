@@ -1,4 +1,5 @@
 import { Switch, Text, TextInput, View } from 'react-native';
+import { joinIngredients, splitIngredients } from '@/core/model/allergens';
 import { afterEdit, sameIngredients, typedSource, type IngredientSource } from '@/core/model/source';
 import { ALLERGENS, type Allergen } from '@/core/model/types';
 import type { DrinkSnapshot } from '@/core/usecases/preferences';
@@ -33,7 +34,7 @@ export const draftFromDrink = (d: DrinkSnapshot): DrinkDraft => ({
   name: d.name,
   amount: String(d.amountMl),
   alcohol: d.alcohol,
-  ingredients: d.ingredients.join(', '),
+  ingredients: joinIngredients(d.ingredients),
   allergens: new Set(d.allergens),
   barcode: d.barcode,
   source: d.source,
@@ -42,7 +43,7 @@ export const draftFromDrink = (d: DrinkSnapshot): DrinkDraft => ({
 
 /** Input for `logDrink` and `editDrink` from the form state. */
 export const drinkInput = (d: DrinkDraft) => {
-  const ingredients = d.ingredients.split(',').map((i) => i.trim()).filter(Boolean);
+  const ingredients = splitIngredients(d.ingredients);
   const allergens = [...d.allergens] as Allergen[];
   return {
     name: d.name,

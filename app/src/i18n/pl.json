@@ -19,7 +19,8 @@
     "yes": "Tak",
     "no": "Nie",
     "add": "Dodaj",
-    "name": "Nazwa"
+    "name": "Nazwa",
+    "back": "Wstecz"
   },
   "meal": {
     "title": "Dodaj posiłek",
@@ -621,7 +622,11 @@
     "itemDescription": "Opis (opcjonalnie)",
     "flareThresholdTitle": "Zaostrzenia",
     "flareThresholdHint": "Zaostrzenie to okres, w którym nasilenie zmiany skórnej jest równe tej liczbie lub wyższe. Kończy się na pierwszym późniejszym wpisie poniżej. Zmiana przelicza zaostrzenia z wpisów.",
-    "flareThresholdLabel": "Nasilenie co najmniej"
+    "flareThresholdLabel": "Nasilenie co najmniej",
+    "loggingHint": "Początek dnia, zaostrzenia, pozycje Zdrowia dnia, miejsca, zabiegi, ulubione",
+    "remindersPrivacyHint": "Przypomnienia, blokada aplikacji i zdjęcia",
+    "aiHint": "Klucz API i model dla każdej akcji",
+    "dataHint": "Eksport, import i usuwanie"
   },
   "about": {
     "title": "O aplikacji",
@@ -663,28 +668,22 @@
     "privacy": "Prywatność",
     "drink": "Napój",
     "medication": "Lek",
-    "stool": "Stolec"
+    "stool": "Stolec",
+    "remindersPrivacy": "Przypomnienia i prywatność"
   },
   "home": {
     "quickActions": "Szybkie akcje",
-    "meal": "Posiłek",
-    "skin": "Skóra",
-    "treatment": "Leczenie",
-    "checkin": "Wpis dzienny",
     "more": "Więcej",
-    "moreIntake": "Napój, lek lub suplement",
-    "moreReaction": "Reakcja po posiłku",
-    "moreNails": "Aktualizacja paznokci",
-    "moreChange": "Rozpoczęte lub zakończone",
-    "stool": "Stolec",
     "edit": "Edytuj",
     "done": "Gotowe",
     "moveUp": "W górę",
     "moveDown": "W dół",
-    "hide": "Ukryj",
-    "show": "Pokaż",
-    "moreDrink": "Napój",
-    "moreMedication": "Lek lub suplement"
+    "pinned": "Na ekranie Dziś",
+    "inMore": "W Więcej",
+    "pin": "Przypnij do Dziś",
+    "unpin": "Przenieś do Więcej",
+    "moreFixed": "Więcej zawsze jest na ekranie Dziś.",
+    "moreEmpty": "Wszystko jest przypięte do ekranu Dziś."
   },
   "review": {
     "empty": "Na razie nie ma czego przeglądać. Wpisy dodane w Dziś pojawią się tutaj.",
@@ -766,13 +765,14 @@
     "editAction": "Edytuj wpis"
   },
   "cards": {
-    "openFlare": "Zaostrzenie od {{since}}: {{areas}}",
     "openCheckin": "Otwórz Zdrowie dnia",
     "noExport": "Nie było jeszcze eksportu. Dziennik jest tylko na tym telefonie.",
     "lastExport": "Ostatni eksport {{days}} dni temu.",
     "openBackup": "Zrób kopię",
     "notLogged": "Ten dzień nie ma jeszcze wpisu Zdrowie dnia.",
-    "openAreas": "Otwórz Miejsca"
+    "openAreas": "Otwórz Miejsca",
+    "openFlareOne": "Zaostrzenie: {{area}}, nasilenie {{severity}} od {{since}}",
+    "openFlareMany": "Zaostrzenie w {{n}} miejscach, najgorsze: {{area}}"
   },
   "edit": {
     "title": "Edycja wpisu",
@@ -862,5 +862,47 @@
     "tag-travel": "Podróż dziś.",
     "tag-nicotine": "Papierosy lub inna nikotyna dziś.",
     "tag-joint-symptoms": "Bolesne lub sztywne stawy dziś."
+  },
+  "entry": {
+    "meal": {
+      "title": "Posiłek",
+      "hint": "Jedzenie wraz ze składnikami"
+    },
+    "drink": {
+      "title": "Napój",
+      "hint": "Każdy napój, z przełącznikiem alkoholu"
+    },
+    "medication": {
+      "title": "Lek lub suplement",
+      "hint": "Jednorazowo przyjęty lek lub suplement"
+    },
+    "skin": {
+      "title": "Skóra",
+      "hint": "Oceny i zdjęcia miejsca na skórze"
+    },
+    "nails": {
+      "title": "Paznokcie",
+      "hint": "Stadium, zakres i zdjęcia paznokcia"
+    },
+    "treatment": {
+      "title": "Zabieg",
+      "hint": "Krem lub inny zabieg, który zastosowano"
+    },
+    "checkin": {
+      "title": "Zdrowie dnia",
+      "hint": "Jaki był dzień: oceny i pozycje tak/nie"
+    },
+    "stool": {
+      "title": "Stolec",
+      "hint": "Jeden wpis z typem w skali Bristol"
+    },
+    "reaction": {
+      "title": "Reakcja",
+      "hint": "Objawy po posiłku"
+    },
+    "change": {
+      "title": "Zmiana rutyny",
+      "hint": "Produkt lub dieta, które zaczęto lub przerwano"
+    }
   }
 }

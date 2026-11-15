@@ -3,20 +3,16 @@ import { t } from '@/i18n';
 import { NavRow } from '@/ui/NavRow';
 import { Screen } from '@/ui/components';
 
-/** UX-6: a grouped list with chevron rows. Data and backup is last because it holds Delete data. */
+/** UX-6: five groups. Data and backup is next to last and About last; Delete data sits at the end of Data and backup. */
 export default function SettingsScreen() {
   const router = useRouter();
   return (
     <Screen>
-      <NavRow title={t('nav.logging')} onPress={() => router.push('/today/settings/logging')} />
-      <NavRow title={t('nav.areas')} onPress={() => router.push('/today/settings/areas')} />
-      <NavRow title={t('nav.favorites')} onPress={() => router.push('/today/settings/favorites')} />
-      <NavRow title={t('nav.suggestions')} onPress={() => router.push('/today/settings/suggestions')} />
-      <NavRow title={t('nav.reminders')} onPress={() => router.push('/today/settings/reminders')} />
-      <NavRow title={t('nav.privacy')} onPress={() => router.push('/today/settings/privacy')} />
-      <NavRow title={t('nav.ai')} onPress={() => router.push('/today/settings/ai')} />
-      <NavRow title={t('nav.data')} onPress={() => router.push('/today/settings/data')} />
-      <NavRow title={t('nav.about')} onPress={() => router.push('/today/settings/about')} />
+      <NavRow title={t('nav.logging')} subtitle={t('settings.loggingHint')} onPress={() => router.push('/settings/logging')} />
+      <NavRow title={t('nav.remindersPrivacy')} subtitle={t('settings.remindersPrivacyHint')} onPress={() => router.push('/settings/reminders')} />
+      <NavRow title={t('nav.ai')} subtitle={t('settings.aiHint')} onPress={() => router.push('/settings/ai')} />
+      <NavRow title={t('nav.data')} subtitle={t('settings.dataHint')} onPress={() => router.push('/settings/data')} />
+      <NavRow title={t('nav.about')} onPress={() => router.push('/settings/about')} />
     </Screen>
   );
 }

@@ -3,10 +3,10 @@ import { NettleError } from '../model/errors';
 import {
   defaultPreferences,
   MAX_SUGGESTION_ROWS,
-  QUICK_ACTIONS,
   WINDOW_DAYS,
   type Preferences,
-  type QuickAction,
+  type EntryType,
+  ENTRY_TYPES,
   type SuggestionSettings,
 } from '../model/preferences';
 import { drinkKey, normalizeText } from '../model/suggestions';
@@ -134,28 +134,37 @@ export async function refreshFavoriteMeal(deps: Deps, meal: Meal): Promise<void>
   await deps.repo.setPreferences(prefs);
 }
 
-/** UX-2: move a quick action up (-1) or down (+1) in the order; at either end nothing changes. */
-export async function moveQuickAction(deps: Deps, id: QuickAction, delta: -1 | 1): Promise<QuickAction[]> {
-  if (!QUICK_ACTIONS.includes(id)) throw new NettleError('invalid_value', id);
+/** UX-2: the entry types pinned to Today, in order. */
+export const pinnedEntryTypes = (p: Preferences): EntryType[] => p.quickActions.pinned;
+
+/** UX-2: the entry types that are not pinned, in catalog order: More lists exactly these. */
+export const unpinnedEntryTypes = (p: Preferences): EntryType[] => ENTRY_TYPES.filter((id) => !p.quickActions.pinned.includes(id));
+
+const known = (id: EntryType) => {
+  if (!ENTRY_TYPES.includes(id)) throw new NettleError('invalid_value', id);
+};
+
+/** UX-2: pin an entry type to the end of the Today list (a type that is already pinned stays where it is). */
+export async function pinEntryType(deps: Deps, id: EntryType): Promise<EntryType[]> {
+  known(id);
+  return (await change(deps, (p) => void (p.quickActions.pinned = [...new Set([...p.quickActions.pinned, id])]))).quickActions.pinned;
+}
+
+/** UX-2: move an entry type from Today to More. Nothing is hidden; the type shows up in More. */
+export async function unpinEntryType(deps: Deps, id: EntryType): Promise<EntryType[]> {
+  known(id);
+  return (await change(deps, (p) => void (p.quickActions.pinned = p.quickActions.pinned.filter((x) => x !== id)))).quickActions.pinned;
+}
+
+/** UX-2: move a pinned entry type up (-1) or down (+1); at either end, or when it is not pinned, nothing changes. */
+export async function movePinnedEntryType(deps: Deps, id: EntryType, delta: -1 | 1): Promise<EntryType[]> {
+  known(id);
   return (
     await change(deps, (p) => {
-      const order = p.quickActions.order;
+      const order = p.quickActions.pinned;
       const i = order.indexOf(id);
       const j = i + delta;
       if (i >= 0 && j >= 0 && j < order.length) [order[i], order[j]] = [order[j]!, order[i]!];
     })
-  ).quickActions.order;
+  ).quickActions.pinned;
 }
-
-/** UX-2: hide or show a quick action. More stays: it is the way to every rarer entry. */
-export async function setQuickActionHidden(deps: Deps, id: QuickAction, hidden: boolean): Promise<QuickAction[]> {
-  if (!QUICK_ACTIONS.includes(id) || (hidden && id === 'more')) throw new NettleError('invalid_value', id);
-  return (
-    await change(deps, (p) => {
-      p.quickActions.hidden = hidden ? [...new Set([...p.quickActions.hidden, id])] : p.quickActions.hidden.filter((x) => x !== id);
-    })
-  ).quickActions.hidden;
-}
-
-/** UX-2: the quick actions Today shows, in order. */
-export const visibleQuickActions = (p: Preferences): QuickAction[] => p.quickActions.order.filter((a) => !p.quickActions.hidden.includes(a));

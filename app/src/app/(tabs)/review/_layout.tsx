@@ -1,10 +1,11 @@
 import { Stack } from 'expo-router';
 import { t } from '@/i18n';
+import { GearButton } from '@/ui/GearButton';
 
 export default function ReviewStack() {
   return (
     <Stack>
-      <Stack.Screen name="index" options={{ title: t('tabs.review') }} />
+      <Stack.Screen name="index" options={{ title: t('tabs.review'), headerRight: () => <GearButton /> }} />
       <Stack.Screen name="day" options={{ title: t('nav.day') }} />
       <Stack.Screen name="area" options={{ title: t('nav.timeline') }} />
       <Stack.Screen name="report" options={{ title: t('nav.report') }} />

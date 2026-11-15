@@ -149,7 +149,7 @@ describe('reminder taps (SK-9)', () => {
 
   it('SK-9 backup opens Data and backup; an unknown target, a URL or an object opens nothing', async () => {
     const deps = makeDeps(new MemoryRepo());
-    expect((await resolveReminderTap(deps, tap('backup'), { hasUnsavedForm: false }))?.route.pathname).toBe('/today/settings/data');
+    expect((await resolveReminderTap(deps, tap('backup'), { hasUnsavedForm: false }))?.route.pathname).toBe('/settings/data');
     for (const [i, target] of ['https://example.invalid/', '/form/skin', { x: 1 }, undefined, 'Backup'].entries()) {
       expect(await resolveReminderTap(deps, { id: `n${i}`, target, deliveredAt: at }, { hasUnsavedForm: false })).toBeNull();
     }

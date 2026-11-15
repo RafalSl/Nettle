@@ -19,7 +19,8 @@
     "yes": "Yes",
     "no": "No",
     "add": "Add",
-    "name": "Name"
+    "name": "Name",
+    "back": "Back"
   },
   "meal": {
     "title": "Log a meal",
@@ -621,7 +622,11 @@
     "itemDescription": "Description (optional)",
     "flareThresholdTitle": "Flares",
     "flareThresholdHint": "A flare is a period in which a skin area's severity is at or above this number. It ends at the first later entry below it. Changing it recomputes the flares from the entries.",
-    "flareThresholdLabel": "Severity at or above"
+    "flareThresholdLabel": "Severity at or above",
+    "loggingHint": "Day start, flares, Daily health items, areas, treatments, favorites",
+    "remindersPrivacyHint": "Reminders, app lock and photos",
+    "aiHint": "Your API key and the model for each action",
+    "dataHint": "Export, import and delete"
   },
   "about": {
     "title": "About",
@@ -663,28 +668,22 @@
     "privacy": "Privacy",
     "drink": "Drink",
     "medication": "Medication",
-    "stool": "Stool"
+    "stool": "Stool",
+    "remindersPrivacy": "Reminders and privacy"
   },
   "home": {
     "quickActions": "Quick actions",
-    "meal": "Meal",
-    "skin": "Skin",
-    "treatment": "Treatment",
-    "checkin": "Daily health",
     "more": "More",
-    "moreIntake": "Drink, medication or supplement",
-    "moreReaction": "Reaction after a meal",
-    "moreNails": "Nail update",
-    "moreChange": "Started or stopped",
-    "stool": "Stool",
     "edit": "Edit",
     "done": "Done",
     "moveUp": "Move up",
     "moveDown": "Move down",
-    "hide": "Hide",
-    "show": "Show",
-    "moreDrink": "Drink",
-    "moreMedication": "Medication or supplement"
+    "pinned": "On Today",
+    "inMore": "In More",
+    "pin": "Pin to Today",
+    "unpin": "Move to More",
+    "moreFixed": "More is always on Today.",
+    "moreEmpty": "Everything is pinned to Today."
   },
   "review": {
     "empty": "Nothing to review yet. Entries you log on Today show up here.",
@@ -766,13 +765,14 @@
     "editAction": "Edit entry"
   },
   "cards": {
-    "openFlare": "Flare since {{since}}: {{areas}}",
     "openCheckin": "Open Daily health",
     "noExport": "No export yet. The diary exists only on this phone.",
     "lastExport": "Last export {{days}} days ago.",
     "openBackup": "Back up now",
     "notLogged": "This day has no Daily health record yet.",
-    "openAreas": "Open Areas"
+    "openAreas": "Open Areas",
+    "openFlareOne": "Flare: {{area}}, severity {{severity}} since {{since}}",
+    "openFlareMany": "Flare in {{n}} areas, worst: {{area}}"
   },
   "edit": {
     "title": "Edit entry",
@@ -862,5 +862,47 @@
     "tag-travel": "You travelled today.",
     "tag-nicotine": "Cigarettes or other nicotine today.",
     "tag-joint-symptoms": "Painful or stiff joints today."
+  },
+  "entry": {
+    "meal": {
+      "title": "Meal",
+      "hint": "Food you ate, with its ingredients"
+    },
+    "drink": {
+      "title": "Drink",
+      "hint": "Any drink, with an alcohol switch"
+    },
+    "medication": {
+      "title": "Medication",
+      "hint": "A medicine or supplement you took once"
+    },
+    "skin": {
+      "title": "Skin",
+      "hint": "Scores and photos for a skin area"
+    },
+    "nails": {
+      "title": "Nails",
+      "hint": "Stage, extent and photos of a nail"
+    },
+    "treatment": {
+      "title": "Treatment",
+      "hint": "A cream or other treatment you applied"
+    },
+    "checkin": {
+      "title": "Daily health",
+      "hint": "How the day was: scores and yes or no items"
+    },
+    "stool": {
+      "title": "Stool",
+      "hint": "One entry with its Bristol type"
+    },
+    "reaction": {
+      "title": "Reaction",
+      "hint": "Symptoms after a meal"
+    },
+    "change": {
+      "title": "Routine change",
+      "hint": "A product or diet you started or stopped"
+    }
   }
 }

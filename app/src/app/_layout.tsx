@@ -81,6 +81,7 @@ export default function RootLayout() {
       <AnalysisWatcher />
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="settings" options={{ headerShown: false }} />
         <Stack.Screen name="form/meal" options={form(t('nav.meal'))} />
         <Stack.Screen name="form/skin" options={form(t('nav.skin'))} />
         <Stack.Screen name="form/checkin" options={form(t('nav.checkin'))} />

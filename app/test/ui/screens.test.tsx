@@ -17,7 +17,7 @@ import { logDrink, logMedication } from '@/core/usecases/intake';
 import { addPhoto } from '@/core/usecases/photos';
 import { applyImport, exportBundle, previewImport } from '@/core/usecases/exchange';
 import { deleteEntry } from '@/core/usecases/entries';
-import { toggleFavoriteDrink, toggleFavoriteMeal, updateSuggestionSettings } from '@/core/usecases/preferences';
+import { unpinEntryType, toggleFavoriteDrink, toggleFavoriteMeal, updateSuggestionSettings } from '@/core/usecases/preferences';
 import { applyTreatment, logChangeEvent, logReaction } from '@/core/usecases/events';
 import { addListItem, archiveListItem } from '@/core/usecases/lists';
 import { saveApiKey } from '@/core/usecases/llm';
@@ -82,16 +82,16 @@ const services = require('@/services') as { __state: { current: unknown } };
 const screens: [string, () => { default: React.ComponentType }][] = [
   ['today', () => require('@/app/(tabs)/today/index')],
   ['more', () => require('@/app/(tabs)/today/more')],
-  ['settings', () => require('@/app/(tabs)/today/settings/index')],
-  ['settings logging', () => require('@/app/(tabs)/today/settings/logging')],
-  ['settings suggestions', () => require('@/app/(tabs)/today/settings/suggestions')],
-  ['settings reminders', () => require('@/app/(tabs)/today/settings/reminders')],
-  ['settings ai', () => require('@/app/(tabs)/today/settings/ai')],
-  ['settings about', () => require('@/app/(tabs)/today/settings/about')],
-  ['settings areas', () => require('@/app/(tabs)/today/settings/areas')],
-  ['settings favorites', () => require('@/app/(tabs)/today/settings/favorites')],
-  ['settings privacy', () => require('@/app/(tabs)/today/settings/privacy')],
-  ['settings data', () => require('@/app/(tabs)/today/settings/data')],
+  ['settings', () => require('@/app/settings/index')],
+  ['settings logging', () => require('@/app/settings/logging')],
+  ['settings suggestions', () => require('@/app/settings/suggestions')],
+  ['settings reminders', () => require('@/app/settings/reminders')],
+  ['settings ai', () => require('@/app/settings/ai')],
+  ['settings about', () => require('@/app/settings/about')],
+  ['settings areas', () => require('@/app/settings/areas')],
+  ['settings favorites', () => require('@/app/settings/favorites')],
+  ['settings privacy', () => require('@/app/settings/privacy')],
+  ['settings data', () => require('@/app/settings/data')],
   ['review', () => require('@/app/(tabs)/review/index')],
   ['doctor report', () => require('@/app/(tabs)/review/report')],
   ['analysis', () => require('@/app/(tabs)/review/analysis')],
@@ -192,7 +192,7 @@ describe('screen flows (NF-2, NF-3)', () => {
       [() => require('@/app/form/checkin'), en.today.hint],
       [() => require('@/app/form/skin'), en.skin.scale],
       [() => require('@/app/form/nails'), en.more.nailNone],
-      [() => require('@/app/(tabs)/today/settings/data'), en.data.exportTitle],
+      [() => require('@/app/settings/data'), en.data.exportTitle],
       [() => require('@/app/(tabs)/review/analysis'), en.analysis.title],
     ];
     for (const [load, title] of titles) {
@@ -294,7 +294,7 @@ describe('screen flows (NF-2, NF-3)', () => {
 
   it('SE-2 the key is saved to the key store, cleared from the field and never shown', async () => {
     const deps = nowDeps();
-    const { tree } = await mount(() => require('@/app/(tabs)/today/settings/ai'), deps);
+    const { tree } = await mount(() => require('@/app/settings/ai'), deps);
     await type(tree, en.llm.keyField, 'sk-synthetic-secret');
     await press(tree, en.llm.keySave);
     await flush();
@@ -305,7 +305,7 @@ describe('screen flows (NF-2, NF-3)', () => {
 
   it('SK-2, SK-10 Settings adds, renames, resets and archives areas, and restores an archived one', async () => {
     const deps = nowDeps();
-    const { tree } = await mount(() => require('@/app/(tabs)/today/settings/areas'), deps);
+    const { tree } = await mount(() => require('@/app/settings/areas'), deps);
     await flush();
     await type(tree, en.settings.skinAreaName, 'Synthetic elbow');
     await press(tree, en.common.add);
@@ -338,7 +338,7 @@ describe('screen flows (NF-2, NF-3)', () => {
 
   it('SK-5, UX-6 an area can start its photos as sensitive, and About shows the version and the limits of the app', async () => {
     const deps = nowDeps();
-    const { tree } = await mount(() => require('@/app/(tabs)/today/settings/areas'), deps);
+    const { tree } = await mount(() => require('@/app/settings/areas'), deps);
     await flush();
     await press(tree, 'Behind the ears');
     const sw = () => tree.root.findAll((n) => n.props.accessibilityLabel === en.settings.sensitiveDefault && typeof n.props.onValueChange === 'function')[0]!;
@@ -351,19 +351,19 @@ describe('screen flows (NF-2, NF-3)', () => {
     const entry = await logSkinEntry(deps, { areaId: 'area-behind-ears', scores });
     await addPhoto(deps, { entryKind: 'skinEntry', entryId: entry.id, sourceUri: 'x' });
     expect((await deps.repo.listRecords('photos'))[0]!.sensitive).toBe(true);
-    const about = await mount(() => require('@/app/(tabs)/today/settings/about'), deps);
+    const about = await mount(() => require('@/app/settings/about'), deps);
     expect(hasText(about.tree, en.about.version.replace('{{version}}', '9.9.9'))).toBe(true);
     expect(hasText(about.tree, en.about.medical)).toBe(true);
-    const settings = await mount(() => require('@/app/(tabs)/today/settings/index'), deps);
+    const settings = await mount(() => require('@/app/settings/index'), deps);
     await press(settings.tree, en.nav.about);
-    expect(mockRouter.push).toHaveBeenLastCalledWith('/today/settings/about');
+    expect(mockRouter.push).toHaveBeenLastCalledWith('/settings/about');
   });
 
   it('IN-14, UX-6 Settings lists the favorites and removes one with a tap', async () => {
     const deps = nowDeps();
     await toggleFavoriteMeal(deps, { description: 'Synthetic rice', ingredients: [], allergens: [], barcode: null, source: { kind: 'typed', edited: false, llm: null, aiTags: false } });
     await toggleFavoriteDrink(deps, { name: 'Synthetic tea', amountMl: 200, alcohol: false, ingredients: [], allergens: [], barcode: null, source: { kind: 'typed', edited: false, llm: null, aiTags: false } });
-    const { tree } = await mount(() => require('@/app/(tabs)/today/settings/favorites'), deps);
+    const { tree } = await mount(() => require('@/app/settings/favorites'), deps);
     await flush();
     expect(hasText(tree, '★ Synthetic rice')).toBe(true);
     expect(hasText(tree, '★ Synthetic tea 200 ml')).toBe(true);
@@ -388,7 +388,7 @@ describe('screen flows (NF-2, NF-3)', () => {
 
   it('LL-9 the AI settings list a model choice per action, defaulting to the first offered model', async () => {
     const deps = nowDeps();
-    const { tree } = await mount(() => require('@/app/(tabs)/today/settings/ai'), deps);
+    const { tree } = await mount(() => require('@/app/settings/ai'), deps);
     for (const label of Object.values(en.llm.action)) expect(hasText(tree, label)).toBe(true);
     const selected = () => tree.root.findAll((n) => n.props.accessibilityLabel === 'Haiku' && n.props.accessibilityState?.selected === true && typeof n.props.onPress === 'function');
     expect(selected()).toHaveLength(5);
@@ -409,7 +409,7 @@ describe('screen flows (NF-2, NF-3)', () => {
       cb(script.shift() ?? o.options.length - 1);
     });
     jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
-    const { tree, fileShare } = await mount(() => require('@/app/(tabs)/today/settings/data'), deps);
+    const { tree, fileShare } = await mount(() => require('@/app/settings/data'), deps);
     await press(tree, en.delete.groups.food);
     await press(tree, en.delete.button);
     await flush();
@@ -432,7 +432,7 @@ describe('screen flows (NF-2, NF-3)', () => {
         cb(next === null || next === undefined ? o.options.length - 1 : next);
       });
       jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
-      const { tree } = await mount(() => require('@/app/(tabs)/today/settings/data'), deps);
+      const { tree } = await mount(() => require('@/app/settings/data'), deps);
       await press(tree, en.delete.groups.food);
       await press(tree, en.delete.button);
       await flush();
@@ -445,7 +445,7 @@ describe('screen flows (NF-2, NF-3)', () => {
     const deps = nowDeps();
     await logMeal(deps, { description: 'Synthetic inside', ingredients: [], at: new Date('2026-01-10T10:00:00.000Z') });
     await logMeal(deps, { description: 'Synthetic outside', ingredients: [], at: new Date('2026-01-20T10:00:00.000Z') });
-    const { tree, fileShare } = await mount(() => require('@/app/(tabs)/today/settings/data'), deps);
+    const { tree, fileShare } = await mount(() => require('@/app/settings/data'), deps);
     await toggle(tree, en.range.limit);
     const [fromPicker, toPicker] = mockPicker.all.slice(-2);
     await act(async () => {
@@ -488,7 +488,7 @@ describe('screen flows (NF-2, NF-3)', () => {
   it('EX-1, EX-9 the Data screen exports a ZIP with data.json and hands it to the share sheet', async () => {
     const deps = nowDeps();
     await logMeal(deps, { description: 'Synthetic meal', ingredients: ['a'] });
-    const { tree, fileShare } = await mount(() => require('@/app/(tabs)/today/settings/data'), deps);
+    const { tree, fileShare } = await mount(() => require('@/app/settings/data'), deps);
     await press(tree, en.data.exportButton);
     await flush();
     expect(fileShare.saveAndShare).toHaveBeenCalledTimes(1);
@@ -501,7 +501,7 @@ describe('screen flows (NF-2, NF-3)', () => {
   it('EX-3, EX-5 turning on CSV and the PDF report adds those files to the export', async () => {
     const deps = nowDeps();
     await logMeal(deps, { description: 'Synthetic meal', ingredients: ['a'] });
-    const { tree, fileShare } = await mount(() => require('@/app/(tabs)/today/settings/data'), deps);
+    const { tree, fileShare } = await mount(() => require('@/app/settings/data'), deps);
     await toggle(tree, en.export.csv);
     await toggle(tree, en.export.report);
     await press(tree, en.data.exportButton);
@@ -585,7 +585,7 @@ describe('screen flows (NF-2, NF-3)', () => {
 
   it('SK-9 the reminders section saves a daily reminder, and a refused permission leaves the switch off', async () => {
     const deps = nowDeps();
-    const { tree } = await mount(() => require('@/app/(tabs)/today/settings/reminders'), deps);
+    const { tree } = await mount(() => require('@/app/settings/reminders'), deps);
     await toggle(tree, en.reminders.checkIn);
     await flush();
     expect((deps.notifier as unknown as { scheduled: { id: string }[] }).scheduled.map((s) => s.id)).toEqual(['checkin']);
@@ -593,7 +593,7 @@ describe('screen flows (NF-2, NF-3)', () => {
 
     const refused = nowDeps();
     (refused.notifier as unknown as { granted: boolean }).granted = false;
-    const second = await mount(() => require('@/app/(tabs)/today/settings/reminders'), refused);
+    const second = await mount(() => require('@/app/settings/reminders'), refused);
     await toggle(second.tree, en.reminders.backup);
     await flush();
     expect(alert.mock.calls.some((c) => c[0] === en.errors.notifications_denied)).toBe(true);
@@ -609,10 +609,10 @@ describe('navigation shell (UX-1, UX-2, UX-3, UX-6)', () => {
   it('UX-2 Today offers the quick actions, each opening its modal form or the More list', async () => {
     const { tree } = await mount(() => require('@/app/(tabs)/today/index'), nowDeps());
     for (const [label, href] of [
-      [en.home.meal, '/form/meal'],
-      [en.home.skin, '/form/skin'],
-      [en.home.treatment, '/form/treatment'],
-      [en.home.checkin, '/form/checkin'],
+      [en.entry.meal.title, '/form/meal'],
+      [en.entry.skin.title, '/form/skin'],
+      [en.entry.treatment.title, '/form/treatment'],
+      [en.entry.checkin.title, '/form/checkin'],
       [en.home.more, '/today/more'],
     ] as const) {
       await press(tree, label);
@@ -623,34 +623,59 @@ describe('navigation shell (UX-1, UX-2, UX-3, UX-6)', () => {
   it('UX-2 More lists the rarer entries and UX-6 Settings lists its groups, each a pushed screen', async () => {
     const more = await mount(() => require('@/app/(tabs)/today/more'), nowDeps());
     for (const [label, href] of [
-      [en.home.moreDrink, '/form/drink'],
-      [en.home.moreMedication, '/form/medication'],
-      [en.home.moreReaction, '/form/reaction'],
-      [en.home.moreNails, '/form/nails'],
-      [en.home.moreChange, '/form/change'],
+      [en.entry.drink.title, '/form/drink'],
+      [en.entry.medication.title, '/form/medication'],
+      [en.entry.reaction.title, '/form/reaction'],
+      [en.entry.nails.title, '/form/nails'],
+      [en.entry.change.title, '/form/change'],
     ] as const) {
       await press(more.tree, label);
       expect(mockRouter.push).toHaveBeenLastCalledWith(href);
     }
-    const settings = await mount(() => require('@/app/(tabs)/today/settings/index'), nowDeps());
+    const settings = await mount(() => require('@/app/settings/index'), nowDeps());
+    // UX-6: five groups, in this order, with About last
     for (const [label, href] of [
-      [en.nav.logging, '/today/settings/logging'],
-      [en.nav.suggestions, '/today/settings/suggestions'],
-      [en.nav.reminders, '/today/settings/reminders'],
-      [en.nav.privacy, '/today/settings/privacy'],
-      [en.nav.ai, '/today/settings/ai'],
-      [en.nav.data, '/today/settings/data'],
+      [en.nav.logging, '/settings/logging'],
+      [en.nav.remindersPrivacy, '/settings/reminders'],
+      [en.nav.ai, '/settings/ai'],
+      [en.nav.data, '/settings/data'],
+      [en.nav.about, '/settings/about'],
     ] as const) {
       await press(settings.tree, label);
       expect(mockRouter.push).toHaveBeenLastCalledWith(href);
     }
+    const logging = await mount(() => require('@/app/settings/logging'), nowDeps());
+    for (const [label, href] of [
+      [en.nav.suggestions, '/settings/suggestions'],
+      [en.nav.areas, '/settings/areas'],
+      [en.nav.favorites, '/settings/favorites'],
+    ] as const) {
+      await press(logging.tree, label);
+      expect(mockRouter.push).toHaveBeenLastCalledWith(href);
+    }
+    const reminders = await mount(() => require('@/app/settings/reminders'), nowDeps());
+    await press(reminders.tree, en.nav.privacy);
+    expect(mockRouter.push).toHaveBeenLastCalledWith('/settings/privacy');
+  });
+
+  it('UX-1 both tab headers have the gear, and it pushes Settings above the tabs', async () => {
+    const fs = require('fs') as typeof import('fs');
+    const path = require('path') as typeof import('path');
+    const root = path.join(__dirname, '../../src/app');
+    for (const layout of ['(tabs)/today/_layout.tsx', '(tabs)/review/_layout.tsx']) {
+      expect(fs.readFileSync(path.join(root, layout), 'utf8')).toContain('GearButton');
+    }
+    expect(fs.readFileSync(path.join(root, '_layout.tsx'), 'utf8')).toContain('name="settings"'); // above the tabs, so the tab bar is hidden inside
+    const { tree } = await mount(() => ({ default: require('@/ui/GearButton').GearButton }), nowDeps());
+    await press(tree, en.nav.gear);
+    expect(mockRouter.push).toHaveBeenLastCalledWith('/settings');
   });
 
   it('UX-1 every screen a layout declares has a route file, and titles stay under 15 characters', () => {
     const fs = require('fs') as typeof import('fs');
     const path = require('path') as typeof import('path');
     const root = path.join(__dirname, '../../src/app');
-    const layouts = ['_layout.tsx', '(tabs)/_layout.tsx', '(tabs)/today/_layout.tsx', '(tabs)/review/_layout.tsx'];
+    const layouts = ['_layout.tsx', '(tabs)/_layout.tsx', '(tabs)/today/_layout.tsx', '(tabs)/review/_layout.tsx', 'settings/_layout.tsx'];
     for (const layout of layouts) {
       const dir = path.dirname(path.join(root, layout));
       const names = [...fs.readFileSync(path.join(root, layout), 'utf8').matchAll(/<(?:Stack|Tabs)\.Screen name="([^"]+)"/g)].map((m) => m[1]!);
@@ -754,7 +779,7 @@ describe('Today (UX-2, UX-5, EN-1, UX-9)', () => {
     await flush();
     expect(hasText(tree, en.cards.notLogged)).toBe(true);
     expect(hasText(tree, en.cards.noExport)).toBe(true);
-    expect(hasText(tree, 'Chin')).toBe(true);
+    expect(hasText(tree, 'Chin, severity 9')).toBe(true); // one area: name, latest severity and the day it started
     await press(tree, en.cards.openAreas);
     expect(mockRouter.navigate).toHaveBeenLastCalledWith('/review');
   });
@@ -880,7 +905,7 @@ describe('Data and backup (EX-14, EX-10, EX-13)', () => {
     jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
   });
   afterEach(() => jest.restoreAllMocks());
-  const data = () => require('@/app/(tabs)/today/settings/data');
+  const data = () => require('@/app/settings/data');
 
   it('EX-14, EX-11 the full backup holds records, settings and sensitive photos, and remembers the export', async () => {
     const deps = nowDeps();
@@ -945,7 +970,7 @@ describe('Replace on import offers an export first (UX-6, UX-9)', () => {
       seen.push(o.options);
       cb(script.shift() ?? o.options.length - 1);
     });
-    const { tree, fileShare } = await mount(() => require('@/app/(tabs)/today/settings/data'), target, { saveAndShare: jest.fn(async () => undefined), pickFile: jest.fn(async () => backup as unknown as null) });
+    const { tree, fileShare } = await mount(() => require('@/app/settings/data'), target, { saveAndShare: jest.fn(async () => undefined), pickFile: jest.fn(async () => backup as unknown as null) });
     await press(tree, en.data.importButton);
     await flush();
     await press(tree, en.data.replace);
@@ -1092,7 +1117,7 @@ describe('Review (UX-1, EX-14)', () => {
 
   it('NF-7 Logging settings has "Day starts at" and saves the hour at once', async () => {
     const deps = nowDeps();
-    const { tree } = await mount(() => require('@/app/(tabs)/today/settings/logging'), deps);
+    const { tree } = await mount(() => require('@/app/settings/logging'), deps);
     expect(hasText(tree, en.day.dayStart)).toBe(true);
     await press(tree, '03:00');
     await flush();
@@ -1322,7 +1347,7 @@ describe('Suggestion settings and quick-action layout (IN-14, UX-2, UX-6)', () =
 
   it('IN-14 the Suggestions screen shows the defaults and stores rows, window and save on tap', async () => {
     const deps = nowDeps();
-    const { tree } = await mount(() => require('@/app/(tabs)/today/settings/suggestions'), deps);
+    const { tree } = await mount(() => require('@/app/settings/suggestions'), deps);
     await flush();
     expect(hasText(tree, '5')).toBe(true);
     await press(tree, en.sugg.more);
@@ -1332,20 +1357,42 @@ describe('Suggestion settings and quick-action layout (IN-14, UX-2, UX-6)', () =
     expect((await deps.repo.getPreferences())!.suggestions).toEqual({ rows: 6, windowDays: 14, saveOnTap: true, knownNames: false });
   });
 
-  it('UX-2 Edit mode on Today moves and hides quick actions with buttons, and the grid follows', async () => {
+  it('UX-2 Edit mode on Today has On Today and In More lists; moving an entry type changes the grid and More, nothing is hidden', async () => {
     const deps = nowDeps();
     const { tree } = await mount(() => require('@/app/(tabs)/today/index'), deps);
     await flush();
-    const grid = () => tree.root.findAll((n) => n.props.accessibilityRole === 'button' && [en.home.meal, en.home.skin, en.home.treatment, en.home.checkin, en.day.stool, en.home.more].includes(n.props.accessibilityLabel)).map((n) => n.props.accessibilityLabel as string);
-    expect([...new Set(grid())].slice(0, 2)).toEqual([en.home.meal, en.home.skin]);
+    const e = en.entry;
+    const grid = () => tree.root.findAll((n) => n.props.accessibilityRole === 'button' && [e.meal.title, e.skin.title, e.treatment.title, e.checkin.title, e.stool.title, e.drink.title, en.home.more].includes(n.props.accessibilityLabel)).map((n) => n.props.accessibilityLabel as string);
+    expect([...new Set(grid())]).toEqual([e.meal.title, e.skin.title, e.treatment.title, e.checkin.title, e.stool.title, en.home.more]);
     await press(tree, en.home.edit);
-    await press(tree, `${en.home.moveUp} ${en.home.checkin}`);
-    await press(tree, `${en.home.hide} ${en.day.stool}`);
-    expect(tree.root.findAll((n) => n.props.accessibilityLabel === `${en.home.hide} ${en.home.more}`)).toHaveLength(0); // More stays
+    await press(tree, `${en.home.moveUp} ${e.checkin.title}`);
+    await press(tree, `${en.home.unpin} ${e.stool.title}`);
+    await press(tree, `${en.home.pin} ${e.drink.title}`);
+    expect(tree.root.findAll((n) => n.props.accessibilityLabel === `${en.home.unpin} ${en.home.more}`)).toHaveLength(0); // More cannot be unpinned
     await press(tree, en.home.done);
     await flush();
-    expect([...new Set(grid())]).toEqual([en.home.meal, en.home.skin, en.home.checkin, en.home.treatment, en.home.more]);
-    expect((await deps.repo.getPreferences())!.quickActions.hidden).toEqual(['stool']);
+    expect([...new Set(grid())]).toEqual([e.meal.title, e.skin.title, e.checkin.title, e.treatment.title, e.drink.title, en.home.more]);
+    expect((await deps.repo.getPreferences())!.quickActions.pinned).toEqual(['meal', 'skin', 'checkin', 'treatment', 'drink']);
+    const more = await mount(() => require('@/app/(tabs)/today/more'), deps);
+    await flush();
+    expect(hasText(more.tree, e.stool.title)).toBe(true); // moved, not hidden
+    expect(hasText(more.tree, e.stool.hint)).toBe(true); // UX-11 subtitle
+    expect(hasText(more.tree, e.meal.hint)).toBe(false); // pinned types are not listed
+  });
+
+  it('UX-2 the stool tile opens the quick sheet while pinned, and More opens the full form', async () => {
+    const deps = nowDeps();
+    const { tree } = await mount(() => require('@/app/(tabs)/today/index'), deps);
+    await flush();
+    mockRouter.push.mockClear();
+    await press(tree, en.entry.stool.title);
+    expect(hasText(tree, en.day.stoolTitle)).toBe(true);
+    expect(mockRouter.push).not.toHaveBeenCalled();
+    await unpinEntryType(deps, 'stool');
+    const more = await mount(() => require('@/app/(tabs)/today/more'), deps);
+    await flush();
+    await press(more.tree, en.entry.stool.title);
+    expect(mockRouter.push).toHaveBeenLastCalledWith('/form/stool');
   });
 });
 
@@ -1474,7 +1521,7 @@ describe('Reminder taps (SK-9)', () => {
     const deps = nowDeps();
     const { notifier } = await mountLayout(deps);
     await act(async () => notifier.tap({ id: 'backup', target: 'backup', deliveredAt: null }));
-    expect(mockRouter.navigate).toHaveBeenCalledWith({ pathname: '/today/settings/data' });
+    expect(mockRouter.navigate).toHaveBeenCalledWith({ pathname: '/settings/data' });
     expect(fileShareCalls(deps)).toBe(0);
   });
 
@@ -2188,7 +2235,7 @@ describe('Photo selection for an export (EX-7, EX-8)', () => {
     await addPhoto(deps, { entryKind: 'skinEntry', entryId: chin.id, sourceUri: 'one' });
     await addPhoto(deps, { entryKind: 'skinEntry', entryId: chin.id, sourceUri: 'two' });
     await addPhoto(deps, { entryKind: 'skinEntry', entryId: intimate.id, sourceUri: 'three' }); // sensitive by the area default
-    const { tree, fileShare } = await mount(() => require('@/app/(tabs)/today/settings/data'), deps);
+    const { tree, fileShare } = await mount(() => require('@/app/settings/data'), deps);
     await flush();
     await press(tree, en.exportPhotos.custom);
     expect(hasText(tree, en.exportPhotos.customHint)).toBe(true);
@@ -2244,7 +2291,7 @@ describe('App lock (SE-8)', () => {
     services.__state.current = { deps, fileShare: { saveAndShare: jest.fn(), pickFile: jest.fn() }, analysisRunner: new AnalysisRunner(deps), appLock: lock };
     let tree!: ReactTestRenderer;
     await act(async () => {
-      tree = create(React.createElement(require('@/app/(tabs)/today/settings/privacy').default));
+      tree = create(React.createElement(require('@/app/settings/privacy').default));
     });
     const auth = deps.auth as unknown as FakeAuth;
     auth.hasLock = false;
@@ -2321,7 +2368,7 @@ describe('App lock (SE-8)', () => {
     await act(async () => {
       await tapped;
     });
-    expect(mockRouter.navigate).toHaveBeenCalledWith({ pathname: '/today/settings/data' });
+    expect(mockRouter.navigate).toHaveBeenCalledWith({ pathname: '/settings/data' });
   });
 });
 

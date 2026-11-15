@@ -40,12 +40,14 @@ export interface SuggestionSettings {
   knownNames: boolean;
 }
 
-/** UX-2: the quick actions Today can show; the layout is order plus the hidden ones. */
-export const QUICK_ACTIONS = ['meal', 'skin', 'treatment', 'checkin', 'stool', 'more'] as const;
-export type QuickAction = (typeof QUICK_ACTIONS)[number];
+/** UX-2: the ten entry types; the user pins any of them to Today, the rest are listed in More. */
+export const ENTRY_TYPES = ['meal', 'drink', 'medication', 'skin', 'nails', 'treatment', 'checkin', 'stool', 'reaction', 'change'] as const;
+export type EntryType = (typeof ENTRY_TYPES)[number];
+/** UX-2: the default pins. */
+export const DEFAULT_PINNED: readonly EntryType[] = ['meal', 'skin', 'treatment', 'checkin', 'stool'];
+/** UX-2: the ordered pins. Nothing is hidden: whatever is not pinned is in More. The More tile itself is always shown. */
 export interface QuickActionLayout {
-  order: QuickAction[];
-  hidden: QuickAction[];
+  pinned: EntryType[];
 }
 
 /** EX-1: preferences travel in the settings part of an export. The API key never does. */
@@ -64,7 +66,7 @@ export const MAX_SUGGESTION_ROWS = 20;
 export const DEFAULT_PREFERENCES: Preferences = {
   favorites: { meals: [], drinks: [], medications: [] },
   suggestions: { rows: 5, windowDays: 30, saveOnTap: false, knownNames: false },
-  quickActions: { order: [...QUICK_ACTIONS], hidden: [] },
+  quickActions: { pinned: [...DEFAULT_PINNED] },
   dayStartHour: 0,
   flareThreshold: DEFAULT_FLARE_THRESHOLD,
 };

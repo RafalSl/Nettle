@@ -1,5 +1,5 @@
 import { isDayStartHour } from '../model/dayStart';
-import { QUICK_ACTIONS, MAX_SUGGESTION_ROWS, WINDOW_DAYS, type Preferences, type QuickAction } from '../model/preferences';
+import { ENTRY_TYPES, MAX_SUGGESTION_ROWS, WINDOW_DAYS, type EntryType, type Preferences } from '../model/preferences';
 import { ALLERGENS, MEDICATION_CATEGORIES } from '../model/types';
 import { parseBarcode, parseSource, sourceToJson } from './sourceJson';
 import { bad, bool, enumList, isObj, list, nullableText, oneOf, str, stringList, unique, type Obj } from './guards';
@@ -13,15 +13,15 @@ export function preferencesToJson(p: Preferences): Obj {
       medications: p.favorites.medications.map((m) => ({ key: m.key, category: m.category, name: m.name, dose: m.dose })),
     },
     suggestions: { rows: p.suggestions.rows, window_days: p.suggestions.windowDays, save_on_tap: p.suggestions.saveOnTap, known_names: p.suggestions.knownNames },
-    quick_actions: { order: [...p.quickActions.order], hidden: [...p.quickActions.hidden] },
+    quick_actions: { pinned: [...p.quickActions.pinned] },
     day_start_hour: p.dayStartHour,
     flare_threshold: p.flareThreshold,
   };
 }
 
 const obj = (o: Obj, k: string, where: string): Obj => (isObj(o[k]) ? (o[k] as Obj) : bad(`${where}.${k}`));
-const quickList = (o: Obj, k: string, where: string): QuickAction[] => {
-  const v = enumList(o, k, QUICK_ACTIONS, where);
+const quickList = (o: Obj, k: string, where: string): EntryType[] => {
+  const v = enumList(o, k, ENTRY_TYPES, where);
   unique(v, `${where}.${k}`);
   return v;
 };
@@ -62,12 +62,11 @@ export function parsePreferences(o: Obj, where = 'settings.preferences'): Prefer
   if (!(WINDOW_DAYS as readonly unknown[]).includes(windowDays)) bad(`${where}.suggestions.window_days`);
 
   const qa = obj(o, 'quick_actions', where);
-  const order = quickList(qa, 'order', `${where}.quick_actions`);
-  const hidden = quickList(qa, 'hidden', `${where}.quick_actions`);
+  const pinned = quickList(qa, 'pinned', `${where}.quick_actions`);
   return {
     favorites: { meals, drinks, medications },
     suggestions: { rows: rows as number, windowDays: windowDays as (typeof WINDOW_DAYS)[number], saveOnTap: bool(sg, 'save_on_tap', `${where}.suggestions`), knownNames: bool(sg, 'known_names', `${where}.suggestions`) },
-    quickActions: { order, hidden },
+    quickActions: { pinned },
     dayStartHour: isDayStartHour(o.day_start_hour) ? o.day_start_hour : bad(`${where}.day_start_hour`),
     flareThreshold: typeof o.flare_threshold === 'number' && Number.isInteger(o.flare_threshold) && o.flare_threshold >= 1 && o.flare_threshold <= 10 ? o.flare_threshold : bad(`${where}.flare_threshold`),
   };

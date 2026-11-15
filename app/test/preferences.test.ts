@@ -7,13 +7,15 @@ import { applyImport, exportBundle, previewImport } from '@/core/usecases/exchan
 import { logMeal } from '@/core/usecases/logMeal';
 import {
   getPreferences,
-  moveQuickAction,
+  movePinnedEntryType,
+  pinEntryType,
+  pinnedEntryTypes,
+  unpinEntryType,
+  unpinnedEntryTypes,
   refreshFavoriteMeal,
-  setQuickActionHidden,
   toggleFavoriteDrink,
   toggleFavoriteMeal,
   updateSuggestionSettings,
-  visibleQuickActions,
 } from '@/core/usecases/preferences';
 import { MemoryRepo } from './fakes/memoryRepo';
 import { makeDeps } from './helpers/fixtures';
@@ -73,16 +75,23 @@ describe.each(repos)('preferences (%s)', (_name, make) => {
     expect((await getPreferences(deps)).favorites.drinks.map((a) => a.amountMl)).toEqual([500, 330]);
   });
 
-  it('UX-2 quick actions move with up and down, can be hidden, and More cannot be hidden', async () => {
+  it('UX-2 entry types are pinned, unpinned and moved with up and down; whatever is not pinned is in More', async () => {
     const deps = makeDeps(await make());
-    expect((await moveQuickAction(deps, 'checkin', -1)).slice(0, 4)).toEqual(['meal', 'skin', 'checkin', 'treatment']);
-    expect((await moveQuickAction(deps, 'meal', -1))[0]).toBe('meal'); // already first
-    expect((await moveQuickAction(deps, 'more', 1)).at(-1)).toBe('more'); // already last
-    await setQuickActionHidden(deps, 'stool', true);
-    expect(visibleQuickActions(await getPreferences(deps))).toEqual(['meal', 'skin', 'checkin', 'treatment', 'more']);
-    expect(await code(setQuickActionHidden(deps, 'more', true))).toBe('invalid_value');
-    await setQuickActionHidden(deps, 'stool', false);
-    expect(visibleQuickActions(await getPreferences(deps))).toHaveLength(6);
+    expect((await getPreferences(deps)).quickActions.pinned).toEqual(['meal', 'skin', 'treatment', 'checkin', 'stool']);
+    expect((await movePinnedEntryType(deps, 'checkin', -1)).slice(0, 4)).toEqual(['meal', 'skin', 'checkin', 'treatment']);
+    expect((await movePinnedEntryType(deps, 'meal', -1))[0]).toBe('meal'); // already first
+    expect((await movePinnedEntryType(deps, 'stool', 1)).at(-1)).toBe('stool'); // already last
+    expect(await movePinnedEntryType(deps, 'drink', 1)).toHaveLength(5); // not pinned: nothing changes
+    await unpinEntryType(deps, 'stool');
+    let prefs = await getPreferences(deps);
+    expect(pinnedEntryTypes(prefs)).toEqual(['meal', 'skin', 'checkin', 'treatment']);
+    expect(unpinnedEntryTypes(prefs)).toEqual(['drink', 'medication', 'nails', 'stool', 'reaction', 'change']);
+    await pinEntryType(deps, 'drink');
+    await pinEntryType(deps, 'drink'); // pinning twice keeps one
+    prefs = await getPreferences(deps);
+    expect(pinnedEntryTypes(prefs)).toEqual(['meal', 'skin', 'checkin', 'treatment', 'drink']);
+    expect(pinnedEntryTypes(prefs).length + unpinnedEntryTypes(prefs).length).toBe(10); // nothing is hidden
+    expect(await code(pinEntryType(deps, 'more' as never))).toBe('invalid_value');
   });
 
   it('EX-1, EX-10 preferences export in the settings part; a fresh install takes them, a merge keeps local ones, replace overwrites', async () => {

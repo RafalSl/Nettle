@@ -6,9 +6,31 @@ import { LlmSettingsSection } from '@/ui/LlmSettingsSection';
 import { ListSection } from '@/ui/ListSection';
 import { RemindersSection } from '@/ui/RemindersSection';
 import { Screen } from '@/ui/components';
+import { NavRow } from '@/ui/NavRow';
+import { useRouter } from 'expo-router';
+import { t } from '@/i18n';
+
+/** UX-6: the Logging group opens suggestions, the skin and nail areas and favorites; the rest of it is on this screen. */
+function SubPages() {
+  const router = useRouter();
+  return (
+    <>
+      <NavRow title={t('nav.suggestions')} onPress={() => router.push('/settings/suggestions')} />
+      <NavRow title={t('nav.areas')} onPress={() => router.push('/settings/areas')} />
+      <NavRow title={t('nav.favorites')} onPress={() => router.push('/settings/favorites')} />
+    </>
+  );
+}
+
+/** UX-6: Privacy and photos belongs to the Reminders and privacy group. */
+function PrivacyRow() {
+  const router = useRouter();
+  return <NavRow title={t('nav.privacy')} onPress={() => router.push('/settings/privacy')} />;
+}
 
 export const LoggingSettings = () => (
   <Screen>
+    <SubPages />
     <DayStartSection />
     <FlareThresholdSection />
     <ListSection kind="dailyItems" />
@@ -29,6 +51,7 @@ export const FavoriteSettings = () => (
 export const ReminderSettings = () => (
   <Screen>
     <RemindersSection />
+    <PrivacyRow />
   </Screen>
 );
 export const AiSettings = () => (

@@ -8,14 +8,14 @@ import { backupCardDue, daysSinceExport } from '@/core/usecases/backup';
 import { logStool } from '@/core/usecases/checkin';
 import { dayLog, dayStatus, treatmentShortcuts, type DayStatus, type LogRow, type TreatmentShortcut } from '@/core/usecases/dayLog';
 import { applyTreatment } from '@/core/usecases/events';
-import type { FlarePeriod } from '@/core/model/flares';
-import { openFlare } from '@/core/usecases/flares';
-import { defaultPreferences, type QuickAction } from '@/core/model/preferences';
-import { getPreferences, moveQuickAction, setQuickActionHidden, visibleQuickActions } from '@/core/usecases/preferences';
+import { openFlareSummary, type OpenFlare } from '@/core/usecases/flares';
+import { defaultPreferences, type EntryType } from '@/core/model/preferences';
+import { getPreferences, movePinnedEntryType, pinEntryType, unpinEntryType, unpinnedEntryTypes } from '@/core/usecases/preferences';
 import { areaLabel, errorMessage, itemLabel, t } from '@/i18n';
 import { useServices } from '@/services';
 import { DayLog, TODAY_LOG_LIMIT } from '@/ui/DayLog';
-import { Button, Heading, Label, Screen, styles } from '@/ui/components';
+import { ENTRY_ROUTE, entrySubtitle, entryTitle } from '@/ui/entryTypes';
+import { Button, Heading, Hint, Label, Screen, styles } from '@/ui/components';
 
 /** UX-2: how long a new row stays highlighted. */
 export const HIGHLIGHT_MS = 3000;
@@ -48,7 +48,7 @@ export default function TodayScreen() {
   const [ctx, setCtx] = useState<{ areas: SkinArea[]; treatments: ListItem[] }>({ areas: [], treatments: [] });
   const [status, setStatus] = useState<DayStatus | null>(null);
   const [shortcuts, setShortcuts] = useState<TreatmentShortcut[]>([]);
-  const [flare, setFlare] = useState<FlarePeriod | null>(null);
+  const [flare, setFlare] = useState<OpenFlare | null>(null);
   const [backup, setBackup] = useState<{ due: boolean; days: number | null }>({ due: false, days: null });
   const [stoolOpen, setStoolOpen] = useState(false);
   const [highlight, setHighlight] = useState<Set<string>>(new Set());
@@ -99,7 +99,7 @@ export default function TodayScreen() {
       setCtx({ areas: await deps.repo.listAreas(), treatments: await deps.repo.listItems('treatments') });
       setStatus(await dayStatus(deps, day));
       setShortcuts(await treatmentShortcuts(deps));
-      setFlare(await openFlare(deps));
+      setFlare(await openFlareSummary(deps));
       setBackup({ due: await backupCardDue(deps), days: await daysSinceExport(deps) });
       setLayout((await getPreferences(deps)).quickActions);
     })().catch((e) => Alert.alert(errorMessage(e)));
@@ -131,14 +131,11 @@ export default function TodayScreen() {
     );
   }
 
-  const setLayoutOrder = (order: QuickAction[]) => setLayout((l) => ({ ...l, order }));
-  const actions: Record<QuickAction, { title: string; onPress: () => void }> = {
-    meal: { title: t('home.meal'), onPress: () => router.push(isToday ? '/form/meal' : { pathname: '/form/meal', params: { day } }) },
-    skin: { title: t('home.skin'), onPress: () => router.push(isToday ? '/form/skin' : { pathname: '/form/skin', params: { day } }) },
-    treatment: { title: t('home.treatment'), onPress: () => router.push(isToday ? '/form/treatment' : { pathname: '/form/treatment', params: { day } }) },
-    checkin: { title: t('home.checkin'), onPress: () => router.push(isToday ? '/form/checkin' : { pathname: '/form/checkin', params: { day } }) },
-    stool: { title: t('day.stool'), onPress: () => setStoolOpen((o) => !o) },
-    more: { title: t('home.more'), onPress: () => router.push('/today/more') },
+  const setLayoutPinned = (pinned: EntryType[]) => setLayout((l) => ({ ...l, pinned }));
+  /** UX-2: a pinned tile opens its form; Stool opens its quick sheet while it is pinned (from More it opens the full form). */
+  const open = (id: EntryType) => () => {
+    if (id === 'stool') return setStoolOpen((o) => !o);
+    router.push(isToday ? ENTRY_ROUTE[id] : { pathname: ENTRY_ROUTE[id], params: { day } });
   };
 
   const areaName = (id: string) => {
@@ -180,32 +177,41 @@ export default function TodayScreen() {
         <Button kind="secondary" title={editing ? t('home.done') : t('home.edit')} onPress={() => setEditing((e) => !e)} />
       </View>
       {editing ? (
-        // UX-2: reorder and hide with buttons, never by dragging.
+        // UX-2: two lists, On Today and In More, with buttons to reorder and to move between them, never by dragging.
         <View style={{ gap: 4 }}>
-          {layout.order.map((id) => {
-            const hidden = layout.hidden.includes(id);
-            return (
-              <View key={id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, opacity: hidden ? 0.5 : 1 }}>
-                <Text style={[styles.rowText, { flex: 1 }]}>{actions[id].title}</Text>
-                <Button kind="secondary" title="▲" accessibilityLabel={`${t('home.moveUp')} ${actions[id].title}`} onPress={() => void run(async () => setLayoutOrder(await moveQuickAction(deps, id, -1)))} />
-                <Button kind="secondary" title="▼" accessibilityLabel={`${t('home.moveDown')} ${actions[id].title}`} onPress={() => void run(async () => setLayoutOrder(await moveQuickAction(deps, id, 1)))} />
-                {id !== 'more' && (
-                  <Button
-                    kind="secondary"
-                    title={hidden ? t('home.show') : t('home.hide')}
-                    accessibilityLabel={`${hidden ? t('home.show') : t('home.hide')} ${actions[id].title}`}
-                    onPress={() => void run(() => setQuickActionHidden(deps, id, !hidden))}
-                  />
-                )}
+          <Label>{t('home.pinned')}</Label>
+          {layout.pinned.map((id) => (
+            <View key={id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.rowText}>{entryTitle(id)}</Text>
+                <Text style={styles.hint}>{entrySubtitle(id)}</Text>
               </View>
-            );
-          })}
+              <Button kind="secondary" title="▲" accessibilityLabel={`${t('home.moveUp')} ${entryTitle(id)}`} onPress={() => void run(async () => setLayoutPinned(await movePinnedEntryType(deps, id, -1)))} />
+              <Button kind="secondary" title="▼" accessibilityLabel={`${t('home.moveDown')} ${entryTitle(id)}`} onPress={() => void run(async () => setLayoutPinned(await movePinnedEntryType(deps, id, 1)))} />
+              <Button kind="secondary" title={t('home.unpin')} accessibilityLabel={`${t('home.unpin')} ${entryTitle(id)}`} onPress={() => void run(async () => setLayoutPinned(await unpinEntryType(deps, id)))} />
+            </View>
+          ))}
+          <Hint>{t('home.moreFixed')}</Hint>
+          <Label>{t('home.inMore')}</Label>
+          {unpinnedEntryTypes({ ...defaultPreferences(), quickActions: layout }).map((id) => (
+            <View key={id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.rowText}>{entryTitle(id)}</Text>
+                <Text style={styles.hint}>{entrySubtitle(id)}</Text>
+              </View>
+              <Button kind="secondary" title={t('home.pin')} accessibilityLabel={`${t('home.pin')} ${entryTitle(id)}`} onPress={() => void run(async () => setLayoutPinned(await pinEntryType(deps, id)))} />
+            </View>
+          ))}
         </View>
       ) : (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-          {visibleQuickActions({ ...defaultPreferences(), quickActions: layout }).map((id) => (
+          {[...layout.pinned, 'more' as const].map((id) => (
             <View key={id} style={{ flexBasis: '31%', flexGrow: 1 }}>
-              <Button kind="secondary" title={actions[id].title} onPress={actions[id].onPress} />
+              <Button
+                kind="secondary"
+                title={id === 'more' ? t('home.more') : entryTitle(id)}
+                onPress={id === 'more' ? () => router.push('/today/more') : open(id)}
+              />
             </View>
           ))}
         </View>
@@ -256,7 +262,9 @@ export default function TodayScreen() {
       {isToday && flare && (
         <Card>
           <Text style={styles.rowText}>
-            {t('cards.openFlare', { since: localDay(flare.start.utc, flare.start.tz, deps.dayStart.get()), areas: flare.areaIds.map(areaName).join(', ') })}
+            {flare.areas.length === 1
+              ? t('cards.openFlareOne', { area: areaName(flare.areas[0]!.areaId), severity: flare.areas[0]!.severity, since: localDay(flare.period.start.utc, flare.period.start.tz, deps.dayStart.get()) })
+              : t('cards.openFlareMany', { n: flare.period.areaIds.length, area: areaName(flare.areas[0]!.areaId) })}
           </Text>
           <Button kind="secondary" title={t('cards.openAreas')} onPress={() => router.navigate('/review')} />
         </Card>
@@ -270,7 +278,7 @@ export default function TodayScreen() {
       {backup.due && (
         <Card>
           <Text style={styles.rowText}>{backup.days === null ? t('cards.noExport') : t('cards.lastExport', { days: backup.days })}</Text>
-          <Button kind="secondary" title={t('cards.openBackup')} onPress={() => router.push('/today/settings/data')} />
+          <Button kind="secondary" title={t('cards.openBackup')} onPress={() => router.push('/settings/data')} />
         </Card>
       )}
 

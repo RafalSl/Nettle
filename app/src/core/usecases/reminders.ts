@@ -128,7 +128,7 @@ export async function resolveReminderTap(
     case 'nails':
       return (await listActiveAreas(deps, 'nail')).length > 0 ? { route: { pathname: '/form/nails' }, viaToday: true } : today;
     case 'backup':
-      return { route: { pathname: '/today/settings/data' }, viaToday: false };
+      return { route: { pathname: '/settings/data' }, viaToday: false };
     default:
       return null;
   }

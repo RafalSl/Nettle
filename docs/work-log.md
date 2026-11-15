@@ -393,3 +393,8 @@ Newest entry last. One short entry per working session or meaningful step: what 
 - **Done:** SK-6, EN-1, EX-13, LL-2 (and the data side of EX-1). Flares are computed from skin entries at or above a severity threshold (default 8, Settings, Logging), merged across areas, with "open at last entry". Today has one flare card that opens Review; the report, analysis input and area timeline use the derived periods. Flare markers, their table, codec, tombstones, edit form and the More row are removed. 664 tests pass, iOS bundle builds.
 - **Not built:** the card opens the Review tab only; the Areas browsing change comes with Review browsing (UX-10). A range export derives flares from the entries inside the range.
 - **Next:** quick-action layout and Settings placement (phase 4).
+
+## 2026-11-15: quick actions and Settings placement (branch feature/quick-actions-settings)
+- **Done:** UX-1, UX-2, UX-6, NF-2. Pinned quick actions over ten entry types with More listing the rest (subtitles, no hide), Edit mode with On Today and In More lists; Settings is a stack above the tabs with the gear on both tab headers, five groups, links updated to `/settings/data`. The Today flare card has the specified wording. 666 tests pass, iOS bundle builds.
+- **Phone check:** tab bar hidden inside Settings, Back returns to the right tab.
+- **Next:** routine change (IN-12), regular items (IN-17), photos in forms (SK-4), Review browsing (UX-10), guide (UX-11).

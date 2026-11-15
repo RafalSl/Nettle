@@ -51,9 +51,10 @@ function ReminderTaps() {
       await appLock.whenUnlocked(); // SE-8: a tap waits for the unlock
       const action = await resolveReminderTap(deps, tap, { hasUnsavedForm: unsavedForm.current });
       if (!action) return;
-      if (action.viaToday) router.navigate('/today');
-      if (action.viaToday) router.push(action.route as never);
-      else router.navigate(action.route as never);
+      if (action.viaToday) {
+        router.navigate('/today');
+        router.push(action.route as never);
+      } else router.navigate(action.route as never);
     });
   }, [deps, appLock, ready, router]);
   return null;

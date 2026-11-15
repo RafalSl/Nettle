@@ -15,6 +15,16 @@ export const bool = (o: Obj, k: string, where: string): boolean =>
   typeof o[k] === 'boolean' ? (o[k] as boolean) : bad(`${where}.${k}`);
 export const nullableText = (o: Obj, k: string, where: string): string | null =>
   o[k] === null || o[k] === undefined ? null : text(o, k, where);
+/** An IANA timezone the runtime knows: an unknown one would make every later day grouping throw. */
+export const tz = (o: Obj, where: string): string => {
+  const v = str(o, 'tz', where);
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: v });
+    return v;
+  } catch {
+    return bad(`${where}.tz`);
+  }
+};
 export const utc = (o: Obj, where: string): string => {
   const v = str(o, 'utc', where);
   return CANONICAL_UTC.test(v) && !Number.isNaN(Date.parse(v)) ? v : bad(`${where}.utc`);

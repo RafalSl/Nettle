@@ -19,6 +19,17 @@ const codeOf = (fn: () => unknown) => {
   }
 };
 
+describe('zip-bomb guard (EX-10)', () => {
+  it('refuses an entry that inflates beyond the size its header declares', () => {
+    const zip = writeZip({ 'a.bin': new Uint8Array(200_000) }, {});
+    const dv = new DataView(zip.buffer, zip.byteOffset, zip.byteLength);
+    let p = 0;
+    while (dv.getUint32(p, true) !== 0x02014b50) p++; // the central directory header
+    dv.setUint32(p + 24, 1000, true); // lie: "1000 bytes when inflated"
+    expect(codeOf(() => readZip(zip, { ...opts, maxBytes: 10_000 }))).toBe('import_corrupt_zip');
+  });
+});
+
 describe('stored entries (EX-2)', () => {
   const isPhoto = (name: string) => name.startsWith('photos/');
   const files = { 'a.bin': rb(5000), 'photos/x.jpg': rb(70001) };

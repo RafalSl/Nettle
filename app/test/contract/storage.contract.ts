@@ -228,6 +228,21 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
       expect(await repo.listSkinEntries()).toHaveLength(1);
     });
 
+    it('EX-10 merge leaves an existing meal without ingredients as it is', async () => {
+      await repo.addMeal(syntheticMeal('m1', '2026-01-10T08:00:00.000Z', []));
+      await repo.addMeal(syntheticMeal('m2', '2026-01-11T08:00:00.000Z', ['kept', 'order']));
+      const payload = {
+        records: { meals: [syntheticMeal('m1', '2026-01-10T08:00:00.000Z', ['from file']), syntheticMeal('m3', '2026-01-12T08:00:00.000Z', ['new'])], skinEntries: [], ...noExtra },
+        settings: { skinAreas: await repo.listAreas(), ...noItems },
+      };
+      await repo.importData(payload, 'merge');
+      const byId = new Map((await repo.listMeals()).map((m) => [m.id, m.ingredients]));
+      expect(byId.get('m1')).toEqual([]);
+      expect(byId.get('m3')).toEqual(['new']);
+      const ranged = await repo.listMeals({ from: '2026-01-11T00:00:00.000Z', to: '2026-01-11T23:59:59.000Z' });
+      expect(ranged.map((m) => [m.id, m.ingredients])).toEqual([['m2', ['kept', 'order']]]);
+    });
+
     it('EX-10 replace records wipes meals and entries but leaves areas untouched', async () => {
       await repo.upsertArea(custom);
       await repo.addMeal(syntheticMeal('old', '2026-01-01T08:00:00.000Z'));

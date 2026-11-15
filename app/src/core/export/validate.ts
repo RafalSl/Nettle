@@ -16,7 +16,7 @@ import { isScore } from '../usecases/skin';
 import { EXTRA_CODECS } from './extras';
 import { parsePreferences } from './preferencesJson';
 import { parseBarcode, parseSource } from './sourceJson';
-import { bad, bool, enumList, oneOf, isObj, list, nullableText, str, unique, utc, type Obj } from './guards';
+import { bad, bool, enumList, oneOf, isObj, list, nullableText, str, tz, unique, utc, type Obj } from './guards';
 import { LIST_KEYS, recordWireKey, SCHEMA_VERSION } from './schema';
 
 const obj = (o: Obj, k: string, where: string): Obj => (isObj(o[k]) ? (o[k] as Obj) : bad(`${where}.${k}`));
@@ -85,7 +85,7 @@ export function parseDataJson(raw: unknown): Payload {
       if (!Array.isArray(ing) || ing.some((x) => typeof x !== 'string')) bad(`${w}.ingredients`);
       return {
         id: str(o, 'id', w),
-        at: { utc: utc(o, w), tz: str(o, 'tz', w) },
+        at: { utc: utc(o, w), tz: tz(o, w) },
         description: str(o, 'description', w),
         ingredients: ing as string[],
         allergens: enumList(o, 'allergens', ALLERGENS, w),
@@ -108,7 +108,7 @@ export function parseDataJson(raw: unknown): Payload {
       for (const [k, v] of Object.entries(scores)) if (!isScore(v)) bad(`${w}.scores.${k}`);
       return {
         id: str(o, 'id', w),
-        at: { utc: utc(o, w), tz: str(o, 'tz', w) },
+        at: { utc: utc(o, w), tz: tz(o, w) },
         areaId: str(o, 'area_id', w),
         scores: scores as SkinEntry['scores'],
         note: nullableText(o, 'note', w),
@@ -132,7 +132,7 @@ export function parseDataJson(raw: unknown): Payload {
       return {
         id: str(o, 'id', w),
         kind: kinds.get(oneOf(o, 'kind', [...kinds.keys()], w))!,
-        deletedAt: { utc: utc(o, w), tz: str(o, 'tz', w) },
+        deletedAt: { utc: utc(o, w), tz: tz(o, w) },
       };
     });
     unique(payload.tombstones.map((t) => t.id), 'records.tombstones');

@@ -1,3 +1,4 @@
+import Slider from '@react-native-community/slider';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import type { ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -46,74 +47,65 @@ export function Button({
   );
 }
 
-/** 0-10 stepper: avoids a slider dependency and is quick to tap (NF-2). */
-export function ScoreStepper({
+/**
+ * One score input for skin scores and Daily health scores (SK-3, SK-7, UX-3):
+ * label and value on top, then - / slider (whole steps) / +. With `optional`
+ * the value may be null: it shows a dash and a Clear button.
+ */
+export function ScoreInput({
   label,
   value,
   onChange,
-}: {
-  label: string;
-  value: number;
-  onChange: (v: number) => void;
-}) {
-  return (
-    <View style={styles.stepperRow}>
-      <Text style={styles.stepperLabel}>{label}</Text>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`${t('common.decrease')} ${label}`}
-        onPress={() => onChange(Math.max(0, value - 1))}
-        style={styles.stepBtn}>
-        <Text style={styles.stepText}>−</Text>
-      </Pressable>
-      <Text style={styles.stepValue}>{value}</Text>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`${t('common.increase')} ${label}`}
-        onPress={() => onChange(Math.min(10, value + 1))}
-        style={styles.stepBtn}>
-        <Text style={styles.stepText}>+</Text>
-      </Pressable>
-    </View>
-  );
-}
-
-/** Like ScoreStepper, but a score can stay unset (shown as a dash) and be cleared. */
-export function OptionalScoreStepper({
-  label,
-  value,
-  onChange,
+  optional = false,
 }: {
   label: string;
   value: number | null;
   onChange: (v: number | null) => void;
+  optional?: boolean;
 }) {
+  const set = (v: number) => onChange(Math.min(10, Math.max(0, Math.round(v))));
   return (
-    <View style={styles.stepperRow}>
-      <Text style={styles.stepperLabel}>{label}</Text>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`${t('common.decrease')} ${label}`}
-        onPress={() => onChange(value === null ? 0 : Math.max(0, value - 1))}
-        style={styles.stepBtn}>
-        <Text style={styles.stepText}>−</Text>
-      </Pressable>
-      <Text style={styles.stepValue}>{value ?? '–'}</Text>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`${t('common.increase')} ${label}`}
-        onPress={() => onChange(value === null ? 0 : Math.min(10, value + 1))}
-        style={styles.stepBtn}>
-        <Text style={styles.stepText}>+</Text>
-      </Pressable>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`${t('common.clear')} ${label}`}
-        disabled={value === null}
-        onPress={() => onChange(null)}
-        style={[styles.stepBtn, value === null && { opacity: 0.3 }]}>
-        <Text style={styles.stepText}>×</Text>
-      </Pressable>
+    <View style={styles.scoreBox}>
+      <View style={styles.scoreHead}>
+        <Text style={styles.stepperLabel}>{label}</Text>
+        <Text style={styles.stepValue}>{value ?? '–'}</Text>
+        {optional ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`${t('common.clear')} ${label}`}
+            disabled={value === null}
+            onPress={() => onChange(null)}
+            style={[styles.clearBtn, value === null && { opacity: 0.3 }]}>
+            <Text style={styles.clearText}>{t('common.clear')}</Text>
+          </Pressable>
+        ) : null}
+      </View>
+      <View style={styles.stepperRow}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`${t('common.decrease')} ${label}`}
+          onPress={() => set(value === null ? 0 : value - 1)}
+          style={styles.stepBtn}>
+          <Text style={styles.stepText}>−</Text>
+        </Pressable>
+        <Slider
+          style={{ flex: 1, height: 44 }}
+          accessibilityLabel={label}
+          minimumValue={0}
+          maximumValue={10}
+          step={1}
+          value={value ?? 0}
+          minimumTrackTintColor={value === null ? '#c7c7cc' : '#208AEF'}
+          onValueChange={set}
+        />
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`${t('common.increase')} ${label}`}
+          onPress={() => set(value === null ? 0 : value + 1)}
+          style={styles.stepBtn}>
+          <Text style={styles.stepText}>+</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -178,6 +170,10 @@ export const styles = StyleSheet.create({
   secondary: { backgroundColor: '#e8f2fe' },
   danger: { backgroundColor: '#c0392b' },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  scoreBox: { gap: 2 },
+  scoreHead: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  clearBtn: { minHeight: 44, paddingHorizontal: 8, justifyContent: 'center' },
+  clearText: { fontSize: 16, color: '#208AEF' },
   stepperRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   stepperLabel: { flex: 1, fontSize: 16, color: '#111' },
   stepBtn: {
@@ -189,7 +185,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   stepText: { fontSize: 24, color: '#208AEF' },
-  stepValue: { width: 28, textAlign: 'center', fontSize: 18, color: '#111' },
+  stepValue: { minWidth: 28, textAlign: 'center', fontSize: 18, color: '#111' },
   timeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   chip: {
     borderWidth: 1,

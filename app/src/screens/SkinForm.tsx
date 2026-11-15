@@ -7,7 +7,7 @@ import { areaLabel, errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
 import { FormModal, useField, useForm } from '@/ui/FormModal';
 import { useFormTime } from '@/ui/useFormTime';
-import { Button, Chips, Hint, Label, ScoreStepper, TimeField, styles } from '@/ui/components';
+import { Button, Chips, Hint, Label, ScoreInput, TimeField, styles } from '@/ui/components';
 
 const ZERO: SkinScores = { severity: 0, itch: 0, pain: 0, dryness: 0, scaling: 0 };
 
@@ -81,7 +81,7 @@ export default function SkinForm() {
       <Hint>{t('skin.scale')}</Hint>
       {hasLast && <Hint>{t('skin.prefilled')}</Hint>}
       {SCORE_KEYS.map((k) => (
-        <ScoreStepper key={k} label={t(`skin.scores.${k}`)} value={scores[k]} onChange={(v) => (f.touch(), setScores((s) => ({ ...s, [k]: v })))} />
+        <ScoreInput key={k} label={t(`skin.scores.${k}`)} value={scores[k]} onChange={(v) => (f.touch(), setScores((s) => ({ ...s, [k]: v })))} />
       ))}
       <TimeField value={time.value} onChange={time.set} />
       <Label>{t('common.note')}</Label>

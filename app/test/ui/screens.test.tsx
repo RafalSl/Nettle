@@ -241,9 +241,10 @@ describe('screen flows (NF-2, NF-3)', () => {
     await flush();
     const shown = () => tree.root.findAll((n) => n.props.accessibilityLabel === `${en.common.increase} ${en.today.wellbeing}`).length;
     expect(shown()).toBeGreaterThan(0);
-    expect(hasText(tree, '7')).toBe(false); // today's form starts empty
+    const showsValue = (v: string) => tree.root.findAll((n) => (n.type as unknown) === 'Text' && String(n.props.children) === v).length > 0;
+    expect(showsValue('7')).toBe(false); // today's form starts empty
     await press(tree, en.today.sameAsYesterday);
-    expect(hasText(tree, '7')).toBe(true);
+    expect(showsValue('7')).toBe(true);
     const bloating = tree.root.findAll((n) => n.props.accessibilityLabel === en.today.bloating && n.props.value !== undefined)[0]!;
     expect(bloating.props.value).toBe(true);
   });

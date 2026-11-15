@@ -25,7 +25,7 @@ import { FormModal, useField, useForm } from '@/ui/FormModal';
 import { DrinkFields, draftFromDrink, drinkInput, drinkMissing, type DrinkDraft } from '@/ui/DrinkFields';
 import { PhotoStrip } from '@/ui/PhotoStrip';
 import { useCheckInScores } from '@/ui/useCheckInScores';
-import { Chips, Hint, Label, OptionalScoreStepper, ScoreStepper, TimeField, styles } from '@/ui/components';
+import { Chips, Hint, Label, ScoreInput, TimeField, styles } from '@/ui/components';
 
 type Rec<K extends LogKind> = Extract<LogRow, { kind: K }>['record'];
 type LogKind = (typeof LOG_KINDS)[number];
@@ -96,7 +96,7 @@ function SkinFields({ r, areas }: { r: Rec<'skinEntries'>; areas: SkinArea[] }) 
       <Chips items={areas.filter((a) => a.kind === 'skin').map((a) => ({ id: a.id, label: areaLabel(a) }))} selected={one(areaId)} onToggle={setAreaId} />
       <Label>{t('edit.scores')}</Label>
       {SCORE_KEYS.map((k) => (
-        <ScoreStepper key={k} label={t(`skin.scores.${k}`)} value={scores[k]} onChange={(v) => setScores({ ...scores, [k]: v })} />
+        <ScoreInput key={k} label={t(`skin.scores.${k}`)} value={scores[k]} onChange={(v) => setScores({ ...scores, [k]: v })} />
       ))}
       <CommonFields c={c} original={r.at.utc} />
       <Label>{t('edit.photos')}</Label>
@@ -142,7 +142,7 @@ function CheckInFields({ r, tags }: { r: Rec<'checkIns'>; tags: ListItem[] }) {
   return (
     <FormModal dirty={f.dirty} missing={null} onSave={async () => void (await editCheckIn(deps, r.id, { ...v, bloating, tags: [...picked], note: c.note, at: c.at ?? undefined }))}>
       {(['wellbeing', 'stress', 'sleep', 'abdominalPain'] as const).filter((k) => scoresOn[k]).map((k) => (
-        <OptionalScoreStepper key={k} label={t(`today.${k}`)} value={v[k]} onChange={(n) => setV({ ...v, [k]: n })} />
+        <ScoreInput optional key={k} label={t(`today.${k}`)} value={v[k]} onChange={(n) => setV({ ...v, [k]: n })} />
       ))}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <Text style={styles.rowText}>{t('edit.bloating')}</Text>

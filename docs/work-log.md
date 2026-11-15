@@ -377,3 +377,8 @@ Newest entry last. One short entry per working session or meaningful step: what 
 - **Done (docs):** Status column in every requirements table (Done, v0.6 change pending, Not built; update it when a task finishes). Recorded: prototyping phase, no migrations or old-data handling until the first GitHub release or a changed decision (also in CLAUDE.md); accessibility pass (UX-8) and Polish string review stay out of the plan until the user says so. Requirements v0.6.1.
 - **Baseline:** `npm run check` is green, 660 tests; the two screen tests noted as failing earlier (UX-2, UX-5 log order) pass, also over repeated runs of `test/ui`.
 - **Next:** v0.6 build, phase 1: score input component.
+
+## 2026-11-15: score input (branch feature/score-input)
+- **Done:** SK-3, UX-3. One `ScoreInput` (−, slider in whole steps, +, value; optional scores show "–" with Clear) replaces `ScoreStepper` and `OptionalScoreStepper` in the Skin, check-in and edit forms. `@react-native-community/slider` added with `npx expo install`. Tests in `test/ui/scoreInput.test.tsx`; 663 tests pass.
+- **Phone check:** whole steps, value readable, thumb not hiding it.
+- **Next:** Daily health data model (phase 2).

@@ -142,7 +142,8 @@ export async function editChangeEvent(deps: Deps, id: string, input: ChangeEvent
 /** EN-1: edit a reaction; it still cannot start before its meal (a different meal may be chosen). */
 export async function editReaction(deps: Deps, id: string, input: ReactionInput): Promise<Reaction> {
   const orig = (await getEntry(deps, 'reactions', id)) as Reaction;
-  return logReaction(editing(deps, id, { at: keepAt(orig, input.at) }), input);
+  // Validate against the original onset when no new time is given, not against "now"; the stamp is kept as is.
+  return logReaction(editing(deps, id, { at: keepAt(orig, input.at) }), { ...input, at: input.at ?? new Date(orig.at.utc) });
 }
 
 /**

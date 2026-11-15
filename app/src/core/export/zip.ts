@@ -169,7 +169,7 @@ export interface ReadOptions {
   password?: string;
   /** Only these entry names are read; others are skipped without decrypting or inflating. */
   names: string[];
-  /** Reject entries that claim to inflate beyond this many bytes (zip-bomb guard). */
+  /** Reject entries that claim to inflate, or actually inflate, beyond this many bytes (zip-bomb guard). */
   maxBytes: number;
 }
 
@@ -182,6 +182,16 @@ export function readZip(zip: Uint8Array, opts: ReadOptions): Record<string, Uint
     if (e instanceof NettleError) throw e;
     throw corrupt();
   }
+}
+
+/**
+ * Inflates into a buffer of the declared size plus one byte, so a stream that is larger than its header says
+ * stops there instead of growing without limit, and is refused.
+ */
+function inflateBounded(data: Uint8Array, declared: number, name: string): Uint8Array {
+  const out = inflateSync(data, { out: new Uint8Array(declared + 1) });
+  if (out.length !== declared) throw new NettleError('import_corrupt_zip', `size mismatch: ${name}`);
+  return out;
 }
 
 function read(zip: Uint8Array, opts: ReadOptions): Record<string, Uint8Array> {
@@ -214,7 +224,7 @@ function read(zip: Uint8Array, opts: ReadOptions): Record<string, Uint8Array> {
 
     if (method !== AES_METHOD) {
       if (flags & 1) throw new NettleError('import_corrupt_zip', 'legacy ZIP encryption is not supported');
-      result[name] = method === 8 ? inflateSync(data) : data.slice();
+      result[name] = method === 8 ? inflateBounded(data, usize, name) : data.slice();
       continue;
     }
 
@@ -228,7 +238,7 @@ function read(zip: Uint8Array, opts: ReadOptions): Record<string, Uint8Array> {
     const mac = hmac(sha1, macKey, cipher).subarray(0, 10);
     if (!sameBytes(mac, data.subarray(data.length - 10))) throw new NettleError('import_corrupt_zip', 'authentication failed');
     const body = ctrXor(encKey, cipher);
-    result[name] = aes.method === 8 ? inflateSync(body) : body;
+    result[name] = aes.method === 8 ? inflateBounded(body, usize, name) : body;
   }
   return result;
 }

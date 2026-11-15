@@ -26,7 +26,7 @@ import {
 import { CANONICAL_UTC } from '../model/time';
 import { analysisResultFromJson, analysisResultToJson } from '../llm/analysisResult';
 import { parseBarcode, parseSource, sourceToJson } from './sourceJson';
-import { bad, bool, enumList, nullableScore, nullableText, oneOf, str, stringList, utc, type Obj } from './guards';
+import { bad, bool, enumList, nullableScore, nullableText, oneOf, str, stringList, tz, utc, type Obj } from './guards';
 
 /**
  * data.json wire format for the flat record kinds (see ExtraKind): `key` is the snake_case array name inside
@@ -51,7 +51,7 @@ const nail: Codec<NailEntry> = {
   }),
   parse: (o, w) => ({
     id: str(o, 'id', w),
-    at: { utc: utc(o, w), tz: str(o, 'tz', w) },
+    at: { utc: utc(o, w), tz: tz(o, w) },
     areaId: str(o, 'area_id', w),
     stage: oneOf(o, 'stage', NAIL_STAGES, w),
     extent: oneOf(o, 'extent', NAIL_EXTENTS, w),
@@ -89,7 +89,7 @@ const checkIn: Codec<CheckIn> = {
     if ((completedUtc === null) !== (completedTz === null)) bad(`${w}.completed_tz`);
     return {
       id: str(o, 'id', w),
-      at: { utc: utc(o, w), tz: str(o, 'tz', w) },
+      at: { utc: utc(o, w), tz: tz(o, w) },
       day,
       wellbeing: nullableScore(o, 'wellbeing', w),
       stress: nullableScore(o, 'stress', w),
@@ -111,7 +111,7 @@ const stool: Codec<StoolEntry> = {
     if (typeof b !== 'number' || !Number.isInteger(b) || b < 1 || b > 7) bad(`${w}.bristol`);
     return {
       id: str(o, 'id', w),
-      at: { utc: utc(o, w), tz: str(o, 'tz', w) },
+      at: { utc: utc(o, w), tz: tz(o, w) },
       bristol: b as number,
       note: nullableText(o, 'note', w),
     };
@@ -126,7 +126,7 @@ const treatmentApplication: Codec<TreatmentApplication> = {
     if (areaIds.length === 0) bad(`${w}.area_ids`);
     return {
       id: str(o, 'id', w),
-      at: { utc: utc(o, w), tz: str(o, 'tz', w) },
+      at: { utc: utc(o, w), tz: tz(o, w) },
       treatmentId: str(o, 'treatment_id', w),
       areaIds,
       note: nullableText(o, 'note', w),
@@ -139,7 +139,7 @@ const changeEvent: Codec<ChangeEvent> = {
   toJson: (e) => ({ id: e.id, utc: e.at.utc, tz: e.at.tz, action: e.action, category: e.category, name: e.name, note: e.note }),
   parse: (o, w) => ({
     id: str(o, 'id', w),
-    at: { utc: utc(o, w), tz: str(o, 'tz', w) },
+    at: { utc: utc(o, w), tz: tz(o, w) },
     action: oneOf(o, 'action', CHANGE_ACTIONS, w),
     category: oneOf(o, 'category', CHANGE_CATEGORIES, w),
     name: str(o, 'name', w),
@@ -155,7 +155,7 @@ const reaction: Codec<Reaction> = {
     if (symptoms.length === 0) bad(`${w}.symptoms`);
     return {
       id: str(o, 'id', w),
-      at: { utc: utc(o, w), tz: str(o, 'tz', w) },
+      at: { utc: utc(o, w), tz: tz(o, w) },
       mealId: str(o, 'meal_id', w),
       symptoms,
       note: nullableText(o, 'note', w),
@@ -186,7 +186,7 @@ const drink: Codec<Drink> = {
     if (!Array.isArray(ing) || ing.some((x) => typeof x !== 'string')) bad(`${w}.ingredients`);
     return {
       id: str(o, 'id', w),
-      at: { utc: utc(o, w), tz: str(o, 'tz', w) },
+      at: { utc: utc(o, w), tz: tz(o, w) },
       name: str(o, 'name', w),
       amountMl: ml as number,
       alcohol: o.alcohol as boolean,
@@ -204,7 +204,7 @@ const medication: Codec<MedicationEntry> = {
   toJson: (e) => ({ id: e.id, utc: e.at.utc, tz: e.at.tz, category: e.category, name: e.name, dose: e.dose, note: e.note }),
   parse: (o, w) => ({
     id: str(o, 'id', w),
-    at: { utc: utc(o, w), tz: str(o, 'tz', w) },
+    at: { utc: utc(o, w), tz: tz(o, w) },
     category: oneOf(o, 'category', MEDICATION_CATEGORIES, w),
     name: str(o, 'name', w),
     dose: nullableText(o, 'dose', w),
@@ -236,7 +236,7 @@ const photo: Codec<Photo> = {
   }),
   parse: (o, w) => ({
     id: str(o, 'id', w),
-    at: { utc: utc(o, w), tz: str(o, 'tz', w) },
+    at: { utc: utc(o, w), tz: tz(o, w) },
     entryKind: oneOf(o, 'entry_kind', ['skinEntry', 'nailEntry'] as const, w),
     entryId: str(o, 'entry_id', w),
     sensitive: bool(o, 'sensitive', w),
@@ -270,7 +270,7 @@ const analysis: Codec<Analysis> = {
     };
     return {
       id: str(o, 'id', w),
-      at: { utc: utc(o, w), tz: str(o, 'tz', w) },
+      at: { utc: utc(o, w), tz: tz(o, w) },
       dayFrom: day('day_from'),
       dayTo: day('day_to'),
       model: str(o, 'model', w),
@@ -307,7 +307,7 @@ const reportSummary: Codec<ReportSummary> = {
     };
     return {
       id: str(o, 'id', w),
-      at: { utc: utc(o, w), tz: str(o, 'tz', w) },
+      at: { utc: utc(o, w), tz: tz(o, w) },
       dayFrom: day('day_from'),
       dayTo: day('day_to'),
       language: oneOf(o, 'language', ['en', 'pl'] as const, w),
@@ -325,7 +325,7 @@ const flare: Codec<FlareMarker> = {
   toJson: (f) => ({ id: f.id, utc: f.at.utc, tz: f.at.tz, area_id: f.areaId, kind: f.kind, note: f.note }),
   parse: (o, w) => ({
     id: str(o, 'id', w),
-    at: { utc: utc(o, w), tz: str(o, 'tz', w) },
+    at: { utc: utc(o, w), tz: tz(o, w) },
     areaId: str(o, 'area_id', w),
     kind: oneOf(o, 'kind', FLARE_KINDS, w),
     note: nullableText(o, 'note', w),

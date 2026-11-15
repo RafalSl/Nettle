@@ -352,3 +352,7 @@ Newest entry last. One short entry per working session or meaningful step: what 
 - Tapping "Reopen day" / "Finish day" crashed `CheckInForm`: preferences stored before `checkInScores` existed had no such field, so `scoresOn[k]` threw.
 - `SqliteRepo.getPreferences` now fills any missing setting from the defaults (nested groups too). Test added (650 total).
 - Next: phone verification checklist.
+
+## 2026-11-15: fixes from the whole-repo code review
+- **Done:** a reaction edited without a new time keeps its onset (IN-13, EN-1); a backdated flare marker keeps start and end alternating (SK-6); a merge import no longer adds the file's ingredients to an existing meal that has none (EX-10); the ZIP reader bounds inflation by the declared size (EX-10); an aborted ingredient run no longer deletes the newer run's photo (LL-12); imports reject unknown timezones (EX-10); a range export leaves out reactions whose meal is outside the range (EX-2); `listMeals` reads only the ingredients in range; transactions on the Expo SQLite connection run one at a time; duplicate `viaToday` branch merged (SK-9). Regression tests added for each fix (659 tests); each fails without its fix.
+- **Not done:** an exclusive SQLite transaction (needs a transaction-scoped `SqlDb`, so plain reads during an import still join it); use cases that list a whole table to find one record. Two screen tests (UX-2, UX-5 log order) already failed before these changes.

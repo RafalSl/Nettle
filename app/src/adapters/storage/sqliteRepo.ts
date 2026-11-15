@@ -130,17 +130,15 @@ export class SqliteRepo implements StorageRepository {
   }
 
   private async insertMeal(m: Meal, ignoreIfExists: boolean) {
-    const verb = ignoreIfExists ? 'INSERT OR IGNORE' : 'INSERT';
+    // A skipped duplicate keeps its own row and ingredients: the file's ingredients must not be appended to it.
+    if (ignoreIfExists) {
+      const [row] = await this.db.all<{ n: number }>('SELECT COUNT(*) AS n FROM meal WHERE id = ?', [m.id]);
+      if ((row?.n ?? 0) > 0) return;
+    }
     await this.db.run(
-      `${verb} INTO meal (id, ts_utc, tz, description, allergens_json, barcode, source_json, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      'INSERT INTO meal (id, ts_utc, tz, description, allergens_json, barcode, source_json, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
       [m.id, m.at.utc, m.at.tz, m.description, JSON.stringify(m.allergens), m.barcode, JSON.stringify(m.source), m.note],
     );
-    // Ingredients of a skipped duplicate must not be appended to the existing meal.
-    const [row] = await this.db.all<{ n: number }>(
-      'SELECT COUNT(*) AS n FROM meal_ingredient WHERE meal_id = ?',
-      [m.id],
-    );
-    if ((row?.n ?? 0) > 0) return;
     for (const [i, name] of m.ingredients.entries()) {
       await this.db.run('INSERT INTO meal_ingredient (meal_id, position, name) VALUES (?, ?, ?)', [
         m.id,
@@ -214,11 +212,17 @@ export class SqliteRepo implements StorageRepository {
       `SELECT * FROM meal ${sql} ORDER BY ts_utc DESC, id ASC`,
       params,
     );
+    // Only the ingredients of the meals in range, in one pass without copying arrays.
     const ing = await this.db.all<{ meal_id: string; name: string }>(
-      'SELECT meal_id, name FROM meal_ingredient ORDER BY meal_id, position',
+      `SELECT meal_id, name FROM meal_ingredient WHERE meal_id IN (SELECT id FROM meal ${sql}) ORDER BY meal_id, position`,
+      params,
     );
     const byMeal = new Map<string, string[]>();
-    for (const r of ing) byMeal.set(r.meal_id, [...(byMeal.get(r.meal_id) ?? []), r.name]);
+    for (const r of ing) {
+      const list = byMeal.get(r.meal_id);
+      if (list) list.push(r.name);
+      else byMeal.set(r.meal_id, [r.name]);
+    }
     return rows.map((r) => ({
       id: r.id,
       at: { utc: r.ts_utc, tz: r.tz },

@@ -57,6 +57,10 @@ export async function exportBundle(deps: Deps, options: ExportOptions = {}): Pro
   const parts = options.parts ?? { records: true, settings: true };
   if (!parts.records && !parts.settings) throw new NettleError('nothing_selected');
   const snapshot = await deps.repo.snapshot(range);
+  // A reaction belongs to its meal and an import refuses one without it, so a range cuts them as a pair: a
+  // reaction whose meal falls outside the range stays out too.
+  const mealIds = new Set(snapshot.meals.map((m) => m.id));
+  snapshot.reactions = snapshot.reactions.filter((r) => mealIds.has(r.mealId));
 
   // EX-2, EX-7: a photo is exported when its entry is in the range and the photo selection includes it.
   const files: Record<string, Uint8Array> = {};

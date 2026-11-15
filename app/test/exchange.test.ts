@@ -120,6 +120,12 @@ describe('data.json validation of nail data (SK-10)', () => {
     expect(p.settings?.skinAreas[0]?.kind).toBe('nail');
   });
 
+  it('EX-10 rejects a timezone the runtime does not know', () => {
+    const row = { id: 'm1', utc: stamp.utc, tz: 'Mars/Olympus', description: 'Synthetic meal', ingredients: [], allergens: [], barcode: null, source: { kind: 'typed', edited: false, llm: null, ai_tags: false }, note: null };
+    expect(() => parseDataJson(file({ ...base, meals: [row] }))).toThrow(NettleError);
+    expect(() => parseDataJson(file({ ...base, meals: [{ ...row, tz: 'Europe/Warsaw' }] }))).not.toThrow();
+  });
+
   it('rejects a bad stage, a bad extent, a missing nail_entries list and an unknown area kind', () => {
     const bad = (raw: unknown) => {
       try {
@@ -391,6 +397,16 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
     await applyImport(deps, parsed, { mode: 'merge', parts: BOTH });
     expect((await target.listMeals()).find((m) => m.id === 'm1')?.ingredients).toEqual(['kept']);
     expect(await target.listMeals()).toHaveLength(2);
+  });
+
+  it('EX-1 a range export leaves out a reaction whose meal is outside the range', async () => {
+    const source = await seeded(make); // reaction r1 (12 Jan 09:00) belongs to meal m2 (12 Jan 08:00)
+    const zip = await exportBundle(makeDeps(source), { range: { from: '2026-01-12T08:30:00.000Z', to: '2026-01-13T00:00:00.000Z' } });
+    const json = dataJson(zip);
+    expect(json.records.meals).toHaveLength(0);
+    expect(json.records.reactions).toHaveLength(0);
+    const all = dataJson(await exportBundle(makeDeps(source)));
+    expect(all.records.reactions).toHaveLength(1);
   });
 
   it('EX-1 records-only export has no settings section and restores into a store with the same areas', async () => {

@@ -88,6 +88,8 @@ export function useIngredientRun() {
       discard(); // the answer is in memory; the photo is no longer needed
     } catch (e) {
       if (controller.signal.aborted || (e instanceof NettleError && e.code === 'llm_cancelled')) {
+        // A run replaced by a newer one must not touch the newer run's photo or state.
+        if (ctl.current !== controller) return;
         discard();
         return setRun({ status: 'idle' });
       }

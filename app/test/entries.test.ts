@@ -80,6 +80,15 @@ describe.each(repos)('editing and deleting one entry (%s)', (_name, make) => {
     expect(ok.id).toBe(reaction.id);
   });
 
+  it('EN-1 editing a reaction without a new time keeps its onset even when its meal is later than "now"', async () => {
+    const { repo, deps } = await setup(); // the clock stands at 2026-01-15
+    const meal = await logMeal(deps, { description: 'Synthetic future meal', ingredients: [], at: d('2026-02-01T08:00:00.000Z') });
+    const reaction = await logReaction(deps, { mealId: meal.id, symptoms: ['hives'], at: d('2026-02-01T09:00:00.000Z') });
+    const ok = await editReaction(deps, reaction.id, { mealId: meal.id, symptoms: ['stomach'] });
+    expect(ok.at).toEqual(reaction.at);
+    expect((await repo.listRecords('reactions'))[0]?.symptoms).toEqual(['stomach']);
+  });
+
   it('EN-1 editing a skin entry keeps an archived area it already uses but refuses to move to another archived one', async () => {
     const { repo, deps } = await setup();
     const entry = await logSkinEntry(deps, { areaId: 'area-chin', scores });

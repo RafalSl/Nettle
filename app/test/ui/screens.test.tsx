@@ -1072,6 +1072,26 @@ describe('Review (UX-1, EX-14)', () => {
     expect(hasText(tree, '2026-01-10')).toBe(true);
   });
 
+  it('UX-2, NF-7 Today moves on to the new day by itself when the app comes back after midnight', async () => {
+    const deps = makeDeps(new MemoryRepo(), '2026-11-14T22:00:00.000Z'); // 23:00 in Warsaw
+    let now = new Date('2026-11-14T22:00:00.000Z');
+    deps.clock.now = () => now;
+    let onChange: ((s: string) => void) | null = null;
+    jest.spyOn(AppState, 'addEventListener').mockImplementation(((_t: string, h: (s: string) => void) => {
+      onChange = h;
+      return { remove: jest.fn() };
+    }) as never);
+    mockParams.current = {};
+    const { tree } = await mount(() => require('@/app/(tabs)/today/index'), deps);
+    await flush();
+    expect(hasText(tree, '2026-11-14')).toBe(true);
+    now = new Date('2026-11-14T23:30:00.000Z'); // 00:30 on the 15th
+    await act(async () => onChange!('active'));
+    expect(hasText(tree, '2026-11-15')).toBe(true);
+    expect(hasText(tree, '2026-11-14')).toBe(false);
+    jest.restoreAllMocks();
+  });
+
   it('UX-2 Today shows the 8 newest entries of the day and "Show all (n)" opens the full log in Review', async () => {
     const deps = nowDeps();
     const base = Date.now() - 3 * 3600_000;

@@ -34,6 +34,7 @@ export const LoggingSettings = () => (
     <DayStartSection />
     <FlareThresholdSection />
     <ListSection kind="dailyItems" />
+    <ListSection kind="changeCategories" />
     <ListSection kind="treatments" />
   </Screen>
 );

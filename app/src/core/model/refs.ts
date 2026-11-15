@@ -27,6 +27,7 @@ export function recordRefs(records: Records): RecordRefs {
     refs.items.treatments.add(a.treatmentId);
     a.areaIds.forEach((id) => refs.areas.add(id));
   }
+  for (const e of records.changeEvents) refs.items.changeCategories.add(e.category);
   for (const r of records.reactions) refs.meals.add(r.mealId);
   for (const p of records.photos) (p.entryKind === 'skinEntry' ? refs.skinEntries : refs.nailEntries).add(p.entryId);
   return refs;

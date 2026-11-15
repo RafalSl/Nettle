@@ -82,7 +82,7 @@ export const noExtra = {
 };
 
 /** The user lists (see ListKind) with no items, to complete a Settings literal. */
-export const noItems = { dailyItems: [], treatments: [] };
+export const noItems = { dailyItems: [], changeCategories: [], treatments: [] };
 
 export const syntheticCheckIn = (id: string, utc: string, day: string, tags: string[] = []): CheckIn => ({
   id,

@@ -8,7 +8,6 @@ import type {
   MedicationCategory,
   MedicationEntry,
   ChangeAction,
-  ChangeCategory,
   ChangeEvent,
   CheckIn,
   ExtraKind,
@@ -93,14 +92,15 @@ const treatmentApplication: ExtraTable<TreatmentApplication> = {
 
 const changeEvent: ExtraTable<ChangeEvent> = {
   table: 'change_event',
-  columns: ['action', 'category', 'name', 'note'],
-  toValues: (e) => [e.action, e.category, e.name, e.note],
+  columns: ['action', 'category', 'name', 'date_unknown', 'note'],
+  toValues: (e) => [e.action, e.category, e.name, +e.dateUnknown, e.note],
   fromRow: (r) => ({
     id: r.id as string,
     at: { utc: r.ts_utc as string, tz: r.tz as string },
     action: r.action as ChangeAction,
-    category: r.category as ChangeCategory,
+    category: r.category as string,
     name: r.name as string,
+    dateUnknown: !!r.date_unknown,
     note: r.note as string | null,
   }),
 };

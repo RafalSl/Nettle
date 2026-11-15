@@ -45,7 +45,7 @@ export default function TodayScreen() {
   const chosen = pick && pick.param === dayParam ? pick.day : validDay(dayParam);
   const setChosen = (d: string | null) => setPick({ param: dayParam, day: d });
   const [rows, setRows] = useState<LogRow[]>([]);
-  const [ctx, setCtx] = useState<{ areas: SkinArea[]; treatments: ListItem[] }>({ areas: [], treatments: [] });
+  const [ctx, setCtx] = useState<{ areas: SkinArea[]; treatments: ListItem[]; categories: ListItem[] }>({ areas: [], treatments: [], categories: [] });
   const [status, setStatus] = useState<DayStatus | null>(null);
   const [shortcuts, setShortcuts] = useState<TreatmentShortcut[]>([]);
   const [flare, setFlare] = useState<OpenFlare | null>(null);
@@ -96,7 +96,7 @@ export default function TodayScreen() {
       }
       seenIds.current = { day, ids: new Set(next.map((r) => r.id)), loaded: true };
       setRows(next);
-      setCtx({ areas: await deps.repo.listAreas(), treatments: await deps.repo.listItems('treatments') });
+      setCtx({ areas: await deps.repo.listAreas(), treatments: await deps.repo.listItems('treatments'), categories: await deps.repo.listItems('changeCategories') });
       setStatus(await dayStatus(deps, day));
       setShortcuts(await treatmentShortcuts(deps));
       setFlare(await openFlareSummary(deps));

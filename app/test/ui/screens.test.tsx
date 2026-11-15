@@ -872,7 +872,7 @@ describe('Edit entry (EN-1, UX-3)', () => {
       ['checkIns', (await saveCheckIn(deps, { at, values: { 'item-wellbeing': 5 }, confirmEmptyDay: true })).id],
       ['stoolEntries', (await logStool(deps, { bristol: 3, at })).id],
       ['treatmentApplications', (await applyTreatment(deps, { treatmentId: cream.id, areaIds: ['area-chin'], at })).id],
-      ['changeEvents', (await logChangeEvent(deps, { action: 'started', category: 'product', name: 'Synthetic soap', at })).id],
+      ['changeEvents', (await logChangeEvent(deps, { action: 'started', category: 'cat-product', name: 'Synthetic soap', at })).id],
       ['reactions', (await logReaction(deps, { mealId: meal.id, symptoms: ['hives'], at: new Date(at.getTime() + 600_000) })).id],
       ['drinks', (await logDrink(deps, { name: 'Synthetic beer', amountMl: 500, at })).id],
       ['medicationEntries', (await logMedication(deps, { category: 'medication', name: 'Synthetic pill', at })).id],
@@ -1393,6 +1393,49 @@ describe('Suggestion settings and quick-action layout (IN-14, UX-2, UX-6)', () =
     await flush();
     await press(more.tree, en.entry.stool.title);
     expect(mockRouter.push).toHaveBeenLastCalledWith('/form/stool');
+  });
+});
+
+describe('Routine change form (IN-12, UX-11)', () => {
+  beforeEach(() => {
+    mockRouter.back.mockClear();
+    jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+  });
+  afterEach(() => jest.restoreAllMocks());
+  const form = () => require('@/app/form/change');
+
+  it('IN-12 "Stopped" offers what is in use now, and "Started" can be saved as already using with an unknown date', async () => {
+    const deps = nowDeps();
+    const { tree } = await mount(form, deps);
+    await flush();
+    expect(hasText(tree, en.tags['cat-product'])).toBe(true);
+    expect(hasText(tree, en.tags['cat-diet'])).toBe(true);
+    expect(hasText(tree, en.itemDescriptions['cat-product'])).toBe(true); // UX-11: the description of the chosen category
+    const save = async () => {
+      let rendered!: ReactTestRenderer;
+      await act(async () => {
+        rendered = create(mockScreen.options!.headerRight!());
+      });
+      await act(async () => {
+        await rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!.props.onPress();
+      });
+      await flush();
+    };
+    await act(async () => {
+      tree.root.findAll((n) => n.props.placeholder === en.more.changeName)[0]!.props.onChangeText('Synthetic cream');
+    });
+    await toggle(tree, en.change.dateUnknown);
+    await save();
+    const [started] = await deps.repo.listRecords('changeEvents');
+    expect(started).toMatchObject({ action: 'started', category: 'cat-product', name: 'Synthetic cream', dateUnknown: true });
+    const stop = await mount(form, deps);
+    await flush();
+    await press(stop.tree, en.change.actions.stopped);
+    expect(hasText(stop.tree, en.change.inUse)).toBe(true);
+    await press(stop.tree, 'Synthetic cream');
+    await save();
+    const events = await deps.repo.listRecords('changeEvents');
+    expect(events.map((e) => [e.action, e.name, e.dateUnknown]).sort()).toEqual([['started', 'Synthetic cream', true], ['stopped', 'Synthetic cream', false]]);
   });
 });
 

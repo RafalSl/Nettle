@@ -1,8 +1,8 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { TextInput } from 'react-native';
+import { Switch, Text, TextInput, View } from 'react-native';
 import { joinIngredients, splitIngredients } from '@/core/model/allergens';
-import { ALLERGENS, CHANGE_ACTIONS, CHANGE_CATEGORIES, MEDICATION_CATEGORIES, NAIL_EXTENTS, NAIL_STAGES, SCORE_KEYS, SYMPTOMS } from '@/core/model/types';
+import { ALLERGENS, CHANGE_ACTIONS, MEDICATION_CATEGORIES, NAIL_EXTENTS, NAIL_STAGES, SCORE_KEYS, SYMPTOMS } from '@/core/model/types';
 import type { Allergen, ListItem, MedicationCategory, RecordKind, SkinArea } from '@/core/model/types';
 import {
   editDrink,
@@ -175,13 +175,14 @@ function TreatmentFields({ r, areas, treatments }: { r: Rec<'treatmentApplicatio
   );
 }
 
-function ChangeFields({ r }: { r: Rec<'changeEvents'> }) {
+function ChangeFields({ r, categories }: { r: Rec<'changeEvents'>; categories: ListItem[] }) {
   const { deps } = useServices();
   const f = useForm();
   const c = useCommon(r.note, f.touch);
   const [action, setAction] = useField<string>(r.action, f.touch);
   const [category, setCategory] = useField<string>(r.category, f.touch);
   const [name, setName] = useField(r.name, f.touch);
+  const [unknown, setUnknown] = useField(r.dateUnknown, f.touch);
   return (
     <FormModal
       dirty={f.dirty}
@@ -189,15 +190,22 @@ function ChangeFields({ r }: { r: Rec<'changeEvents'> }) {
       onSave={async () =>
         void (await editChangeEvent(deps, r.id, {
           action: action as (typeof CHANGE_ACTIONS)[number],
-          category: category as (typeof CHANGE_CATEGORIES)[number],
+          category,
           name,
+          dateUnknown: unknown && action === 'started',
           note: c.note,
           at: c.at ?? undefined,
         }))
       }>
       <Chips items={CHANGE_ACTIONS.map((a) => ({ id: a, label: t(`change.actions.${a}`) }))} selected={one(action)} onToggle={setAction} />
-      <Chips items={CHANGE_CATEGORIES.map((a) => ({ id: a, label: t(`change.categories.${a}`) }))} selected={one(category)} onToggle={setCategory} />
+      <Chips items={categories.map((a) => ({ id: a.id, label: itemLabel(a) }))} selected={one(category)} onToggle={setCategory} />
       <TextInput style={styles.input} placeholder={t('more.changeName')} value={name} onChangeText={setName} />
+      {action === 'started' && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Text style={styles.rowText}>{t('change.dateUnknown')}</Text>
+          <Switch value={unknown} onValueChange={setUnknown} accessibilityLabel={t('change.dateUnknown')} />
+        </View>
+      )}
       <CommonFields c={c} original={r.at.utc} />
     </FormModal>
   );
@@ -265,7 +273,7 @@ function MedicationFields({ r }: { r: Rec<'medicationEntries'> }) {
 export default function EditEntryScreen() {
   const { deps } = useServices();
   const { kind, id } = useLocalSearchParams<{ kind: string; id: string }>();
-  const [state, setState] = useState<{ row: LogRow; areas: SkinArea[]; treatments: ListItem[]; tags: ListItem[] } | 'missing' | null>(null);
+  const [state, setState] = useState<{ row: LogRow; areas: SkinArea[]; treatments: ListItem[]; tags: ListItem[]; categories: ListItem[] } | 'missing' | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -276,6 +284,7 @@ export default function EditEntryScreen() {
         areas: await deps.repo.listAreas(),
         treatments: await deps.repo.listItems('treatments'),
         tags: await deps.repo.listItems('dailyItems'),
+        categories: await deps.repo.listItems('changeCategories'),
       });
     })().catch(() => setState('missing'));
   }, [deps, kind, id]);
@@ -293,7 +302,7 @@ export default function EditEntryScreen() {
     case 'stoolEntries': return <StoolFields r={row.record} />;
     case 'treatmentApplications':
       return <TreatmentFields r={row.record} areas={usable(areas, row.record.areaIds)} treatments={usable(treatments, [row.record.treatmentId])} />;
-    case 'changeEvents': return <ChangeFields r={row.record} />;
+    case 'changeEvents': return <ChangeFields r={row.record} categories={state.categories} />;
     case 'reactions': return <ReactionFields r={row.record} />;
     case 'drinks': return <DrinkEdit r={row.record} />;
     case 'medicationEntries': return <MedicationFields r={row.record} />;

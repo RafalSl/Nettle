@@ -53,7 +53,7 @@ export interface DataJson {
 }
 
 /** Array name inside `settings` for each list kind. */
-export const LIST_KEYS = { dailyItems: 'daily_items', treatments: 'treatments' } as const;
+export const LIST_KEYS = { dailyItems: 'daily_items', changeCategories: 'change_categories', treatments: 'treatments' } as const;
 
 /** Name of a record kind in data.json (the array name inside `records`), used by tombstones. */
 export const recordWireKey = (kind: RecordKind): string =>

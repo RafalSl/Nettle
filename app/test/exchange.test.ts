@@ -57,8 +57,9 @@ async function seeded(make: () => Promise<StorageRepository>) {
     id: 'ce1',
     at: { utc: '2026-01-11T00:00:00.000Z', tz: TZ },
     action: 'started',
-    category: 'product',
+    category: 'cat-product',
     name: 'Synthetic shampoo',
+    dateUnknown: false,
     note: null,
   });
   await repo.addRecord('drinks', { id: 'al1', at: { utc: '2026-01-12T19:00:00.000Z', tz: TZ }, name: 'Synthetic beer', amountMl: 500, alcohol: true, ingredients: [], allergens: [], barcode: null, source: { kind: 'typed', edited: false, llm: null, aiTags: false }, note: null });
@@ -96,7 +97,7 @@ const RAW_RECORDS = {
   report_summaries: [],
   tombstones: [],
 };
-const RAW_SETTINGS = { skin_areas: [], daily_items: [], treatments: [], preferences: preferencesToJson(defaultPreferences()) };
+const RAW_SETTINGS = { skin_areas: [], daily_items: [], change_categories: [], treatments: [], preferences: preferencesToJson(defaultPreferences()) };
 
 describe('data.json validation of nail data (SK-10)', () => {
   const stamp = { utc: '2026-01-10T08:00:00.000Z', tz: 'Europe/Warsaw' };
@@ -226,7 +227,7 @@ describe('data.json validation of alcohol and medication entries (IN-4, IN-5)', 
 describe('data.json validation of treatments, events, reactions and allergens (IN-10 to IN-13)', () => {
   const at = { utc: '2026-01-10T20:00:00.000Z', tz: 'Europe/Warsaw' };
   const application = { id: 'ta1', utc: at.utc, tz: at.tz, treatment_id: 'tr1', area_ids: ['area-chin'], note: null };
-  const event = { id: 'ce1', utc: at.utc, tz: at.tz, action: 'started', category: 'product', name: 'x', note: null };
+  const event = { id: 'ce1', utc: at.utc, tz: at.tz, action: 'started', category: 'cat-product', name: 'x', date_unknown: false, note: null };
   const reaction = { id: 'r1', utc: at.utc, tz: at.tz, meal_id: 'm1', symptoms: ['hives'], note: null };
   const meal = { id: 'm1', utc: at.utc, tz: at.tz, description: 'x', ingredients: [], allergens: ['milk'], barcode: null, source: { kind: 'typed', edited: false, llm: null, aiTags: false }, note: null };
   const records = (over: object = {}) => ({
@@ -256,7 +257,7 @@ describe('data.json validation of treatments, events, reactions and allergens (I
     );
     expect(p.records?.meals[0]?.allergens).toEqual(['milk']);
     expect(p.records?.treatmentApplications[0]).toMatchObject({ treatmentId: 'tr1', areaIds: ['area-chin'] });
-    expect(p.records?.changeEvents[0]).toMatchObject({ action: 'started', category: 'product' });
+    expect(p.records?.changeEvents[0]).toMatchObject({ action: 'started', category: 'cat-product', dateUnknown: false });
     expect(p.records?.reactions[0]).toMatchObject({ mealId: 'm1', symptoms: ['hives'] });
     expect(p.settings?.treatments).toHaveLength(1);
   });
@@ -284,7 +285,7 @@ describe('data.json validation of treatments, events, reactions and allergens (I
     expect(err(file(records({ meals: [{ ...meal, allergens: undefined }] })))).toBe('import_invalid_data');
     expect(err(file(records({ treatment_applications: [{ ...application, area_ids: [] }] })))).toBe('import_invalid_data');
     expect(err(file(records({ change_events: [{ ...event, action: 'paused' }] })))).toBe('import_invalid_data');
-    expect(err(file(records({ change_events: [{ ...event, category: 'mood' }] })))).toBe('import_invalid_data');
+    expect(err(file(records({ change_events: [{ ...event, date_unknown: 'no' }] })))).toBe('import_invalid_data');
     expect(err(file(records({ reactions: [{ ...reaction, symptoms: [] }] })))).toBe('import_invalid_data');
     expect(err(file(records({ reactions: [{ ...reaction, symptoms: ['sneezing'] }] })))).toBe('import_invalid_data');
   });
@@ -326,6 +327,7 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
       reportSummaries: 0,
       skinAreas: 8,
       dailyItems: 15,
+      changeCategories: 2,
       treatments: 1,
     });
     await applyImport(deps, parsed, { mode: 'replace', parts: BOTH });
@@ -366,6 +368,7 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
       reportSummaries: 0,
       skinAreas: 6,
       dailyItems: 14,
+      changeCategories: 2,
       treatments: 0,
     });
     expect(parsed.preview.newRows).toEqual({
@@ -384,6 +387,7 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
       reportSummaries: 0,
       skinAreas: 2,
       dailyItems: 1,
+      changeCategories: 0,
       treatments: 1,
     });
     await applyImport(deps, parsed, { mode: 'merge', parts: BOTH });

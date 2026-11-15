@@ -19,6 +19,7 @@ export interface ReportInput {
   records: Records;
   skinAreas: SkinArea[];
   dailyItems: ListItem[];
+  changeCategories: ListItem[];
   treatments: ListItem[];
   /** Photo id → data URI of a small JPEG, for the photos in the bundle only. */
   photos: Map<string, string>;
@@ -70,6 +71,10 @@ export function buildReportHtml(input: ReportInput): string {
   const areaById = new Map(input.skinAreas.map((a) => [a.id, a]));
   const area = (id: string) => (areaById.has(id) ? input.areaName(areaById.get(id)!) : id);
   const dailyItems = input.dailyItems;
+  const categoryName = (id: string) => {
+    const c = input.changeCategories.find((x) => x.id === id);
+    return c ? input.itemName(c) : id;
+  };
   const treatments = new Map(input.treatments.map((t) => [t.id, input.itemName(t)]));
   const byTime = <T extends { at: { utc: string } }>(rows: readonly T[]) => [...rows].sort((a, b) => a.at.utc.localeCompare(b.at.utc));
   const out: string[] = [];
@@ -183,7 +188,7 @@ export function buildReportHtml(input: ReportInput): string {
   const events = byTime(r.changeEvents);
   if (events.length > 0) {
     out.push(`<h2>${esc(tx('report.changes'))}</h2>`);
-    out.push(table([tx('report.date'), tx('report.what'), tx('report.name')], events.map((e) => [when(e.at), `${tx(`change.actions.${e.action}`)} (${tx(`change.categories.${e.category}`)})`, e.name])));
+    out.push(table([tx('report.date'), tx('report.what'), tx('report.name')], events.map((e) => [e.dateUnknown ? tx('report.dateUnknown') : when(e.at), `${tx(`change.actions.${e.action}`)} (${categoryName(e.category)})`, e.name])));
   }
   const meds = byTime(r.medicationEntries);
   if (meds.length > 0) {

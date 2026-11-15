@@ -262,7 +262,9 @@
     "item-stress": "Stress",
     "item-sleep": "Sleep quality",
     "item-abdominal-pain": "Abdominal pain",
-    "item-bloating": "Bloating"
+    "item-bloating": "Bloating",
+    "cat-product": "Product",
+    "cat-diet": "Diet"
   },
   "more": {
     "nailTitle": "Nails",
@@ -347,11 +349,11 @@
       "started": "Started",
       "stopped": "Stopped"
     },
-    "categories": {
-      "product": "Product",
-      "medication": "Medication",
-      "diet": "Diet"
-    }
+    "inUse": "In use now",
+    "inUseNone": "Nothing is marked as in use.",
+    "dateUnknown": "Already using, date unknown",
+    "dateUnknownHint": "Saved without a date. The analysis is told it was already in use.",
+    "dateUnknownShort": "date unknown"
   },
   "symptoms": {
     "hives": "Hives",
@@ -361,7 +363,8 @@
   },
   "lists": {
     "treatments": "Treatments",
-    "dailyItems": "Daily tags"
+    "dailyItems": "Daily tags",
+    "changeCategories": "Routine change categories"
   },
   "photos": {
     "camera": "Take photo",
@@ -562,7 +565,8 @@
     "aiOrder": "Order and timing",
     "aiLimits": "What the data cannot show",
     "flaresBasis": "Flares are periods in which a skin area's severity was {{n}} or higher. Their timing is only as precise as the logging.",
-    "openAtLastEntry": "open at last entry ({{date}})"
+    "openAtLastEntry": "open at last entry ({{date}})",
+    "dateUnknown": "date unknown"
   },
   "export": {
     "extras": "Extra files",
@@ -861,7 +865,9 @@
     "tag-sun-exposure": "A lot of time in strong sun.",
     "tag-travel": "You travelled today.",
     "tag-nicotine": "Cigarettes or other nicotine today.",
-    "tag-joint-symptoms": "Painful or stiff joints today."
+    "tag-joint-symptoms": "Painful or stiff joints today.",
+    "cat-product": "Anything that touches the skin or its surroundings: cosmetics, detergents, clothing, jewelry. Log it once when it starts and once when it stops.",
+    "cat-diet": "A way of eating you started or stopped, for example gluten-free or no dairy. It does not replace logging meals."
   },
   "entry": {
     "meal": {

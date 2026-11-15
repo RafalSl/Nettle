@@ -60,7 +60,7 @@ async function diary(make: () => Promise<StorageRepository>, llm = new FakeLlm([
   await applyTreatment(deps, { treatmentId: cream.id, areaIds: ['area-chin'], at: at('2026-01-12T21:00:00.000Z') });
   await saveCheckIn(deps, { at: at('2026-01-12T21:30:00.000Z'), values: { 'item-wellbeing': 4, 'item-stress': 8, 'tag-antibiotics': true }, confirmEmptyDay: true });
   await saveCheckIn(deps, { at: at('2026-01-13T21:30:00.000Z'), values: { 'item-wellbeing': 5 }, confirmEmptyDay: true });
-  await logChangeEvent(deps, { action: 'started', category: 'medication', name: 'Synthetic antibiotic', at: at('2025-12-30T09:00:00.000Z') });
+  await logChangeEvent(deps, { action: 'started', category: 'cat-product', name: 'Synthetic antibiotic', at: at('2025-12-30T09:00:00.000Z') });
   await logMedication(deps, { category: 'supplement', name: 'Synthetic vitamin', at: at('2025-12-28T09:00:00.000Z') });
   await logMeal(deps, { description: 'Synthetic lookback meal', ingredients: ['rice'], at: at('2025-12-29T11:00:00.000Z') }); // must not be sent
   await logMeal(deps, { description: 'Synthetic later meal', ingredients: ['bread'], at: at('2026-01-16T11:00:00.000Z') }); // after the period

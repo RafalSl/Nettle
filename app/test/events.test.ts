@@ -2,8 +2,8 @@ import { NettleError } from '@/core/model/errors';
 import { suggestAllergens } from '@/core/model/allergens';
 import { ALLERGENS } from '@/core/model/types';
 import { logDrink, logMedication } from '@/core/usecases/intake';
-import { applyTreatment, logChangeEvent, logReaction } from '@/core/usecases/events';
-import { addListItem, archiveListItem } from '@/core/usecases/lists';
+import { applyTreatment, itemsInUse, logChangeEvent, logReaction } from '@/core/usecases/events';
+import { addListItem, archiveListItem, listActiveItems } from '@/core/usecases/lists';
 import { logMeal } from '@/core/usecases/logMeal';
 import { addArea, archiveSkinArea } from '@/core/usecases/skin';
 import { MemoryRepo } from './fakes/memoryRepo';
@@ -61,23 +61,56 @@ describe('treatments (IN-11)', () => {
   });
 });
 
-describe('change events (IN-12)', () => {
-  it('IN-12 logs started and stopped events with a date and a name', async () => {
+describe('routine changes (IN-12)', () => {
+  it('IN-12 logs started and stopped events with a date, a category and a name', async () => {
     const repo = new MemoryRepo();
     const deps = makeDeps(repo);
-    const a = await logChangeEvent(deps, { action: 'started', category: 'medication', name: ' Synthetic pill ', at: new Date('2026-01-10T00:00:00.000Z') });
-    const b = await logChangeEvent(deps, { action: 'stopped', category: 'diet', name: 'Synthetic diet', note: ' n ' });
-    expect(a).toMatchObject({ action: 'started', category: 'medication', name: 'Synthetic pill', note: null });
+    const a = await logChangeEvent(deps, { action: 'started', category: 'cat-product', name: ' Synthetic soap ', at: new Date('2026-01-10T00:00:00.000Z') });
+    const b = await logChangeEvent(deps, { action: 'stopped', category: 'cat-diet', name: 'Synthetic diet', note: ' n ' });
+    expect(a).toMatchObject({ action: 'started', category: 'cat-product', name: 'Synthetic soap', note: null, dateUnknown: false });
     expect(b.note).toBe('n');
     expect((await repo.listRecords('changeEvents')).map((e) => e.id)).toEqual([b.id, a.id]);
   });
 
+  it('IN-12 seeds Product and Diet, no medication category, and lets the user add and archive categories', async () => {
+    const deps = makeDeps(new MemoryRepo());
+    expect((await listActiveItems(deps, 'changeCategories')).map((c) => c.id)).toEqual(['cat-diet', 'cat-product']);
+    const mine = await addListItem(deps, 'changeCategories', 'Synthetic clothing');
+    const e = await logChangeEvent(deps, { action: 'started', category: mine.id, name: 'Synthetic wool sweater' });
+    expect(e.category).toBe(mine.id);
+    await archiveListItem(deps, 'changeCategories', mine.id);
+    expect((await listActiveItems(deps, 'changeCategories')).some((c) => c.id === mine.id)).toBe(false);
+  });
+
+  it('IN-12 "started" can be "already using, date unknown"; "stopped" cannot', async () => {
+    const deps = makeDeps(new MemoryRepo());
+    const e = await logChangeEvent(deps, { action: 'started', category: 'cat-product', name: 'Synthetic cream', dateUnknown: true });
+    expect(e.dateUnknown).toBe(true);
+    expect(await code(logChangeEvent(deps, { action: 'stopped', category: 'cat-product', name: 'x', dateUnknown: true }))).toBe('invalid_value');
+  });
+
+  it('IN-12 "stopped" offers what is in use now: the latest event per category and name is a start', async () => {
+    const deps = makeDeps(new MemoryRepo());
+    const at = (d: string) => new Date(`2026-01-${d}T08:00:00.000Z`);
+    await logChangeEvent(deps, { action: 'started', category: 'cat-product', name: 'Synthetic soap', at: at('01') });
+    await logChangeEvent(deps, { action: 'started', category: 'cat-diet', name: 'No dairy', at: at('02') });
+    await logChangeEvent(deps, { action: 'started', category: 'cat-product', name: 'Old shampoo', dateUnknown: true, at: at('03') });
+    await logChangeEvent(deps, { action: 'stopped', category: 'cat-product', name: ' synthetic SOAP ', at: at('05') });
+    expect((await itemsInUse(deps)).map((i) => [i.name, i.category, i.dateUnknown])).toEqual([
+      ['Old shampoo', 'cat-product', true],
+      ['No dairy', 'cat-diet', false],
+    ]);
+    await logChangeEvent(deps, { action: 'started', category: 'cat-product', name: 'Synthetic soap', at: at('09') }); // started again
+    expect((await itemsInUse(deps)).map((i) => i.name)).toContain('Synthetic soap');
+  });
+
   it('IN-12 rejects an empty name and unknown values', async () => {
     const deps = makeDeps(new MemoryRepo());
-    const ok = { action: 'started', category: 'product', name: 'x' } as const;
+    const ok = { action: 'started', category: 'cat-product', name: 'x' } as const;
     expect(await code(logChangeEvent(deps, { ...ok, name: '  ' }))).toBe('empty_item_name');
     expect(await code(logChangeEvent(deps, { ...ok, action: 'paused' as never }))).toBe('invalid_value');
-    expect(await code(logChangeEvent(deps, { ...ok, category: 'mood' as never }))).toBe('invalid_value');
+    expect(await code(logChangeEvent(deps, { ...ok, category: 'mood' }))).toBe('unknown_item');
+    expect(await code(logChangeEvent(deps, { ...ok, category: 'medication' }))).toBe('unknown_item'); // medication is not a category
   });
 });
 

@@ -30,6 +30,8 @@ export const PREDEFINED_ITEMS: Record<ListKind, readonly ListItem[]> = {
       'tag-joint-symptoms',
     ].map((id) => item(id, 'yesno')),
   ],
+  // IN-12: Product and Diet; medication and treatments are not categories (IN-5, IN-11).
+  changeCategories: [item('cat-product', 'yesno'), item('cat-diet', 'yesno')],
   // IN-11: no seeded treatments; the user saves their own.
   treatments: [],
 };

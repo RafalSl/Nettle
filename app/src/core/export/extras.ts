@@ -6,7 +6,6 @@ import {
   type Analysis,
   type Photo,
   type MedicationEntry,
-  CHANGE_CATEGORIES,
   EXTRA_KINDS,
   NAIL_EXTENTS,
   NAIL_STAGES,
@@ -108,13 +107,14 @@ const treatmentApplication: Codec<TreatmentApplication> = {
 
 const changeEvent: Codec<ChangeEvent> = {
   key: 'change_events',
-  toJson: (e) => ({ id: e.id, utc: e.at.utc, tz: e.at.tz, action: e.action, category: e.category, name: e.name, note: e.note }),
+  toJson: (e) => ({ id: e.id, utc: e.at.utc, tz: e.at.tz, action: e.action, category: e.category, name: e.name, date_unknown: e.dateUnknown, note: e.note }),
   parse: (o, w) => ({
     id: str(o, 'id', w),
     at: { utc: utc(o, w), tz: tz(o, w) },
     action: oneOf(o, 'action', CHANGE_ACTIONS, w),
-    category: oneOf(o, 'category', CHANGE_CATEGORIES, w),
+    category: str(o, 'category', w),
     name: str(o, 'name', w),
+    dateUnknown: bool(o, 'date_unknown', w),
     note: nullableText(o, 'note', w),
   }),
 };

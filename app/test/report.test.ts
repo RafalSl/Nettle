@@ -6,7 +6,6 @@ import { buildReportHtml } from '@/core/export/report';
 import { exportBundle } from '@/core/usecases/exchange';
 import { applyTreatment, logChangeEvent, logReaction } from '@/core/usecases/events';
 import { saveCheckIn, logStool } from '@/core/usecases/checkin';
-import { markFlare } from '@/core/usecases/flares';
 import { addListItem } from '@/core/usecases/lists';
 import { logMeal } from '@/core/usecases/logMeal';
 import { addPhoto } from '@/core/usecases/photos';
@@ -61,7 +60,7 @@ async function diary() {
   const meal = await logMeal(deps, { description: 'Synthetic <pasta> & sauce', ingredients: ['pasta'], allergens: ['gluten'], at: at('2026-01-10T11:00:00.000Z') });
   await logReaction(deps, { mealId: meal.id, symptoms: ['hives'], at: at('2026-01-10T12:00:00.000Z') });
   const e1 = await logSkinEntry(deps, { areaId: 'area-chin', scores: { severity: 3, itch: 4, pain: 0, dryness: 2, scaling: 1 }, at: at('2026-01-10T20:00:00.000Z') });
-  const e2 = await logSkinEntry(deps, { areaId: 'area-chin', scores: { severity: 7, itch: 8, pain: 2, dryness: 5, scaling: 4 }, at: at('2026-01-13T20:00:00.000Z') });
+  const e2 = await logSkinEntry(deps, { areaId: 'area-chin', scores: { severity: 8, itch: 8, pain: 2, dryness: 5, scaling: 4 }, at: at('2026-01-13T20:00:00.000Z') });
   const priv = await logSkinEntry(deps, { areaId: 'area-intimate', scores: { severity: 5, itch: 5, pain: 5, dryness: 5, scaling: 5 }, at: at('2026-01-11T20:00:00.000Z') });
   const nail = await addArea(deps, 'Left thumb', 'nail');
   const n1 = await logNailEntry(deps, { areaId: nail.id, stage: 'yellow', extent: 'under_quarter', at: at('2026-01-12T08:00:00.000Z') });
@@ -72,7 +71,6 @@ async function diary() {
     priv: await p('skinEntry', priv.id, 'private-photo', '2026-01-11T20:05:00.000Z'),
     nail: await p('nailEntry', n1.id, 'nail-photo', '2026-01-12T08:05:00.000Z'),
   };
-  await markFlare(deps, { areaId: 'area-chin', kind: 'start', at: at('2026-01-10T20:00:00.000Z') });
   await saveCheckIn(deps, { at: at('2026-01-12T21:00:00.000Z'), values: { 'item-wellbeing': 5, 'item-stress': 2, 'item-bloating': true, 'tag-travel': true }, confirmEmptyDay: true });
   await logStool(deps, { bristol: 6, at: at('2026-01-12T07:00:00.000Z') });
   const cream = await addListItem(deps, 'treatments', 'Synthetic cream');
@@ -95,7 +93,7 @@ describe('export with CSV and PDF report (EX-3, EX-4, EX-5, EX-8)', () => {
     const zip = await exportBundle(deps, { csv: true });
     const files = unzipSync(zip);
     const names = Object.keys(files);
-    for (const n of ['csv/meals.csv', 'csv/skin_entries.csv', 'csv/check_ins.csv', 'csv/skin_areas.csv', 'csv/daily_items.csv', 'csv/flare_markers.csv', 'csv/analyses.csv']) {
+    for (const n of ['csv/meals.csv', 'csv/skin_entries.csv', 'csv/check_ins.csv', 'csv/skin_areas.csv', 'csv/daily_items.csv', 'csv/analyses.csv']) {
       expect(names).toContain(n);
     }
     const skin = strFromU8(files['csv/skin_entries.csv']!).split('\r\n');
@@ -186,7 +184,7 @@ describe('export with CSV and PDF report (EX-3, EX-4, EX-5, EX-8)', () => {
     const html = (meals: object[]) =>
       buildReportHtml({
         ...reportOptions('en'),
-        records: { ...Object.fromEntries(['skinEntries', 'nailEntries', 'checkIns', 'stoolEntries', 'treatmentApplications', 'changeEvents', 'reactions', 'drinks', 'medicationEntries', 'photos', 'analyses', 'reportSummaries', 'flareMarkers'].map((k) => [k, []])), meals } as never,
+        records: { ...Object.fromEntries(['skinEntries', 'nailEntries', 'checkIns', 'stoolEntries', 'treatmentApplications', 'changeEvents', 'reactions', 'drinks', 'medicationEntries', 'photos', 'analyses', 'reportSummaries'].map((k) => [k, []])), meals } as never,
         skinAreas: [],
         dailyItems: [],
         treatments: [],
@@ -213,7 +211,7 @@ describe('export with CSV and PDF report (EX-3, EX-4, EX-5, EX-8)', () => {
     const html = (meals: object[]) =>
       buildReportHtml({
         ...reportOptions('en'),
-        records: { ...Object.fromEntries(['skinEntries', 'nailEntries', 'checkIns', 'stoolEntries', 'treatmentApplications', 'changeEvents', 'reactions', 'drinks', 'medicationEntries', 'photos', 'analyses', 'reportSummaries', 'flareMarkers'].map((k) => [k, []])), meals } as never,
+        records: { ...Object.fromEntries(['skinEntries', 'nailEntries', 'checkIns', 'stoolEntries', 'treatmentApplications', 'changeEvents', 'reactions', 'drinks', 'medicationEntries', 'photos', 'analyses', 'reportSummaries'].map((k) => [k, []])), meals } as never,
         skinAreas: [], dailyItems: [], treatments: [], photos: new Map(), range: { from: null, to: null }, exportedAt: { utc: '2026-01-20T10:00:00.000Z', tz: 'Europe/Warsaw' },
       });
     const out = html([meal('a', true), meal('b', false)]);
@@ -243,7 +241,7 @@ describe('export with CSV and PDF report (EX-3, EX-4, EX-5, EX-8)', () => {
     const html = buildReportHtml({
       ...reportOptions('pl'),
       records: Object.fromEntries(
-        ['meals', 'skinEntries', 'nailEntries', 'checkIns', 'stoolEntries', 'treatmentApplications', 'changeEvents', 'reactions', 'drinks', 'medicationEntries', 'photos', 'analyses', 'reportSummaries', 'flareMarkers'].map((k) => [k, []]),
+        ['meals', 'skinEntries', 'nailEntries', 'checkIns', 'stoolEntries', 'treatmentApplications', 'changeEvents', 'reactions', 'drinks', 'medicationEntries', 'photos', 'analyses', 'reportSummaries'].map((k) => [k, []]),
       ) as never,
       skinAreas: [],
       dailyItems: [],

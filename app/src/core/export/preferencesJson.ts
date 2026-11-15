@@ -15,6 +15,7 @@ export function preferencesToJson(p: Preferences): Obj {
     suggestions: { rows: p.suggestions.rows, window_days: p.suggestions.windowDays, save_on_tap: p.suggestions.saveOnTap, known_names: p.suggestions.knownNames },
     quick_actions: { order: [...p.quickActions.order], hidden: [...p.quickActions.hidden] },
     day_start_hour: p.dayStartHour,
+    flare_threshold: p.flareThreshold,
   };
 }
 
@@ -68,5 +69,6 @@ export function parsePreferences(o: Obj, where = 'settings.preferences'): Prefer
     suggestions: { rows: rows as number, windowDays: windowDays as (typeof WINDOW_DAYS)[number], saveOnTap: bool(sg, 'save_on_tap', `${where}.suggestions`), knownNames: bool(sg, 'known_names', `${where}.suggestions`) },
     quickActions: { order, hidden },
     dayStartHour: isDayStartHour(o.day_start_hour) ? o.day_start_hour : bad(`${where}.day_start_hour`),
+    flareThreshold: typeof o.flare_threshold === 'number' && Number.isInteger(o.flare_threshold) && o.flare_threshold >= 1 && o.flare_threshold <= 10 ? o.flare_threshold : bad(`${where}.flare_threshold`),
   };
 }

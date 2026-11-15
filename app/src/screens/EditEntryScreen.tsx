@@ -8,7 +8,6 @@ import {
   editDrink,
   editChangeEvent,
   editCheckIn,
-  editFlareMarker,
   editMeal,
   editMedication,
   editNailEntry,
@@ -258,18 +257,6 @@ function MedicationFields({ r }: { r: Rec<'medicationEntries'> }) {
   );
 }
 
-function FlareFields({ r }: { r: Rec<'flareMarkers'> }) {
-  const { deps } = useServices();
-  const f = useForm();
-  const c = useCommon(r.note, f.touch);
-  return (
-    <FormModal dirty={f.dirty} missing={null} onSave={async () => void (await editFlareMarker(deps, r.id, { note: c.note, at: c.at ?? undefined }))}>
-      <Label>{t(r.kind === 'start' ? 'skin.flareStart' : 'skin.flareEnd')}</Label>
-      <CommonFields c={c} original={r.at.utc} />
-    </FormModal>
-  );
-}
-
 /**
  * EN-1: edit one entry of the day's log. The route carries the record kind and id; the form for the kind loads
  * the record and saves through the matching `edit*` use case, which keeps the id and applies the edit rules.
@@ -310,6 +297,5 @@ export default function EditEntryScreen() {
     case 'reactions': return <ReactionFields r={row.record} />;
     case 'drinks': return <DrinkEdit r={row.record} />;
     case 'medicationEntries': return <MedicationFields r={row.record} />;
-    case 'flareMarkers': return <FlareFields r={row.record} />;
   }
 }

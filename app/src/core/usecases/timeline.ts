@@ -1,6 +1,8 @@
 import { localDay } from '../model/time';
-import { NAIL_EXTENTS, type FlareMarker, type LocalDay, type NailEntry, type Photo, type SkinArea, type SkinEntry } from '../model/types';
+import { deriveFlares } from '../model/flares';
+import { NAIL_EXTENTS, type LocalDay, type NailEntry, type Stamp, type Photo, type SkinArea, type SkinEntry } from '../model/types';
 import type { Deps } from './deps';
+import { getPreferences } from './preferences';
 
 /** SK-8: one skin or nail entry of an area with its photos, so scores and photos sit side by side. */
 export type TimelineEntry =
@@ -11,10 +13,11 @@ export interface TimelineDay {
   day: LocalDay;
   /** Oldest first within the day. */
   entries: TimelineEntry[];
-  flares: FlareMarker[];
+  /** SK-6: the start and end of this area's derived flares that fall on the day. */
+  flares: { id: string; kind: 'start' | 'end'; at: Stamp }[];
 }
 
-/** SK-8: the entries, photos and flare markers of one area grouped by the entry's own local day, newest day first. */
+/** SK-8: the entries, photos and derived flare marks of one area grouped by the entry's own local day, newest day first. */
 export async function areaTimeline(deps: Deps, areaId: string): Promise<TimelineDay[]> {
   const photos = await deps.repo.listRecords('photos');
   const photosOf = (kind: Photo['entryKind'], id: string) =>
@@ -31,8 +34,11 @@ export async function areaTimeline(deps: Deps, areaId: string): Promise<Timeline
   for (const entry of await deps.repo.listRecords('nailEntries')) {
     if (entry.areaId === areaId) dayOf(localDay(entry.at.utc, entry.at.tz, deps.dayStart.get())).entries.push({ kind: 'nail', entry, photos: photosOf('nailEntry', entry.id) });
   }
-  for (const marker of await deps.repo.listRecords('flareMarkers')) {
-    if (marker.areaId === areaId) dayOf(localDay(marker.at.utc, marker.at.tz, deps.dayStart.get())).flares.push(marker);
+  const threshold = (await getPreferences(deps)).flareThreshold;
+  const skin = (await deps.repo.listSkinEntries()).filter((e) => e.areaId === areaId);
+  for (const f of deriveFlares(skin, threshold)) {
+    dayOf(localDay(f.start.utc, f.start.tz, deps.dayStart.get())).flares.push({ id: `start-${f.start.utc}`, kind: 'start', at: f.start });
+    if (f.end) dayOf(localDay(f.end.utc, f.end.tz, deps.dayStart.get())).flares.push({ id: `end-${f.end.utc}`, kind: 'end', at: f.end });
   }
   for (const d of days.values()) {
     d.entries.sort((a, b) => a.entry.at.utc.localeCompare(b.entry.at.utc) || a.entry.id.localeCompare(b.entry.id));
@@ -70,7 +76,7 @@ export interface TrendPoint {
   day: LocalDay;
   /** The day's average (skin scores) or worst (nail extent), to one decimal. */
   value: number;
-  /** A flare marker of the area on this day, for the chart's marks. */
+  /** A derived flare start or end of the area on this day, for the chart's marks. */
   flare: 'start' | 'end' | null;
 }
 

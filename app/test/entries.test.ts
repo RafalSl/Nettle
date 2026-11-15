@@ -6,7 +6,6 @@ import { applyTreatment, logReaction } from '@/core/usecases/events';
 import {
   deleteEntry,
   editCheckIn,
-  editFlareMarker,
   editMeal,
   editNailEntry,
   editReaction,
@@ -16,10 +15,10 @@ import {
   previewEntryDelete,
 } from '@/core/usecases/entries';
 import { addListItem } from '@/core/usecases/lists';
-import { markFlare } from '@/core/usecases/flares';
 import { logMeal } from '@/core/usecases/logMeal';
 import { addPhoto } from '@/core/usecases/photos';
 import { addArea, archiveSkinArea, logNailEntry, logSkinEntry } from '@/core/usecases/skin';
+import { flarePeriods } from '@/core/usecases/flares';
 import { MemoryPhotoStore } from './fakes/memoryPhotoStore';
 import { MemoryRepo } from './fakes/memoryRepo';
 import { makeDeps } from './helpers/fixtures';
@@ -126,17 +125,15 @@ describe.each(repos)('editing and deleting one entry (%s)', (_name, make) => {
     expect(await repo.listRecords('checkIns')).toHaveLength(2);
   });
 
-  it('EN-1, SK-6 a flare marker keeps start before end and the flares of an area apart', async () => {
-    const { deps } = await setup();
-    const s1 = await markFlare(deps, { areaId: 'area-chin', kind: 'start', at: d('2026-01-02T08:00:00.000Z') });
-    const e1 = await markFlare(deps, { areaId: 'area-chin', kind: 'end', at: d('2026-01-05T08:00:00.000Z') });
-    const s2 = await markFlare(deps, { areaId: 'area-chin', kind: 'start', at: d('2026-01-10T08:00:00.000Z') });
-    expect(await code(editFlareMarker(deps, e1.id, { at: d('2026-01-01T08:00:00.000Z') }))).toBe('flare_end_before_start');
-    expect(await code(editFlareMarker(deps, s1.id, { at: d('2026-01-06T08:00:00.000Z') }))).toBe('flare_end_before_start');
-    expect(await code(editFlareMarker(deps, s2.id, { at: d('2026-01-04T08:00:00.000Z') }))).toBe('flare_overlap');
-    expect(await code(editFlareMarker(deps, e1.id, { at: d('2026-01-11T08:00:00.000Z') }))).toBe('flare_overlap');
-    const moved = await editFlareMarker(deps, e1.id, { at: d('2026-01-07T08:00:00.000Z'), note: ' n ' });
-    expect(moved).toMatchObject({ id: e1.id, note: 'n' });
+  it('EN-1, SK-6 deleting the skin entry that starts a flare removes the flare, with no marker to clean up', async () => {
+    const { repo, deps } = await setup();
+    const scores = (severity: number) => ({ severity, itch: 0, pain: 0, dryness: 0, scaling: 0 });
+    const high = await logSkinEntry(deps, { areaId: 'area-chin', scores: scores(9), at: d('2026-01-02T08:00:00.000Z') });
+    await logSkinEntry(deps, { areaId: 'area-chin', scores: scores(2), at: d('2026-01-05T08:00:00.000Z') });
+    expect(await flarePeriods(deps)).toHaveLength(1);
+    await deleteEntry(deps, 'skinEntries', high.id);
+    expect(await flarePeriods(deps)).toEqual([]);
+    expect(await repo.listSkinEntries()).toHaveLength(1);
   });
 
   it('EN-1, EX-13 deleting a meal also deletes its reactions and tombstones all of them', async () => {
@@ -166,22 +163,6 @@ describe.each(repos)('editing and deleting one entry (%s)', (_name, make) => {
     await expect(store.read(p1.file)).rejects.toThrow();
     expect(await store.read(kept.file)).toBeDefined();
     expect((await repo.listTombstones()).filter((t) => t.kind === 'photos')).toHaveLength(2);
-  });
-
-  it('EN-1, SK-6 deleting a flare start also removes its end; deleting an end alone reopens the flare', async () => {
-    const { repo, deps } = await setup();
-    const s = await markFlare(deps, { areaId: 'area-chin', kind: 'start', at: d('2026-01-02T08:00:00.000Z') });
-    const e = await markFlare(deps, { areaId: 'area-chin', kind: 'end', at: d('2026-01-05T08:00:00.000Z') });
-    const s2 = await markFlare(deps, { areaId: 'area-chin', kind: 'start', at: d('2026-01-10T08:00:00.000Z') });
-    expect(await previewEntryDelete(deps, 'flareMarkers', s.id)).toEqual({ flareMarkers: 1 });
-    await deleteEntry(deps, 'flareMarkers', s.id);
-    expect((await repo.listRecords('flareMarkers')).map((m) => m.id)).toEqual([s2.id]);
-    expect(e.id).not.toBe(s2.id);
-    // an end alone: only it goes
-    const s3 = await markFlare(deps, { areaId: 'area-neck', kind: 'start', at: d('2026-01-02T08:00:00.000Z') });
-    const e3 = await markFlare(deps, { areaId: 'area-neck', kind: 'end', at: d('2026-01-03T08:00:00.000Z') });
-    expect(await deleteEntry(deps, 'flareMarkers', e3.id)).toEqual({});
-    expect((await repo.listRecords('flareMarkers')).map((m) => m.id).sort()).toEqual([s2.id, s3.id].sort());
   });
 
   it('EN-1 deleting a flat entry leaves one tombstone, and bulk delete still leaves none (SE-9)', async () => {

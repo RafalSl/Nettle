@@ -388,3 +388,8 @@ Newest entry last. One short entry per working session or meaningful step: what 
 - **Trade-off:** internal names `CheckIn`/`checkIns`/`check_in` stay (renaming touches many files for no behaviour); the UI and docs say Daily health. Polish strings added as drafts only.
 - **Not built:** Daily health trend charts; the descriptions of user items are shown in Settings only.
 - **Next:** derived flares (phase 3).
+
+## 2026-11-15: derived flares (branch feature/derived-flares)
+- **Done:** SK-6, EN-1, EX-13, LL-2 (and the data side of EX-1). Flares are computed from skin entries at or above a severity threshold (default 8, Settings, Logging), merged across areas, with "open at last entry". Today has one flare card that opens Review; the report, analysis input and area timeline use the derived periods. Flare markers, their table, codec, tombstones, edit form and the More row are removed. 664 tests pass, iOS bundle builds.
+- **Not built:** the card opens the Review tab only; the Areas browsing change comes with Review browsing (UX-10). A range export derives flares from the entries inside the range.
+- **Next:** quick-action layout and Settings placement (phase 4).

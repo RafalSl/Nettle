@@ -15,7 +15,6 @@ export const LOG_KINDS = [
   'reactions',
   'drinks',
   'medicationEntries',
-  'flareMarkers',
 ] as const;
 export type LogKind = (typeof LOG_KINDS)[number];
 

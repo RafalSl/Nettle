@@ -1,5 +1,6 @@
 import { AreasSection } from '@/ui/AreasSection';
 import { FavoritesSection } from '@/ui/FavoritesSection';
+import { FlareThresholdSection } from '@/ui/FlareThresholdSection';
 import { DayStartSection } from '@/ui/DayStartSection';
 import { LlmSettingsSection } from '@/ui/LlmSettingsSection';
 import { ListSection } from '@/ui/ListSection';
@@ -9,6 +10,7 @@ import { Screen } from '@/ui/components';
 export const LoggingSettings = () => (
   <Screen>
     <DayStartSection />
+    <FlareThresholdSection />
     <ListSection kind="dailyItems" />
     <ListSection kind="treatments" />
   </Screen>

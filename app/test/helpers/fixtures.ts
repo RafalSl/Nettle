@@ -79,7 +79,6 @@ export const noExtra = {
   photos: [],
   analyses: [],
   reportSummaries: [],
-  flareMarkers: [],
 };
 
 /** The user lists (see ListKind) with no items, to complete a Settings literal. */

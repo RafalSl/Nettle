@@ -114,9 +114,6 @@
     "noChange": "Bez zmian",
     "noChangeHint": "Zapisuje nowy wpis z takimi samymi ocenami jak ostatni dla tego miejsca.",
     "prefilled": "Oceny zaczynają od ostatniego wpisu dla tego miejsca.",
-    "flareStart": "Początek rzutu",
-    "flareEnd": "Koniec rzutu",
-    "flareOpen": "W tym miejscu trwa rzut.",
     "noChangeAll": "Bez zmian we wszystkich miejscach",
     "noChangeAllNeed": "Te miejsca potrzebują pierwszego wpisu: {{list}}.",
     "noChangeAllDone": "Zapisano {{n}} miejsc bez zmian."
@@ -222,10 +219,6 @@
     "summary_empty": "Podsumowanie jest puste. Napisz coś albo je odrzuć.",
     "summary_mismatch": "To podsumowanie powstało dla innego okresu lub języka. Utwórz nowe.",
     "too_many_photos": "Za dużo zdjęć na jedno uruchomienie. Wybierz mniej.",
-    "flare_already_started": "Dla tego miejsca zaznaczono już początek rzutu.",
-    "flare_not_started": "Dla tego miejsca nie zaznaczono początku rzutu.",
-    "flare_end_before_start": "Rzut nie może skończyć się przed początkiem.",
-    "flare_overlap": "Ta godzina nakłada się na poprzedni lub następny znacznik rzutu w tym miejscu.",
     "checkin_day_taken": "Ten dzień ma już wpis dzienny. Otwórz go zamiast tego.",
     "meal_after_reaction": "Posiłku nie można przesunąć na czas po jego reakcji.",
     "duplicate_area_name": "Miejsce o tej nazwie już istnieje.",
@@ -272,9 +265,6 @@
   },
   "more": {
     "nailTitle": "Paznokcie",
-    "flareOpenMark": "otwarty",
-    "flareWillStart": "Zapis oznacza początek rzutu w tym miejscu.",
-    "flareWillEnd": "Zapis oznacza koniec otwartego rzutu w tym miejscu.",
     "nailAreaName": "Nowy paznokieć (np. lewy kciuk)",
     "nailAddArea": "Dodaj paznokieć",
     "nailNone": "Najpierw dodaj paznokieć.",
@@ -418,8 +408,7 @@
       "stoolEntries": "wpisy o stolcu: {{n}}",
       "changeEvents": "zmiany: {{n}}",
       "analyses": "analizy AI: {{n}}",
-      "reportSummaries": "podsumowania raportu: {{n}}",
-      "flareMarkers": "znaczniki rzutów: {{n}}"
+      "reportSummaries": "podsumowania raportu: {{n}}"
     }
   },
   "exportPhotos": {
@@ -508,7 +497,6 @@
     "exported": "Utworzono {{date}}",
     "disclaimer": "Ten raport podsumowuje to, co zapisała jedna osoba. Nie jest diagnozą ani poradą medyczną. Oceny są własnymi ocenami tej osoby.",
     "flares": "Rzuty",
-    "ongoing": "trwa",
     "area": "Miejsce",
     "start": "Początek",
     "end": "Koniec",
@@ -571,7 +559,9 @@
     "aiAgainst": "Przeciw",
     "aiUncertainty": "Niepewność",
     "aiOrder": "Kolejność i czas",
-    "aiLimits": "Czego dane nie pokazują"
+    "aiLimits": "Czego dane nie pokazują",
+    "flaresBasis": "Zaostrzenia to okresy, w których nasilenie zmiany skórnej wynosiło {{n}} lub więcej. Czas jest tak dokładny, jak zapisy.",
+    "openAtLastEntry": "trwa do ostatniego wpisu ({{date}})"
   },
   "export": {
     "extras": "Dodatkowe pliki",
@@ -628,7 +618,10 @@
     "itemsHint": "Oceny mają skalę 0–10; pozycje tak/nie zapisują tylko „tak”. Zarchiwizowana pozycja nie jest już pytana, ale jej historia zostaje w raporcie i analizie.",
     "itemScore": "Nowa pozycja to ocena",
     "itemYesNo": "Nowa pozycja to tak/nie",
-    "itemDescription": "Opis (opcjonalnie)"
+    "itemDescription": "Opis (opcjonalnie)",
+    "flareThresholdTitle": "Zaostrzenia",
+    "flareThresholdHint": "Zaostrzenie to okres, w którym nasilenie zmiany skórnej jest równe tej liczbie lub wyższe. Kończy się na pierwszym późniejszym wpisie poniżej. Zmiana przelicza zaostrzenia z wpisów.",
+    "flareThresholdLabel": "Nasilenie co najmniej"
   },
   "about": {
     "title": "O aplikacji",
@@ -645,7 +638,6 @@
   },
   "nav": {
     "about": "O aplikacji",
-    "flare": "Rzut",
     "settings": "Ustawienia",
     "more": "Więcej",
     "meal": "Posiłek",
@@ -684,7 +676,6 @@
     "moreReaction": "Reakcja po posiłku",
     "moreNails": "Aktualizacja paznokci",
     "moreChange": "Rozpoczęte lub zakończone",
-    "moreFlare": "Początek lub koniec rzutu",
     "stool": "Stolec",
     "edit": "Edytuj",
     "done": "Gotowe",
@@ -760,8 +751,6 @@
     "drink": "{{name}}, {{ml}} ml",
     "alcoholic": "alkohol",
     "medication": "{{name}}",
-    "flareStart": "Początek rzutu: {{area}}",
-    "flareEnd": "Koniec rzutu: {{area}}",
     "scores": "nasilenie {{severity}}, świąd {{itch}}, ból {{pain}}",
     "deleteTitle": "Usunąć ten wpis?",
     "deleteAction": "Usuń wpis",
@@ -770,7 +759,6 @@
     "kinds": {
       "reactions": "reakcje",
       "photos": "zdjęcia",
-      "flareMarkers": "koniec rzutu",
       "meals": "posiłki",
       "skinEntries": "wpisy",
       "nailEntries": "wpisy"
@@ -778,13 +766,13 @@
     "editAction": "Edytuj wpis"
   },
   "cards": {
-    "openFlare": "Rzut trwa: {{area}}",
-    "endFlare": "Zakończ rzut",
+    "openFlare": "Zaostrzenie od {{since}}: {{areas}}",
     "openCheckin": "Otwórz Zdrowie dnia",
     "noExport": "Nie było jeszcze eksportu. Dziennik jest tylko na tym telefonie.",
     "lastExport": "Ostatni eksport {{days}} dni temu.",
     "openBackup": "Zrób kopię",
-    "notLogged": "Ten dzień nie ma jeszcze wpisu Zdrowie dnia."
+    "notLogged": "Ten dzień nie ma jeszcze wpisu Zdrowie dnia.",
+    "openAreas": "Otwórz Miejsca"
   },
   "edit": {
     "title": "Edycja wpisu",

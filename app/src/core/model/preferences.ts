@@ -1,3 +1,4 @@
+import { DEFAULT_FLARE_THRESHOLD } from './flares';
 import type { IngredientSource } from './source';
 import type { Allergen, MedicationCategory } from './types';
 
@@ -54,6 +55,8 @@ export interface Preferences {
   quickActions: QuickActionLayout;
   /** NF-7: the hour a diary day starts at, 0 to 6 (default midnight). */
   dayStartHour: number;
+  /** SK-6: severity at or above which a skin entry counts as a flare (1 to 10, default 8). */
+  flareThreshold: number;
 }
 
 export const MAX_SUGGESTION_ROWS = 20;
@@ -63,6 +66,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
   suggestions: { rows: 5, windowDays: 30, saveOnTap: false, knownNames: false },
   quickActions: { order: [...QUICK_ACTIONS], hidden: [] },
   dayStartHour: 0,
+  flareThreshold: DEFAULT_FLARE_THRESHOLD,
 };
 
 /** A fresh copy of the defaults, so callers can change it freely. */

@@ -20,7 +20,6 @@ import { deleteEntry } from '@/core/usecases/entries';
 import { toggleFavoriteDrink, toggleFavoriteMeal, updateSuggestionSettings } from '@/core/usecases/preferences';
 import { applyTreatment, logChangeEvent, logReaction } from '@/core/usecases/events';
 import { addListItem, archiveListItem } from '@/core/usecases/lists';
-import { markFlare } from '@/core/usecases/flares';
 import { saveApiKey } from '@/core/usecases/llm';
 import { prepareAnalysis } from '@/core/usecases/analysis';
 import { localDay } from '@/core/model/time';
@@ -91,7 +90,6 @@ const screens: [string, () => { default: React.ComponentType }][] = [
   ['settings about', () => require('@/app/(tabs)/today/settings/about')],
   ['settings areas', () => require('@/app/(tabs)/today/settings/areas')],
   ['settings favorites', () => require('@/app/(tabs)/today/settings/favorites')],
-  ['form flare', () => require('@/app/form/flare')],
   ['settings privacy', () => require('@/app/(tabs)/today/settings/privacy')],
   ['settings data', () => require('@/app/(tabs)/today/settings/data')],
   ['review', () => require('@/app/(tabs)/review/index')],
@@ -275,30 +273,10 @@ describe('screen flows (NF-2, NF-3)', () => {
     expect(entries.map((e) => e.scores)).toEqual([scores, scores]);
   });
 
-  it('SK-6 a flare is started and then ended from More, the kind following the area', async () => {
+  it('SK-6 the More screen has no flare row: flares are derived from skin entries', async () => {
     const deps = nowDeps();
-    const save = async () => {
-      let rendered!: ReactTestRenderer;
-      await act(async () => {
-        rendered = create(mockScreen.options!.headerRight!());
-      });
-      await act(async () => {
-        await rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!.props.onPress();
-      });
-      await flush();
-    };
-    const first = await mount(() => require('@/app/form/flare'), deps);
-    await flush();
-    expect(hasText(first.tree, en.more.flareWillStart)).toBe(true);
-    await save();
-    const second = await mount(() => require('@/app/form/flare'), deps);
-    await flush();
-    expect(hasText(second.tree, en.more.flareWillEnd)).toBe(true);
-    await save();
-    expect((await deps.repo.listRecords('flareMarkers')).map((m) => m.kind).sort()).toEqual(['end', 'start']);
     const more = await mount(() => require('@/app/(tabs)/today/more'), deps);
-    await press(more.tree, en.home.moreFlare);
-    expect(mockRouter.push).toHaveBeenLastCalledWith('/form/flare');
+    expect(hasText(more.tree, 'Flare start or end')).toBe(false);
   });
 
   it('SK-10, IN-11 the More screen adds a nail and saves a treatment', async () => {
@@ -769,17 +747,16 @@ describe('Today (UX-2, UX-5, EN-1, UX-9)', () => {
     expect(hasText(tree, en.day.empty)).toBe(true);
   });
 
-  it('UX-2 the cards offer to end an open flare and to open Daily health of a day with no record', async () => {
+  it('SK-6, UX-2 an open derived flare shows one card that opens Review, and Daily health is offered for a day with no record', async () => {
     const deps = nowDeps();
-    await markFlare(deps, { areaId: 'area-chin', kind: 'start', at: new Date(Date.now() - 3600_000) });
+    await logSkinEntry(deps, { areaId: 'area-chin', scores: { severity: 9, itch: 0, pain: 0, dryness: 0, scaling: 0 }, at: new Date(Date.now() - 3600_000) });
     const { tree } = await mount(today, deps);
     await flush();
     expect(hasText(tree, en.cards.notLogged)).toBe(true);
     expect(hasText(tree, en.cards.noExport)).toBe(true);
-    await press(tree, en.cards.endFlare);
-    await flush();
-    expect((await deps.repo.listRecords('flareMarkers')).map((m) => m.kind).sort()).toEqual(['end', 'start']);
-    expect(hasText(tree, en.cards.endFlare)).toBe(false);
+    expect(hasText(tree, 'Chin')).toBe(true);
+    await press(tree, en.cards.openAreas);
+    expect(mockRouter.navigate).toHaveBeenLastCalledWith('/review');
   });
 });
 
@@ -874,7 +851,6 @@ describe('Edit entry (EN-1, UX-3)', () => {
       ['reactions', (await logReaction(deps, { mealId: meal.id, symptoms: ['hives'], at: new Date(at.getTime() + 600_000) })).id],
       ['drinks', (await logDrink(deps, { name: 'Synthetic beer', amountMl: 500, at })).id],
       ['medicationEntries', (await logMedication(deps, { category: 'medication', name: 'Synthetic pill', at })).id],
-      ['flareMarkers', (await markFlare(deps, { areaId: 'area-neck', kind: 'start', at })).id],
     ];
     for (const [kind, id] of ids) {
       mockRouter.back.mockClear();
@@ -885,7 +861,7 @@ describe('Edit entry (EN-1, UX-3)', () => {
       await header('headerRight', en.common.save);
       await flush();
       expect(mockRouter.back).toHaveBeenCalledTimes(1);
-      const all = [...(await deps.repo.listMeals()), ...(await deps.repo.listSkinEntries()), ...(await deps.repo.listRecords('nailEntries')), ...(await deps.repo.listRecords('checkIns')), ...(await deps.repo.listRecords('stoolEntries')), ...(await deps.repo.listRecords('treatmentApplications')), ...(await deps.repo.listRecords('changeEvents')), ...(await deps.repo.listRecords('reactions')), ...(await deps.repo.listRecords('drinks')), ...(await deps.repo.listRecords('medicationEntries')), ...(await deps.repo.listRecords('flareMarkers'))];
+      const all = [...(await deps.repo.listMeals()), ...(await deps.repo.listSkinEntries()), ...(await deps.repo.listRecords('nailEntries')), ...(await deps.repo.listRecords('checkIns')), ...(await deps.repo.listRecords('stoolEntries')), ...(await deps.repo.listRecords('treatmentApplications')), ...(await deps.repo.listRecords('changeEvents')), ...(await deps.repo.listRecords('reactions')), ...(await deps.repo.listRecords('drinks')), ...(await deps.repo.listRecords('medicationEntries'))];
       expect(all.filter((r) => r.id === id)).toHaveLength(1);
       expect(all).toHaveLength(ids.length);
     }

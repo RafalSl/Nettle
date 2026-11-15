@@ -1,3 +1,4 @@
+import { DEFAULT_FLARE_THRESHOLD, deriveFlares } from '../model/flares';
 import { isAiSource, type IngredientSource } from '../model/source';
 import { localDateTime, localDay } from '../model/time';
 import type { Analysis, ListItem, Records, ReportSummary, SkinArea } from '../model/types';
@@ -7,6 +8,8 @@ import type { Language } from '../ports/llm';
 export type ReportText = (key: string, vars?: Record<string, string | number>) => string;
 
 export interface ReportInput {
+  /** SK-6: severity at or above which a skin entry counts as a flare (default 8). */
+  flareThreshold?: number;
   language: Language;
   text: ReportText;
   /** Display names in the report language (a predefined area is localized, a user area keeps its name). */
@@ -88,22 +91,17 @@ export function buildReportHtml(input: ReportInput): string {
     );
   }
 
-  // Flares (SK-6)
-  const flares = byTime(r.flareMarkers);
+  // Flares (SK-6): derived from the skin entries and the threshold, so the table says how they were found.
+  const flares = deriveFlares(r.skinEntries, input.flareThreshold ?? DEFAULT_FLARE_THRESHOLD);
   if (flares.length > 0) {
     out.push(`<h2>${esc(tx('report.flares'))}</h2>`);
-    const rows: string[][] = [];
-    const open = new Map<string, string>();
-    for (const f of flares) {
-      if (f.kind === 'start') {
-        open.set(f.areaId, when(f.at));
-      } else {
-        rows.push([area(f.areaId), open.get(f.areaId) ?? '?', when(f.at)]);
-        open.delete(f.areaId);
-      }
-    }
-    for (const [id, start] of open) rows.push([area(id), start, tx('report.ongoing')]);
-    out.push(table([tx('report.area'), tx('report.start'), tx('report.end')], rows));
+    out.push(`<p class="note">${esc(tx('report.flaresBasis', { n: input.flareThreshold ?? DEFAULT_FLARE_THRESHOLD }))}</p>`);
+    out.push(
+      table(
+        [tx('report.areas'), tx('report.start'), tx('report.end')],
+        flares.map((f) => [f.areaIds.map(area).join(', '), when(f.start), f.end ? when(f.end) : tx('report.openAtLastEntry', { date: when(f.lastEntryAt) })]),
+      ),
+    );
   }
 
   // Skin trends per area (SK-3)

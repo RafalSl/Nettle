@@ -1,4 +1,4 @@
-import { RECORD_KINDS, type DateRange, type FlareMarker, type RecordKind, type Records } from './types';
+import { RECORD_KINDS, type DateRange, type RecordKind, type Records } from './types';
 
 /** SE-9: what to delete. `kinds` are the record collections, `range` bounds them by time (open sides allowed). */
 export interface DeleteSelection {
@@ -41,8 +41,8 @@ export const countPlan = (plan: DeletePlan): Record<RecordKind, number> =>
 
 /**
  * EN-1: the ids removed when one entry is deleted. The entry itself, plus what cannot outlive it: a meal's
- * reactions, a skin or nail entry's photos, and the end marker that closes a deleted flare start. Deleting
- * an end marker alone removes only it, which reopens the flare. Returns an empty plan for an unknown id.
+ * reactions, a skin or nail entry's photos. Flares are derived from skin entries (SK-6), so deleting an entry
+ * changes them without any marker to remove. Returns an empty plan for an unknown id.
  */
 export function planEntryDeletion(records: Records, kind: RecordKind, id: string): DeletePlan {
   const plan = Object.fromEntries(RECORD_KINDS.map((k) => [k, [] as string[]])) as DeletePlan;
@@ -54,14 +54,6 @@ export function planEntryDeletion(records: Records, kind: RecordKind, id: string
   } else if (kind === 'skinEntries' || kind === 'nailEntries') {
     const entryKind = kind === 'skinEntries' ? 'skinEntry' : 'nailEntry';
     plan.photos = records.photos.filter((p) => p.entryKind === entryKind && p.entryId === id).map((p) => p.id);
-  } else if (kind === 'flareMarkers') {
-    const marker = entry as FlareMarker;
-    if (marker.kind === 'start') {
-      const next = records.flareMarkers
-        .filter((m) => m.areaId === marker.areaId && m.at.utc > marker.at.utc)
-        .sort((a, b) => a.at.utc.localeCompare(b.at.utc) || a.id.localeCompare(b.id))[0];
-      if (next?.kind === 'end') plan.flareMarkers.push(next.id);
-    }
   }
   return plan;
 }

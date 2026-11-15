@@ -8,7 +8,8 @@ import { backupCardDue, daysSinceExport } from '@/core/usecases/backup';
 import { logStool } from '@/core/usecases/checkin';
 import { dayLog, dayStatus, treatmentShortcuts, type DayStatus, type LogRow, type TreatmentShortcut } from '@/core/usecases/dayLog';
 import { applyTreatment } from '@/core/usecases/events';
-import { markFlare, openFlareAreas } from '@/core/usecases/flares';
+import type { FlarePeriod } from '@/core/model/flares';
+import { openFlare } from '@/core/usecases/flares';
 import { defaultPreferences, type QuickAction } from '@/core/model/preferences';
 import { getPreferences, moveQuickAction, setQuickActionHidden, visibleQuickActions } from '@/core/usecases/preferences';
 import { areaLabel, errorMessage, itemLabel, t } from '@/i18n';
@@ -47,7 +48,7 @@ export default function TodayScreen() {
   const [ctx, setCtx] = useState<{ areas: SkinArea[]; treatments: ListItem[] }>({ areas: [], treatments: [] });
   const [status, setStatus] = useState<DayStatus | null>(null);
   const [shortcuts, setShortcuts] = useState<TreatmentShortcut[]>([]);
-  const [flares, setFlares] = useState<string[]>([]);
+  const [flare, setFlare] = useState<FlarePeriod | null>(null);
   const [backup, setBackup] = useState<{ due: boolean; days: number | null }>({ due: false, days: null });
   const [stoolOpen, setStoolOpen] = useState(false);
   const [highlight, setHighlight] = useState<Set<string>>(new Set());
@@ -98,7 +99,7 @@ export default function TodayScreen() {
       setCtx({ areas: await deps.repo.listAreas(), treatments: await deps.repo.listItems('treatments') });
       setStatus(await dayStatus(deps, day));
       setShortcuts(await treatmentShortcuts(deps));
-      setFlares([...(await openFlareAreas(deps))]);
+      setFlare(await openFlare(deps));
       setBackup({ due: await backupCardDue(deps), days: await daysSinceExport(deps) });
       setLayout((await getPreferences(deps)).quickActions);
     })().catch((e) => Alert.alert(errorMessage(e)));
@@ -252,13 +253,14 @@ export default function TodayScreen() {
         </View>
       )}
 
-      {isToday &&
-        flares.map((areaId) => (
-          <Card key={areaId}>
-            <Text style={styles.rowText}>{t('cards.openFlare', { area: areaName(areaId) })}</Text>
-            <Button kind="secondary" title={t('cards.endFlare')} onPress={() => void run(() => markFlare(deps, { areaId, kind: 'end', at: atNow() }))} />
-          </Card>
-        ))}
+      {isToday && flare && (
+        <Card>
+          <Text style={styles.rowText}>
+            {t('cards.openFlare', { since: localDay(flare.start.utc, flare.start.tz, deps.dayStart.get()), areas: flare.areaIds.map(areaName).join(', ') })}
+          </Text>
+          <Button kind="secondary" title={t('cards.openAreas')} onPress={() => router.navigate('/review')} />
+        </Card>
+      )}
       {status && !status.checkIn && day <= today && (
         <Card>
           <Text style={styles.rowText}>{t('cards.notLogged')}</Text>

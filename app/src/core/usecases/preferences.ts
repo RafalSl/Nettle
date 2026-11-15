@@ -32,6 +32,12 @@ export async function setDayStartHour(deps: Deps, hour: number): Promise<number>
   return (await change(deps, (p) => void (p.dayStartHour = hour))).dayStartHour;
 }
 
+/** SK-6: the severity at or above which skin entries count as a flare, a whole number 1 to 10. Flares are recomputed from the entries. */
+export async function setFlareThreshold(deps: Deps, threshold: number): Promise<number> {
+  if (!Number.isInteger(threshold) || threshold < 1 || threshold > 10) throw new NettleError('invalid_value', 'flareThreshold');
+  return (await change(deps, (p) => void (p.flareThreshold = threshold))).flareThreshold;
+}
+
 /** IN-14, UX-6: a favorite removed in Settings (the key is the suggestion identity). */
 export async function removeFavorite(deps: Deps, kind: 'meals' | 'drinks' | 'medications', key: string): Promise<void> {
   await change(deps, (p) => {

@@ -6,6 +6,7 @@ import { NettleError } from '../model/errors';
 import { addDays, localDateTime, makeStamp } from '../model/time';
 import type { Analysis, LocalDay } from '../model/types';
 import type { Language, LlmImage, LlmRequest } from '../ports/llm';
+import { getPreferences } from './preferences';
 import type { Deps } from './deps';
 import { currentProvider, getModel } from './llm';
 
@@ -46,7 +47,7 @@ export async function prepareAnalysis(deps: Deps, sel: AnalysisSelection): Promi
   if (photoIds.length > MAX_ANALYSIS_PHOTOS) throw new NettleError('too_many_photos');
 
   const snap = await deps.repo.snapshot();
-  const built = buildAnalysisInput(snap, sel.dayFrom, sel.dayTo, deps.dayStart.get());
+  const built = buildAnalysisInput(snap, sel.dayFrom, sel.dayTo, deps.dayStart.get(), (await getPreferences(deps)).flareThreshold);
   if (built.periodRecords === 0) throw new NettleError('analysis_no_data');
 
   const areas = new Map(snap.skinAreas.map((a) => [a.id, a.nameOverride ?? a.name]));

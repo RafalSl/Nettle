@@ -53,7 +53,5 @@ export function describeRow(row: LogRow, ctx: RowContext): { title: string; deta
       return { title: t('log.drink', { name: row.record.name, ml: row.record.amountMl }), detail: [row.record.alcohol ? t('log.alcoholic') : '', sourceLabel(row.record.source)].filter(Boolean).join(' · ') || null };
     case 'medicationEntries':
       return { title: t('log.medication', { name: row.record.name }), detail: row.record.dose };
-    case 'flareMarkers':
-      return { title: t(row.record.kind === 'start' ? 'log.flareStart' : 'log.flareEnd', { area: area(row.record.areaId) }), detail: null };
   }
 }

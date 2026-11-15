@@ -4,7 +4,6 @@ import { localDay, makeStamp } from '../model/time';
 import type {
   Drink,
   CheckIn,
-  FlareMarker,
   Meal,
   MedicationEntry,
   NailEntry,
@@ -161,36 +160,6 @@ export async function editCheckIn(deps: Deps, id: string, input: CheckInInput): 
   const record: CheckIn = { id, at, day, values, note: input.note?.trim() || null };
   await deps.repo.putRecord('checkIns', record);
   return record;
-}
-
-/**
- * EN-1, SK-6: move a flare marker in time or change its note. Start stays before end, and the markers of an
- * area keep alternating start, end, start, ... so flares do not overlap.
- */
-export async function editFlareMarker(
-  deps: Deps,
-  id: string,
-  input: { at?: Date; note?: string },
-): Promise<FlareMarker> {
-  const orig = (await getEntry(deps, 'flareMarkers', id)) as FlareMarker;
-  const at = input.at ? makeStamp(deps.clock, input.at) : orig.at;
-  const order = (a: FlareMarker, b: FlareMarker) => a.at.utc.localeCompare(b.at.utc) || a.id.localeCompare(b.id);
-  const same = (await deps.repo.listRecords('flareMarkers')).filter((m) => m.areaId === orig.areaId).sort(order);
-  const i = same.findIndex((m) => m.id === id);
-  const partner = orig.kind === 'end' ? same[i - 1] : same[i + 1];
-  if (partner && partner.kind !== orig.kind) {
-    const startUtc = orig.kind === 'start' ? at.utc : partner.at.utc;
-    const endUtc = orig.kind === 'start' ? partner.at.utc : at.utc;
-    if (startUtc >= endUtc) throw new NettleError('flare_end_before_start', id);
-  }
-  const edited: FlareMarker = { ...orig, at, note: input.note === undefined ? orig.note : input.note.trim() || null };
-  const after = same.map((m) => (m.id === id ? edited : m)).sort(order);
-  const wanted = (n: number) => (n % 2 === 0 ? 'start' : 'end');
-  if (after.some((m, n) => m.kind !== wanted(n) || (n > 0 && m.at.utc === after[n - 1]!.at.utc))) {
-    throw new NettleError('flare_overlap', id);
-  }
-  await deps.repo.putRecord('flareMarkers', edited);
-  return edited;
 }
 
 /** Counts per kind of what a plan removes besides the entry itself. */

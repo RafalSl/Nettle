@@ -268,6 +268,10 @@ export const MIGRATIONS: string[] = [
   ALTER TABLE list_item ADD COLUMN description TEXT;
   UPDATE preference SET json = json_remove(json, '$.checkInScores');
   `,
+  // SK-6: flares are derived from skin entries, so the marker table goes (prototype data only).
+  `
+  DROP TABLE flare_marker;
+  `,
 ];
 
 export async function migrate(db: SqlDb): Promise<void> {

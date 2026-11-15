@@ -114,9 +114,6 @@
     "noChange": "No change",
     "noChangeHint": "Saves a new entry with the same scores as the last one for this area.",
     "prefilled": "Scores start from the last entry for this area.",
-    "flareStart": "Flare started",
-    "flareEnd": "Flare ended",
-    "flareOpen": "A flare is open in this area.",
     "noChangeAll": "No change for all areas",
     "noChangeAllNeed": "These areas need a first entry: {{list}}.",
     "noChangeAllDone": "{{n}} areas saved with no change."
@@ -222,10 +219,6 @@
     "summary_empty": "The summary is empty. Write something or discard it.",
     "summary_mismatch": "That summary was made for another period or language. Make a new one.",
     "too_many_photos": "Too many photos for one run. Choose fewer.",
-    "flare_already_started": "A flare is already marked as started for this area.",
-    "flare_not_started": "No flare is marked as started for this area.",
-    "flare_end_before_start": "A flare cannot end before it starts.",
-    "flare_overlap": "This time overlaps the previous or the next flare marker of this area.",
     "checkin_day_taken": "That day already has a Daily health record. Open it instead.",
     "meal_after_reaction": "A meal cannot be moved after its reaction.",
     "duplicate_area_name": "An area with this name already exists.",
@@ -272,9 +265,6 @@
   },
   "more": {
     "nailTitle": "Nails",
-    "flareOpenMark": "open",
-    "flareWillStart": "Saving marks a flare as started in this area.",
-    "flareWillEnd": "Saving marks the open flare in this area as ended.",
     "nailAreaName": "New nail (for example left thumb)",
     "nailAddArea": "Add nail",
     "nailNone": "Add a nail first.",
@@ -418,8 +408,7 @@
       "stoolEntries": "{{n}} stool entries",
       "changeEvents": "{{n}} change events",
       "analyses": "{{n}} AI analyses",
-      "reportSummaries": "{{n}} report summaries",
-      "flareMarkers": "{{n}} flare markers"
+      "reportSummaries": "{{n}} report summaries"
     }
   },
   "exportPhotos": {
@@ -508,7 +497,6 @@
     "exported": "Created {{date}}",
     "disclaimer": "This report is a summary of what one person recorded. It is not a diagnosis or medical advice. Scores are the person's own ratings.",
     "flares": "Flares",
-    "ongoing": "ongoing",
     "area": "Area",
     "start": "Start",
     "end": "End",
@@ -571,7 +559,9 @@
     "aiAgainst": "Against",
     "aiUncertainty": "Uncertainty",
     "aiOrder": "Order and timing",
-    "aiLimits": "What the data cannot show"
+    "aiLimits": "What the data cannot show",
+    "flaresBasis": "Flares are periods in which a skin area's severity was {{n}} or higher. Their timing is only as precise as the logging.",
+    "openAtLastEntry": "open at last entry ({{date}})"
   },
   "export": {
     "extras": "Extra files",
@@ -628,7 +618,10 @@
     "itemsHint": "Scores run from 0 to 10; yes or no items record only a yes. An archived item is no longer asked, but its history stays in the report and the analysis.",
     "itemScore": "New item is a score",
     "itemYesNo": "New item is yes or no",
-    "itemDescription": "Description (optional)"
+    "itemDescription": "Description (optional)",
+    "flareThresholdTitle": "Flares",
+    "flareThresholdHint": "A flare is a period in which a skin area's severity is at or above this number. It ends at the first later entry below it. Changing it recomputes the flares from the entries.",
+    "flareThresholdLabel": "Severity at or above"
   },
   "about": {
     "title": "About",
@@ -645,7 +638,6 @@
   },
   "nav": {
     "about": "About",
-    "flare": "Flare",
     "settings": "Settings",
     "more": "More",
     "meal": "Meal",
@@ -684,7 +676,6 @@
     "moreReaction": "Reaction after a meal",
     "moreNails": "Nail update",
     "moreChange": "Started or stopped",
-    "moreFlare": "Flare start or end",
     "stool": "Stool",
     "edit": "Edit",
     "done": "Done",
@@ -760,8 +751,6 @@
     "drink": "{{name}}, {{ml}} ml",
     "alcoholic": "alcohol",
     "medication": "{{name}}",
-    "flareStart": "Flare started: {{area}}",
-    "flareEnd": "Flare ended: {{area}}",
     "scores": "severity {{severity}}, itch {{itch}}, pain {{pain}}",
     "deleteTitle": "Delete this entry?",
     "deleteAction": "Delete entry",
@@ -770,7 +759,6 @@
     "kinds": {
       "reactions": "reactions",
       "photos": "photos",
-      "flareMarkers": "flare end",
       "meals": "meals",
       "skinEntries": "entries",
       "nailEntries": "entries"
@@ -778,13 +766,13 @@
     "editAction": "Edit entry"
   },
   "cards": {
-    "openFlare": "Flare open: {{area}}",
-    "endFlare": "End flare",
+    "openFlare": "Flare since {{since}}: {{areas}}",
     "openCheckin": "Open Daily health",
     "noExport": "No export yet. The diary exists only on this phone.",
     "lastExport": "Last export {{days}} days ago.",
     "openBackup": "Back up now",
-    "notLogged": "This day has no Daily health record yet."
+    "notLogged": "This day has no Daily health record yet.",
+    "openAreas": "Open Areas"
   },
   "edit": {
     "title": "Edit entry",

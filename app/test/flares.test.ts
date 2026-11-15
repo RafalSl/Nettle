@@ -1,58 +1,78 @@
-import { NettleError } from '@/core/model/errors';
+import { DEFAULT_FLARE_THRESHOLD, deriveFlares } from '@/core/model/flares';
 import { buildAnalysisInput } from '@/core/llm/analysisInput';
-import { markFlare, openFlareAreas } from '@/core/usecases/flares';
-import { archiveSkinArea } from '@/core/usecases/skin';
+import { flarePeriods, openFlare } from '@/core/usecases/flares';
+import { setFlareThreshold } from '@/core/usecases/preferences';
+import { logSkinEntry } from '@/core/usecases/skin';
+import { NettleError } from '@/core/model/errors';
 import { MemoryRepo } from './fakes/memoryRepo';
 import { makeDeps } from './helpers/fixtures';
 
-const code = async (p: Promise<unknown>) =>
-  p.then(
-    () => 'no error',
-    (e: unknown) => (e instanceof NettleError ? e.code : 'other'),
-  );
+const at = (day: string, hour = '08') => ({ utc: `2026-01-${day}T${hour}:00:00.000Z`, tz: 'UTC' });
+const entry = (id: string, areaId: string, day: string, severity: number, hour = '08') => ({
+  id,
+  areaId,
+  at: at(day, hour),
+  scores: { severity, itch: 0, pain: 0, dryness: 0, scaling: 0 },
+});
+const when = (d: string, severity: number, area = 'area-chin') => entry(`${area}-${d}`, area, d, severity);
 
-describe('flare markers (SK-6)', () => {
-  it('SK-6 marks a start and an end per area, independently of the scores', async () => {
+describe('derived flares (SK-6)', () => {
+  it('SK-6 a flare starts at the first entry at or above the threshold and ends at the first later entry below it', () => {
+    const flares = deriveFlares([when('10', 5), when('12', 8), when('14', 9), when('16', 7), when('20', 8), when('22', 2)], 8);
+    expect(flares).toEqual([
+      { start: at('12'), end: at('16'), areaIds: ['area-chin'], lastEntryAt: at('14') },
+      { start: at('20'), end: at('22'), areaIds: ['area-chin'], lastEntryAt: at('20') },
+    ]);
+  });
+
+  it('SK-6 a flare with no later entry below the threshold is open at its last entry', () => {
+    const [f] = deriveFlares([when('10', 9), when('12', 10)], 8);
+    expect(f).toEqual({ start: at('10'), end: null, areaIds: ['area-chin'], lastEntryAt: at('12') });
+  });
+
+  it('SK-6 overlapping flares of different areas merge into one period listing the areas', () => {
+    const flares = deriveFlares(
+      [when('10', 8), when('14', 3), when('12', 9, 'area-neck'), when('16', 4, 'area-neck'), when('20', 8, 'area-arm'), when('21', 1, 'area-arm')],
+      8,
+    );
+    expect(flares).toHaveLength(2);
+    expect(flares[0]).toMatchObject({ start: at('10'), end: at('16'), areaIds: ['area-chin', 'area-neck'] });
+    expect(flares[1]).toMatchObject({ start: at('20'), end: at('21'), areaIds: ['area-arm'] });
+  });
+
+  it('SK-6 an open flare absorbs a later one of another area, and stays open', () => {
+    const flares = deriveFlares([when('10', 8), when('12', 9, 'area-neck'), when('13', 2, 'area-neck')], 8);
+    expect(flares).toEqual([{ start: at('10'), end: null, areaIds: ['area-chin', 'area-neck'], lastEntryAt: at('12') }]);
+  });
+
+  it('SK-6 the threshold decides, entries are judged in time order, and nothing is derived without entries', () => {
+    expect(deriveFlares([], 8)).toEqual([]);
+    expect(deriveFlares([when('12', 5), when('10', 5)], 8)).toEqual([]);
+    expect(deriveFlares([when('12', 5), when('10', 5)], 5)).toHaveLength(1);
+    expect(deriveFlares([when('14', 2), when('10', 9)], 8)[0]).toMatchObject({ start: at('10'), end: at('14') }); // given out of order
+    expect(DEFAULT_FLARE_THRESHOLD).toBe(8);
+  });
+
+  it('SK-6 the flares follow the entries and the threshold in Settings', async () => {
+    const deps = makeDeps(new MemoryRepo());
+    const scores = (severity: number) => ({ severity, itch: 0, pain: 0, dryness: 0, scaling: 0 });
+    await logSkinEntry(deps, { areaId: 'area-chin', scores: scores(6), at: new Date('2026-01-10T08:00:00.000Z') });
+    expect(await flarePeriods(deps)).toEqual([]);
+    await setFlareThreshold(deps, 6);
+    expect(await openFlare(deps)).toMatchObject({ areaIds: ['area-chin'], end: null });
+    await logSkinEntry(deps, { areaId: 'area-chin', scores: scores(2), at: new Date('2026-01-12T08:00:00.000Z') });
+    expect(await openFlare(deps)).toBeNull();
+    expect(await flarePeriods(deps)).toHaveLength(1);
+    for (const bad of [0, 11, 2.5]) await expect(setFlareThreshold(deps, bad)).rejects.toBeInstanceOf(NettleError);
+  });
+
+  it('LL-2 the analysis input lists derived flares by area name with the threshold used', async () => {
     const repo = new MemoryRepo();
     const deps = makeDeps(repo);
-    await markFlare(deps, { areaId: 'area-chin', kind: 'start', at: new Date('2026-01-10T08:00:00.000Z') });
-    await markFlare(deps, { areaId: 'area-neck', kind: 'start', at: new Date('2026-01-11T08:00:00.000Z'), note: ' n ' });
-    expect([...(await openFlareAreas(deps))].sort()).toEqual(['area-chin', 'area-neck']);
-    await markFlare(deps, { areaId: 'area-chin', kind: 'end', at: new Date('2026-01-14T08:00:00.000Z') });
-    expect([...(await openFlareAreas(deps))]).toEqual(['area-neck']);
-    await markFlare(deps, { areaId: 'area-chin', kind: 'start', at: new Date('2026-01-20T08:00:00.000Z') }); // a new flare
-    expect((await openFlareAreas(deps)).has('area-chin')).toBe(true);
-    expect((await repo.listRecords('flareMarkers')).find((m) => m.areaId === 'area-neck')?.note).toBe('n');
-    expect(await repo.listSkinEntries()).toEqual([]);
-  });
-
-  it('SK-6 refuses a second start, an end without a start, unknown and archived areas', async () => {
-    const deps = makeDeps(new MemoryRepo());
-    expect(await code(markFlare(deps, { areaId: 'area-chin', kind: 'end' }))).toBe('flare_not_started');
-    await markFlare(deps, { areaId: 'area-chin', kind: 'start' });
-    expect(await code(markFlare(deps, { areaId: 'area-chin', kind: 'start' }))).toBe('flare_already_started');
-    expect(await code(markFlare(deps, { areaId: 'nope', kind: 'start' }))).toBe('unknown_area');
-    await archiveSkinArea(deps, 'area-neck');
-    expect(await code(markFlare(deps, { areaId: 'area-neck', kind: 'start' }))).toBe('area_archived');
-  });
-
-  it('SK-6 keeps start and end alternating when a marker is backdated', async () => {
-    const deps = makeDeps(new MemoryRepo());
-    const at = (day: string) => new Date(`2026-01-${day}T08:00:00.000Z`);
-    await markFlare(deps, { areaId: 'area-chin', kind: 'start', at: at('10') });
-    await markFlare(deps, { areaId: 'area-chin', kind: 'end', at: at('14') });
-    await markFlare(deps, { areaId: 'area-chin', kind: 'start', at: at('20') });
-    expect(await code(markFlare(deps, { areaId: 'area-chin', kind: 'end', at: at('16') }))).toBe('flare_not_started'); // between end and start
-    expect(await code(markFlare(deps, { areaId: 'area-chin', kind: 'start', at: at('12') }))).toBe('flare_already_started');
-    expect(await code(markFlare(deps, { areaId: 'area-chin', kind: 'end', at: at('12') }))).toBe('flare_overlap'); // a second end before the first
-    await markFlare(deps, { areaId: 'area-chin', kind: 'end', at: at('25') }); // the normal case still works
-  });
-
-  it('LL-2 flare markers appear in the analysis timeline by area name', async () => {
-    const repo = new MemoryRepo();
-    const deps = makeDeps(repo);
-    await markFlare(deps, { areaId: 'area-chin', kind: 'start', at: new Date('2026-01-10T08:00:00.000Z') });
+    const scores = (severity: number) => ({ severity, itch: 0, pain: 0, dryness: 0, scaling: 0 });
+    await logSkinEntry(deps, { areaId: 'area-chin', scores: scores(9), at: new Date('2026-01-10T08:00:00.000Z') });
     const data = JSON.parse(buildAnalysisInput(await repo.snapshot(), '2026-01-10', '2026-01-11').json);
-    expect(data.days[0].flares).toEqual([{ time: '09:00', area: 'Chin', marker: 'start' }]);
+    expect(data.severity_threshold_for_flares).toBe(8);
+    expect(data.flares).toEqual([{ areas: ['Chin'], start: '2026-01-10 09:00', end: null, open_at_last_entry: '2026-01-10 09:00' }]);
   });
 });

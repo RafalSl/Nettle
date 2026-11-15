@@ -8,7 +8,6 @@ import { applyTreatment, logReaction } from '@/core/usecases/events';
 import { logMeal } from '@/core/usecases/logMeal';
 import { addArea, archiveSkinArea, logNailEntry, logSkinEntry } from '@/core/usecases/skin';
 import { areasWithEntries, areaTimeline, trendPoints } from '@/core/usecases/timeline';
-import { markFlare } from '@/core/usecases/flares';
 import { MemoryRepo } from './fakes/memoryRepo';
 import { makeDeps } from './helpers/fixtures';
 
@@ -123,31 +122,29 @@ describe('days list and report preview (UX-1, EX-14)', () => {
 });
 
 describe('area timeline (SK-8)', () => {
-  it('SK-8 groups an area by the entry day, newest first, with each entry beside its photos and the flare markers', async () => {
+  it('SK-8 groups an area by the entry day, newest first, with each entry beside its photos and the derived flare marks', async () => {
     const deps = makeDeps(new MemoryRepo());
     const early = await logSkinEntry(deps, { areaId: 'area-chin', scores, at: d('2026-01-10T08:00:00.000Z') });
-    const late = await logSkinEntry(deps, { areaId: 'area-chin', scores: { ...scores, itch: 9 }, at: d('2026-01-12T20:00:00.000Z') });
+    const late = await logSkinEntry(deps, { areaId: 'area-chin', scores: { ...scores, severity: 9 }, at: d('2026-01-12T20:00:00.000Z') });
     const other = await logSkinEntry(deps, { areaId: 'area-neck', scores, at: d('2026-01-12T08:00:00.000Z') });
     const nail = await addArea(deps, 'Synthetic thumb', 'nail');
     await logNailEntry(deps, { areaId: nail.id, stage: 'white', extent: 'none', at: d('2026-01-12T09:00:00.000Z') });
     const p1 = await addPhoto(deps, { entryKind: 'skinEntry', entryId: early.id, sourceUri: 'a', at: d('2026-01-10T08:05:00.000Z') });
     await addPhoto(deps, { entryKind: 'skinEntry', entryId: other.id, sourceUri: 'b' });
-    await markFlare(deps, { areaId: 'area-chin', kind: 'start', at: d('2026-01-12T07:00:00.000Z') });
     const days = await areaTimeline(deps, 'area-chin');
     expect(days.map((x) => x.day)).toEqual(['2026-01-12', '2026-01-10']);
     expect(days[0]!.entries.map((e) => e.entry.id)).toEqual([late.id]);
-    expect(days[0]!.flares.map((f) => f.kind)).toEqual(['start']);
+    expect(days[0]!.flares.map((f) => f.kind)).toEqual(['start']); // severity 9 is a derived flare start
     expect(days[1]!.entries[0]).toMatchObject({ kind: 'skin', photos: [{ id: p1.id }] });
     expect(await areaTimeline(deps, nail.id)).toMatchObject([{ day: '2026-01-12', entries: [{ kind: 'nail', photos: [] }] }]);
     expect(await areaTimeline(deps, 'area-sternum')).toEqual([]);
   });
 
-  it('SK-8 trend points average a day, go oldest first, carry the flare marks, and skip other kinds', async () => {
+  it('SK-8 trend points average a day, go oldest first, carry the derived flare marks, and skip other kinds', async () => {
     const deps = makeDeps(new MemoryRepo());
     await logSkinEntry(deps, { areaId: 'area-chin', scores: { ...scores, severity: 2 }, at: d('2026-01-10T08:00:00.000Z') });
     await logSkinEntry(deps, { areaId: 'area-chin', scores: { ...scores, severity: 5 }, at: d('2026-01-10T18:00:00.000Z') });
     await logSkinEntry(deps, { areaId: 'area-chin', scores: { ...scores, severity: 8 }, at: d('2026-01-12T08:00:00.000Z') });
-    await markFlare(deps, { areaId: 'area-chin', kind: 'start', at: d('2026-01-12T07:00:00.000Z') });
     const days = await areaTimeline(deps, 'area-chin');
     expect(trendPoints(days, 'severity')).toEqual([
       { day: '2026-01-10', value: 3.5, flare: null },

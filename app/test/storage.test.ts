@@ -162,18 +162,6 @@ describe('sqlite migrations', () => {
     ).rejects.toThrow();
   });
 
-  it('SK-6 stores flare markers and enforces kind and area in the database', async () => {
-    const db = createNodeSqliteDb();
-    const repo = await SqliteRepo.open(db);
-    const marker = { id: 'f1', at: { utc: '2026-01-01T00:00:00.000Z', tz: 'UTC' }, areaId: 'area-chin', kind: 'start' as const, note: null };
-    await repo.addRecord('flareMarkers', marker);
-    expect(await repo.listRecords('flareMarkers')).toEqual([marker]);
-    await expect(repo.addRecord('flareMarkers', { ...marker, id: 'f2', areaId: 'nope' })).rejects.toThrow();
-    await expect(
-      db.run(`INSERT INTO flare_marker (id, ts_utc, tz, area_id, kind) VALUES ('x', '2026-01-01T00:00:00.000Z', 'UTC', 'area-chin', 'pause')`),
-    ).rejects.toThrow();
-  });
-
   it('NF-3 a database left at any earlier version upgrades to exactly the schema of a fresh one', async () => {
     const schema = async (db: ReturnType<typeof createNodeSqliteDb>) =>
       (await db.all<{ name: string; sql: string }>("SELECT name, sql FROM sqlite_master WHERE name NOT LIKE 'sqlite_%' ORDER BY name"))

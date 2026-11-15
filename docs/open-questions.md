@@ -73,6 +73,7 @@ Requirements and flows are in `docs/requirements.md`, `docs/ux-design.md` and `d
 - Photos in forms (SK-4): `PendingPhotos` in the Skin and Nails forms picks photos that are saved with the entry (`attachPhotos`, dated like the entry; a failed photo never undoes the entry and shows a count); "No change" with photos is a photo-only update; the edit-screen path stays. Cancel keeps nothing.
 - Review browsing (UX-10): the Review tab has Days | Areas (`Segmented`). Days is one month (arrows, a jump picker, a `month` route parameter), a calendar grid whose cells carry text marks (• entries, ✓ Daily health, ▲ flare day) and an accessibility label, the month's days below, and the "Incomplete days" switch (days with entries and no Daily health record; days with no entries at all are not listed). Areas groups Skin and Nails (`areaOverview`) with the last severity or stage and its date, flaring areas first, archived areas hidden. The Today flare card opens Areas (`view=areas`). Unbuilt: other filters (decided to wait).
 
+- First run (UX-1, UX-2): an empty diary shows one card on Today (Log a meal, Where do I log…?); an empty Review has a button to Today. No tour.
 - Guide (UX-11): subtitles on More rows and in the layout editor (`entry.*.hint`), descriptions on predefined routine categories and Daily health items (`itemDescriptions.*`), an optional description on every list item (user treatments, categories, items), shown in the Treatment form and in Settings; `GuideScreen` ("Where do I log…?", 16 everyday situations, each opening its form) from More and from Settings, About.
 
 **Not built**
@@ -80,7 +81,6 @@ Requirements and flows are in `docs/requirements.md`, `docs/ux-design.md` and `d
 - *Daily health trends (SK-7).* No trend charts of the Daily health items yet.
 - *No change buttons (SK-3).* Built on the Skin form (all areas) and the nail form (one nail); the Skin form's single-area button existed.
 - *Settings.* Settings groups of UX-6 are all present.
-- *Today.* The first-run empty states beyond text.
 - *Export and import.* Newest-wins merge (EX-12, Later: needs modified timestamps and a schema bump).
 - *Other.* Pruning unused template dependencies. The accessibility pass (UX-8) and the Polish string review are not planned until the user says so (see the section above).
 

@@ -6,7 +6,7 @@ import { addDays, atOnDay, localDay } from '@/core/model/time';
 import type { ListItem, SkinArea } from '@/core/model/types';
 import { backupCardDue, daysSinceExport } from '@/core/usecases/backup';
 import { logStool } from '@/core/usecases/checkin';
-import { dayLog, dayStatus, treatmentShortcuts, type DayStatus, type LogRow, type TreatmentShortcut } from '@/core/usecases/dayLog';
+import { daysWithEntries, dayLog, dayStatus, treatmentShortcuts, type DayStatus, type LogRow, type TreatmentShortcut } from '@/core/usecases/dayLog';
 import { applyTreatment } from '@/core/usecases/events';
 import { openFlareSummary, type OpenFlare } from '@/core/usecases/flares';
 import { defaultPreferences, type EntryType, type RegularItem } from '@/core/model/preferences';
@@ -52,6 +52,8 @@ export default function TodayScreen() {
   const [flare, setFlare] = useState<OpenFlare | null>(null);
   const [backup, setBackup] = useState<{ due: boolean; days: number | null }>({ due: false, days: null });
   const [stoolOpen, setStoolOpen] = useState(false);
+  /** UX-1: nothing has ever been logged: the first-run card explains where to start. */
+  const [diaryEmpty, setDiaryEmpty] = useState(false);
   const [regular, setRegular] = useState<RegularItem[]>([]);
   /** IN-17: the quick sheet of regular items that is open, if any. */
   const [sheetPick, setSheet] = useState<'medication' | 'treatment' | null | undefined>(undefined);
@@ -105,6 +107,7 @@ export default function TodayScreen() {
       setRows(next);
       setCtx({ areas: await deps.repo.listAreas(), treatments: await deps.repo.listItems('treatments'), categories: await deps.repo.listItems('changeCategories') });
       setStatus(await dayStatus(deps, day));
+      setDiaryEmpty((await daysWithEntries(deps, 1)).length === 0);
       setShortcuts(await treatmentShortcuts(deps));
       setFlare(await openFlareSummary(deps));
       setBackup({ due: await backupCardDue(deps), days: await daysSinceExport(deps) });
@@ -298,6 +301,14 @@ export default function TodayScreen() {
         </View>
       )}
 
+      {diaryEmpty && isToday && (
+        // UX-1: an empty diary says where to start; no tour and no onboarding.
+        <Card>
+          <Text style={styles.rowText}>{t('cards.firstRun')}</Text>
+          <Button kind="secondary" title={t('cards.firstMeal')} onPress={() => router.push('/form/meal')} />
+          <Button kind="secondary" title={t('nav.guide')} onPress={() => router.push('/guide')} />
+        </Card>
+      )}
       {isToday && flare && (
         <Card>
           <Text style={styles.rowText}>

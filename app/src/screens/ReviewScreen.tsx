@@ -9,7 +9,7 @@ import { areaLabel, errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
 import { NavRow } from '@/ui/NavRow';
 import { useAnalysisRun } from '@/ui/useAnalysisRun';
-import { Heading, Hint, Label, Screen, Segmented, styles } from '@/ui/components';
+import { Button, Heading, Hint, Label, Screen, Segmented, styles } from '@/ui/components';
 
 const WEEKDAY_KEYS = [2, 3, 4, 5, 6, 7, 1]; // Monday first; the names are in reminders.weekdays (1 = Sunday)
 
@@ -151,6 +151,7 @@ export default function ReviewScreen() {
           </View>
           {incompleteOnly && <Hint>{t('review.incompleteHint')}</Hint>}
           {listed.length === 0 && <Hint>{incompleteOnly ? t('review.noIncomplete') : `${t('review.noDays')} ${t('review.empty')}`}</Hint>}
+          {listed.length === 0 && !incompleteOnly && days.every((d) => d.entries === 0) && <Button kind="secondary" title={t('review.goToday')} onPress={() => router.navigate('/today')} />}
           {listed.map((d) => (
             <NavRow
               key={d.day}

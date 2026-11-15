@@ -421,3 +421,7 @@ Newest entry last. One short entry per working session or meaningful step: what 
 - **Done:** UX-11. "Where do I log…?" from More and from Settings, About; descriptions on every list item and in the Treatment form; subtitles were built with the layout editor. All v0.6 requirements are now built. 694 tests pass.
 - **Cleaned:** `docs/open-questions.md` no longer lists "Decided in v0.6, not built"; stale lines about hide, flare markers and the check-in score switches are corrected.
 - **Next:** the leftovers: first-run empty states, Daily health trend charts, newest-wins merge (EX-12). Then the phone checks.
+
+## 2026-11-15: first-run states (branch feature/empty-states)
+- **Done:** UX-1, UX-2. A first-run card on Today and a way back to Today from an empty Review. 696 tests pass.
+- **Next:** Daily health trend charts, then newest-wins merge (EX-12).

@@ -1,5 +1,5 @@
 import { isDayStartHour } from '../model/dayStart';
-import { ENTRY_TYPES, MAX_SUGGESTION_ROWS, WINDOW_DAYS, type EntryType, type Preferences } from '../model/preferences';
+import { ENTRY_TYPES, MAX_SUGGESTION_ROWS, WINDOW_DAYS, type EntryType, type Preferences, type RegularItem } from '../model/preferences';
 import { ALLERGENS, MEDICATION_CATEGORIES } from '../model/types';
 import { parseBarcode, parseSource, sourceToJson } from './sourceJson';
 import { bad, bool, enumList, isObj, list, nullableText, oneOf, str, stringList, unique, type Obj } from './guards';
@@ -16,6 +16,7 @@ export function preferencesToJson(p: Preferences): Obj {
     quick_actions: { pinned: [...p.quickActions.pinned] },
     day_start_hour: p.dayStartHour,
     flare_threshold: p.flareThreshold,
+    regular: p.regular.map((r) => ({ id: r.id, kind: r.kind, category: r.category, name: r.name, dose: r.dose, treatment_id: r.treatmentId, area_ids: [...r.areaIds], times: r.times.map((t) => ({ hour: t.hour, minute: t.minute })), hide_name: r.hideName })),
   };
 }
 
@@ -25,6 +26,34 @@ const quickList = (o: Obj, k: string, where: string): EntryType[] => {
   unique(v, `${where}.${k}`);
   return v;
 };
+
+const int = (v: unknown, min: number, max: number): v is number => typeof v === 'number' && Number.isInteger(v) && v >= min && v <= max;
+
+/** IN-17: the regular items of the preferences, validated. */
+function parseRegular(o: Obj, where: string): RegularItem[] {
+  const raw = o.regular;
+  if (!Array.isArray(raw)) return bad(`${where}.regular`);
+  const items = raw.map((r: unknown, i): RegularItem => {
+    const w = `${where}.regular[${i}]`;
+    if (!isObj(r)) return bad(w);
+    const kind = oneOf(r, 'kind', ['medication', 'treatment'] as const, w);
+    const times = r.times;
+    if (!Array.isArray(times) || times.length > 8) return bad(`${w}.times`);
+    return {
+      id: str(r, 'id', w),
+      kind,
+      category: kind === 'medication' ? oneOf(r, 'category', MEDICATION_CATEGORIES, w) : null,
+      name: kind === 'medication' ? str(r, 'name', w) : null,
+      dose: nullableText(r, 'dose', w),
+      treatmentId: kind === 'treatment' ? str(r, 'treatment_id', w) : null,
+      areaIds: kind === 'treatment' ? stringList(r, 'area_ids', w) : [],
+      times: times.map((t: unknown, j) => (isObj(t) && int(t.hour, 0, 23) && int(t.minute, 0, 59) ? { hour: t.hour, minute: t.minute } : bad(`${w}.times[${j}]`))),
+      hideName: bool(r, 'hide_name', w),
+    };
+  });
+  unique(items.map((r) => r.id), `${where}.regular`);
+  return items;
+}
 
 /** Turns the untrusted `settings.preferences` object into Preferences, or throws a NettleError. */
 export function parsePreferences(o: Obj, where = 'settings.preferences'): Preferences {
@@ -68,6 +97,7 @@ export function parsePreferences(o: Obj, where = 'settings.preferences'): Prefer
     suggestions: { rows: rows as number, windowDays: windowDays as (typeof WINDOW_DAYS)[number], saveOnTap: bool(sg, 'save_on_tap', `${where}.suggestions`), knownNames: bool(sg, 'known_names', `${where}.suggestions`) },
     quickActions: { pinned },
     dayStartHour: isDayStartHour(o.day_start_hour) ? o.day_start_hour : bad(`${where}.day_start_hour`),
+    regular: parseRegular(o, where),
     flareThreshold: typeof o.flare_threshold === 'number' && Number.isInteger(o.flare_threshold) && o.flare_threshold >= 1 && o.flare_threshold <= 10 ? o.flare_threshold : bad(`${where}.flare_threshold`),
   };
 }

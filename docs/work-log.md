@@ -402,3 +402,8 @@ Newest entry last. One short entry per working session or meaningful step: what 
 ## 2026-11-15: routine change (branch feature/routine-change)
 - **Done:** IN-12. Categories Product and Diet plus the user's own (a list in Settings, Logging, with descriptions), "in use now" for Stopped, "already using, date unknown" for Started; the medication category is removed. Report, analysis input, CSV and data.json follow. 670 tests pass, iOS bundle builds.
 - **Next:** regular medication and treatment (IN-17) with reminders and quick sheets.
+
+## 2026-11-15: regular medication and treatment (branch feature/regular-items)
+- **Done:** IN-17, IN-5, IN-11, SK-9, UX-3, UX-5. Regular items (switch on the forms, Settings screens, quick sheets on the tiles, per-item reminders with a Taken or Applied button, hide-name, Stop, export and re-scheduling after an import). The Daily health reminder is scheduled day by day for 14 days so a day with a record is skipped. 681 tests pass, iOS bundle builds.
+- **Phone check (not verified):** the action buttons in all app states (reports for old SDKs say they were unreliable; the design opens the app and logs, so it does not depend on them), a DATE trigger firing, notification categories in Expo Go.
+- **Next:** photos in the Skin and Nails forms (SK-4), Review browsing (UX-10), the guide (UX-11).

@@ -1,9 +1,10 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, TextInput, View } from 'react-native';
+import { Alert, Switch, Text, TextInput, View } from 'react-native';
 import type { ListItem, SkinArea } from '@/core/model/types';
 import { applyTreatment } from '@/core/usecases/events';
 import { addListItem, listActiveItems } from '@/core/usecases/lists';
+import { addRegularTreatment } from '@/core/usecases/regular';
 import { listActiveAreas } from '@/core/usecases/skin';
 import { areaLabel, errorMessage, itemLabel, t } from '@/i18n';
 import { useServices } from '@/services';
@@ -20,6 +21,7 @@ export function TreatmentSection() {
   const [treatmentId, setTreatmentId] = useField<string | null>(null, f.touch);
   const [areaIds, setAreaIds] = useField<Set<string>>(new Set(), f.touch);
   const [newName, setNewName] = useState('');
+  const [regular, setRegular] = useField(false, f.touch);
   const time = useFormTime(f.touch);
 
   const reload = useCallback(() => {
@@ -47,6 +49,7 @@ export function TreatmentSection() {
       missing={missing}
       onSave={async () => {
         await applyTreatment(deps, { treatmentId: selected!, areaIds: [...areaIds], at: time.atForSave });
+        if (regular) await addRegularTreatment(deps, { treatmentId: selected!, areaIds: [...areaIds] }); // IN-17
       }}>
       <View style={{ flexDirection: 'row', gap: 8 }}>
         <TextInput style={[styles.input, { flex: 1 }]} placeholder={t('more.treatmentNew')} value={newName} onChangeText={setNewName} />
@@ -67,6 +70,11 @@ export function TreatmentSection() {
               setAreaIds(next);
             }}
           />
+          <View style={styles.timeRow}>
+            <Text style={styles.rowText}>{t('regular.switch')}</Text>
+            <Switch value={regular} onValueChange={setRegular} accessibilityLabel={t('regular.switch')} />
+          </View>
+          {regular && <Hint>{t('regular.switchHint')}</Hint>}
           <TimeField value={time.value} onChange={time.set} />
         </>
       )}

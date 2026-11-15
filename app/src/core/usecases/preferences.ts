@@ -18,7 +18,7 @@ export async function getPreferences(deps: Deps): Promise<Preferences> {
   return (await deps.repo.getPreferences()) ?? defaultPreferences();
 }
 
-async function change(deps: Deps, edit: (p: Preferences) => void): Promise<Preferences> {
+export async function change(deps: Deps, edit: (p: Preferences) => void): Promise<Preferences> {
   const prefs = await getPreferences(deps);
   edit(prefs);
   await deps.repo.setPreferences(prefs);

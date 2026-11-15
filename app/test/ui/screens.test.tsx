@@ -17,7 +17,8 @@ import { logDrink, logMedication } from '@/core/usecases/intake';
 import { addPhoto } from '@/core/usecases/photos';
 import { applyImport, exportBundle, previewImport } from '@/core/usecases/exchange';
 import { deleteEntry } from '@/core/usecases/entries';
-import { unpinEntryType, toggleFavoriteDrink, toggleFavoriteMeal, updateSuggestionSettings } from '@/core/usecases/preferences';
+import { addRegularMedication } from '@/core/usecases/regular';
+import { pinEntryType, unpinEntryType, toggleFavoriteDrink, toggleFavoriteMeal, updateSuggestionSettings } from '@/core/usecases/preferences';
 import { applyTreatment, logChangeEvent, logReaction } from '@/core/usecases/events';
 import { addListItem, archiveListItem } from '@/core/usecases/lists';
 import { saveApiKey } from '@/core/usecases/llm';
@@ -588,7 +589,7 @@ describe('screen flows (NF-2, NF-3)', () => {
     const { tree } = await mount(() => require('@/app/settings/reminders'), deps);
     await toggle(tree, en.reminders.checkIn);
     await flush();
-    expect((deps.notifier as unknown as { scheduled: { id: string }[] }).scheduled.map((s) => s.id)).toEqual(['checkin']);
+    expect((deps.notifier as unknown as { scheduled: { id: string }[] }).scheduled.every((s) => s.id.startsWith('checkin-'))).toBe(true); // one per day ahead
     expect(tree.root.findAll((n) => n.props.accessibilityLabel === en.reminders.checkIn && n.props.value === true).length).toBeGreaterThan(0);
 
     const refused = nowDeps();
@@ -1393,6 +1394,105 @@ describe('Suggestion settings and quick-action layout (IN-14, UX-2, UX-6)', () =
     await flush();
     await press(more.tree, en.entry.stool.title);
     expect(mockRouter.push).toHaveBeenLastCalledWith('/form/stool');
+  });
+});
+
+describe('Regular medication and treatment (IN-17)', () => {
+  beforeEach(() => {
+    mockRouter.push.mockClear();
+    mockRouter.back.mockClear();
+    jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    mockParams.current = {};
+  });
+  afterEach(() => jest.restoreAllMocks());
+  const today = () => require('@/app/(tabs)/today/index');
+  const saveForm = async () => {
+    let rendered!: ReactTestRenderer;
+    await act(async () => {
+      rendered = create(mockScreen.options!.headerRight!());
+    });
+    await act(async () => {
+      await rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!.props.onPress();
+    });
+    await flush();
+  };
+
+  it('IN-17 the Regular switch on the Medication and Treatment forms adds a regular item, and not switching it adds none', async () => {
+    const deps = nowDeps();
+    const med = await mount(() => require('@/app/form/medication'), deps);
+    await flush();
+    await act(async () => {
+      med.tree.root.findAll((n) => n.props.placeholder === en.more.medName)[0]!.props.onChangeText('Synthetic pill');
+    });
+    await toggle(med.tree, en.regular.switch);
+    await saveForm();
+    expect((await deps.repo.getPreferences())!.regular).toMatchObject([{ kind: 'medication', name: 'Synthetic pill' }]);
+    expect(await deps.repo.listRecords('medicationEntries')).toHaveLength(1);
+
+    const cream = await addListItem(deps, 'treatments', 'Synthetic cream');
+    const tr = await mount(() => require('@/app/form/treatment'), deps);
+    await flush();
+    await press(tr.tree, 'Chin');
+    await toggle(tr.tree, en.regular.switch);
+    await saveForm();
+    expect((await deps.repo.getPreferences())!.regular.map((r) => r.kind)).toEqual(['medication', 'treatment']);
+    expect(cream.id).toBeTruthy();
+  });
+
+  it('IN-17, UX-3 the Medication tile opens a quick sheet of regular items: one tap logs one and locks the row; "Other or earlier…" opens the form', async () => {
+    const deps = nowDeps();
+    await pinEntryType(deps, 'medication');
+    const { tree } = await mount(today, deps);
+    await flush();
+    await press(tree, en.entry.medication.title); // no regular items yet: the full form
+    expect(mockRouter.push).toHaveBeenLastCalledWith('/form/medication');
+    await addRegularMedication(deps, { category: 'medication', name: 'Synthetic pill', dose: '5 mg' });
+    const again = await mount(today, deps);
+    await flush();
+    mockRouter.push.mockClear();
+    await press(again.tree, en.entry.medication.title);
+    expect(mockRouter.push).not.toHaveBeenCalled();
+    expect(hasText(again.tree, en.regular.sheetMedication)).toBe(true);
+    await press(again.tree, 'Synthetic pill 5 mg');
+    await flush();
+    expect(await deps.repo.listRecords('medicationEntries')).toMatchObject([{ name: 'Synthetic pill', dose: '5 mg' }]);
+    const row = again.tree.root.findAll((n) => n.props.accessibilityLabel === 'Synthetic pill 5 mg' && n.props.accessibilityState)[0]!;
+    expect(row.props.accessibilityState?.disabled).toBe(true); // locked against a double tap
+    await press(again.tree, en.regular.other);
+    expect(mockRouter.push).toHaveBeenLastCalledWith('/form/medication');
+  });
+
+  it('SK-9 a tap on a regular reminder opens Today with the quick sheet of its kind', async () => {
+    const deps = nowDeps();
+    await addRegularMedication(deps, { category: 'medication', name: 'Synthetic pill' });
+    mockParams.current = { sheet: 'medication' };
+    const { tree } = await mount(today, deps);
+    await flush();
+    expect(hasText(tree, en.regular.sheetMedication)).toBe(true);
+  });
+
+  it('IN-17 a regular item has its own screen in Settings: reminder times, hide name and Stop', async () => {
+    const deps = nowDeps();
+    const item = await addRegularMedication(deps, { category: 'medication', name: 'Synthetic pill' });
+    const list = await mount(() => require('@/app/settings/regular'), deps);
+    await flush();
+    await press(list.tree, 'Synthetic pill');
+    expect(mockRouter.push).toHaveBeenLastCalledWith({ pathname: '/settings/regular-item', params: { id: item.id } });
+    mockParams.current = { id: item.id };
+    const screen = await mount(() => require('@/app/settings/regular-item'), deps);
+    await flush();
+    await press(screen.tree, en.regular.addTime);
+    await flush();
+    expect((await deps.repo.getPreferences())!.regular[0]!.times).toHaveLength(1);
+    expect((deps.notifier as unknown as FakeNotifier).scheduled.some((x) => x.itemId === item.id)).toBe(true);
+    await toggle(screen.tree, en.regular.hideName);
+    await flush();
+    expect((await deps.repo.getPreferences())!.regular[0]!.hideName).toBe(true);
+    jest.spyOn(ActionSheetIOS, 'showActionSheetWithOptions').mockImplementation((_o, cb) => cb(0));
+    await press(screen.tree, en.regular.stop);
+    await flush();
+    expect((await deps.repo.getPreferences())!.regular).toEqual([]);
+    expect((deps.notifier as unknown as FakeNotifier).scheduled).toEqual([]);
   });
 });
 

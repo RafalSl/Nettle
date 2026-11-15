@@ -6,7 +6,8 @@ import type { ImportMode } from '@/core/ports/storage';
 import { EXTRA_KINDS, LIST_KINDS } from '@/core/model/types';
 import { markExported, presetOptions } from '@/core/usecases/backup';
 import { applyImport, exportBundle, previewImport, type ExportOptions, type ParsedImport } from '@/core/usecases/exchange';
-import { areaLabelIn, currentLanguage, errorMessage, itemLabelIn, t, tIn } from '@/i18n';
+import { areaLabelIn, currentLanguage, errorMessage, itemLabelIn, reminderTexts, t, tIn } from '@/i18n';
+import { restoreReminders } from '@/core/usecases/reminders';
 import { useServices } from '@/services';
 import { confirmWithExport, exportEverything } from '@/ui/exportFirst';
 import { DEFAULT_PHOTO_SELECTION, type PhotoSelection } from '@/core/export/photoSelection';
@@ -126,7 +127,9 @@ export default function DataScreen() {
     try {
       await applyImport(deps, pending, { mode, parts: importParts, restoreTombstoned: restore });
       setPending(null);
-      Alert.alert(t('data.imported'));
+      // IN-17, EX-10: regular items came with the file; their reminders are scheduled again, asking for permission on this phone.
+      const reminders = importParts.settings ? await restoreReminders(deps, reminderTexts()) : true;
+      Alert.alert(t('data.imported'), reminders ? undefined : t('regular.denied'));
     } catch (e) {
       Alert.alert(errorMessage(e));
     }

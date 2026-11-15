@@ -20,7 +20,8 @@
     "no": "Nie",
     "add": "Dodaj",
     "name": "Nazwa",
-    "back": "Wstecz"
+    "back": "Wstecz",
+    "remove": "Usuń"
   },
   "meal": {
     "title": "Dodaj posiłek",
@@ -600,7 +601,14 @@
       "nailsTitle": "Zdjęcia paznokci",
       "nailsBody": "Czas sfotografować paznokcie i zapisać, jak wyglądają.",
       "backupTitle": "Kopia dziennika",
-      "backupBody": "Wyeksportuj dziennik z zakładki Dane i przechowaj plik w bezpiecznym miejscu."
+      "backupBody": "Wyeksportuj dziennik z zakładki Dane i przechowaj plik w bezpiecznym miejscu.",
+      "medicationNamed": "Czas na {{name}}",
+      "treatmentNamed": "Czas na zabieg: {{name}}",
+      "medicationHidden": "Czas na lek",
+      "treatmentHidden": "Czas na zabieg",
+      "regularBody": "Dotknij, aby zapisać.",
+      "taken": "Przyjęto",
+      "applied": "Zastosowano"
     }
   },
   "settings": {
@@ -673,7 +681,9 @@
     "drink": "Napój",
     "medication": "Lek",
     "stool": "Stolec",
-    "remindersPrivacy": "Przypomnienia i prywatność"
+    "remindersPrivacy": "Przypomnienia i prywatność",
+    "regular": "Stałe pozycje",
+    "regularItem": "Stała pozycja"
   },
   "home": {
     "quickActions": "Szybkie akcje",
@@ -910,5 +920,29 @@
       "title": "Zmiana rutyny",
       "hint": "Produkt lub dieta, które zaczęto lub przerwano"
     }
+  },
+  "regular": {
+    "title": "Stałe pozycje",
+    "none": "Brak stałych pozycji. Włącz „Stałe” przy zapisie leku lub zabiegu.",
+    "switch": "Stałe",
+    "switchHint": "Dodaje do szybkiej listy i pozwala ustawić przypomnienia (Ustawienia, Zapisywanie, Stałe pozycje).",
+    "sheetMedication": "Stałe leki i suplementy",
+    "sheetTreatment": "Stałe zabiegi",
+    "other": "Inne lub wcześniej…",
+    "summary": "{{n}} stałych pozycji, {{m}} z przypomnieniami",
+    "kindMedication": "Lek lub suplement",
+    "kindTreatment": "Zabieg",
+    "reminders": "Godziny przypomnień",
+    "noTimes": "Brak przypomnień dla tej pozycji.",
+    "addTime": "Dodaj godzinę",
+    "removeTime": "Usuń {{time}}",
+    "hideName": "Ukryj nazwę w przypomnieniach",
+    "hideNameHint": "Przypomnienie mówi wtedy tylko „Czas na lek” lub „Czas na zabieg”. Nigdy nie pokazuje dawki ani notatki.",
+    "stop": "Zakończ stałą pozycję",
+    "stopTitle": "Zakończyć tę stałą pozycję?",
+    "stopBody": "Jej przypomnienia się kończą, a pozycja znika z szybkiej listy. Zapisane wpisy zostają.",
+    "denied": "Powiadomienia są wyłączone dla tej aplikacji, więc przypomnienia nie mogą się pokazać.",
+    "openSystem": "Otwórz ustawienia systemu",
+    "areas": "Miejsca: {{list}}"
   }
 }

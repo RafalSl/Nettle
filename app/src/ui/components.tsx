@@ -114,6 +114,25 @@ export function ScoreInput({
   );
 }
 
+/** UX-10: a two-or-more way segmented control; exactly one segment is selected. */
+export function Segmented({ items, value, onChange }: { items: { id: string; label: string }[]; value: string; onChange: (id: string) => void }) {
+  return (
+    <View style={{ flexDirection: 'row', borderWidth: 1, borderColor: '#208AEF', borderRadius: 8, overflow: 'hidden' }}>
+      {items.map((i) => (
+        <Pressable
+          key={i.id}
+          accessibilityRole="button"
+          accessibilityLabel={i.label}
+          accessibilityState={{ selected: i.id === value }}
+          onPress={() => onChange(i.id)}
+          style={{ flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center', backgroundColor: i.id === value ? '#208AEF' : 'transparent' }}>
+          <Text style={{ fontSize: 16, color: i.id === value ? '#fff' : '#208AEF' }}>{i.label}</Text>
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+
 /** Tap-to-select chips. `selected` is the set of chosen ids; the caller decides single or multi select. */
 export function Chips({
   items,

@@ -1,6 +1,6 @@
 import { atOnDay, localDay } from '@/core/model/time';
 import { archiveListItem, addListItem } from '@/core/usecases/lists';
-import { dayLog, dayStatus, daysWithEntries, treatmentShortcuts } from '@/core/usecases/dayLog';
+import { dayLog, dayStatus, daysWithEntries, treatmentShortcuts, addMonths, monthOf, monthOverview, monthShape } from '@/core/usecases/dayLog';
 import { reportPreview } from '@/core/usecases/backup';
 import { addPhoto } from '@/core/usecases/photos';
 import { saveCheckIn, logStool } from '@/core/usecases/checkin';
@@ -167,5 +167,28 @@ describe('area timeline (SK-8)', () => {
       ['area-neck', 1, '2026-01-12'],
       ['area-chin', 2, '2026-01-11'],
     ]);
+  });
+});
+
+describe('month overview (UX-10)', () => {
+  it('UX-10 month helpers: neighbours across a year, days in the month, Monday-first weekday of the 1st', () => {
+    expect(addMonths('2026-01', -1)).toBe('2025-12');
+    expect(addMonths('2026-12', 1)).toBe('2027-01');
+    expect(monthShape('2026-02')).toEqual({ days: 28, firstWeekday: 6 }); // 1 Feb 2026 is a Sunday
+    expect(monthShape('2024-02').days).toBe(29);
+    expect(monthOf('2026-01-31')).toBe('2026-01');
+  });
+
+  it('UX-10 every day of the month is listed; entries, a Daily health record and flare days are marked (NF-4, NF-7)', async () => {
+    const deps = makeDeps(new MemoryRepo());
+    await logMeal(deps, { description: 'Synthetic oats', ingredients: [], at: d('2026-01-10T08:00:00.000Z') });
+    await saveCheckIn(deps, { at: d('2026-01-10T20:00:00.000Z'), confirmEmptyDay: true });
+    await logSkinEntry(deps, { areaId: 'area-chin', scores: { ...scores, severity: 9 }, at: d('2026-01-30T08:00:00.000Z') }); // open flare into the next month
+    const jan = await monthOverview(deps, '2026-01');
+    expect(jan).toHaveLength(31);
+    expect(jan.find((x) => x.day === '2026-01-10')).toEqual({ day: '2026-01-10', entries: 2, dailyHealth: true, flare: false });
+    expect(jan.filter((x) => x.flare).map((x) => x.day)).toEqual(['2026-01-30']); // open: to the last entry
+    expect(jan.find((x) => x.day === '2026-01-11')).toEqual({ day: '2026-01-11', entries: 0, dailyHealth: false, flare: false });
+    expect((await monthOverview(deps, '2026-02')).every((x) => x.entries === 0 && !x.flare)).toBe(true);
   });
 });

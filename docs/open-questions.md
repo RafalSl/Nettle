@@ -10,8 +10,13 @@ The file has four parts: undecided questions, accepted limits, decided work that
 - **Long LLM runs (LL-12).** The single request with a 10 minute timeout stays. If analyses time out in practice, choose between streaming (`expo/fetch`, unverified in Expo Go) and the Message Batches API.
 - **Anthropic refusal fallback.** Not used (needs the beta request shape); a refusal shows a message. Revisit once a real call has worked.
 - **Merge keeps local settings.** Merging into a fresh install skips the six pre-seeded predefined areas, so a renamed or archived predefined area from the file is not applied; Replace (settings) restores them. Revisit with EX-12, or adopt incoming values for areas still at factory state.
-- **Polish strings.** Review at the end of the project. First draft: `app/src/i18n/pl.json`.
 - **Unused template dependencies.** Prune when moving to a standalone build (reanimated, gesture-handler, expo-image, expo-glass-effect, `@expo/ui`, ...). No effect in Expo Go.
+
+## Not planned until the user says so
+
+- **Accessibility pass (UX-8).** Decided 2026-11-15: not done and not planned until the user decides.
+- **Polish string review.** Decided 2026-11-15: not in the plan until the user says so (first draft in `app/src/i18n/pl.json`).
+- **Migrations and old data.** Prototyping phase: no migration, no old-data handling until the first GitHub release or until the user changes this (see CLAUDE.md).
 
 ## Accepted limits
 
@@ -58,7 +63,7 @@ Requirements and flows are in `docs/requirements.md`, `docs/ux-design.md` and `d
 - Security: app lock (SE-8) with `expo-local-authentication`.
 
 **Decided in v0.6, not built** (requirements v0.6, 2026-11-15; no application code has changed yet)
-- *Quick-action layout (UX-2, EX-10, NF-2).* `QuickActionLayout` becomes an ordered `pinned` list over a catalog of ten entry types (Meal, Drink, Medication, Skin, Nails, Treatment, Daily health, Stool, Reaction, Routine change). More lists whatever is not pinned, with subtitles; no hide. Edit mode has On Today and In More lists. Stool's quick sheet only while pinned. The preferences parser still accepts the old `order` and `hidden` shape.
+- *Quick-action layout (UX-2, EX-10, NF-2).* `QuickActionLayout` becomes an ordered `pinned` list over a catalog of ten entry types (Meal, Drink, Medication, Skin, Nails, Treatment, Daily health, Stool, Reaction, Routine change). More lists whatever is not pinned, with subtitles; no hide. Edit mode has On Today and In More lists. Stool's quick sheet only while pinned.
 - *Derived flares (SK-6, EN-1, EX-1, EX-13, LL-2).* Flare periods are computed from skin entries at or above a severity threshold (`Preferences`, default 8, Settings, Logging), merged across areas. Remove `FlareMarker`, `flares.ts` (`openFlareAreas`, `markFlare`), `FlareSection`, `form/flare`, flare tombstones and the End flare button. Today gets one flare card that opens Review, Areas. Report, analysis input and timeline marks read derived periods. No migration needed (`schema_version` stays 1).
 - *Routine change (IN-12).* Rename "Started or stopped". Categories Product and Diet plus user categories (same list pattern as areas and tags), descriptions on predefined ones, an "in use now" list for Stopped, "already using, date unknown" for Started. The `medication` category goes.
 - *Regular medication and treatment (IN-17, IN-5, IN-11, SK-9).* A "Regular" switch on the Medication and Treatment forms; a "Regular items" list in Settings, Logging, with a screen per item for reminder times, the hide-name switch and Stop; quick sheet on the tiles with a 3 second row lock; `Notifier` gets per-item reminders, a notification category with Taken and Applied actions and a `regular` target; regular items in the settings part of an export; reminders rescheduled after an import with a permission re-ask.

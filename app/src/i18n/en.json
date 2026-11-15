@@ -746,7 +746,8 @@
     "calendarLegend": "• entries   ✓ Daily health   ▲ flare",
     "incomplete": "Incomplete days",
     "incompleteHint": "Days with entries but no Daily health record.",
-    "noIncomplete": "Every day with entries has a Daily health record."
+    "noIncomplete": "Every day with entries has a Daily health record.",
+    "goToday": "Go to Today"
   },
   "day": {
     "newEntry": "New entry",
@@ -807,7 +808,9 @@
     "notLogged": "This day has no Daily health record yet.",
     "openAreas": "Open Areas",
     "openFlareOne": "Flare: {{area}}, severity {{severity}} since {{since}}",
-    "openFlareMany": "Flare in {{n}} areas, worst: {{area}}"
+    "openFlareMany": "Flare in {{n}} areas, worst: {{area}}",
+    "firstRun": "Your diary is empty. Start with a meal, or see where each kind of entry goes.",
+    "firstMeal": "Log a meal"
   },
   "edit": {
     "title": "Edit entry",

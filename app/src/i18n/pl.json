@@ -746,7 +746,8 @@
     "calendarLegend": "• wpisy   ✓ Zdrowie dnia   ▲ zaostrzenie",
     "incomplete": "Niekompletne dni",
     "incompleteHint": "Dni z wpisami, ale bez wpisu Zdrowie dnia.",
-    "noIncomplete": "Każdy dzień z wpisami ma wpis Zdrowie dnia."
+    "noIncomplete": "Każdy dzień z wpisami ma wpis Zdrowie dnia.",
+    "goToday": "Przejdź do Dziś"
   },
   "day": {
     "newEntry": "Nowy wpis",
@@ -807,7 +808,9 @@
     "notLogged": "Ten dzień nie ma jeszcze wpisu Zdrowie dnia.",
     "openAreas": "Otwórz Miejsca",
     "openFlareOne": "Zaostrzenie: {{area}}, nasilenie {{severity}} od {{since}}",
-    "openFlareMany": "Zaostrzenie w {{n}} miejscach, najgorsze: {{area}}"
+    "openFlareMany": "Zaostrzenie w {{n}} miejscach, najgorsze: {{area}}",
+    "firstRun": "Dziennik jest pusty. Zacznij od posiłku albo zobacz, gdzie zapisać każdy rodzaj wpisu.",
+    "firstMeal": "Zapisz posiłek"
   },
   "edit": {
     "title": "Edycja wpisu",

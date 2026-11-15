@@ -1526,6 +1526,33 @@ describe('Photos in the Skin and Nails forms (SK-4)', () => {
   });
 });
 
+describe('First run (UX-1, UX-2)', () => {
+  beforeEach(() => mockRouter.push.mockClear());
+
+  it('UX-1 an empty diary shows a first-run card on Today that opens the meal form or the guide, and it goes away after the first entry', async () => {
+    const deps = nowDeps();
+    const { tree } = await mount(() => require('@/app/(tabs)/today/index'), deps);
+    await flush();
+    expect(hasText(tree, en.cards.firstRun)).toBe(true);
+    await press(tree, en.cards.firstMeal);
+    expect(mockRouter.push).toHaveBeenLastCalledWith('/form/meal');
+    await press(tree, en.nav.guide);
+    expect(mockRouter.push).toHaveBeenLastCalledWith('/guide');
+    await logMeal(deps, { description: 'Synthetic oats', ingredients: [], at: new Date(Date.now() - 60_000) });
+    const again = await mount(() => require('@/app/(tabs)/today/index'), deps);
+    await flush();
+    expect(hasText(again.tree, en.cards.firstRun)).toBe(false);
+  });
+
+  it('UX-1 an empty Review explains why and leads back to Today', async () => {
+    const { tree } = await mount(() => require('@/app/(tabs)/review/index'), nowDeps());
+    await flush();
+    expect(hasText(tree, en.review.empty)).toBe(true);
+    await press(tree, en.review.goToday);
+    expect(mockRouter.navigate).toHaveBeenLastCalledWith('/today');
+  });
+});
+
 describe('Guide (UX-11)', () => {
   beforeEach(() => mockRouter.push.mockClear());
 

@@ -372,3 +372,8 @@ Newest entry last. One short entry per working session or meaningful step: what 
 - **Verified:** Apple HIG on sheets (Done pairs with Cancel or Back; complex flows are not for sheets) and on sliders (side buttons, stepper alongside). `ux-design.md` records both.
 - **Next:** build in this order: score component and Daily health items (data model first), derived flares, quick-action layout and Settings placement, regular items and reminders, Review browsing, guide. Check the notification buttons on the phone before relying on them.
 - **Left:** everything above is unbuilt; the old behaviour (hide model, flare markers, Mark day complete) still runs in the app.
+
+## 2026-11-15: decisions, status column, baseline (branch feature/baseline-and-docs)
+- **Done (docs):** Status column in every requirements table (Done, v0.6 change pending, Not built; update it when a task finishes). Recorded: prototyping phase, no migrations or old-data handling until the first GitHub release or a changed decision (also in CLAUDE.md); accessibility pass (UX-8) and Polish string review stay out of the plan until the user says so. Requirements v0.6.1.
+- **Baseline:** `npm run check` is green, 660 tests; the two screen tests noted as failing earlier (UX-2, UX-5 log order) pass, also over repeated runs of `test/ui`.
+- **Next:** v0.6 build, phase 1: score input component.

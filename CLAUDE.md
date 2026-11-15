@@ -18,6 +18,15 @@ Requirements: @docs/requirements.md.
 - Develop for Expo Go: use only libraries available in Expo Go unless a spike
   proves otherwise.
 
+## Prototyping phase (decided 2026-11-15)
+Nothing logged so far is real data. Do not plan or build data migrations,
+old-data handling, importers for old export shapes or backward-compatible
+parsers; change the schema freely (`schema_version` stays 1; a plain new SQL
+migration step is fine when the app needs one). This holds until the first
+release on GitHub or until the user changes the decision. Also out of the plan
+until the user says so: the accessibility pass (UX-8) and the Polish string
+review.
+
 ## Health and privacy rules
 - LLM or app output is never a medical conclusion, only tentative hypotheses.
 - Never use real personal data in code, tests, fixtures, logs or commits;

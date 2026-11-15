@@ -1,7 +1,7 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, Pressable, Text, View } from 'react-native';
+import { Alert, AppState, Pressable, Text, View } from 'react-native';
 import { addDays, atOnDay, localDay } from '@/core/model/time';
 import type { ListItem, SkinArea } from '@/core/model/types';
 import { backupCardDue, daysSinceExport } from '@/core/usecases/backup';
@@ -59,8 +59,20 @@ export default function TodayScreen() {
   const [locked, setLocked] = useState<Set<string>>(new Set());
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
-  // After midnight an unchosen day moves on by itself: `today` is read again on every render and focus.
-  const now = deps.clock.now();
+  // After midnight an unchosen day moves on by itself. The clock is state, not a call in the render body: with the
+  // React Compiler a `deps.clock.now()` there is cached and the screen would keep yesterday until it is reloaded.
+  // It is read again on focus, when the app comes back to the foreground and every minute.
+  const [now, setNow] = useState(() => deps.clock.now());
+  const refreshNow = useCallback(() => setNow(deps.clock.now()), [deps]);
+  useFocusEffect(refreshNow);
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => state === 'active' && refreshNow());
+    const timer = setInterval(refreshNow, 60_000);
+    return () => {
+      sub.remove();
+      clearInterval(timer);
+    };
+  }, [refreshNow]);
   const today = localDay(now.toISOString(), deps.clock.timeZone(), deps.dayStart.get());
   const day = chosen && chosen < today ? chosen : today; // a chosen day is never in the future
   const isToday = day === today;

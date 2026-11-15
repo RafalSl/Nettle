@@ -305,7 +305,7 @@ export default function TodayScreen() {
               ? t('cards.openFlareOne', { area: areaName(flare.areas[0]!.areaId), severity: flare.areas[0]!.severity, since: localDay(flare.period.start.utc, flare.period.start.tz, deps.dayStart.get()) })
               : t('cards.openFlareMany', { n: flare.period.areaIds.length, area: areaName(flare.areas[0]!.areaId) })}
           </Text>
-          <Button kind="secondary" title={t('cards.openAreas')} onPress={() => router.navigate('/review')} />
+          <Button kind="secondary" title={t('cards.openAreas')} onPress={() => router.navigate({ pathname: '/review', params: { view: 'areas' } })} />
         </Card>
       )}
       {status && !status.checkIn && day <= today && (

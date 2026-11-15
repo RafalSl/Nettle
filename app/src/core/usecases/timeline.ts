@@ -3,6 +3,7 @@ import { deriveFlares } from '../model/flares';
 import { NAIL_EXTENTS, type LocalDay, type NailEntry, type Stamp, type Photo, type SkinArea, type SkinEntry } from '../model/types';
 import type { Deps } from './deps';
 import { getPreferences } from './preferences';
+import { openFlare } from './flares';
 
 /** SK-8: one skin or nail entry of an area with its photos, so scores and photos sit side by side. */
 export type TimelineEntry =
@@ -98,4 +99,50 @@ export function trendPoints(days: readonly TimelineDay[], key: TrendKey): TrendP
     points.push({ day: d.day, value: Math.round(value * 10) / 10, flare: last ? last.kind : null });
   }
   return points;
+}
+
+export interface AreaOverviewRow {
+  area: SkinArea;
+  /** The date of the last entry, or null while the area has none. */
+  lastDay: LocalDay | null;
+  /** Skin areas: the severity of the last entry. */
+  severity: number | null;
+  /** Nail areas: the stage and extent of the last entry. */
+  stage: NailEntry['stage'] | null;
+  extent: NailEntry['extent'] | null;
+  /** The area is part of the open flare (SK-6). */
+  flaring: boolean;
+}
+
+/**
+ * UX-10: the active skin areas and nail areas, each with its last score or stage and the date of that entry. Areas
+ * of the open flare come first, then the most recently logged; archived areas are hidden (their history stays on
+ * their timeline and in the report).
+ */
+export async function areaOverview(deps: Deps): Promise<{ skin: AreaOverviewRow[]; nails: AreaOverviewRow[] }> {
+  const start = deps.dayStart.get();
+  const skin = await deps.repo.listSkinEntries();
+  const nails = await deps.repo.listRecords('nailEntries');
+  const flaring = new Set((await openFlare(deps))?.areaIds ?? []);
+  const row = (area: SkinArea): AreaOverviewRow & { last: string } => {
+    const s = skin.filter((e) => e.areaId === area.id).sort((a, b) => b.at.utc.localeCompare(a.at.utc))[0];
+    const n = nails.filter((e) => e.areaId === area.id).sort((a, b) => b.at.utc.localeCompare(a.at.utc))[0];
+    const last = area.kind === 'nail' ? n : s;
+    return {
+      area,
+      last: last?.at.utc ?? '',
+      lastDay: last ? localDay(last.at.utc, last.at.tz, start) : null,
+      severity: area.kind === 'skin' ? (s?.scores.severity ?? null) : null,
+      stage: area.kind === 'nail' ? (n?.stage ?? null) : null,
+      extent: area.kind === 'nail' ? (n?.extent ?? null) : null,
+      flaring: flaring.has(area.id),
+    };
+  };
+  const rows = (await deps.repo.listAreas()).filter((a) => !a.archived).map(row);
+  const order = (a: { flaring: boolean; last: string }, b: { flaring: boolean; last: string }) => Number(b.flaring) - Number(a.flaring) || b.last.localeCompare(a.last);
+  const strip = ({ last: _last, ...rest }: AreaOverviewRow & { last: string }): AreaOverviewRow => rest;
+  return {
+    skin: rows.filter((r) => r.area.kind === 'skin').sort(order).map(strip),
+    nails: rows.filter((r) => r.area.kind === 'nail').sort(order).map(strip),
+  };
 }

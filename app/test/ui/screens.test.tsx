@@ -11,7 +11,7 @@ import { FakeBarcode } from '../fakes/fakeBarcode';
 import { unsavedForm } from '@/ui/formState';
 import type { LlmProvider } from '@/core/ports/llm';
 import { logMeal } from '@/core/usecases/logMeal';
-import { addArea, logNailEntry, logSkinEntry } from '@/core/usecases/skin';
+import { addArea, archiveSkinArea, logNailEntry, logSkinEntry } from '@/core/usecases/skin';
 import { logStool, saveCheckIn } from '@/core/usecases/checkin';
 import { logDrink, logMedication } from '@/core/usecases/intake';
 import { addPhoto } from '@/core/usecases/photos';
@@ -782,7 +782,7 @@ describe('Today (UX-2, UX-5, EN-1, UX-9)', () => {
     expect(hasText(tree, en.cards.noExport)).toBe(true);
     expect(hasText(tree, 'Chin, severity 9')).toBe(true); // one area: name, latest severity and the day it started
     await press(tree, en.cards.openAreas);
-    expect(mockRouter.navigate).toHaveBeenLastCalledWith('/review');
+    expect(mockRouter.navigate).toHaveBeenLastCalledWith({ pathname: '/review', params: { view: 'areas' } });
   });
 });
 
@@ -996,6 +996,7 @@ describe('Review (UX-1, EX-14)', () => {
     await logMeal(deps, { description: 'Synthetic oats', ingredients: [], at: new Date('2026-01-10T08:00:00.000Z') });
     await logMeal(deps, { description: 'Synthetic soup', ingredients: [], at: new Date('2026-01-12T08:00:00.000Z') });
     await logStool(deps, { bristol: 4, at: new Date('2026-01-12T09:00:00.000Z') });
+    mockParams.current = { month: '2026-01' };
     const { tree } = await mount(() => require('@/app/(tabs)/review/index'), deps);
     await flush();
     const first = en.review.dayRow.replace('{{day}}', '2026-01-12').replace('{{n}}', '2');
@@ -1004,6 +1005,56 @@ describe('Review (UX-1, EX-14)', () => {
     expect(mockRouter.navigate).toHaveBeenLastCalledWith({ pathname: '/review/day', params: { day: '2026-01-12' } });
     await press(tree, en.review.report);
     expect(mockRouter.push).toHaveBeenLastCalledWith('/review/report');
+  });
+
+  it('UX-10 Days shows one month with a calendar grid marking entries, Daily health and flare days, with arrows and a month filter', async () => {
+    const deps = nowDeps();
+    await logMeal(deps, { description: 'Synthetic oats', ingredients: [], at: new Date('2026-01-10T08:00:00.000Z') });
+    await logMeal(deps, { description: 'Synthetic soup', ingredients: [], at: new Date('2026-01-12T08:00:00.000Z') });
+    await saveCheckIn(deps, { at: new Date('2026-01-12T20:00:00.000Z') });
+    await logSkinEntry(deps, { areaId: 'area-chin', scores: { severity: 9, itch: 0, pain: 0, dryness: 0, scaling: 0 }, at: new Date('2026-01-11T08:00:00.000Z') });
+    await logSkinEntry(deps, { areaId: 'area-chin', scores: { severity: 2, itch: 0, pain: 0, dryness: 0, scaling: 0 }, at: new Date('2026-01-14T08:00:00.000Z') });
+    mockParams.current = { month: '2026-01' };
+    const { tree } = await mount(() => require('@/app/(tabs)/review/index'), deps);
+    await flush();
+    const cell = (day: string, n: number, health: boolean, flare: boolean) =>
+      en.review.calendarDay.replace('{{day}}', day).replace('{{n}}', String(n)).replace('{{health}}', health ? en.review.yes : en.review.no).replace('{{flare}}', flare ? en.review.yes : en.review.no);
+    await press(tree, cell('2026-01-10', 1, false, false));
+    expect(mockRouter.navigate).toHaveBeenLastCalledWith({ pathname: '/review/day', params: { day: '2026-01-10' } });
+    expect(tree.root.findAll((n) => n.props.accessibilityLabel === cell('2026-01-12', 2, true, true)).length).toBeGreaterThan(0); // flare 11th to 13th, 14th is the end entry
+    expect(tree.root.findAll((n) => n.props.accessibilityLabel === cell('2026-01-14', 1, false, false)).length).toBeGreaterThan(0);
+    // the incomplete filter lists days with entries and no Daily health record
+    await toggle(tree, en.review.incomplete);
+    const listRow = (label: string) => tree.root.findAll((n) => n.props.accessibilityLabel === label && typeof n.props.onPress === 'function').length;
+    expect(listRow(en.review.dayRow.replace('{{day}}', '2026-01-10').replace('{{n}}', '1'))).toBeGreaterThan(0);
+    expect(listRow(`${en.review.dayRow.replace('{{day}}', '2026-01-12').replace('{{n}}', '2')}, ${en.review.dayComplete}`)).toBe(0);
+    // arrows move by month; the next arrow stops at the current month
+    await press(tree, en.review.prevMonth);
+    await flush();
+    expect(hasText(tree, '2025-12')).toBe(true);
+    expect(hasText(tree, en.review.noIncomplete)).toBe(true);
+  });
+
+  it('UX-10 Areas groups skin and nail areas with the last score or stage, flaring areas first, and hides archived areas', async () => {
+    const deps = nowDeps();
+    const nail = await addArea(deps, 'Synthetic thumb', 'nail');
+    await logSkinEntry(deps, { areaId: 'area-neck', scores: { ...scores, severity: 3 }, at: new Date('2026-01-12T08:00:00.000Z') });
+    await logSkinEntry(deps, { areaId: 'area-chin', scores: { ...scores, severity: 9 }, at: new Date('2026-01-10T08:00:00.000Z') });
+    await logNailEntry(deps, { areaId: nail.id, stage: 'yellow', extent: 'under_quarter', at: new Date('2026-01-11T08:00:00.000Z') });
+    await archiveSkinArea(deps, 'area-sternum');
+    mockParams.current = { view: 'areas' };
+    const { tree } = await mount(() => require('@/app/(tabs)/review/index'), deps);
+    await flush();
+    const text = JSON.stringify(tree.toJSON());
+    expect(text).toContain(en.review.skinGroup);
+    expect(text).toContain(en.review.nailsGroup);
+    expect(text.indexOf(en.areas['area-chin'])).toBeLessThan(text.indexOf(en.areas['area-neck'])); // the flaring area first, though logged earlier
+    expect(text).toContain(`${en.review.areaSeverity.replace('{{n}}', '9')} · 2026-01-10 · ${en.review.areaFlaring}`);
+    expect(text).toContain(`${en.nail.stages.yellow}, ${en.nail.extents.under_quarter} · 2026-01-11`);
+    expect(text).toContain(en.review.areaNone); // an active area with no entries yet
+    expect(text).not.toContain(en.areas['area-sternum']);
+    await press(tree, en.review.days);
+    expect(hasText(tree, en.review.calendarLegend)).toBe(true);
   });
 
   it('UX-1 an empty Review explains why', async () => {
@@ -2385,10 +2436,10 @@ describe('Area timeline (SK-8)', () => {
   it('SK-8 Review lists the areas with entries and opens one timeline', async () => {
     const deps = nowDeps();
     await logSkinEntry(deps, { areaId: 'area-chin', scores, at: new Date('2026-01-10T08:00:00.000Z') });
+    mockParams.current = { view: 'areas' };
     const { tree } = await mount(() => require('@/app/(tabs)/review/index'), deps);
     await flush();
-    const row = en.review.areaRow.replace('{{area}}', en.areas['area-chin']).replace('{{n}}', '1').replace('{{day}}', '2026-01-10');
-    await press(tree, row);
+    await press(tree, en.areas['area-chin']);
     expect(mockRouter.push).toHaveBeenLastCalledWith({ pathname: '/review/area', params: { id: 'area-chin' } });
   });
 

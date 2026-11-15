@@ -2,6 +2,8 @@ import { addDays, localDay, localDaysToRange } from '../model/time';
 import type { CheckIn, DateRange, LocalDay, Records, Stamp } from '../model/types';
 import type { Deps } from './deps';
 import { getCheckIn } from './checkin';
+import { getPreferences } from './preferences';
+import { deriveFlares } from '../model/flares';
 
 /** The record kinds that appear in the day's log (UX-2). Photos hang off entries, analyses are not diary entries. */
 export const LOG_KINDS = [
@@ -113,4 +115,63 @@ export async function daysWithEntries(deps: Deps, limit = 60): Promise<DaySummar
     }
   }
   return [...days.values()].sort((a, b) => b.day.localeCompare(a.day)).slice(0, limit);
+}
+
+export interface MonthDay {
+  day: LocalDay;
+  /** Entries of every kind that day (a Daily health record counts as one). */
+  entries: number;
+  /** SK-11: the day has a Daily health record. */
+  dailyHealth: boolean;
+  /** SK-6: the day falls inside a derived flare (from its first day to the day before it ended, or to the last entry while open). */
+  flare: boolean;
+}
+
+/** "YYYY-MM" of a local day. */
+export const monthOf = (day: LocalDay): string => day.slice(0, 7);
+
+/** The month before (-1) or after (+1) a "YYYY-MM". */
+export function addMonths(month: string, n: number): string {
+  const [y, m] = month.split('-').map(Number) as [number, number];
+  const d = new Date(Date.UTC(y, m - 1 + n, 1));
+  return d.toISOString().slice(0, 7);
+}
+
+/** The number of days of a "YYYY-MM" and the weekday of its first day (0 = Monday ... 6 = Sunday). */
+export function monthShape(month: string): { days: number; firstWeekday: number } {
+  const [y, m] = month.split('-').map(Number) as [number, number];
+  return { days: new Date(Date.UTC(y, m, 0)).getUTCDate(), firstWeekday: (new Date(Date.UTC(y, m - 1, 1)).getUTCDay() + 6) % 7 };
+}
+
+/**
+ * UX-10: every day of one month with what the calendar grid marks: entries, a Daily health record and flare days.
+ * Days are the entries' own local days (NF-4, NF-7).
+ */
+export async function monthOverview(deps: Deps, month: string): Promise<MonthDay[]> {
+  const snap = await deps.repo.snapshot();
+  const start = deps.dayStart.get();
+  const counts = new Map<LocalDay, { entries: number; dailyHealth: boolean }>();
+  for (const kind of LOG_KINDS) {
+    for (const r of snap[kind] as { at: Stamp }[]) {
+      const day = localDay(r.at.utc, r.at.tz, start);
+      if (monthOf(day) !== month) continue;
+      const cur = counts.get(day) ?? { entries: 0, dailyHealth: false };
+      cur.entries++;
+      if (kind === 'checkIns') cur.dailyHealth = true;
+      counts.set(day, cur);
+    }
+  }
+  const flareDays = new Set<LocalDay>();
+  const threshold = (await getPreferences(deps)).flareThreshold;
+  for (const f of deriveFlares(snap.skinEntries, threshold)) {
+    const from = localDay(f.start.utc, f.start.tz, start);
+    const to = f.end ? (addDays(localDay(f.end.utc, f.end.tz, start), -1) ?? from) : localDay(f.lastEntryAt.utc, f.lastEntryAt.tz, start);
+    for (let d: string | null = from; d && d <= to; d = addDays(d, 1)) if (monthOf(d) === month) flareDays.add(d);
+  }
+  const { days } = monthShape(month);
+  return Array.from({ length: days }, (_, i) => {
+    const day = `${month}-${String(i + 1).padStart(2, '0')}`;
+    const c = counts.get(day);
+    return { day, entries: c?.entries ?? 0, dailyHealth: c?.dailyHealth ?? false, flare: flareDays.has(day) };
+  });
 }

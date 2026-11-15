@@ -1,4 +1,4 @@
-# Food Allergy & Skin Condition Diary: Requirements v0.5
+# Food Allergy & Skin Condition Diary: Requirements v0.5.1
 
 Nov 11, 2026 · @Rafal
 
@@ -194,6 +194,7 @@ No decision blocks v0.1; the open items below are checks to run during developme
 
 - Data is stored locally on the phone; no cloud for now.
 - No backend at this point.
+- Branches: `develop` is the main development branch and is never deleted, local or on GitHub, even after it is merged into `main` for a release; it stays for further development. Merged feature branches are pruned.
 - Development starts in Expo (React Native) with Expo Go. The standalone app comes later on the free Apple Account (7-day expiry, weekly rebuild on the Mac); moving to the paid program later is possible.
 - Import and export together are the migration path between Expo Go, a standalone build and other phones.
 - The LLM is the paid Anthropic API (a Pro subscription does not cover it), with the architecture open to other providers.
@@ -239,6 +240,7 @@ No decision blocks v0.1; the open items below are checks to run during developme
 
 ## Changelog
 
+- **v0.5.1 (2026-11-15):** branch rule: `develop` is never deleted (Decided). No requirement IDs changed.
 - **v0.5 (2026-11-14):** drinks, label scan, models per action, shorter Today log, day start, sources, report summary. New: IN-15 (label scan), IN-16 (source of ingredients), LL-13 (label to ingredients), LL-14 (report summary), NF-7 (diary day). Changed: IN-2 (history first, barcode stored), IN-3 (known-names setting), IN-4 (all drinks, alcohol switch), IN-8, IN-10 and IN-14 (drinks), LL-4 (source), LL-5, LL-10 and LL-12 (label scan), LL-9 (model per action, Haiku 5.5 default), EX-1, EX-3, EX-4, EX-10 and the date-range note, UX-2 (More lists drink; Today shows the latest 8 entries; day start), UX-6.
 - **v0.4.4 (2026-11-14):** UX-2: the day's log lists the newest entry first (decided after the first phone run).
 - **v0.4.3 (2026-11-14):** clarifications found while building the IA. IN-2: in-store codes are GS1 prefixes 20 to 29. EX-13: the records that go with a deleted entry, and a removed photo, get their own tombstones. `schema_version` stays 1 until the first release; exports made during prototyping may not import.

@@ -1,7 +1,9 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Switch, Text, View } from 'react-native';
+import { Alert, Linking, Switch, Text, View } from 'react-native';
+import { listRegular } from '@/core/usecases/regular';
+import { NavRow } from '@/ui/NavRow';
 import {
   DEFAULT_REMINDERS,
   loadReminderSettings,
@@ -10,7 +12,7 @@ import {
 } from '@/core/usecases/reminders';
 import { errorMessage, reminderTexts, t } from '@/i18n';
 import { useServices } from '@/services';
-import { Chips, Heading, Hint, Label, styles } from '@/ui/components';
+import { Button, Chips, Heading, Hint, Label, styles } from '@/ui/components';
 
 const at = (hour: number, minute: number) => {
   const d = new Date();
@@ -24,9 +26,13 @@ const MONTH_DAYS = [1, 5, 10, 15, 20, 25, 28];
 export function RemindersSection() {
   const { deps } = useServices();
   const [s, setS] = useState<ReminderSettings>(DEFAULT_REMINDERS);
+  const router = useRouter();
+  const [regular, setRegular] = useState({ n: 0, withReminders: 0 });
+  const [denied, setDenied] = useState(false);
 
   const load = useCallback(() => {
     loadReminderSettings(deps).then(setS).catch(() => undefined);
+    listRegular(deps).then((r) => setRegular({ n: r.length, withReminders: r.filter((x) => x.times.length > 0).length }), () => undefined);
   }, [deps]);
   useFocusEffect(load);
 
@@ -35,7 +41,9 @@ export function RemindersSection() {
     try {
       await saveReminderSettings(deps, next, reminderTexts());
       setS(next);
+      setDenied(false);
     } catch (e) {
+      setDenied(e instanceof Error && 'code' in e && (e as { code: string }).code === 'notifications_denied');
       Alert.alert(errorMessage(e));
     }
   }
@@ -57,6 +65,13 @@ export function RemindersSection() {
     <>
       <Heading>{t('reminders.title')}</Heading>
       <Hint>{t('reminders.hint')}</Hint>
+      {denied && (
+        <>
+          <Hint>{t('regular.denied')}</Hint>
+          <Button kind="secondary" title={t('regular.openSystem')} onPress={() => void Linking.openSettings()} />
+        </>
+      )}
+      <NavRow title={t('regular.title')} subtitle={t('regular.summary', { n: regular.n, m: regular.withReminders })} onPress={() => router.push('/settings/regular')} />
 
       {row(t('reminders.checkIn'), s.checkIn.enabled, (enabled) => change({ ...s, checkIn: { ...s.checkIn, enabled } }))}
       {s.checkIn.enabled && time(s.checkIn.hour, s.checkIn.minute, (hour, minute) => change({ ...s, checkIn: { ...s.checkIn, hour, minute } }))}

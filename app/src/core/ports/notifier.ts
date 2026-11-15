@@ -1,6 +1,7 @@
 /** When a reminder fires. Weekdays use the iOS numbering: 1 = Sunday … 7 = Saturday. */
 export type ReminderWhen =
   | { type: 'daily'; hour: number; minute: number }
+  | { type: 'at'; at: Date }
   | { type: 'weekly'; weekday: number; hour: number; minute: number }
   | { type: 'monthly'; day: number; hour: number; minute: number };
 
@@ -9,6 +10,12 @@ export interface ReminderSpec {
   title: string;
   body: string;
   when: ReminderWhen;
+  /** The fixed place a tap leads to ('checkin', 'nails', 'backup', 'regular'); defaults to the id. */
+  target?: string;
+  /** IN-17: the regular item a reminder is for. Never shown in the text unless the user allows it. */
+  itemId?: string;
+  /** IN-17: the label of the one action button (Taken, Applied); a tap on it logs the item. */
+  actionLabel?: string;
 }
 
 /** SK-9: a tap on a reminder. `target` is the untrusted `data.target` of the notification, `deliveredAt` its delivery time when known. */
@@ -17,6 +24,10 @@ export interface ReminderTap {
   id: string;
   target: unknown;
   deliveredAt: Date | null;
+  /** IN-17: 'log' when the user pressed the action button of a regular item's reminder. */
+  action?: 'log' | null;
+  /** IN-17: the regular item of the reminder. */
+  itemId?: string | null;
 }
 
 /** SK-9: local notifications only (no push, no server). Texts never contain diary data. */

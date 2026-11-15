@@ -20,7 +20,8 @@
     "no": "No",
     "add": "Add",
     "name": "Name",
-    "back": "Back"
+    "back": "Back",
+    "remove": "Remove"
   },
   "meal": {
     "title": "Log a meal",
@@ -600,7 +601,14 @@
       "nailsTitle": "Nail photos",
       "nailsBody": "Time to photograph your nails and log how they look.",
       "backupTitle": "Back up your diary",
-      "backupBody": "Export your diary from the Data tab and keep the file safe."
+      "backupBody": "Export your diary from the Data tab and keep the file safe.",
+      "medicationNamed": "Time for {{name}}",
+      "treatmentNamed": "Time to apply {{name}}",
+      "medicationHidden": "Time for your medication",
+      "treatmentHidden": "Time for your treatment",
+      "regularBody": "Tap to log it.",
+      "taken": "Taken",
+      "applied": "Applied"
     }
   },
   "settings": {
@@ -673,7 +681,9 @@
     "drink": "Drink",
     "medication": "Medication",
     "stool": "Stool",
-    "remindersPrivacy": "Reminders and privacy"
+    "remindersPrivacy": "Reminders and privacy",
+    "regular": "Regular items",
+    "regularItem": "Regular item"
   },
   "home": {
     "quickActions": "Quick actions",
@@ -910,5 +920,29 @@
       "title": "Routine change",
       "hint": "A product or diet you started or stopped"
     }
+  },
+  "regular": {
+    "title": "Regular items",
+    "none": "No regular items yet. Switch \"Regular\" on when you save a medication or a treatment.",
+    "switch": "Regular",
+    "switchHint": "Adds it to the quick sheet and lets you set reminders (Settings, Logging, Regular items).",
+    "sheetMedication": "Regular medication and supplements",
+    "sheetTreatment": "Regular treatments",
+    "other": "Other or earlier…",
+    "summary": "{{n}} regular items, {{m}} with reminders",
+    "kindMedication": "Medication or supplement",
+    "kindTreatment": "Treatment",
+    "reminders": "Reminder times",
+    "noTimes": "No reminders for this item.",
+    "addTime": "Add a time",
+    "removeTime": "Remove {{time}}",
+    "hideName": "Hide the name in reminders",
+    "hideNameHint": "A reminder then says only \"Time for your medication\" or \"Time for your treatment\". It never shows a dose or a note.",
+    "stop": "Stop regular item",
+    "stopTitle": "Stop this regular item?",
+    "stopBody": "Its reminders end and it leaves the quick sheet. Entries already logged stay.",
+    "denied": "Notifications are turned off for this app, so reminders cannot be shown.",
+    "openSystem": "Open system settings",
+    "areas": "Areas: {{list}}"
   }
 }

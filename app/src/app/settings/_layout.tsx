@@ -15,6 +15,8 @@ export default function SettingsStack() {
       <Stack.Screen name="suggestions" options={{ title: t('nav.suggestions') }} />
       <Stack.Screen name="privacy" options={{ title: t('nav.privacy') }} />
       <Stack.Screen name="reminders" options={{ title: t('nav.reminders') }} />
+      <Stack.Screen name="regular" options={{ title: t('nav.regular') }} />
+      <Stack.Screen name="regular-item" options={{ title: t('nav.regularItem') }} />
       <Stack.Screen name="ai" options={{ title: t('nav.ai') }} />
       <Stack.Screen name="about" options={{ title: t('nav.about') }} />
       <Stack.Screen name="data" options={{ title: t('nav.data') }} />

@@ -66,5 +66,11 @@ export function reminderTexts(): ReminderTexts {
     checkIn: { title: t('reminders.text.checkInTitle'), body: t('reminders.text.checkInBody') },
     nails: { title: t('reminders.text.nailsTitle'), body: t('reminders.text.nailsBody') },
     backup: { title: t('reminders.text.backupTitle'), body: t('reminders.text.backupBody') },
+    regular: {
+      named: (name, kind) => ({ title: t(`reminders.text.${kind}Named`, { name }), body: t('reminders.text.regularBody') }),
+      hidden: (kind) => ({ title: t(`reminders.text.${kind}Hidden`), body: t('reminders.text.regularBody') }),
+      takenLabel: t('reminders.text.taken'),
+      appliedLabel: t('reminders.text.applied'),
+    },
   };
 }

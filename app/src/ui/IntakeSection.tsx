@@ -1,6 +1,6 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, Text, TextInput } from 'react-native';
+import { Alert, Pressable, Switch, Text, TextInput, View } from 'react-native';
 import { defaultPreferences, type Preferences } from '@/core/model/preferences';
 import { drinkHistory, drinkKey, medicationHistory, normalizeText, rankSuggestions, type Suggestion } from '@/core/model/suggestions';
 import { MEDICATION_CATEGORIES, type Allergen, type MedicationCategory } from '@/core/model/types';
@@ -10,6 +10,7 @@ import { typedSource } from '@/core/model/source';
 import { localDay } from '@/core/model/time';
 import { ingredientNameHistory } from '@/core/usecases/llm';
 import { logDrink, logMedication } from '@/core/usecases/intake';
+import { addRegularMedication } from '@/core/usecases/regular';
 import { getPreferences, toggleFavoriteDrink, toggleFavoriteMedication, type DrinkSnapshot } from '@/core/usecases/preferences';
 import { errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
@@ -200,6 +201,7 @@ export function MedicationSection() {
   const [category, setCategory] = useField<MedicationCategory>('medication', f.touch);
   const [name, setName] = useField('', f.touch);
   const [dose, setDose] = useField('', f.touch);
+  const [regular, setRegular] = useField(false, f.touch);
   const time = useFormTime(f.touch);
   type Med = { category: MedicationCategory; name: string; dose: string | null };
   const { list, saveOnTap, prefs, refresh } = useSuggestions<Med>(async (d, p) => {
@@ -231,7 +233,10 @@ export function MedicationSection() {
     <FormModal
       dirty={f.dirty}
       missing={name.trim() ? null : t('edit.name')}
-      onSave={async () => void (await logMedication(deps, { category, name, dose, at: time.atForSave }))}>
+      onSave={async () => {
+        await logMedication(deps, { category, name, dose, at: time.atForSave });
+        if (regular) await addRegularMedication(deps, { category, name, dose }); // IN-17
+      }}>
       {list.length > 0 && <Label>{t('meal.suggestions')}</Label>}
       {list.map((s) => (
         <Pressable key={s.key} accessibilityRole="button" accessibilityLabel={s.label} onPress={() => void pick(s.payload)} style={{ paddingVertical: 8 }}>
@@ -251,6 +256,11 @@ export function MedicationSection() {
         disabled={!name.trim()}
         onPress={() => toggleFavoriteMedication(deps, { category, name: name.trim(), dose: dose.trim() || null }).then(refresh, (e) => Alert.alert(errorMessage(e)))}
       />
+      <View style={styles.timeRow}>
+        <Text style={styles.rowText}>{t('regular.switch')}</Text>
+        <Switch value={regular} onValueChange={setRegular} accessibilityLabel={t('regular.switch')} />
+      </View>
+      {regular && <Hint>{t('regular.switchHint')}</Hint>}
       <TimeField value={time.value} onChange={time.set} />
     </FormModal>
   );

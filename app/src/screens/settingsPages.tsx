@@ -17,6 +17,7 @@ function SubPages() {
     <>
       <NavRow title={t('nav.suggestions')} onPress={() => router.push('/settings/suggestions')} />
       <NavRow title={t('nav.areas')} onPress={() => router.push('/settings/areas')} />
+      <NavRow title={t('nav.regular')} onPress={() => router.push('/settings/regular')} />
       <NavRow title={t('nav.favorites')} onPress={() => router.push('/settings/favorites')} />
     </>
   );

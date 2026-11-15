@@ -4,6 +4,8 @@ import type { ReminderSpec, ReminderTap } from '../ports/notifier';
 import type { Deps } from './deps';
 import { getCheckIn } from './checkin';
 import { listActiveAreas } from './skin';
+import { getPreferences } from './preferences';
+import { logRegular, listRegular } from './regular';
 
 /** SK-9 and the monthly backup nudge (Data, privacy and security): what the user switched on. */
 export interface ReminderSettings {
@@ -25,7 +27,17 @@ export interface ReminderTexts {
   checkIn: { title: string; body: string };
   nails: { title: string; body: string };
   backup: { title: string; body: string };
+  /** IN-17: a regular item's reminder shows its name unless the user hides it; never a dose or a note. */
+  regular: {
+    named: (name: string, kind: 'medication' | 'treatment') => { title: string; body: string };
+    hidden: (kind: 'medication' | 'treatment') => { title: string; body: string };
+    takenLabel: string;
+    appliedLabel: string;
+  };
 }
+
+/** SK-9: the Daily health reminder is scheduled for this many days ahead, one by one, so a day that already has a record can be skipped. */
+export const CHECKIN_REMINDER_DAYS = 14;
 
 const KEY = 'reminders';
 const int = (n: unknown, min: number, max: number) => typeof n === 'number' && Number.isInteger(n) && n >= min && n <= max;
@@ -56,18 +68,45 @@ export async function loadReminderSettings(deps: Deps): Promise<ReminderSettings
 
 const structuredCloneSettings = (s: ReminderSettings): ReminderSettings => JSON.parse(JSON.stringify(s)) as ReminderSettings;
 
-/** The reminders that should exist now: the switched-on ones, the nail one only while nail areas exist. */
+/**
+ * The reminders that should exist now: the switched-on ones, the nail one only while nail areas exist, one per
+ * reminder time of each regular item, and the Daily health reminder for the next days except today when today
+ * already has its record (SK-9: saving the record reschedules it).
+ */
 export async function plannedReminders(deps: Deps, texts: ReminderTexts): Promise<ReminderSpec[]> {
   const s = await loadReminderSettings(deps);
   const specs: ReminderSpec[] = [];
   if (s.checkIn.enabled) {
-    specs.push({ id: 'checkin', ...texts.checkIn, when: { type: 'daily', hour: s.checkIn.hour, minute: s.checkIn.minute } });
+    const now = deps.clock.now();
+    for (let i = 0; i < CHECKIN_REMINDER_DAYS; i++) {
+      const at = new Date(now);
+      at.setDate(at.getDate() + i);
+      at.setHours(s.checkIn.hour, s.checkIn.minute, 0, 0);
+      if (at.getTime() <= now.getTime()) continue;
+      if (i === 0 && (await getCheckIn(deps, localDay(at.toISOString(), deps.clock.timeZone(), deps.dayStart.get())))) continue;
+      specs.push({ id: `checkin-${i}`, target: 'checkin', ...texts.checkIn, when: { type: 'at', at } });
+    }
   }
   if (s.nails.enabled && (await listActiveAreas(deps, 'nail')).length > 0) {
     specs.push({ id: 'nails', ...texts.nails, when: { type: 'weekly', weekday: s.nails.weekday, hour: s.nails.hour, minute: s.nails.minute } });
   }
   if (s.backup.enabled) {
     specs.push({ id: 'backup', ...texts.backup, when: { type: 'monthly', day: s.backup.day, hour: s.backup.hour, minute: s.backup.minute } });
+  }
+  const treatments = new Map((await deps.repo.listItems('treatments')).map((t) => [t.id, t.nameOverride ?? t.name]));
+  for (const r of (await getPreferences(deps)).regular) {
+    const name = r.kind === 'medication' ? r.name : (treatments.get(r.treatmentId ?? '') ?? null);
+    const text = r.hideName || !name ? texts.regular.hidden(r.kind) : texts.regular.named(name, r.kind);
+    r.times.forEach((t, i) =>
+      specs.push({
+        id: `regular-${r.id}-${i}`,
+        target: 'regular',
+        itemId: r.id,
+        actionLabel: r.kind === 'medication' ? texts.regular.takenLabel : texts.regular.appliedLabel,
+        ...text,
+        when: { type: 'daily', hour: t.hour, minute: t.minute },
+      }),
+    );
   }
   return specs;
 }
@@ -113,9 +152,14 @@ export async function resolveReminderTap(
   tap: ReminderTap,
   options: { hasUnsavedForm: boolean },
 ): Promise<TapAction | null> {
-  const marker = `${tap.id}|${tap.deliveredAt?.getTime() ?? 0}`;
+  const marker = `${tap.id}|${tap.action ?? ''}|${tap.deliveredAt?.getTime() ?? 0}`;
   if ((await deps.settings.get(TAP_MARKER)) === marker) return null;
   await deps.settings.set(TAP_MARKER, marker);
+  // IN-17: the action button of a regular item's reminder logs it, whatever form is open.
+  if (tap.target === 'regular' && tap.action === 'log' && typeof tap.itemId === 'string') {
+    await logRegular(deps, tap.itemId).catch(() => undefined); // a stopped item or a removed area: nothing to log, never crash a tap
+    return { route: { pathname: '/today' }, viaToday: false };
+  }
   if (options.hasUnsavedForm) return null;
   const today: TapAction = { route: { pathname: '/today' }, viaToday: false };
   switch (tap.target) {
@@ -129,7 +173,24 @@ export async function resolveReminderTap(
       return (await listActiveAreas(deps, 'nail')).length > 0 ? { route: { pathname: '/form/nails' }, viaToday: true } : today;
     case 'backup':
       return { route: { pathname: '/settings/data' }, viaToday: false };
+    case 'regular': {
+      // IN-17: the quick sheet of regular items, on Today
+      const kind = (await listRegular(deps)).find((r) => r.id === tap.itemId)?.kind;
+      return kind ? { route: { pathname: '/today', params: { sheet: kind } }, viaToday: false } : today;
+    }
     default:
       return null;
   }
+}
+
+/**
+ * IN-17: after an import the scheduled notifications are rebuilt from the imported regular items. Anything that
+ * needs reminders asks for notification permission again (the permission belongs to this phone, not to the file).
+ * Returns false when permission was refused; the items stay, only the reminders are not scheduled.
+ */
+export async function restoreReminders(deps: Deps, texts: ReminderTexts): Promise<boolean> {
+  const wanted = (await listRegular(deps)).some((r) => r.times.length > 0);
+  const allowed = !wanted || (await deps.notifier.requestPermission());
+  await applyReminders(deps, texts);
+  return allowed;
 }

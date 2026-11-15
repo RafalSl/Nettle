@@ -9,7 +9,8 @@ import { logStool } from '@/core/usecases/checkin';
 import { dayLog, dayStatus, treatmentShortcuts, type DayStatus, type LogRow, type TreatmentShortcut } from '@/core/usecases/dayLog';
 import { applyTreatment } from '@/core/usecases/events';
 import { openFlareSummary, type OpenFlare } from '@/core/usecases/flares';
-import { defaultPreferences, type EntryType } from '@/core/model/preferences';
+import { defaultPreferences, type EntryType, type RegularItem } from '@/core/model/preferences';
+import { logRegular } from '@/core/usecases/regular';
 import { getPreferences, movePinnedEntryType, pinEntryType, unpinEntryType, unpinnedEntryTypes } from '@/core/usecases/preferences';
 import { areaLabel, errorMessage, itemLabel, t } from '@/i18n';
 import { useServices } from '@/services';
@@ -39,7 +40,7 @@ const Card = ({ children }: { children: React.ReactNode }) => (
 export default function TodayScreen() {
   const { deps } = useServices();
   const router = useRouter();
-  const { day: dayParam } = useLocalSearchParams<{ day?: string }>();
+  const { day: dayParam, sheet: sheetParam } = useLocalSearchParams<{ day?: string; sheet?: string }>();
   // A day picked on this screen wins until the route parameter (from the Review days list) changes again.
   const [pick, setPick] = useState<{ param: string | undefined; day: string | null } | null>(null);
   const chosen = pick && pick.param === dayParam ? pick.day : validDay(dayParam);
@@ -51,6 +52,12 @@ export default function TodayScreen() {
   const [flare, setFlare] = useState<OpenFlare | null>(null);
   const [backup, setBackup] = useState<{ due: boolean; days: number | null }>({ due: false, days: null });
   const [stoolOpen, setStoolOpen] = useState(false);
+  const [regular, setRegular] = useState<RegularItem[]>([]);
+  /** IN-17: the quick sheet of regular items that is open, if any. */
+  const [sheetPick, setSheet] = useState<'medication' | 'treatment' | null | undefined>(undefined);
+  // SK-9: a tap on a regular item's reminder opens Today with its quick sheet (until the user opens or closes one).
+  const fromParam = sheetParam === 'medication' || sheetParam === 'treatment' ? (regular.some((r) => r.kind === sheetParam) ? sheetParam : null) : null;
+  const sheet = sheetPick === undefined ? fromParam : sheetPick;
   const [highlight, setHighlight] = useState<Set<string>>(new Set());
   const seenIds = useRef<{ day: string; ids: Set<string>; loaded: boolean }>({ day: '', ids: new Set(), loaded: false });
   const highlightTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -101,7 +108,9 @@ export default function TodayScreen() {
       setShortcuts(await treatmentShortcuts(deps));
       setFlare(await openFlareSummary(deps));
       setBackup({ due: await backupCardDue(deps), days: await daysSinceExport(deps) });
-      setLayout((await getPreferences(deps)).quickActions);
+      const prefs = await getPreferences(deps);
+      setLayout(prefs.quickActions);
+      setRegular(prefs.regular);
     })().catch((e) => Alert.alert(errorMessage(e)));
   }, [deps, day]);
   useFocusEffect(load);
@@ -135,7 +144,15 @@ export default function TodayScreen() {
   /** UX-2: a pinned tile opens its form; Stool opens its quick sheet while it is pinned (from More it opens the full form). */
   const open = (id: EntryType) => () => {
     if (id === 'stool') return setStoolOpen((o) => !o);
+    // IN-17: Medication and Treatment open the quick sheet of regular items; without any they open the full form.
+    if ((id === 'medication' || id === 'treatment') && regular.some((r) => r.kind === id)) return setSheet(sheet === id ? null : id);
     router.push(isToday ? ENTRY_ROUTE[id] : { pathname: ENTRY_ROUTE[id], params: { day } });
+  };
+
+  const regularLabel = (r: RegularItem) => {
+    if (r.kind === 'medication') return r.dose ? `${r.name} ${r.dose}` : (r.name ?? '');
+    const treatment = ctx.treatments.find((x) => x.id === r.treatmentId);
+    return `${treatment ? itemLabel(treatment) : r.treatmentId}: ${r.areaIds.map(areaName).join(', ')}`;
   };
 
   const areaName = (id: string) => {
@@ -235,6 +252,28 @@ export default function TodayScreen() {
             ))}
           </View>
           <Button kind="secondary" title={t('day.stoolEarlier')} onPress={() => router.push(isToday ? '/form/stool' : { pathname: '/form/stool', params: { day } })} />
+        </Card>
+      )}
+
+      {sheet && (
+        // IN-17, UX-3: one tap logs one regular item at the current time; the row is locked for 3 seconds against a double tap.
+        <Card>
+          <Label>{t(sheet === 'medication' ? 'regular.sheetMedication' : 'regular.sheetTreatment')}</Label>
+          {regular
+            .filter((r) => r.kind === sheet)
+            .map((r) => (
+              <Button
+                key={r.id}
+                kind="secondary"
+                title={regularLabel(r)}
+                disabled={locked.has(r.id)}
+                onPress={() => {
+                  lockShortcut(r.id);
+                  void run(() => logRegular(deps, r.id, atNow()));
+                }}
+              />
+            ))}
+          <Button kind="secondary" title={t('regular.other')} onPress={() => router.push(isToday ? ENTRY_ROUTE[sheet] : { pathname: ENTRY_ROUTE[sheet], params: { day } })} />
         </Card>
       )}
 

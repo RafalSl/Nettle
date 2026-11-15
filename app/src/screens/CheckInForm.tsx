@@ -6,7 +6,8 @@ import { addDays, atOnDay, localDay } from '@/core/model/time';
 import type { ListItem } from '@/core/model/types';
 import { askableValues, getCheckIn, saveCheckIn } from '@/core/usecases/checkin';
 import { listActiveItems } from '@/core/usecases/lists';
-import { errorMessage, t } from '@/i18n';
+import { applyReminders } from '@/core/usecases/reminders';
+import { errorMessage, reminderTexts, t } from '@/i18n';
 import { useServices } from '@/services';
 import { chooseAction } from '@/ui/actionSheet';
 import { FormModal, useForm } from '@/ui/FormModal';
@@ -56,12 +57,14 @@ export default function CheckInForm() {
     const input = { values, note, at: at ?? undefined };
     try {
       await saveCheckIn(deps, input);
+      await applyReminders(deps, reminderTexts()).catch(() => undefined); // SK-9: today's reminder is skipped once the day has its record
     } catch (e) {
       // SK-11: a day with no meals logged is saved only after the user confirms.
       if (e instanceof NettleError && e.code === 'day_has_no_meals') {
         const choice = await chooseAction({ title: errorMessage(e), actions: [{ label: t('today.closeAnyway') }] });
         if (choice !== 0) return false;
         await saveCheckIn(deps, { ...input, confirmEmptyDay: true });
+        await applyReminders(deps, reminderTexts()).catch(() => undefined);
       } else throw e;
     }
   }

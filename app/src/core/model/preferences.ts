@@ -50,6 +50,30 @@ export interface QuickActionLayout {
   pinned: EntryType[];
 }
 
+/** IN-17: a reminder time of a regular item. */
+export interface ReminderTime {
+  hour: number;
+  minute: number;
+}
+
+/**
+ * IN-17: a medication, supplement or treatment the user takes or applies regularly. A medication carries its name,
+ * category and dose; a treatment points at a saved treatment (IN-11) and the areas it is applied to. `times` are the
+ * daily reminder times (none = no reminders); `hideName` keeps the name out of the notification text. Stopping a
+ * regular item removes it from this list and leaves the logged entries alone.
+ */
+export interface RegularItem {
+  id: string;
+  kind: 'medication' | 'treatment';
+  category: MedicationCategory | null;
+  name: string | null;
+  dose: string | null;
+  treatmentId: string | null;
+  areaIds: string[];
+  times: ReminderTime[];
+  hideName: boolean;
+}
+
 /** EX-1: preferences travel in the settings part of an export. The API key never does. */
 export interface Preferences {
   favorites: { meals: FavoriteMeal[]; drinks: FavoriteDrink[]; medications: FavoriteMedication[] };
@@ -59,6 +83,8 @@ export interface Preferences {
   dayStartHour: number;
   /** SK-6: severity at or above which a skin entry counts as a flare (1 to 10, default 8). */
   flareThreshold: number;
+  /** IN-17: regular medication and treatment (travels in the settings part of an export). */
+  regular: RegularItem[];
 }
 
 export const MAX_SUGGESTION_ROWS = 20;
@@ -69,6 +95,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
   quickActions: { pinned: [...DEFAULT_PINNED] },
   dayStartHour: 0,
   flareThreshold: DEFAULT_FLARE_THRESHOLD,
+  regular: [],
 };
 
 /** A fresh copy of the defaults, so callers can change it freely. */

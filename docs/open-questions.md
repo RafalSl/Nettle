@@ -16,14 +16,14 @@ The file has four parts: undecided questions, accepted limits, decided work that
 ## Accepted limits
 
 - **`expo-sqlite` wrapper is untested in code.** Storage logic is tested through the `SqlDb` seam on `node:sqlite`; the ~20-line `app/src/adapters/storage/expoSqliteDb.ts` is verified on a phone only.
-- **One check-in per day is enforced by the use case only.** No database constraint, so a merge from another phone could add a second one for the same day; the newest is shown. Revisit with EX-12.
+- **One Daily health record per day is enforced by the use case only.** No database constraint, so a merge from another phone could add a second one for the same day; the newest is shown. Revisit with EX-12.
 - **`schema_version` stays 1 in development.** Exports made before the current required sections will not import.
 - **Export memory.** Photos are read one at a time, but the whole ZIP is held in memory (about the sum of the photos). Fine for months of daily photos; watch it on a large archive.
 - **Backup exclusion of photos (SE-7).** Expo Go cannot mark files as excluded from iOS backup; revisit in a standalone build (`isExcludedFromBackup` through a config plugin or native code).
 
 ## Status of the decided work
 
-Requirements and flows are in `docs/requirements.md`, `docs/ux-design.md` and `docs/user-flows.md`. The information architecture (two tabs, Settings behind a gear, modal forms, action sheets, the tombstone model) is built; each line below says what exists and what does not. Everything marked built is covered by tests and bundles for iOS, but none of it has run on a device (see the checklist at the end).
+Requirements and flows are in `docs/requirements.md`, `docs/ux-design.md` and `docs/user-flows.md`. The information architecture (two tabs, Settings behind a gear, modal forms, action sheets, the tombstone model) is built; each line below says what exists and what does not. Parts that v0.6 replaces (the hide model of quick actions, manual flare markers, the fixed check-in scores and "Mark day complete", change events with a medication category, Settings inside the Today stack) are still described as built below; they stay until the change is made, and "Decided in v0.6, not built" says what replaces them. Everything marked built is covered by tests and bundles for iOS, but none of it has run on a device (see the checklist at the end).
 
 **Built since the IA (v0.4.2)**
 - Editing and deleting (EN-1, EX-13): `core/usecases/entries.ts`, tombstones (migration 11, the `records.tombstones` section of `data.json`), merge skips and applies them, the restore switch (EX-10) in the import preview. Today's log rows open an action sheet with Edit and Delete (cascades named); `form/edit` has one small form per kind on `FormModal`. Removing a photo leaves a tombstone too. `schema_version` stays 1 while prototyping, so exports made earlier do not import.
@@ -57,11 +57,21 @@ Requirements and flows are in `docs/requirements.md`, `docs/ux-design.md` and `d
 - LLM: elapsed time, Cancel, billing notice, no retry of a timeout, the run in `AnalysisRunner` (survives leaving the screen, interrupted state with retry, keep-awake).
 - Security: app lock (SE-8) with `expo-local-authentication`.
 
-**Decided in v0.5, not built**
+**Decided in v0.6, not built** (requirements v0.6, 2026-11-15; no application code has changed yet)
+- *Quick-action layout (UX-2, EX-10, NF-2).* `QuickActionLayout` becomes an ordered `pinned` list over a catalog of ten entry types (Meal, Drink, Medication, Skin, Nails, Treatment, Daily health, Stool, Reaction, Routine change). More lists whatever is not pinned, with subtitles; no hide. Edit mode has On Today and In More lists. Stool's quick sheet only while pinned. The preferences parser still accepts the old `order` and `hidden` shape.
+- *Derived flares (SK-6, EN-1, EX-1, EX-13, LL-2).* Flare periods are computed from skin entries at or above a severity threshold (`Preferences`, default 8, Settings, Logging), merged across areas. Remove `FlareMarker`, `flares.ts` (`openFlareAreas`, `markFlare`), `FlareSection`, `form/flare`, flare tombstones and the End flare button. Today gets one flare card that opens Review, Areas. Report, analysis input and timeline marks read derived periods. No migration needed (`schema_version` stays 1).
+- *Routine change (IN-12).* Rename "Started or stopped". Categories Product and Diet plus user categories (same list pattern as areas and tags), descriptions on predefined ones, an "in use now" list for Stopped, "already using, date unknown" for Started. The `medication` category goes.
+- *Regular medication and treatment (IN-17, IN-5, IN-11, SK-9).* A "Regular" switch on the Medication and Treatment forms; a "Regular items" list in Settings, Logging, with a screen per item for reminder times, the hide-name switch and Stop; quick sheet on the tiles with a 3 second row lock; `Notifier` gets per-item reminders, a notification category with Taken and Applied actions and a `regular` target; regular items in the settings part of an export; reminders rescheduled after an import with a permission re-ask.
+- *Daily health (SK-7, SK-11, IN-6, EX-1, EX-3, LL-2, LL-4).* Rename Check-in. The record becomes values keyed by item id (score 0–10 or yes/no); predefined items with stable ids and descriptions; user-added items; archive, not delete. This touches the repository, `data.json`, CSV, the report charts and the analysis input. "Same as yesterday" covers all items. Remove the "Mark day complete" switch, the Day complete card and Reopen; keep the empty-day confirmation. The evening reminder fires only for a day without a record. `Preferences.checkInScores` is generalised into the items list.
+- *Score input (SK-3, SK-7, UX-3).* One component for skin scores and Daily health scores: −, slider (step 1), +, value; optional scores show "–" with Clear. `@react-native-community/slider` is included in Expo Go. Replaces `ScoreStepper` and `OptionalScoreStepper`.
+- *Photos in forms (SK-4).* A photos control in the Skin and Nails forms, attached on Save; a photo-only update ("No change" plus a photo); the edit-screen path stays.
+- *Settings placement (UX-1, UX-6).* A root-level `settings/*` stack above the tabs, the gear on both tab headers, the tab bar hidden inside, Back and no Done. Regroup the list: Logging; Reminders and privacy; AI analysis; Data and backup; About. Update the two links to `/today/settings/data` (the Today backup card and the monthly reminder target).
+- *Review browsing (UX-10).* Days | Areas segmented control; a month view with arrows, a jump picker, a calendar grid (entries, Daily health, flare days) and the month's days; Areas grouped Skin and Nails with the last score or stage; the "Incomplete days" filter.
+- *Guide (UX-11).* Subtitles on More rows and in the layout editor, descriptions on predefined categories, items and treatments, and a "Where do I log…?" screen from More and Settings.
 
 **Not built**
 - *Create forms.* Done: every create form is on `FormModal` (Cancel and Save in the header, Save disabled with what is missing, Discard Changes sheet, a past-day default through the `day` route parameter). Skin and nail entries get their photos from the entry's edit form (the "recent" lists they hung off are gone). The reminder-tap guard (`unsavedForm`) covers them.
-- *Check-in (SK-7).* Built: "Same as yesterday" and a separate "Mark day complete" switch; stool has its own full form behind "Earlier…".
+- *Check-in (SK-7), replaced by Daily health in v0.6 (see above).* Built: "Same as yesterday" and a separate "Mark day complete" switch; stool has its own full form behind "Earlier…".
 - *No change buttons (SK-3).* Built on the Skin form (all areas) and the nail form (one nail); the Skin form's single-area button existed.
 - *Settings.* Settings groups of UX-6 are all present.
 - *Today.* The first-run empty states beyond text.
@@ -79,6 +89,7 @@ Nothing below has run on a device.
 - **AI:** a real key, one analysis and one photo-to-ingredients call; the cost and the answer language (English and Polish).
 - **App lock (SE-8):** the prompt (Expo Go asks for the passcode; Face ID needs a standalone build), the cover in the app switcher, locking after a minute away, a reminder tap while locked.
 - **Barcode (IN-2):** camera permission and scanning a real product in Expo Go; how many of the Polish products you buy Open Food Facts knows.
+- **v0.6 checks:** notification action buttons (Taken, Applied) from the lock screen and Notification Center with the app open, in the background and killed (forum reports for SDK 39 and 42 say they were unreliable; the design opens the app and logs, so it does not depend on them); the slider row (whole steps, value readable, thumb not hiding it); Settings pushed above the tabs (tab bar hidden, Back returns to the right tab); the evening reminder skipped after saving Daily health.
 - **Reminders:** permission prompt; a daily reminder a minute away; weekly and monthly ones by changing the day. Taps (SK-9): from the lock screen and Notification Center, with the app open, in the background and killed; check that `notification.date` exists and the form does not reopen on every launch. Also `expo-keep-awake` in Expo Go.
 - **Date pickers:** check-in day, export photo filter, analysis range; the delete confirmation and "Export first".
 - **Language:** Expo Go follows the device language (decided: no in-app setting, UX-7); the Polish strings appear when the device is set to Polish.

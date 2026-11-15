@@ -1,6 +1,6 @@
 # UX design: information architecture
 
-Status: accepted 2026-11-14 and built (see `docs/open-questions.md`, "Status of the decided work", for what is still missing). Requirements are in `docs/requirements.md` (v0.4.2). Flows and edge cases: `docs/user-flows.md`. This file holds the screen map, the rules behind it and the HIG audit.
+Status: accepted 2026-11-14 and built, then revised 2026-11-15 after the first phone tests (requirements v0.6). The revised parts are decided but not built; `docs/open-questions.md` ("Status of the decided work", "Decided in v0.6, not built") lists what is built and what is not. Requirements are in `docs/requirements.md` (v0.6). Flows and edge cases: `docs/user-flows.md`. This file holds the screen map, the rules behind it and the HIG audit.
 
 ## Why
 
@@ -9,34 +9,49 @@ The first screens carried too much on one page: More held eight forms, Today abo
 ## Screen map
 
 ```
-Tabs:  Today | Review
+Tabs:  Today | Review                      gear on both tabs -> Settings (pushed above the tabs)
 
-Today (start)                              gear -> Settings (pushed)
+Today (start)
   day switcher  < date >
-  quick actions  Meal  Skin  Treatment  Check-in  Stool  More      [Edit]
+  quick actions  the pinned entry types (default: Meal  Skin  Treatment  Daily health  Stool)  +  More tile   [Edit]
   treatment shortcuts  (one tap: treatment + areas)
-  context cards  open flare, day not complete
+  context cards  flare (derived), time since last export
   the day's log  (latest 8, "Show all (n)" opens the day in Review; tap a row: edit / delete)
 
-More (pushed list)  Drink, Medication or supplement, Reaction after a meal,
-                    Nail update, Flare start or end, Started or stopped
+Edit (on Today)    On Today: ordered list, up / down, Move to More
+                   In More:  Pin to Today
+
+More (pushed list)  every entry type that is not pinned, each row with a one-line subtitle
+                    (catalog: Meal, Drink, Medication or supplement, Skin, Nails, Treatment,
+                    Daily health, Stool, Reaction, Routine change)
+                    + "Where do I log...?" (guide, UX-11)
+
+Quick sheets (tile tap)
+  Medication / Treatment: regular items, one tap each, + "Other or earlier..."
+  Stool (only while pinned): types, + "Earlier..."
 
 Forms (full-height modal, one at a time)
   Cancel | title | Save          time chip "Now"
+  Skin and Nails forms carry a photos control (SK-4)
 
 Review
-  Doctor report (export preset)  |  AI analysis  |  Days list (edit, delete)  |  per-area timeline (SK-8, later)
+  Doctor report (export preset)  |  AI analysis
+  [ Days | Areas ]
+    Days:  month with < > and a jump picker, calendar grid (entries, Daily health, flare days),
+           the month's days; filter "Incomplete days"
+    Areas: Skin / Nails groups with last score or stage and date; flaring areas first
+  per-area timeline (SK-8, later)
 
-Settings (grouped list, chevrons)
-  Logging: Suggestions, Day start, Daily check-in scores, Skin and nail areas, Treatments, Favorites
-  Reminders
-  Privacy and photos
+Settings (pushed above the tabs, Back, no Done; grouped list, chevrons)
+  Logging: Suggestions, Day start, Flare threshold, Daily health items, Skin and nail areas,
+           Treatments, Regular items, Routine categories, Favorites
+  Reminders and privacy: Reminders (summary of regular items), Privacy and photos
   AI analysis (key, model per action)
   Data and backup: Export and Import (each: records / settings / both), Delete data (last)
-  About
+  About (incl. "Where do I log...?")
 ```
 
-Route sketch (expo-router): `(tabs)/today`, `(tabs)/review`, `today/more`, `today/settings/*` as stack screens, and the forms in a modal group (`presentation: 'modal'`).
+Route sketch (expo-router): `(tabs)/today`, `(tabs)/review`, `today/more` as stack screens, a root-level `settings/*` stack above the tabs (so the tab bar is hidden and Back returns to the originating tab), and the forms in a modal group (`presentation: 'modal'`). Moving Settings out of `today/settings/*` means two links change: the Today backup card and the monthly reminder target (SK-9), both of which pointed at `/today/settings/data`.
 
 ## Density rules (UX-4)
 
@@ -45,7 +60,7 @@ Route sketch (expo-router): `(tabs)/today`, `(tabs)/review`, `today/more`, `toda
 - No always-visible hints and no "Recent" lists on forms (suggestions are the only exception).
 - More than about eight chips collapse into a summary plus Edit.
 - Rare and destructive actions only at the bottom of Settings; details behind switches.
-- Tap budgets (NF-2): repeated meal 3 taps, favorite treatment 1, stool 2, skin "no change for all" 2.
+- Tap budgets (NF-2): repeated meal 3 taps, favorite treatment 1, stool 2, regular medication 2 (tile, item), skin "no change for all" 2.
 
 ## Suggestions (IN-14)
 
@@ -61,10 +76,11 @@ A pure core function `rankSuggestions(history, favorites, now, options)` over ex
 | Meal | choose phase (suggestions or typing), then review phase with editable ingredient chips and autocomplete |
 | Drink, medication, supplement | recent (item, amount) pairs from the same function |
 | Treatment | one-tap shortcuts for treatment plus areas |
-| Started or stopped | "stopped" offers items started and not stopped |
+| Routine change | "Stopped" offers items in use now; "Started" offers "already using, date unknown"; categories Product and Diet plus user categories, each with a description |
 | Skin and nails | prefilled with the last values, "No change" per area and for all areas |
-| Daily check-in | explicit "same as yesterday", never a silent prefill |
-| Stool, reaction, flare | fixed lists |
+| Daily health | explicit "same as yesterday" for all items, never a silent prefill; scores use a slider with − and + |
+| Regular medication, regular treatment | quick sheet of regular items; reminder button Taken or Applied (IN-17) |
+| Stool, reaction | fixed lists |
 
 ## Editing, deleting, tombstones (EN-1, EX-13)
 
@@ -77,8 +93,9 @@ Read: tab bars, toolbars, sheets, modality, action sheets, settings, entering da
 | Area | Finding | Resolution |
 | --- | --- | --- |
 | Tab bar | navigation only; no hidden or disabled tabs; explain empty sections | two tabs; no center "+" tab; empty states explain (UX-1) |
-| Settings | infrequent options only; task options belong in the task; do not duplicate system settings; keep the number small | gear icon, not a tab; Home layout edited on Today; no language setting; each setting has a default (UX-6) |
-| Sheets and modality | Cancel leading, Done or Save trailing; confirm before data loss; one sheet at a time; keep modal tasks short | UX-3; More is a pushed list so forms are the only modals |
+| Settings | infrequent options only; task options belong in the task; do not duplicate system settings; keep the number small | gear icon on both tabs, not a tab; Home layout edited on Today; no language setting; each setting has a default; reminder times live on the item, with a summary in Settings (UX-6, IN-17) |
+| Sheets and modality | Cancel leading, Done or Save trailing; Done must be paired with Cancel or Back; confirm before data loss; one sheet at a time; keep modal tasks short; complex flows do not belong in a sheet (verified 2026-11-15) | UX-3; More is a pushed list so forms are the only modals; Settings is a pushed screen with Back and no Done, not a sheet (UX-1) |
+| Sliders and steppers | a slider can have side buttons for fine steps, and a stepper can sit alongside it (verified 2026-11-15) | one row: −, slider in steps of 1, +, value (UX-3); feel to be tested on the phone |
 | Entering data | prefer choices, prefill defaults, enable the primary action only when data is complete | suggestions, chips, Save disabled until required data is present |
 | Undo | show the result of an action; avoid timed UI | highlighted row in the log instead of a toast (UX-5) |
 | Destructive actions | action sheet, destructive choice on top | UX-9 |
@@ -87,13 +104,14 @@ Read: tab bars, toolbars, sheets, modality, action sheets, settings, entering da
 ## Not verified
 
 - HIG pages not read: buttons, pickers, toggles, segmented controls, materials and Liquid Glass, VoiceOver.
-- "Save" is used on forms; the HIG names "Done" and "saving changes". The trailing placement and the Cancel pairing are verified.
+- "Save" is used on forms; the HIG names "Done" and "saving changes". The trailing placement and the Cancel pairing are verified. Settings has neither, because it is a pushed screen.
+- Notification action buttons (Taken, Applied): Expo forum reports for SDK 39 and 42 say they were unreliable when the app was in the background. Untested on the current SDK; the design opens the app and logs, so it does not depend on background logging (IN-17).
 - Expo Go: large titles, `expo-symbols`, the sheet grabber, how the JS tab bar looks next to the iOS floating tab bar, and shake to undo are untested. The design does not depend on any of them.
 - Language: Expo documents per-app language through the `expo-localization` config plugin (`supportedLocales`), which needs a native build, so it cannot work in Expo Go. The decision is therefore no in-app setting; Expo Go follows the device language.
 
 ## Decisions recorded
 
-1. Navigation: Today and Review tabs, Settings behind a gear icon.
+1. Navigation: Today and Review tabs, Settings behind a gear icon on both tabs, as a pushed screen without Done (revised 2026-11-15).
 2. Deletion markers are designed in now (EX-13); bulk delete leaves none; newest-wins merge stays Later.
 3. Preferences (favorites, quick-action layout, suggestion settings) are exported with the settings part; the API key never is.
 4. A locally suggested allergen tag counts as confirmed when visible and pre-selected on the form.
@@ -106,3 +124,9 @@ Read: tab bars, toolbars, sheets, modality, action sheets, settings, entering da
 11. LLM waits show elapsed time and Cancel; every LLM confirmation carries the billing notice.
 12. Two export presets: Doctor report and Full backup (all photos).
 13. Reminder taps open their target; flow defaults (cascade deletes, unique area names, empty-day confirmation) are accepted.
+14. Quick actions: one catalog of entry types, an ordered pinned list on Today, everything else in More automatically, nothing hidden (UX-2).
+15. Flares are derived from skin severity at or above a threshold (default 8), with no manual markers (SK-6).
+16. Routine change replaces "Started or stopped"; regular medication and treatment are marked regular with reminders and a quick sheet (IN-12, IN-17).
+17. Daily health replaces the check-in; items are user-defined scores or yes/no; saving logs the day, so there is no complete mark (SK-7, SK-11).
+18. Review has Days (month calendar) and Areas; only the "Incomplete days" filter for now (UX-10).
+19. Guide: subtitles, descriptions and a "Where do I log...?" screen (UX-11).

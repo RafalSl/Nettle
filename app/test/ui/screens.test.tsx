@@ -1439,7 +1439,8 @@ describe('Photos in the Skin and Nails forms (SK-4)', () => {
     await logSkinEntry(deps, { areaId: 'area-chin', scores, at: new Date(Date.now() - 86_400_000) });
     const { tree } = await mount(() => require('@/app/form/skin'), deps);
     await flush();
-    await flush(); // the area loads first, then its last scores
+    await press(tree, 'Chin'); // the area that has an earlier entry
+    await flush(); // its last scores load
     await press(tree, en.photos.library);
     await press(tree, en.skin.noChange);
     await flush();

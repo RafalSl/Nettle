@@ -687,7 +687,8 @@
     "stool": "Stolec",
     "remindersPrivacy": "Przypomnienia i prywatność",
     "regular": "Stałe pozycje",
-    "regularItem": "Stała pozycja"
+    "regularItem": "Stała pozycja",
+    "guide": "Gdzie zapisać"
   },
   "home": {
     "quickActions": "Szybkie akcje",
@@ -964,5 +965,35 @@
     "denied": "Powiadomienia są wyłączone dla tej aplikacji, więc przypomnienia nie mogą się pokazać.",
     "openSystem": "Otwórz ustawienia systemu",
     "areas": "Miejsca: {{list}}"
+  },
+  "guide": {
+    "hint": "Który wpis pasuje do codziennej sytuacji",
+    "intro": "Wybierz sytuację; otworzy się właściwy formularz.",
+    "items": {
+      "meal": "Posiłek lub przekąska",
+      "drink": "Napój, z alkoholem lub bez",
+      "tablet": "Tabletka lub suplement przyjmowany od czasu do czasu",
+      "regularTablet": "Stała tabletka lub suplement",
+      "cream": "Krem lub inny zabieg na skórę",
+      "regularCream": "Zabieg stosowany codziennie",
+      "newProduct": "Nowy krem, mydło lub detergent dotykający skóry",
+      "stoppedProduct": "Przestałem(am) używać produktu",
+      "diet": "Zaczęłam/zacząłem lub przerwałem(am) dietę",
+      "skin": "Jak dziś wygląda miejsce na skórze",
+      "flare": "Zaostrzenie skóry",
+      "nail": "Jak wygląda paznokieć",
+      "feeling": "Jak się czuję: samopoczucie, stres, sen",
+      "belly": "Wzdęcia lub ból brzucha",
+      "reaction": "Reakcja po jedzeniu",
+      "stool": "Stolec"
+    },
+    "notes": {
+      "regularTablet": "włącz Stałe",
+      "regularCream": "włącz Stałe",
+      "stoppedProduct": "wybierz Przerwano",
+      "flare": "zaostrzenia wynikają z nasilenia równego progowi lub wyższego",
+      "newProduct": "wybierz Zaczęto",
+      "diet": "wybierz Zaczęto lub Przerwano"
+    }
   }
 }

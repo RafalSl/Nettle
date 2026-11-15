@@ -6,7 +6,7 @@ import { applyTreatment } from '@/core/usecases/events';
 import { addListItem, listActiveItems } from '@/core/usecases/lists';
 import { addRegularTreatment } from '@/core/usecases/regular';
 import { listActiveAreas } from '@/core/usecases/skin';
-import { areaLabel, errorMessage, itemLabel, t } from '@/i18n';
+import { areaLabel, errorMessage, itemDescription, itemLabel, t } from '@/i18n';
 import { useServices } from '@/services';
 import { FormModal, useField, useForm } from '@/ui/FormModal';
 import { useFormTime } from '@/ui/useFormTime';
@@ -30,6 +30,7 @@ export function TreatmentSection() {
   }, [deps]);
   useFocusEffect(reload);
   const selected = treatmentId && treatments.some((x) => x.id === treatmentId) ? treatmentId : (treatments[0]?.id ?? null);
+  const chosen = treatments.find((x) => x.id === selected);
 
   async function addTreatment() {
     try {
@@ -60,6 +61,7 @@ export function TreatmentSection() {
       ) : (
         <>
           <Chips items={treatments.map((i) => ({ id: i.id, label: itemLabel(i) }))} selected={new Set(selected ? [selected] : [])} onToggle={setTreatmentId} />
+          {chosen && itemDescription(chosen) ? <Hint>{itemDescription(chosen)}</Hint> : null}
           <Label>{t('more.treatmentAreas')}</Label>
           <Chips
             items={areas.map((a) => ({ id: a.id, label: areaLabel(a) }))}

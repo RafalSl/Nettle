@@ -100,6 +100,7 @@ export default function ReviewScreen() {
         />
       )}
       <NavRow title={t('review.analysis')} onPress={() => router.push('/review/analysis')} />
+      <NavRow title={t('review.healthTitle')} onPress={() => router.push('/review/health')} />
 
       <Segmented
         items={[

@@ -1,6 +1,6 @@
 import { localDay } from '../model/time';
 import { deriveFlares } from '../model/flares';
-import { NAIL_EXTENTS, type LocalDay, type NailEntry, type Stamp, type Photo, type SkinArea, type SkinEntry } from '../model/types';
+import { NAIL_EXTENTS, type ListItem, type LocalDay, type NailEntry, type Stamp, type Photo, type SkinArea, type SkinEntry } from '../model/types';
 import type { Deps } from './deps';
 import { getPreferences } from './preferences';
 import { openFlare } from './flares';
@@ -145,4 +145,17 @@ export async function areaOverview(deps: Deps): Promise<{ skin: AreaOverviewRow[
     skin: rows.filter((r) => r.area.kind === 'skin').sort(order).map(strip),
     nails: rows.filter((r) => r.area.kind === 'nail').sort(order).map(strip),
   };
+}
+
+/** SK-7, UX-1: the score items that have at least one value (archived ones keep their history), for the Daily health trends. */
+export async function trendScoreItems(deps: Deps): Promise<ListItem[]> {
+  const used = new Set((await deps.repo.listRecords('checkIns')).flatMap((c) => Object.entries(c.values).filter(([, v]) => typeof v === 'number').map(([id]) => id)));
+  return (await deps.repo.listItems('dailyItems')).filter((i) => i.valueKind === 'score' && used.has(i.id));
+}
+
+/** SK-7, UX-1: the points of a trend chart for one Daily health score item, oldest day first. Days without a value are skipped. */
+export async function healthTrendPoints(deps: Deps, itemId: string): Promise<TrendPoint[]> {
+  return (await deps.repo.listRecords('checkIns'))
+    .flatMap((c) => (typeof c.values[itemId] === 'number' ? [{ day: c.day, value: c.values[itemId] as number, flare: null }] : []))
+    .sort((a, b) => a.day.localeCompare(b.day));
 }

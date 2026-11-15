@@ -688,7 +688,8 @@
     "remindersPrivacy": "Przypomnienia i prywatność",
     "regular": "Stałe pozycje",
     "regularItem": "Stała pozycja",
-    "guide": "Gdzie zapisać"
+    "guide": "Gdzie zapisać",
+    "health": "Trendy zdrowia"
   },
   "home": {
     "quickActions": "Szybkie akcje",
@@ -747,7 +748,9 @@
     "incomplete": "Niekompletne dni",
     "incompleteHint": "Dni z wpisami, ale bez wpisu Zdrowie dnia.",
     "noIncomplete": "Każdy dzień z wpisami ma wpis Zdrowie dnia.",
-    "goToday": "Przejdź do Dziś"
+    "goToday": "Przejdź do Dziś",
+    "healthTitle": "Trendy Zdrowia dnia",
+    "healthEmpty": "Brak danych do wykresu. Najpierw zapisz Zdrowie dnia z oceną."
   },
   "day": {
     "newEntry": "Nowy wpis",

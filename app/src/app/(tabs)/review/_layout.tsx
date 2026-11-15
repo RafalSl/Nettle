@@ -8,6 +8,7 @@ export default function ReviewStack() {
       <Stack.Screen name="index" options={{ title: t('tabs.review'), headerRight: () => <GearButton /> }} />
       <Stack.Screen name="day" options={{ title: t('nav.day') }} />
       <Stack.Screen name="area" options={{ title: t('nav.timeline') }} />
+      <Stack.Screen name="health" options={{ title: t('nav.health') }} />
       <Stack.Screen name="report" options={{ title: t('nav.report') }} />
       <Stack.Screen name="analysis" options={{ title: t('nav.analysis') }} />
     </Stack>

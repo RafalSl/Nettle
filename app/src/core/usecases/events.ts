@@ -2,10 +2,8 @@ import { NettleError } from '../model/errors';
 import { makeStamp } from '../model/time';
 import {
   CHANGE_ACTIONS,
-  CHANGE_CATEGORIES,
   SYMPTOMS,
   type ChangeAction,
-  type ChangeCategory,
   type ChangeEvent,
   type Reaction,
   type Symptom,
@@ -46,17 +44,22 @@ export async function applyTreatment(deps: Deps, input: ApplyTreatmentInput): Pr
 
 export interface ChangeEventInput {
   action: ChangeAction;
-  category: ChangeCategory;
+  /** The id of a routine change category (`cat-product`, `cat-diet`, or one the user added). */
+  category: string;
   name: string;
   /** The date it changed; defaults to now. */
   at?: Date;
+  /** "Already using, date unknown": only for `started`; `at` is then just when it was logged. */
+  dateUnknown?: boolean;
   note?: string;
 }
 
-/** IN-12: "started" or "stopped" a product, medication or diet. */
+/** IN-12: "started" or "stopped" a product or diet (or a category of the user's). */
 export async function logChangeEvent(deps: Deps, input: ChangeEventInput): Promise<ChangeEvent> {
   if (!CHANGE_ACTIONS.includes(input.action)) throw new NettleError('invalid_value', 'action');
-  if (!CHANGE_CATEGORIES.includes(input.category)) throw new NettleError('invalid_value', 'category');
+  const category = (await deps.repo.listItems('changeCategories')).find((c) => c.id === input.category);
+  if (!category) throw new NettleError('unknown_item', input.category);
+  if (input.dateUnknown && input.action !== 'started') throw new NettleError('invalid_value', 'dateUnknown');
   const name = input.name.trim();
   if (!name) throw new NettleError('empty_item_name');
   const event: ChangeEvent = {
@@ -65,6 +68,7 @@ export async function logChangeEvent(deps: Deps, input: ChangeEventInput): Promi
     action: input.action,
     category: input.category,
     name,
+    dateUnknown: !!input.dateUnknown,
     note: input.note?.trim() || null,
   };
   await deps.repo.addRecord('changeEvents', event);
@@ -90,4 +94,27 @@ export async function logReaction(deps: Deps, input: ReactionInput): Promise<Rea
   const reaction: Reaction = { id: deps.ids(), at, mealId: input.mealId, symptoms, note: input.note?.trim() || null };
   await deps.repo.addRecord('reactions', reaction);
   return reaction;
+}
+
+export interface InUseItem {
+  category: string;
+  name: string;
+  /** When it was started (or logged, when the date is unknown). */
+  since: ChangeEvent['at'];
+  dateUnknown: boolean;
+}
+
+/**
+ * IN-12: what is in use now: for each category and name (compared without case), the latest event is "started".
+ * "Stopped" offers these so the name does not have to be typed again.
+ */
+export async function itemsInUse(deps: Deps): Promise<InUseItem[]> {
+  const latest = new Map<string, ChangeEvent>();
+  for (const e of [...(await deps.repo.listRecords('changeEvents'))].sort((a, b) => a.at.utc.localeCompare(b.at.utc) || a.id.localeCompare(b.id))) {
+    latest.set(`${e.category}|${e.name.trim().toLowerCase()}`, e);
+  }
+  return [...latest.values()]
+    .filter((e) => e.action === 'started')
+    .sort((a, b) => b.at.utc.localeCompare(a.at.utc))
+    .map((e) => ({ category: e.category, name: e.name, since: e.at, dateUnknown: e.dateUnknown }));
 }

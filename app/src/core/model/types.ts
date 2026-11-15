@@ -130,16 +130,20 @@ export interface TreatmentApplication {
 /** IN-12 */
 export const CHANGE_ACTIONS = ['started', 'stopped'] as const;
 export type ChangeAction = (typeof CHANGE_ACTIONS)[number];
-export const CHANGE_CATEGORIES = ['product', 'medication', 'diet'] as const;
-export type ChangeCategory = (typeof CHANGE_CATEGORIES)[number];
 
-/** IN-12: "started" or "stopped" a product, medication or diet on a date; shown as a marker on the timeline. */
+/**
+ * IN-12: a routine change: a product or diet started or stopped on a date, shown as a marker on the timeline.
+ * `category` is the id of an item of the `changeCategories` list (predefined `cat-product` and `cat-diet`, plus the
+ * user's own). `dateUnknown` marks "started" for something already in use before the diary: `at` is then only when
+ * it was logged.
+ */
 export interface ChangeEvent {
   id: string;
   at: Stamp;
   action: ChangeAction;
-  category: ChangeCategory;
+  category: string;
   name: string;
+  dateUnknown: boolean;
   note: string | null;
 }
 
@@ -341,13 +345,15 @@ export interface Settings {
   skinAreas: SkinArea[];
   /** SK-7, IN-6: the Daily health items (scores and yes/no, daily tags included). */
   dailyItems: ListItem[];
+  /** IN-12: the categories of routine changes (Product and Diet, plus the user's own). */
+  changeCategories: ListItem[];
   /** IN-11: the saved list of topical treatments. */
   treatments: ListItem[];
 }
 
 /** Settings collections that are plain lists of ListItem. */
 export type ListKind = Exclude<keyof Settings, 'skinAreas'>;
-export const LIST_KINDS: readonly ListKind[] = ['dailyItems', 'treatments'];
+export const LIST_KINDS: readonly ListKind[] = ['dailyItems', 'changeCategories', 'treatments'];
 
 export interface Snapshot extends Records, Settings {}
 

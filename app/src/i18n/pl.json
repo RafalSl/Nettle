@@ -262,7 +262,9 @@
     "item-stress": "Stres",
     "item-sleep": "Jakość snu",
     "item-abdominal-pain": "Ból brzucha",
-    "item-bloating": "Wzdęcia"
+    "item-bloating": "Wzdęcia",
+    "cat-product": "Produkt",
+    "cat-diet": "Dieta"
   },
   "more": {
     "nailTitle": "Paznokcie",
@@ -347,11 +349,11 @@
       "started": "Rozpoczęto",
       "stopped": "Zakończono"
     },
-    "categories": {
-      "product": "Produkt",
-      "medication": "Lek",
-      "diet": "Dieta"
-    }
+    "inUse": "Aktualnie używane",
+    "inUseNone": "Nic nie jest oznaczone jako używane.",
+    "dateUnknown": "Już używam, data nieznana",
+    "dateUnknownHint": "Zapisane bez daty. Analiza dowie się, że było już używane.",
+    "dateUnknownShort": "data nieznana"
   },
   "symptoms": {
     "hives": "Pokrzywka",
@@ -361,7 +363,8 @@
   },
   "lists": {
     "treatments": "Zabiegi",
-    "dailyItems": "Pozycje Zdrowia dnia"
+    "dailyItems": "Pozycje Zdrowia dnia",
+    "changeCategories": "Kategorie zmian rutyny"
   },
   "photos": {
     "camera": "Zrób zdjęcie",
@@ -562,7 +565,8 @@
     "aiOrder": "Kolejność i czas",
     "aiLimits": "Czego dane nie pokazują",
     "flaresBasis": "Zaostrzenia to okresy, w których nasilenie zmiany skórnej wynosiło {{n}} lub więcej. Czas jest tak dokładny, jak zapisy.",
-    "openAtLastEntry": "trwa do ostatniego wpisu ({{date}})"
+    "openAtLastEntry": "trwa do ostatniego wpisu ({{date}})",
+    "dateUnknown": "data nieznana"
   },
   "export": {
     "extras": "Dodatkowe pliki",
@@ -861,7 +865,9 @@
     "tag-sun-exposure": "Dużo czasu w silnym słońcu.",
     "tag-travel": "Podróż dziś.",
     "tag-nicotine": "Papierosy lub inna nikotyna dziś.",
-    "tag-joint-symptoms": "Bolesne lub sztywne stawy dziś."
+    "tag-joint-symptoms": "Bolesne lub sztywne stawy dziś.",
+    "cat-product": "Wszystko, co dotyka skóry lub jej otoczenia: kosmetyki, detergenty, ubrania, biżuteria. Zapisz raz na początku i raz na końcu.",
+    "cat-diet": "Sposób odżywiania, który zaczęto lub przerwano, np. bez glutenu lub bez nabiału. Nie zastępuje zapisu posiłków."
   },
   "entry": {
     "meal": {

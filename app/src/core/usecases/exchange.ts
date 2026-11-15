@@ -114,6 +114,7 @@ export async function exportBundle(deps: Deps, options: ExportOptions = {}): Pro
       records: parts.records ? snapshot : emptyRecords(),
       skinAreas: snapshot.skinAreas,
       dailyItems: snapshot.dailyItems,
+      changeCategories: snapshot.changeCategories,
       treatments: snapshot.treatments,
       photos: thumbnails,
       range: data.range,

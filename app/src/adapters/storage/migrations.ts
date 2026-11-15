@@ -272,6 +272,22 @@ export const MIGRATIONS: string[] = [
   `
   DROP TABLE flare_marker;
   `,
+  // IN-12: routine changes. Categories are a list (ids, so the user can add some) and a start can be "date unknown".
+  // The medication category goes. Prototype data only: the table is recreated.
+  `
+  DROP TABLE change_event;
+  CREATE TABLE change_event (
+    id TEXT PRIMARY KEY,
+    ts_utc TEXT NOT NULL,
+    tz TEXT NOT NULL,
+    action TEXT NOT NULL CHECK (action IN ('started', 'stopped')),
+    category TEXT NOT NULL,
+    name TEXT NOT NULL,
+    date_unknown INTEGER NOT NULL DEFAULT 0 CHECK (date_unknown IN (0, 1)),
+    note TEXT
+  );
+  CREATE INDEX change_event_ts ON change_event (ts_utc);
+  `,
 ];
 
 export async function migrate(db: SqlDb): Promise<void> {

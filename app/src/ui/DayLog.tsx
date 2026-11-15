@@ -28,7 +28,7 @@ export function DayLog({
   highlight,
 }: {
   rows: LogRow[];
-  ctx: { areas: SkinArea[]; treatments: ListItem[] };
+  ctx: { areas: SkinArea[]; treatments: ListItem[]; categories: ListItem[] };
   /** Called after an entry was deleted, so the screen reloads. */
   onChanged: () => void;
   limit?: number;

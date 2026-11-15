@@ -144,7 +144,7 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
     });
 
     it('IN-12 stores change events', async () => {
-      const e = { id: 'ce1', at: { utc: '2026-01-10T00:00:00.000Z', tz: 'UTC' }, action: 'stopped' as const, category: 'diet' as const, name: 'Synthetic diet', note: 'n' };
+      const e = { id: 'ce1', at: { utc: '2026-01-10T00:00:00.000Z', tz: 'UTC' }, action: 'stopped' as const, category: 'cat-diet', name: 'Synthetic diet', dateUnknown: true, note: 'n' };
       await repo.addRecord('changeEvents', e);
       expect(await repo.listRecords('changeEvents')).toEqual([e]);
     });

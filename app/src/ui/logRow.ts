@@ -6,11 +6,18 @@ import { areaLabel, itemLabel, t } from '@/i18n';
 export interface RowContext {
   areas: SkinArea[];
   treatments: ListItem[];
+  /** IN-12: the routine change categories. */
+  categories: ListItem[];
 }
 
 /** IN-16: the source shown on an entry; typed entries say nothing. */
 const sourceLabel = (s: IngredientSource): string =>
   s.kind === 'typed' ? '' : `${t(`source.${s.kind}`)}${s.edited ? `, ${t('source.edited')}` : ''}`;
+
+const categoryLabel = (ctx: RowContext, id: string) => {
+  const c = ctx.categories.find((x) => x.id === id);
+  return c ? itemLabel(c) : id;
+};
 
 /** UX-2: the text of one row of the day's log. Only ids and enums are looked up; free text is shown as typed. */
 export function describeRow(row: LogRow, ctx: RowContext): { title: string; detail: string | null } {
@@ -45,7 +52,7 @@ export function describeRow(row: LogRow, ctx: RowContext): { title: string; deta
     case 'changeEvents':
       return {
         title: t('log.change', { action: t(`change.actions.${row.record.action}`), name: row.record.name }),
-        detail: t(`change.categories.${row.record.category}`),
+        detail: [categoryLabel(ctx, row.record.category), row.record.dateUnknown ? t('change.dateUnknownShort') : ''].filter(Boolean).join(' · '),
       };
     case 'reactions':
       return { title: t('log.reaction', { symptoms: row.record.symptoms.map((s) => t(`symptoms.${s}`)).join(', ') }), detail: null };

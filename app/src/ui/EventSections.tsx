@@ -1,17 +1,10 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Text, TextInput } from 'react-native';
-import {
-  CHANGE_ACTIONS,
-  CHANGE_CATEGORIES,
-  SYMPTOMS,
-  type ChangeAction,
-  type ChangeCategory,
-  type Meal,
-  type Symptom,
-} from '@/core/model/types';
-import { logChangeEvent, logReaction } from '@/core/usecases/events';
-import { errorMessage, t } from '@/i18n';
+import { Alert, Switch, Text, TextInput, View } from 'react-native';
+import { CHANGE_ACTIONS, SYMPTOMS, type ChangeAction, type ListItem, type Meal, type Symptom } from '@/core/model/types';
+import { itemsInUse, logChangeEvent, logReaction, type InUseItem } from '@/core/usecases/events';
+import { listActiveItems } from '@/core/usecases/lists';
+import { errorMessage, itemDescription, itemLabel, t } from '@/i18n';
 import { useServices } from '@/services';
 import { FormModal, useField, useForm } from '@/ui/FormModal';
 import { useFormTime } from '@/ui/useFormTime';
@@ -23,25 +16,69 @@ const toggled = (set: Set<string>, id: string) => {
   return next;
 };
 
-/** IN-12: "started" or "stopped" a product, medication or diet, on a date. */
+/**
+ * IN-12: a routine change: a product or diet started or stopped, on a date. "Stopped" offers what is in use now;
+ * "Started" can say "already using, date unknown" for things begun before the diary.
+ */
 export function ChangeEventSection() {
   const { deps } = useServices();
   const f = useForm();
   const [action, setAction] = useField<ChangeAction>('started', f.touch);
-  const [category, setCategory] = useField<ChangeCategory>('product', f.touch);
+  const [categories, setCategories] = useState<ListItem[]>([]);
+  const [category, setCategory] = useField<string>('cat-product', f.touch);
   const [name, setName] = useField('', f.touch);
+  const [unknown, setUnknown] = useField(false, f.touch);
+  const [inUse, setInUse] = useState<InUseItem[]>([]);
   const time = useFormTime(f.touch);
+  useFocusEffect(
+    useCallback(() => {
+      (async () => {
+        setCategories(await listActiveItems(deps, 'changeCategories'));
+        setInUse(await itemsInUse(deps));
+      })().catch((e) => Alert.alert(errorMessage(e)));
+    }, [deps]),
+  );
+  const selected = categories.find((c) => c.id === category);
+  const description = selected ? itemDescription(selected) : null;
+  const known = unknown && action === 'started';
   return (
     <FormModal
       dirty={f.dirty}
       missing={name.trim() ? null : t('edit.name')}
       onSave={async () => {
-        await logChangeEvent(deps, { action, category, name, at: time.atForSave });
+        await logChangeEvent(deps, { action, category, name, ...(known ? { dateUnknown: true } : { at: time.atForSave }) });
       }}>
       <Chips items={CHANGE_ACTIONS.map((a) => ({ id: a, label: t(`change.actions.${a}`) }))} selected={new Set([action])} onToggle={(id) => setAction(id as ChangeAction)} />
-      <Chips items={CHANGE_CATEGORIES.map((c) => ({ id: c, label: t(`change.categories.${c}`) }))} selected={new Set([category])} onToggle={(id) => setCategory(id as ChangeCategory)} />
+      <Chips items={categories.map((c) => ({ id: c.id, label: itemLabel(c) }))} selected={new Set([category])} onToggle={setCategory} />
+      {description ? <Hint>{description}</Hint> : null}
+      {action === 'stopped' && (
+        <>
+          <Label>{t('change.inUse')}</Label>
+          {inUse.length === 0 ? (
+            <Hint>{t('change.inUseNone')}</Hint>
+          ) : (
+            <Chips
+              items={inUse.map((i) => ({ id: `${i.category}|${i.name}`, label: i.name }))}
+              selected={new Set(inUse.filter((i) => i.name === name && i.category === category).map((i) => `${i.category}|${i.name}`))}
+              onToggle={(id) => {
+                const item = inUse.find((i) => `${i.category}|${i.name}` === id);
+                if (!item) return;
+                setName(item.name);
+                setCategory(item.category);
+              }}
+            />
+          )}
+        </>
+      )}
       <TextInput style={styles.input} accessibilityLabel={t('more.changeName')} placeholder={t('more.changeName')} value={name} onChangeText={setName} />
-      <TimeField value={time.value} onChange={time.set} />
+      {action === 'started' && (
+        <View style={styles.timeRow}>
+          <Text style={styles.rowText}>{t('change.dateUnknown')}</Text>
+          <Switch value={unknown} onValueChange={setUnknown} accessibilityLabel={t('change.dateUnknown')} />
+        </View>
+      )}
+      {!known && <TimeField value={time.value} onChange={time.set} />}
+      {known && <Hint>{t('change.dateUnknownHint')}</Hint>}
     </FormModal>
   );
 }

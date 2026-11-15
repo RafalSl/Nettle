@@ -15,6 +15,7 @@ export const LOOKBACK_DAYS = 21;
 export interface AnalysisSource extends Records {
   skinAreas: SkinArea[];
   dailyItems: ListItem[];
+  changeCategories: ListItem[];
   treatments: ListItem[];
 }
 
@@ -54,6 +55,7 @@ export function buildAnalysisInput(src: AnalysisSource, dayFrom: string, dayTo: 
   const dayOf = (at: { utc: string; tz: string }) => localDay(at.utc, at.tz, startHour);
   const areaName = new Map(src.skinAreas.map((a) => [a.id, label(a)]));
   const items = new Map(src.dailyItems.map((i) => [i.id, i]));
+  const categoryName = new Map(src.changeCategories.map((c) => [c.id, label(c)]));
   const treatmentName = new Map(src.treatments.map((t) => [t.id, label(t)]));
   const mealById = new Map(src.meals.map((m) => [m.id, m]));
 
@@ -98,7 +100,7 @@ export function buildAnalysisInput(src: AnalysisSource, dayFrom: string, dayTo: 
     if (inPeriod(c.day)) periodRecords++;
   }
   for (const e of src.changeEvents) {
-    add('changeEvents', dayOf(e.at), 'events', { time: time(e.at.utc, e.at.tz), action: e.action, kind: e.category, name: e.name, ...(e.note ? { note: e.note } : {}) }, true);
+    add('changeEvents', dayOf(e.at), 'events', { time: time(e.at.utc, e.at.tz), action: e.action, category: categoryName.get(e.category) ?? e.category, name: e.name, ...(e.dateUnknown ? { date_unknown: 'already in use before the diary; the date is when it was logged' } : {}), ...(e.note ? { note: e.note } : {}) }, true);
   }
   for (const m of src.medicationEntries) {
     add('medicationEntries', dayOf(m.at), 'medication', { time: time(m.at.utc, m.at.tz), kind: m.category, name: m.name, ...(m.dose ? { dose: m.dose } : {}) }, true);

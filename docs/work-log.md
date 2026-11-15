@@ -398,3 +398,7 @@ Newest entry last. One short entry per working session or meaningful step: what 
 - **Done:** UX-1, UX-2, UX-6, NF-2. Pinned quick actions over ten entry types with More listing the rest (subtitles, no hide), Edit mode with On Today and In More lists; Settings is a stack above the tabs with the gear on both tab headers, five groups, links updated to `/settings/data`. The Today flare card has the specified wording. 666 tests pass, iOS bundle builds.
 - **Phone check:** tab bar hidden inside Settings, Back returns to the right tab.
 - **Next:** routine change (IN-12), regular items (IN-17), photos in forms (SK-4), Review browsing (UX-10), guide (UX-11).
+
+## 2026-11-15: routine change (branch feature/routine-change)
+- **Done:** IN-12. Categories Product and Diet plus the user's own (a list in Settings, Logging, with descriptions), "in use now" for Stopped, "already using, date unknown" for Started; the medication category is removed. Report, analysis input, CSV and data.json follow. 670 tests pass, iOS bundle builds.
+- **Next:** regular medication and treatment (IN-17) with reminders and quick sheets.

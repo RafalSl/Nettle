@@ -75,7 +75,7 @@ async function diary() {
   await logStool(deps, { bristol: 6, at: at('2026-01-12T07:00:00.000Z') });
   const cream = await addListItem(deps, 'treatments', 'Synthetic cream');
   await applyTreatment(deps, { treatmentId: cream.id, areaIds: ['area-chin'], at: at('2026-01-13T21:00:00.000Z') });
-  await logChangeEvent(deps, { action: 'started', category: 'product', name: 'Synthetic soap', at: at('2026-01-09T09:00:00.000Z') });
+  await logChangeEvent(deps, { action: 'started', category: 'cat-product', name: 'Synthetic soap', at: at('2026-01-09T09:00:00.000Z') });
   await runAnalysis(deps, await prepareAnalysis(deps, { dayFrom: '2026-01-10', dayTo: '2026-01-13', language: 'en' }));
   return { deps, photos, pdf: deps.pdf as FakePdf };
 }
@@ -186,7 +186,7 @@ describe('export with CSV and PDF report (EX-3, EX-4, EX-5, EX-8)', () => {
         ...reportOptions('en'),
         records: { ...Object.fromEntries(['skinEntries', 'nailEntries', 'checkIns', 'stoolEntries', 'treatmentApplications', 'changeEvents', 'reactions', 'drinks', 'medicationEntries', 'photos', 'analyses', 'reportSummaries'].map((k) => [k, []])), meals } as never,
         skinAreas: [],
-        dailyItems: [],
+        dailyItems: [], changeCategories: [],
         treatments: [],
         photos: new Map(),
         range: { from: null, to: null },
@@ -212,7 +212,7 @@ describe('export with CSV and PDF report (EX-3, EX-4, EX-5, EX-8)', () => {
       buildReportHtml({
         ...reportOptions('en'),
         records: { ...Object.fromEntries(['skinEntries', 'nailEntries', 'checkIns', 'stoolEntries', 'treatmentApplications', 'changeEvents', 'reactions', 'drinks', 'medicationEntries', 'photos', 'analyses', 'reportSummaries'].map((k) => [k, []])), meals } as never,
-        skinAreas: [], dailyItems: [], treatments: [], photos: new Map(), range: { from: null, to: null }, exportedAt: { utc: '2026-01-20T10:00:00.000Z', tz: 'Europe/Warsaw' },
+        skinAreas: [], dailyItems: [], changeCategories: [], treatments: [], photos: new Map(), range: { from: null, to: null }, exportedAt: { utc: '2026-01-20T10:00:00.000Z', tz: 'Europe/Warsaw' },
       });
     const out = html([meal('a', true), meal('b', false)]);
     expect(out).toContain('[allergens.milk] [[report.aiMark]]');
@@ -244,7 +244,7 @@ describe('export with CSV and PDF report (EX-3, EX-4, EX-5, EX-8)', () => {
         ['meals', 'skinEntries', 'nailEntries', 'checkIns', 'stoolEntries', 'treatmentApplications', 'changeEvents', 'reactions', 'drinks', 'medicationEntries', 'photos', 'analyses', 'reportSummaries'].map((k) => [k, []]),
       ) as never,
       skinAreas: [],
-      dailyItems: [],
+      dailyItems: [], changeCategories: [],
       treatments: [],
       photos: new Map(),
       range: { from: null, to: null },

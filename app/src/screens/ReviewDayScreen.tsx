@@ -14,13 +14,13 @@ export default function ReviewDayScreen() {
   const router = useRouter();
   const { day } = useLocalSearchParams<{ day?: string }>();
   const [rows, setRows] = useState<LogRow[]>([]);
-  const [ctx, setCtx] = useState<{ areas: SkinArea[]; treatments: ListItem[] }>({ areas: [], treatments: [] });
+  const [ctx, setCtx] = useState<{ areas: SkinArea[]; treatments: ListItem[]; categories: ListItem[] }>({ areas: [], treatments: [], categories: [] });
   const valid = typeof day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(day) ? day : null;
   const load = useCallback(() => {
     if (!valid) return;
     (async () => {
       setRows(await dayLog(deps, valid));
-      setCtx({ areas: await deps.repo.listAreas(), treatments: await deps.repo.listItems('treatments') });
+      setCtx({ areas: await deps.repo.listAreas(), treatments: await deps.repo.listItems('treatments'), categories: await deps.repo.listItems('changeCategories') });
     })().catch((e) => Alert.alert(errorMessage(e)));
   }, [deps, valid]);
   useFocusEffect(load);

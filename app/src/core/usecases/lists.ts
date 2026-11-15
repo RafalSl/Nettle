@@ -1,5 +1,5 @@
 import { NettleError } from '../model/errors';
-import type { ListItem, ListKind } from '../model/types';
+import type { ItemValueKind, ListItem, ListKind } from '../model/types';
 import type { Deps } from './deps';
 
 /** Items of a user-editable list that can currently be chosen (not archived). */
@@ -7,10 +7,23 @@ export async function listActiveItems(deps: Deps, kind: ListKind): Promise<ListI
   return (await deps.repo.listItems(kind)).filter((i) => !i.archived);
 }
 
-export async function addListItem(deps: Deps, kind: ListKind, name: string): Promise<ListItem> {
+export async function addListItem(
+  deps: Deps,
+  kind: ListKind,
+  name: string,
+  options: { valueKind?: ItemValueKind; description?: string } = {},
+): Promise<ListItem> {
   const trimmed = name.trim();
   if (!trimmed) throw new NettleError('empty_item_name');
-  const item: ListItem = { id: deps.ids(), name: trimmed, predefined: false, archived: false, nameOverride: null };
+  const item: ListItem = {
+    id: deps.ids(),
+    name: trimmed,
+    predefined: false,
+    archived: false,
+    nameOverride: null,
+    valueKind: options.valueKind ?? 'yesno',
+    description: options.description?.trim() || null,
+  };
   await deps.repo.upsertItem(kind, item);
   return item;
 }

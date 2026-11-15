@@ -185,7 +185,7 @@
     "unknown_item": "That item does not exist.",
     "empty_item_name": "Enter a name.",
     "invalid_stool_type": "Choose a type from 1 to 7.",
-    "checkin_not_found": "There is no check-in for that day.",
+    "checkin_not_found": "There is no Daily health record for that day.",
     "import_unknown_item": "Some entries use a tag or treatment that is not in the app. Import the settings too, or add it first.",
     "import_unknown_meal": "Some reactions point at a meal that is not in the app.",
     "unknown_meal": "That meal does not exist.",
@@ -226,10 +226,10 @@
     "flare_not_started": "No flare is marked as started for this area.",
     "flare_end_before_start": "A flare cannot end before it starts.",
     "flare_overlap": "This time overlaps the previous or the next flare marker of this area.",
-    "checkin_day_taken": "That day already has a check-in. Open it instead.",
+    "checkin_day_taken": "That day already has a Daily health record. Open it instead.",
     "meal_after_reaction": "A meal cannot be moved after its reaction.",
     "duplicate_area_name": "An area with this name already exists.",
-    "day_has_no_meals": "No meals are logged for this day. Confirm to close it anyway.",
+    "day_has_no_meals": "No meals are logged for this day. Save the Daily health record anyway?",
     "notifications_denied": "Notifications are turned off for this app. Allow them in the iPhone settings to get reminders.",
     "invalid_barcode": "This is not a valid barcode. Check the digits.",
     "barcode_lookup_failed": "The product database could not be reached. Enter the product by hand.",
@@ -237,26 +237,22 @@
     "lock_failed": "Could not confirm it is you. The lock was not changed."
   },
   "today": {
-    "title": "Daily check-in",
+    "title": "Daily health",
     "day": "Day",
-    "hint": "Leave a score unset if you do not want to record it.",
+    "hint": "Leave a score unset if you do not want to record it. Saving logs the day.",
     "wellbeing": "Wellbeing",
     "stress": "Stress",
     "sleep": "Sleep quality",
     "abdominalPain": "Abdominal pain",
     "bloating": "Bloating",
     "tags": "Today",
-    "saveClose": "Save and close the day",
-    "closeAnyway": "Close the day anyway",
-    "dayComplete": "Day closed: everything for this day is logged.",
-    "reopen": "Reopen day",
     "stoolTitle": "Stool",
     "stoolHint": "Bristol type 1 (hard lumps) to 7 (watery)",
     "stoolAdd": "Add stool entry",
     "sameAsYesterday": "Same as yesterday",
-    "noYesterday": "There is no check-in for the day before.",
-    "markComplete": "Mark day complete",
-    "stoolSave": "Save stool entry"
+    "noYesterday": "There is no Daily health record for the day before.",
+    "stoolSave": "Save stool entry",
+    "closeAnyway": "Save anyway"
   },
   "tags": {
     "tag-illness-or-infection": "Illness or infection",
@@ -267,7 +263,12 @@
     "tag-sun-exposure": "Sun exposure",
     "tag-travel": "Travel",
     "tag-nicotine": "Nicotine",
-    "tag-joint-symptoms": "Joint symptoms"
+    "tag-joint-symptoms": "Joint symptoms",
+    "item-wellbeing": "Wellbeing",
+    "item-stress": "Stress",
+    "item-sleep": "Sleep quality",
+    "item-abdominal-pain": "Abdominal pain",
+    "item-bloating": "Bloating"
   },
   "more": {
     "nailTitle": "Nails",
@@ -368,8 +369,8 @@
     "stomach": "Stomach symptoms"
   },
   "lists": {
-    "dailyTags": "Daily tags",
-    "treatments": "Treatments"
+    "treatments": "Treatments",
+    "dailyItems": "Daily tags"
   },
   "photos": {
     "camera": "Take photo",
@@ -467,7 +468,7 @@
     "review": "Review what will be sent",
     "confirmTitle": "Send this to Anthropic?",
     "confirmIntro": "This data leaves your phone and is sent over the internet to Anthropic using your API key. Anthropic bills this separately to your API account; a Claude subscription does not cover it. Nothing is sent until you confirm.",
-    "range": "Days: {{from}} to {{to}} ({{days}} days, {{complete}} marked complete)",
+    "range": "Days: {{from}} to {{to}} ({{days}} days, {{complete}} with a Daily health record)",
     "lookback": "Also included for context: {{n}} earlier days of illness, stress, sleep, medication and changes.",
     "model": "Model: {{model}}",
     "size": "About {{n}} characters of text",
@@ -527,7 +528,7 @@
     "photos": "Photos",
     "nailTimeline": "photos over time",
     "firstLast": "first and latest photo",
-    "checkins": "Daily check-ins",
+    "checkins": "Daily health",
     "wellbeing": "Wellbeing",
     "stress": "Stress",
     "sleep": "Sleep",
@@ -612,8 +613,6 @@
     "photosTitle": "Photos",
     "photosInfo": "Photos are stored in the app's private storage on this phone, never in the photo library, and EXIF data such as location is removed when they are saved. They leave the phone only in an export you share or in an AI run you confirm.",
     "photosSensitive": "Sensitive photos are blurred in the app and left out of the Doctor report and AI runs unless you include them. Set an area's default in Skin and nail areas, or change a single photo.",
-    "scoresTitle": "Daily check-in scores",
-    "scoresHint": "A score that is off is not asked in the check-in and not recorded. Values already saved stay.",
     "skinAreas": "Skin areas",
     "nailAreas": "Nail areas",
     "skinAreaName": "New or new name of the selected skin area",
@@ -624,7 +623,12 @@
     "favMeals": "Meals",
     "favDrinks": "Drinks",
     "favMedications": "Medications and supplements",
-    "favRemove": "Remove favorite {{name}}"
+    "favRemove": "Remove favorite {{name}}",
+    "itemsTitle": "Daily health items",
+    "itemsHint": "Scores run from 0 to 10; yes or no items record only a yes. An archived item is no longer asked, but its history stays in the report and the analysis.",
+    "itemScore": "New item is a score",
+    "itemYesNo": "New item is yes or no",
+    "itemDescription": "Description (optional)"
   },
   "about": {
     "title": "About",
@@ -646,7 +650,7 @@
     "more": "More",
     "meal": "Meal",
     "skin": "Skin update",
-    "checkin": "Check-in",
+    "checkin": "Daily health",
     "intake": "Drinks, meds",
     "treatment": "Treatment",
     "nails": "Nails",
@@ -674,7 +678,7 @@
     "meal": "Meal",
     "skin": "Skin",
     "treatment": "Treatment",
-    "checkin": "Check-in",
+    "checkin": "Daily health",
     "more": "More",
     "moreIntake": "Drink, medication or supplement",
     "moreReaction": "Reaction after a meal",
@@ -698,7 +702,7 @@
     "report": "Doctor report",
     "days": "Days",
     "dayRow": "{{day}}: {{n}} entries",
-    "dayComplete": "complete",
+    "dayComplete": "Daily health logged",
     "noDays": "No days logged yet.",
     "runRunning": "Analysis running",
     "runReady": "Analysis ready",
@@ -748,8 +752,7 @@
     "meal": "Meal",
     "skin": "Skin",
     "nail": "Nail",
-    "checkin": "Check-in",
-    "complete": "day complete",
+    "checkin": "Daily health",
     "stool": "Stool type {{n}}",
     "treatment": "{{name}} on {{areas}}",
     "change": "{{action}} {{name}}",
@@ -777,13 +780,11 @@
   "cards": {
     "openFlare": "Flare open: {{area}}",
     "endFlare": "End flare",
-    "notComplete": "This day is not marked complete.",
-    "openCheckin": "Open check-in",
-    "complete": "Day complete.",
-    "reopen": "Reopen",
+    "openCheckin": "Open Daily health",
     "noExport": "No export yet. The diary exists only on this phone.",
     "lastExport": "Last export {{days}} days ago.",
-    "openBackup": "Back up now"
+    "openBackup": "Back up now",
+    "notLogged": "This day has no Daily health record yet."
   },
   "edit": {
     "title": "Edit entry",
@@ -857,5 +858,21 @@
     "hint": "Locks the app when it starts and after a minute in the background. Your diary stays on this phone either way. In Expo Go the system asks for the passcode, because Face ID needs a standalone build.",
     "turnOn": "Turn on the lock",
     "turnOff": "Turn off the lock"
+  },
+  "itemDescriptions": {
+    "item-wellbeing": "How well you felt overall today. 0 is very poor, 10 is very good.",
+    "item-stress": "How stressed you felt today. 0 is not at all, 10 is extreme.",
+    "item-sleep": "How well you slept last night. 0 is very poor, 10 is very good.",
+    "item-abdominal-pain": "Stomach or belly pain today. 0 is none, 10 is the worst imaginable.",
+    "item-bloating": "A swollen or tight belly today.",
+    "tag-illness-or-infection": "A cold, flu or other infection today.",
+    "tag-antibiotics": "You took antibiotics today.",
+    "tag-shaving": "You shaved today.",
+    "tag-heavy-sweating": "Sport or heat made you sweat a lot.",
+    "tag-sauna-or-pool": "You were in a sauna or a swimming pool.",
+    "tag-sun-exposure": "A lot of time in strong sun.",
+    "tag-travel": "You travelled today.",
+    "tag-nicotine": "Cigarettes or other nicotine today.",
+    "tag-joint-symptoms": "Painful or stiff joints today."
   }
 }

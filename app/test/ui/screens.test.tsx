@@ -19,7 +19,7 @@ import { applyImport, exportBundle, previewImport } from '@/core/usecases/exchan
 import { deleteEntry } from '@/core/usecases/entries';
 import { toggleFavoriteDrink, toggleFavoriteMeal, updateSuggestionSettings } from '@/core/usecases/preferences';
 import { applyTreatment, logChangeEvent, logReaction } from '@/core/usecases/events';
-import { addListItem } from '@/core/usecases/lists';
+import { addListItem, archiveListItem } from '@/core/usecases/lists';
 import { markFlare } from '@/core/usecases/flares';
 import { saveApiKey } from '@/core/usecases/llm';
 import { prepareAnalysis } from '@/core/usecases/analysis';
@@ -203,12 +203,12 @@ describe('screen flows (NF-2, NF-3)', () => {
     }
   });
 
-  it('SK-7, SK-11 the check-in saves from the header, and closing a day with no meals asks first', async () => {
+  it('SK-7, SK-11 Daily health saves from the header, and saving a day with no meals asks first', async () => {
     const sheet = jest.spyOn(ActionSheetIOS, 'showActionSheetWithOptions').mockImplementation((_o, cb) => cb(0));
     const deps = nowDeps();
     const { tree } = await mount(() => require('@/app/form/checkin'), deps);
-    await press(tree, `${en.common.increase} ${en.today.wellbeing}`);
-    await press(tree, `${en.common.increase} ${en.today.wellbeing}`);
+    await press(tree, `${en.common.increase} ${en.tags['item-wellbeing']}`);
+    await press(tree, `${en.common.increase} ${en.tags['item-wellbeing']}`);
     const save = async () => {
       let rendered!: ReactTestRenderer;
       await act(async () => {
@@ -219,16 +219,15 @@ describe('screen flows (NF-2, NF-3)', () => {
         await node.props.onPress();
       });
     };
-    await toggle(tree, en.today.markComplete);
+    expect(hasText(tree, 'Mark day complete')).toBe(false); // no separate "complete" switch any more
     sheet.mockImplementationOnce((_o, cb) => cb(1)); // Cancel in the sheet: nothing is saved, the form stays
     await save();
     expect(await deps.repo.listRecords('checkIns')).toEqual([]);
     expect(mockRouter.back).not.toHaveBeenCalled();
-    await save(); // this time the user picks "Close the day anyway"
+    await save(); // this time the user picks "Save anyway"
     await flush();
-    const [checkIn] = await deps.repo.listRecords('checkIns');
-    expect(checkIn).toMatchObject({ wellbeing: 1, stress: null, day: localDay(deps.clock.now().toISOString(), deps.clock.timeZone()) });
-    expect(checkIn!.completedAt).not.toBeNull();
+    const [record] = await deps.repo.listRecords('checkIns');
+    expect(record).toMatchObject({ values: { 'item-wellbeing': 1 }, day: localDay(deps.clock.now().toISOString(), deps.clock.timeZone()) });
     expect(mockRouter.back).toHaveBeenCalledTimes(1);
     sheet.mockRestore();
   });
@@ -236,17 +235,17 @@ describe('screen flows (NF-2, NF-3)', () => {
   it('SK-7 "Same as yesterday" is an explicit button, and nothing is filled in silently', async () => {
     const deps = nowDeps();
     const yesterday = new Date(Date.now() - 86_400_000);
-    await saveCheckIn(deps, { at: yesterday, wellbeing: 7, stress: 2, bloating: true });
+    await saveCheckIn(deps, { at: yesterday, values: { 'item-wellbeing': 7, 'item-stress': 2, 'item-bloating': true }, confirmEmptyDay: true });
     const { tree } = await mount(() => require('@/app/form/checkin'), deps);
     await flush();
-    const shown = () => tree.root.findAll((n) => n.props.accessibilityLabel === `${en.common.increase} ${en.today.wellbeing}`).length;
+    const shown = () => tree.root.findAll((n) => n.props.accessibilityLabel === `${en.common.increase} ${en.tags['item-wellbeing']}`).length;
     expect(shown()).toBeGreaterThan(0);
     const showsValue = (v: string) => tree.root.findAll((n) => (n.type as unknown) === 'Text' && String(n.props.children) === v).length > 0;
     expect(showsValue('7')).toBe(false); // today's form starts empty
     await press(tree, en.today.sameAsYesterday);
     expect(showsValue('7')).toBe(true);
-    const bloating = tree.root.findAll((n) => n.props.accessibilityLabel === en.today.bloating && n.props.value !== undefined)[0]!;
-    expect(bloating.props.value).toBe(true);
+    const bloating = tree.root.findAll((n) => n.props.accessibilityLabel === en.tags['item-bloating'] && typeof n.props.onPress === 'function')[0]!;
+    expect(bloating.props.accessibilityState.selected).toBe(true);
   });
 
   it('SK-7 the stool form saves a type and a time through the header', async () => {
@@ -397,22 +396,16 @@ describe('screen flows (NF-2, NF-3)', () => {
     expect((await deps.repo.getPreferences())!.favorites.drinks).toHaveLength(1);
   });
 
-  it('SK-7 a check-in score switched off in Settings is not asked and not recorded, and what was saved stays', async () => {
+  it('SK-7 an archived Daily health item is not asked and what was saved stays', async () => {
     const deps = nowDeps();
-    await saveCheckIn(deps, { stress: 7, wellbeing: 4 });
-    const settings = await mount(() => require('@/app/(tabs)/today/settings/logging'), deps);
-    await flush();
-    await act(async () => {
-      settings.tree.root.findAll((n) => n.props.accessibilityLabel === en.today.stress && typeof n.props.onValueChange === 'function')[0]!.props.onValueChange(false);
-    });
-    await flush();
-    expect((await deps.repo.getPreferences())!.checkInScores.stress).toBe(false);
+    await saveCheckIn(deps, { values: { 'item-stress': 7, 'item-wellbeing': 4 }, confirmEmptyDay: true });
+    await archiveListItem(deps, 'dailyItems', 'item-stress');
     const form = await mount(() => require('@/app/form/checkin'), deps);
     await flush();
-    expect(hasText(form.tree, en.today.wellbeing)).toBe(true);
-    expect(hasText(form.tree, en.today.stress)).toBe(false);
-    const saved = await saveCheckIn(deps, { stress: 2, wellbeing: 5 }); // the caller passes a value for the switched-off score
-    expect(saved).toMatchObject({ stress: 7, wellbeing: 5 });
+    expect(hasText(form.tree, en.tags['item-wellbeing'])).toBe(true);
+    expect(hasText(form.tree, en.tags['item-stress'])).toBe(false);
+    const saved = await saveCheckIn(deps, { values: { 'item-wellbeing': 5 } });
+    expect(saved.values).toEqual({ 'item-wellbeing': 5, 'item-stress': 7 });
   });
 
   it('LL-9 the AI settings list a model choice per action, defaulting to the first offered model', async () => {
@@ -776,12 +769,12 @@ describe('Today (UX-2, UX-5, EN-1, UX-9)', () => {
     expect(hasText(tree, en.day.empty)).toBe(true);
   });
 
-  it('UX-2 the cards offer to end an open flare and to open the check-in of an incomplete day', async () => {
+  it('UX-2 the cards offer to end an open flare and to open Daily health of a day with no record', async () => {
     const deps = nowDeps();
     await markFlare(deps, { areaId: 'area-chin', kind: 'start', at: new Date(Date.now() - 3600_000) });
     const { tree } = await mount(today, deps);
     await flush();
-    expect(hasText(tree, en.cards.notComplete)).toBe(true);
+    expect(hasText(tree, en.cards.notLogged)).toBe(true);
     expect(hasText(tree, en.cards.noExport)).toBe(true);
     await press(tree, en.cards.endFlare);
     await flush();
@@ -874,7 +867,7 @@ describe('Edit entry (EN-1, UX-3)', () => {
       ['meals', meal.id],
       ['skinEntries', (await logSkinEntry(deps, { areaId: 'area-chin', scores, at })).id],
       ['nailEntries', (await logNailEntry(deps, { areaId: nail.id, stage: 'white', extent: 'none', at })).id],
-      ['checkIns', (await saveCheckIn(deps, { at, wellbeing: 5 })).id],
+      ['checkIns', (await saveCheckIn(deps, { at, values: { 'item-wellbeing': 5 }, confirmEmptyDay: true })).id],
       ['stoolEntries', (await logStool(deps, { bristol: 3, at })).id],
       ['treatmentApplications', (await applyTreatment(deps, { treatmentId: cream.id, areaIds: ['area-chin'], at })).id],
       ['changeEvents', (await logChangeEvent(deps, { action: 'started', category: 'product', name: 'Synthetic soap', at })).id],

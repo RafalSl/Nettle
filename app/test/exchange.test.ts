@@ -41,11 +41,11 @@ async function seeded(make: () => Promise<StorageRepository>) {
   await repo.addSkinEntry(syntheticEntry('e2', '2026-01-12T09:00:00.000Z', 'a-custom'));
   await repo.upsertArea({ ...custom, id: 'a-nail', kind: 'nail', name: 'Synthetic left thumb' });
   await repo.addRecord('nailEntries', syntheticNailEntry('n1', '2026-01-12T10:00:00.000Z', 'a-nail'));
-  await repo.upsertItem('dailyTags', { id: 'tag-custom', name: 'Synthetic tag', predefined: false, archived: false, nameOverride: null });
+  await repo.upsertItem('dailyItems', { id: 'tag-custom', name: 'Synthetic tag', predefined: false, archived: false, nameOverride: null, valueKind: 'yesno' as const, description: null });
   await repo.addRecord('checkIns', syntheticCheckIn('c1', '2026-01-12T20:00:00.000Z', '2026-01-12', ['tag-travel', 'tag-custom']));
   await repo.addRecord('stoolEntries', syntheticStool('s1', '2026-01-12T07:00:00.000Z'));
   await repo.addRecord('stoolEntries', syntheticStool('s2', '2026-01-12T18:00:00.000Z', 6));
-  await repo.upsertItem('treatments', { id: 'tr1', name: 'Synthetic cream', predefined: false, archived: false, nameOverride: null });
+  await repo.upsertItem('treatments', { id: 'tr1', name: 'Synthetic cream', predefined: false, archived: false, nameOverride: null, valueKind: 'yesno' as const, description: null });
   await repo.addRecord('treatmentApplications', {
     id: 'ta1',
     at: { utc: '2026-01-12T21:00:00.000Z', tz: TZ },
@@ -97,7 +97,7 @@ const RAW_RECORDS = {
   flare_markers: [],
   tombstones: [],
 };
-const RAW_SETTINGS = { skin_areas: [], daily_tags: [], treatments: [], preferences: preferencesToJson(defaultPreferences()) };
+const RAW_SETTINGS = { skin_areas: [], daily_items: [], treatments: [], preferences: preferencesToJson(defaultPreferences()) };
 
 describe('data.json validation of nail data (SK-10)', () => {
   const stamp = { utc: '2026-01-10T08:00:00.000Z', tz: 'Europe/Warsaw' };
@@ -155,8 +155,7 @@ describe('data.json validation of nail data (SK-10)', () => {
 describe('data.json validation of check-ins, stool and tags (SK-7, SK-11, IN-6)', () => {
   const at = { utc: '2026-01-10T20:00:00.000Z', tz: 'Europe/Warsaw' };
   const checkIn = {
-    id: 'c1', utc: at.utc, tz: at.tz, day: '2026-01-10', wellbeing: 5, stress: null, sleep: 3,
-    abdominal_pain: 0, bloating: false, tags: ['tag-travel'], note: null, completed_utc: at.utc, completed_tz: at.tz,
+    id: 'c1', utc: at.utc, tz: at.tz, day: '2026-01-10', values: { 'item-wellbeing': 5, 'item-sleep': 3, 'tag-travel': true }, note: null,
   };
   const stool = { id: 's1', utc: at.utc, tz: at.tz, bristol: 4, note: null };
   const records = (over: object = {}) => ({ ...RAW_RECORDS, check_ins: [checkIn], stool_entries: [stool], ...over });
@@ -174,25 +173,22 @@ describe('data.json validation of check-ins, stool and tags (SK-7, SK-11, IN-6)'
     const p = parseDataJson(
       file(records(), {
         ...RAW_SETTINGS,
-        daily_tags: [{ id: 'tag-x', name: 'x', predefined: false, archived: false, name_override: null }],
+        daily_items: [{ id: 'tag-x', name: 'x', predefined: false, archived: false, name_override: null, value_kind: 'yesno', description: null }],
       }),
     );
-    expect(p.records?.checkIns[0]).toMatchObject({ day: '2026-01-10', stress: null, completedAt: at });
+    expect(p.records?.checkIns[0]).toMatchObject({ day: '2026-01-10', values: { 'item-wellbeing': 5, 'item-sleep': 3, 'tag-travel': true } });
     expect(p.records?.stoolEntries[0]?.bristol).toBe(4);
-    expect(p.settings?.dailyTags[0]?.id).toBe('tag-x');
+    expect(p.settings?.dailyItems[0]?.id).toBe('tag-x');
   });
 
-  it('rejects bad scores, days, completion stamps, tag lists and Bristol types', () => {
+  it('rejects bad values, days and Bristol types', () => {
     const bad = (over: object) => err(file(records({ check_ins: [{ ...checkIn, ...over }] })));
-    expect(bad({ wellbeing: 11 })).toBe('import_invalid_data');
-    expect(bad({ stress: 2.5 })).toBe('import_invalid_data');
+    expect(bad({ values: { 'item-wellbeing': 11 } })).toBe('import_invalid_data');
+    expect(bad({ values: { 'item-stress': 2.5 } })).toBe('import_invalid_data');
+    expect(bad({ values: ['tag-travel'] })).toBe('import_invalid_data');
     expect(bad({ day: '15-01-2026' })).toBe('import_invalid_data');
     expect(bad({ day: '2026-13-45' })).toBe('import_invalid_data');
-    expect(bad({ bloating: 'yes' })).toBe('import_invalid_data');
-    expect(bad({ tags: 'tag-travel' })).toBe('import_invalid_data');
-    expect(bad({ tags: [''] })).toBe('import_invalid_data');
-    expect(bad({ completed_tz: null })).toBe('import_invalid_data'); // stamp must be both or neither
-    expect(bad({ completed_utc: 'yesterday' })).toBe('import_invalid_data');
+    expect(bad({ values: { 'tag-travel': 'yes' } })).toBe('import_invalid_data');
     expect(err(file(records({ stool_entries: [{ ...stool, bristol: 0 }] })))).toBe('import_invalid_data');
     expect(err(file(records({ stool_entries: [{ ...stool, bristol: 7.5 }] })))).toBe('import_invalid_data');
     expect(err(file(records({ check_ins: [checkIn, checkIn] })))).toBe('import_invalid_data'); // duplicate id
@@ -202,7 +198,7 @@ describe('data.json validation of check-ins, stool and tags (SK-7, SK-11, IN-6)'
 
   it('refuses to apply a check-in that uses a tag that will not exist (import_unknown_item)', async () => {
     const deps = makeDeps(new MemoryRepo());
-    const parsed = { payload: parseDataJson(file(records({ check_ins: [{ ...checkIn, tags: ['tag-gone'] }] }))), preview: undefined as never };
+    const parsed = { payload: parseDataJson(file(records({ check_ins: [{ ...checkIn, values: { 'tag-gone': true } }] }))), preview: undefined as never };
     expect(await code(applyImport(deps, parsed, { mode: 'merge', parts: RECORDS }))).toBe('import_unknown_item');
   });
 });
@@ -256,7 +252,7 @@ describe('data.json validation of treatments, events, reactions and allergens (I
     const p = parseDataJson(
       file(records(), {
         ...RAW_SETTINGS,
-        treatments: [{ id: 'tr1', name: 'x', predefined: false, archived: false, name_override: null }],
+        treatments: [{ id: 'tr1', name: 'x', predefined: false, archived: false, name_override: null, value_kind: 'yesno', description: null }],
       }),
     );
     expect(p.records?.meals[0]?.allergens).toEqual(['milk']);
@@ -331,7 +327,7 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
       reportSummaries: 0,
       flareMarkers: 0,
       skinAreas: 8,
-      dailyTags: 10,
+      dailyItems: 15,
       treatments: 1,
     });
     await applyImport(deps, parsed, { mode: 'replace', parts: BOTH });
@@ -372,7 +368,7 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
       reportSummaries: 0,
       flareMarkers: 0,
       skinAreas: 6,
-      dailyTags: 9,
+      dailyItems: 14,
       treatments: 0,
     });
     expect(parsed.preview.newRows).toEqual({
@@ -391,7 +387,7 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
       reportSummaries: 0,
       flareMarkers: 0,
       skinAreas: 2,
-      dailyTags: 1,
+      dailyItems: 1,
       treatments: 1,
     });
     await applyImport(deps, parsed, { mode: 'merge', parts: BOTH });
@@ -418,7 +414,7 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
 
     const target = await make();
     for (const a of (await source.listAreas()).filter((a) => a.id.startsWith('a-'))) await target.upsertArea(a);
-    for (const k of ['dailyTags', 'treatments'] as const) {
+    for (const k of ['dailyItems', 'treatments'] as const) {
       for (const i of await source.listItems(k)) await target.upsertItem(k, i);
     }
     const deps = makeDeps(target);
@@ -468,7 +464,7 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
     const target = await make();
     await target.addMeal(syntheticMeal('only-here', '2026-01-01T08:00:00.000Z'));
     for (const a of (await source.listAreas()).filter((a) => a.id.startsWith('a-'))) await target.upsertArea(a);
-    for (const k of ['dailyTags', 'treatments'] as const) {
+    for (const k of ['dailyItems', 'treatments'] as const) {
       for (const i of await source.listItems(k)) await target.upsertItem(k, i);
     }
     const deps = makeDeps(target);

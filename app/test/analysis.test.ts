@@ -58,8 +58,8 @@ async function diary(make: () => Promise<StorageRepository>, llm = new FakeLlm([
   await logReaction(deps, { mealId: m1.id, symptoms: ['hives'], at: at('2026-01-10T12:00:00.000Z') });
   const cream = await addListItem(deps, 'treatments', 'Synthetic cream');
   await applyTreatment(deps, { treatmentId: cream.id, areaIds: ['area-chin'], at: at('2026-01-12T21:00:00.000Z') });
-  await saveCheckIn(deps, { at: at('2026-01-12T21:30:00.000Z'), wellbeing: 4, stress: 8, tags: ['tag-antibiotics'], complete: true, confirmEmptyDay: true });
-  await saveCheckIn(deps, { at: at('2026-01-13T21:30:00.000Z'), wellbeing: 5 }); // open day
+  await saveCheckIn(deps, { at: at('2026-01-12T21:30:00.000Z'), values: { 'item-wellbeing': 4, 'item-stress': 8, 'tag-antibiotics': true }, confirmEmptyDay: true });
+  await saveCheckIn(deps, { at: at('2026-01-13T21:30:00.000Z'), values: { 'item-wellbeing': 5 }, confirmEmptyDay: true });
   await logChangeEvent(deps, { action: 'started', category: 'medication', name: 'Synthetic antibiotic', at: at('2025-12-30T09:00:00.000Z') });
   await logMedication(deps, { category: 'supplement', name: 'Synthetic vitamin', at: at('2025-12-28T09:00:00.000Z') });
   await logMeal(deps, { description: 'Synthetic lookback meal', ingredients: ['rice'], at: at('2025-12-29T11:00:00.000Z') }); // must not be sent
@@ -95,22 +95,22 @@ describe('buildAnalysisInput (LL-2, LL-3, LL-4)', () => {
     expect(day('2026-01-10').reactions[0].meal).toContain('Synthetic pasta');
     expect(day('2026-01-12').skin[0]).toMatchObject({ area: 'Chin', severity: 6, itch: 7 });
     expect(day('2026-01-12').treatments[0]).toMatchObject({ name: 'Synthetic cream', areas: ['Chin'] });
-    expect(day('2026-01-12').checkin.tags).toEqual(['antibiotics']);
+    expect(day('2026-01-12').daily_health).toEqual({ scores: { wellbeing: 4, stress: 8 }, yes: ['antibiotics'] });
     expect(day('2026-01-13').nails[0]).toMatchObject({ nail: 'Left thumb', stage: 'yellow' });
   });
 
-  it('LL-4 counts days marked complete, shows empty days, and flags the open day', async () => {
+  it('LL-4 counts logged days (a Daily health record), shows empty days, and flags the unlogged ones', async () => {
     const { repo } = await diary(async () => new MemoryRepo());
     const built = buildAnalysisInput(await repo.snapshot(), '2026-01-10', '2026-01-14');
     const data = JSON.parse(built.json);
     expect(built.days).toBe(5);
-    expect(built.completeDays).toBe(1);
-    expect(data.period).toMatchObject({ days: 5, days_marked_complete: 1, days_with_meals: 3 });
+    expect(built.completeDays).toBe(2);
+    expect(data.period).toMatchObject({ days: 5, days_logged: 2, days_with_meals: 3 });
     const days = data.days.filter((d: { context?: boolean }) => !d.context);
     expect(days.map((d: { date: string }) => d.date)).toEqual(['2026-01-10', '2026-01-11', '2026-01-12', '2026-01-13', '2026-01-14']);
-    expect(days.find((d: { date: string }) => d.date === '2026-01-12').complete).toBe(true);
-    expect(days.find((d: { date: string }) => d.date === '2026-01-13').complete).toBe(false);
-    expect(days.find((d: { date: string }) => d.date === '2026-01-14').complete).toBeNull(); // nothing logged
+    expect(days.find((d: { date: string }) => d.date === '2026-01-12').logged).toBe(true);
+    expect(days.find((d: { date: string }) => d.date === '2026-01-13').logged).toBe(true);
+    expect(days.find((d: { date: string }) => d.date === '2026-01-14').logged).toBeNull(); // nothing logged
   });
 
   it('LL-3 includes a 21 day lookback for change events and medication only, flagged as context', async () => {
@@ -151,7 +151,7 @@ describe('analysis prompt (LL-4, LL-10, LL-11)', () => {
   const p = analysisPrompt('pl', { json: '{}', photoNotes: ['Chin 2026-01-12 20:00'] });
 
   it('asks for hypotheses with uncertainty, windows, lookbacks, confounders, incomplete days and limits', () => {
-    for (const phrase of ['never diagnose', 'tentative hypothes', '24, 48 and 72 hours', '7 and 21 days', 'confounders', 'not marked complete', 'most days', 'cannot answer', 'order_and_lag']) {
+    for (const phrase of ['never diagnose', 'tentative hypothes', '24, 48 and 72 hours', '7 and 21 days', 'confounders', '"logged": false', 'most days', 'cannot answer', 'order_and_lag']) {
       expect(p.system).toContain(phrase);
     }
     expect(p.system).toContain('Polish');
@@ -184,8 +184,8 @@ describe.each(repos)('prepare and run an analysis (%s)', (_name, make) => {
     const { deps, llm } = await diary(make);
     const prepared = await prepareAnalysis(deps, sel);
     expect(llm.requests).toHaveLength(0);
-    expect(prepared).toMatchObject({ dayFrom: '2026-01-10', dayTo: '2026-01-14', model: 'claude-haiku-5-5', promptVersion: 'analysis-2' });
-    expect(prepared.counts).toMatchObject({ meals: 3, skinEntries: 1, nailEntries: 1, reactions: 1, treatmentApplications: 1, checkIns: 2, days: 5, completeDays: 1, photos: 0 });
+    expect(prepared).toMatchObject({ dayFrom: '2026-01-10', dayTo: '2026-01-14', model: 'claude-haiku-5-5', promptVersion: 'analysis-3' });
+    expect(prepared.counts).toMatchObject({ meals: 3, skinEntries: 1, nailEntries: 1, reactions: 1, treatmentApplications: 1, checkIns: 2, days: 5, completeDays: 2, photos: 0 });
     expect(prepared.counts.changeEvents).toBe(1); // lookback
     expect(prepared.sentCharacters).toBeGreaterThan(500);
   });
@@ -228,7 +228,7 @@ describe.each(repos)('prepare and run an analysis (%s)', (_name, make) => {
     const prepared = await prepareAnalysis(deps, sel);
     const analysis = await runAnalysis(deps, prepared);
     expect(llm.requests[0]).toBe(prepared.request); // exactly what was confirmed
-    expect(analysis).toMatchObject({ dayFrom: '2026-01-10', dayTo: '2026-01-14', model: 'fake-model', promptVersion: 'analysis-2', language: 'en', at: { utc: '2026-01-20T10:00:00.000Z' } });
+    expect(analysis).toMatchObject({ dayFrom: '2026-01-10', dayTo: '2026-01-14', model: 'fake-model', promptVersion: 'analysis-3', language: 'en', at: { utc: '2026-01-20T10:00:00.000Z' } });
     expect(analysis.result.hypotheses[0]?.title).toBe('Synthetic hypothesis');
     expect(await listAnalyses(deps)).toEqual([analysis]);
     const after = await repo.snapshot();

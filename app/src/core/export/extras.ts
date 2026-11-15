@@ -23,10 +23,9 @@ import {
   type StoolEntry,
   type TreatmentApplication,
 } from '../model/types';
-import { CANONICAL_UTC } from '../model/time';
 import { analysisResultFromJson, analysisResultToJson } from '../llm/analysisResult';
 import { parseBarcode, parseSource, sourceToJson } from './sourceJson';
-import { bad, bool, enumList, nullableScore, nullableText, oneOf, str, stringList, tz, utc, type Obj } from './guards';
+import { bad, bool, enumList, nullableText, oneOf, str, stringList, tz, utc, type Obj } from './guards';
 
 /**
  * data.json wire format for the flat record kinds (see ExtraKind): `key` is the snake_case array name inside
@@ -63,43 +62,18 @@ const LOCAL_DAY = /^\d{4}-\d{2}-\d{2}$/;
 
 const checkIn: Codec<CheckIn> = {
   key: 'check_ins',
-  toJson: (c) => ({
-    id: c.id,
-    utc: c.at.utc,
-    tz: c.at.tz,
-    day: c.day,
-    wellbeing: c.wellbeing,
-    stress: c.stress,
-    sleep: c.sleep,
-    abdominal_pain: c.abdominalPain,
-    bloating: c.bloating,
-    tags: [...c.tags],
-    note: c.note,
-    completed_utc: c.completedAt?.utc ?? null,
-    completed_tz: c.completedAt?.tz ?? null,
-  }),
+  toJson: (c) => ({ id: c.id, utc: c.at.utc, tz: c.at.tz, day: c.day, values: { ...c.values }, note: c.note }),
   parse: (o, w) => {
     const day = str(o, 'day', w);
     if (!LOCAL_DAY.test(day) || Number.isNaN(Date.parse(day))) bad(`${w}.day`);
-    const completedUtc = nullableText(o, 'completed_utc', w);
-    if (completedUtc !== null && (!CANONICAL_UTC.test(completedUtc) || Number.isNaN(Date.parse(completedUtc)))) {
-      bad(`${w}.completed_utc`);
+    const raw = o.values;
+    if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) bad(`${w}.values`);
+    const values: Record<string, number | boolean> = {};
+    for (const [id, v] of Object.entries(raw as Record<string, unknown>)) {
+      if (typeof v === 'boolean' || (typeof v === 'number' && Number.isInteger(v) && v >= 0 && v <= 10)) values[id] = v;
+      else bad(`${w}.values.${id}`);
     }
-    const completedTz = nullableText(o, 'completed_tz', w);
-    if ((completedUtc === null) !== (completedTz === null)) bad(`${w}.completed_tz`);
-    return {
-      id: str(o, 'id', w),
-      at: { utc: utc(o, w), tz: tz(o, w) },
-      day,
-      wellbeing: nullableScore(o, 'wellbeing', w),
-      stress: nullableScore(o, 'stress', w),
-      sleep: nullableScore(o, 'sleep', w),
-      abdominalPain: nullableScore(o, 'abdominal_pain', w),
-      bloating: bool(o, 'bloating', w),
-      tags: stringList(o, 'tags', w),
-      note: nullableText(o, 'note', w),
-      completedAt: completedUtc === null ? null : { utc: completedUtc, tz: completedTz! },
-    };
+    return { id: str(o, 'id', w), at: { utc: utc(o, w), tz: tz(o, w) }, day, values, note: nullableText(o, 'note', w) };
   },
 };
 

@@ -57,11 +57,14 @@ export function ScoreInput({
   value,
   onChange,
   optional = false,
+  hint = null,
 }: {
   label: string;
   value: number | null;
   onChange: (v: number | null) => void;
   optional?: boolean;
+  /** A short description shown under the label (UX-11). */
+  hint?: string | null;
 }) {
   const set = (v: number) => onChange(Math.min(10, Math.max(0, Math.round(v))));
   return (
@@ -80,6 +83,7 @@ export function ScoreInput({
           </Pressable>
         ) : null}
       </View>
+      {hint ? <Hint>{hint}</Hint> : null}
       <View style={styles.stepperRow}>
         <Pressable
           accessibilityRole="button"

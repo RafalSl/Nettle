@@ -89,18 +89,19 @@ export class SqliteRepo implements StorageRepository {
 
   private async insertItem(kind: ListKind, i: ListItem, ignoreIfExists: boolean) {
     await this.db.run(
-      `INSERT ${ignoreIfExists ? 'OR IGNORE ' : ''}INTO list_item (kind, id, name, predefined, archived, name_override)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [kind, i.id, i.name, +i.predefined, +i.archived, i.nameOverride],
+      `INSERT ${ignoreIfExists ? 'OR IGNORE ' : ''}INTO list_item (kind, id, name, predefined, archived, name_override, value_kind, description)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [kind, i.id, i.name, +i.predefined, +i.archived, i.nameOverride, i.valueKind, i.description],
     );
   }
 
   async upsertItem(kind: ListKind, i: ListItem) {
     await this.db.run(
-      `INSERT INTO list_item (kind, id, name, predefined, archived, name_override) VALUES (?, ?, ?, ?, ?, ?)
+      `INSERT INTO list_item (kind, id, name, predefined, archived, name_override, value_kind, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(kind, id) DO UPDATE SET name = excluded.name, predefined = excluded.predefined,
-         archived = excluded.archived, name_override = excluded.name_override`,
-      [kind, i.id, i.name, +i.predefined, +i.archived, i.nameOverride],
+         archived = excluded.archived, name_override = excluded.name_override,
+         value_kind = excluded.value_kind, description = excluded.description`,
+      [kind, i.id, i.name, +i.predefined, +i.archived, i.nameOverride, i.valueKind, i.description],
     );
   }
 
@@ -111,6 +112,8 @@ export class SqliteRepo implements StorageRepository {
       predefined: number;
       archived: number;
       name_override: string | null;
+      value_kind: 'score' | 'yesno';
+      description: string | null;
     }>('SELECT * FROM list_item WHERE kind = ? ORDER BY id', [kind]);
     return rows.map((r) => ({
       id: r.id,
@@ -118,6 +121,8 @@ export class SqliteRepo implements StorageRepository {
       predefined: !!r.predefined,
       archived: !!r.archived,
       nameOverride: r.name_override,
+      valueKind: r.value_kind,
+      description: r.description,
     }));
   }
 
@@ -385,7 +390,6 @@ export class SqliteRepo implements StorageRepository {
       favorites: { ...d.favorites, ...saved.favorites },
       suggestions: { ...d.suggestions, ...saved.suggestions },
       quickActions: { ...d.quickActions, ...saved.quickActions },
-      checkInScores: { ...d.checkInScores, ...saved.checkInScores },
     };
   }
 

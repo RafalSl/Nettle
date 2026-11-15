@@ -130,7 +130,7 @@ describe('reminder taps (SK-9)', () => {
       route: { pathname: '/form/checkin', params: { day: '2026-01-10' } },
       viaToday: true,
     });
-    await saveCheckIn(deps, { at, confirmEmptyDay: true, complete: true });
+    await saveCheckIn(deps, { at, confirmEmptyDay: true });
     expect(await resolveReminderTap(deps, tap('checkin', new Date('2026-01-10T20:00:01.000Z')), { hasUnsavedForm: false })).toEqual({
       route: { pathname: '/today' },
       viaToday: false,

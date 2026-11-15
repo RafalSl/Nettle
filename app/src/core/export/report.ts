@@ -15,7 +15,7 @@ export interface ReportInput {
   /** The records in the bundle, after the date range and the photo selection (EX-8). */
   records: Records;
   skinAreas: SkinArea[];
-  dailyTags: ListItem[];
+  dailyItems: ListItem[];
   treatments: ListItem[];
   /** Photo id → data URI of a small JPEG, for the photos in the bundle only. */
   photos: Map<string, string>;
@@ -66,7 +66,7 @@ export function buildReportHtml(input: ReportInput): string {
   const dayOf = (at: { utc: string; tz: string }) => localDay(at.utc, at.tz, input.dayStartHour ?? 0);
   const areaById = new Map(input.skinAreas.map((a) => [a.id, a]));
   const area = (id: string) => (areaById.has(id) ? input.areaName(areaById.get(id)!) : id);
-  const tags = new Map(input.dailyTags.map((t) => [t.id, input.itemName(t)]));
+  const dailyItems = input.dailyItems;
   const treatments = new Map(input.treatments.map((t) => [t.id, input.itemName(t)]));
   const byTime = <T extends { at: { utc: string } }>(rows: readonly T[]) => [...rows].sort((a, b) => a.at.utc.localeCompare(b.at.utc));
   const out: string[] = [];
@@ -149,14 +149,24 @@ export function buildReportHtml(input: ReportInput): string {
     }
   }
 
-  // Check-ins and digestion (SK-7)
+  // Daily health (SK-7): one column per score item that has a value in the range, then the yes items of the day.
   const checkIns = byTime(r.checkIns);
   if (checkIns.length > 0) {
     out.push(`<h2>${esc(tx('report.checkins'))}</h2>`);
+    const used = new Set(checkIns.flatMap((c) => Object.keys(c.values)));
+    const scoreItems = dailyItems.filter((i) => i.valueKind === 'score' && used.has(i.id));
+    const yesName = (id: string) => {
+      const item = dailyItems.find((i) => i.id === id);
+      return item ? input.itemName(item) : id;
+    };
     out.push(
       table(
-        [tx('report.date'), tx('report.wellbeing'), tx('report.stress'), tx('report.sleep'), tx('report.abdominalPain'), tx('report.bloating'), tx('report.tags'), tx('report.dayComplete')],
-        checkIns.map((c) => [c.day, c.wellbeing, c.stress, c.sleep, c.abdominalPain, c.bloating ? tx('report.yes') : tx('report.no'), c.tags.map((id) => tags.get(id) ?? id).join(', '), c.completedAt ? tx('report.yes') : tx('report.no')]),
+        [tx('report.date'), ...scoreItems.map((i) => input.itemName(i)), tx('report.tags')],
+        checkIns.map((c) => [
+          c.day,
+          ...scoreItems.map((i) => (typeof c.values[i.id] === 'number' ? (c.values[i.id] as number) : '')),
+          Object.entries(c.values).filter(([id, v]) => v === true || (typeof v === 'number' && !scoreItems.some((i) => i.id === id))).map(([id]) => yesName(id)).join(', '),
+        ]),
       ),
     );
   }

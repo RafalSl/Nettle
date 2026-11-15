@@ -33,7 +33,6 @@ describe('sqlite migrations', () => {
     await db.run('INSERT INTO preference (id, json) VALUES (1, ?)', [JSON.stringify({ dayStartHour: 3, favorites: { meals: [] } })]);
     const p = await repo.getPreferences();
     expect(p?.dayStartHour).toBe(3);
-    expect(p?.checkInScores).toEqual({ wellbeing: true, stress: true, sleep: true, abdominalPain: true });
     expect(p?.favorites.drinks).toEqual([]);
     expect(p?.suggestions.rows).toBe(5);
   });
@@ -74,21 +73,15 @@ describe('sqlite migrations', () => {
       await db.exec(`PRAGMA user_version = ${i + 1}`);
     }
     const repo = await SqliteRepo.open(db);
-    expect(await repo.listItems('dailyTags')).toHaveLength(9);
+    expect(await repo.listItems('dailyItems')).toHaveLength(14);
     expect(await repo.listRecords('checkIns')).toEqual([]);
   });
 
-  it('SK-7 enforces Bristol 1-7 and check-in score ranges in the database itself', async () => {
+  it('SK-7 enforces Bristol 1-7 in the database itself', async () => {
     const db = createNodeSqliteDb();
     await SqliteRepo.open(db);
     await expect(
       db.run(`INSERT INTO stool_entry (id, ts_utc, tz, bristol) VALUES ('x', '2026-01-01T00:00:00.000Z', 'UTC', 8)`),
-    ).rejects.toThrow();
-    await expect(
-      db.run(
-        `INSERT INTO check_in (id, ts_utc, tz, day, wellbeing, bloating, tags_json)
-         VALUES ('x', '2026-01-01T00:00:00.000Z', 'UTC', '2026-01-01', 11, 0, '[]')`,
-      ),
     ).rejects.toThrow();
   });
 

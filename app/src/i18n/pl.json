@@ -237,7 +237,7 @@
     "lock_failed": "Nie udało się potwierdzić, że to Ty. Blokada nie została zmieniona."
   },
   "today": {
-    "title": "Codzienna kontrola",
+    "title": "Zdrowie dnia",
     "day": "Dzień",
     "hint": "Zostaw ocenę nieustawioną, jeśli nie chcesz jej zapisywać.",
     "wellbeing": "Samopoczucie",
@@ -246,16 +246,12 @@
     "abdominalPain": "Ból brzucha",
     "bloating": "Wzdęcia",
     "tags": "Dziś",
-    "saveClose": "Zapisz i zamknij dzień",
     "closeAnyway": "Zamknij dzień mimo to",
-    "dayComplete": "Dzień zamknięty: wszystko z tego dnia jest zapisane.",
-    "reopen": "Otwórz dzień ponownie",
     "stoolTitle": "Stolec",
     "stoolHint": "Skala Bristolska od 1 (twarde grudki) do 7 (wodnisty)",
     "stoolAdd": "Dodaj wpis o stolcu",
     "sameAsYesterday": "Tak samo jak wczoraj",
     "noYesterday": "Nie ma wpisu dziennego z poprzedniego dnia.",
-    "markComplete": "Oznacz dzień jako zamknięty",
     "stoolSave": "Zapisz stolec"
   },
   "tags": {
@@ -267,7 +263,12 @@
     "tag-sun-exposure": "Słońce",
     "tag-travel": "Podróż",
     "tag-nicotine": "Nikotyna",
-    "tag-joint-symptoms": "Objawy stawowe"
+    "tag-joint-symptoms": "Objawy stawowe",
+    "item-wellbeing": "Samopoczucie",
+    "item-stress": "Stres",
+    "item-sleep": "Jakość snu",
+    "item-abdominal-pain": "Ból brzucha",
+    "item-bloating": "Wzdęcia"
   },
   "more": {
     "nailTitle": "Paznokcie",
@@ -368,8 +369,8 @@
     "stomach": "Objawy żołądkowe"
   },
   "lists": {
-    "dailyTags": "Tagi dnia",
-    "treatments": "Zabiegi"
+    "treatments": "Zabiegi",
+    "dailyItems": "Pozycje Zdrowia dnia"
   },
   "photos": {
     "camera": "Zrób zdjęcie",
@@ -467,7 +468,7 @@
     "review": "Sprawdź, co zostanie wysłane",
     "confirmTitle": "Wysłać to do Anthropic?",
     "confirmIntro": "Te dane opuszczają telefon i są wysyłane przez internet do Anthropic z użyciem Twojego klucza API. Anthropic rozlicza to osobno na Twoim koncie API; subskrypcja Claude tego nie obejmuje. Nic nie zostanie wysłane bez Twojego potwierdzenia.",
-    "range": "Dni: od {{from}} do {{to}} ({{days}} dni, {{complete}} oznaczonych jako zamknięte)",
+    "range": "Dni: od {{from}} do {{to}} ({{days}} dni, {{complete}} z wpisem Zdrowie dnia)",
     "lookback": "Dla kontekstu dołączono też: {{n}} wcześniejszych dni z chorobą, stresem, snem, lekami i zmianami.",
     "model": "Model: {{model}}",
     "size": "Około {{n}} znaków tekstu",
@@ -612,8 +613,6 @@
     "photosTitle": "Zdjęcia",
     "photosInfo": "Zdjęcia są zapisywane w prywatnej pamięci aplikacji na tym telefonie, nigdy w galerii, a dane EXIF, takie jak lokalizacja, są usuwane przy zapisie. Opuszczają telefon tylko w eksporcie, który udostępnisz, albo w uruchomieniu AI, które potwierdzisz.",
     "photosSensitive": "Wrażliwe zdjęcia są rozmyte w aplikacji i pomijane w raporcie dla lekarza oraz w uruchomieniach AI, chyba że je dodasz. Ustawienie domyślne miejsca zmienisz w Miejscach na skórze i paznokciach, a pojedyncze zdjęcie osobno.",
-    "scoresTitle": "Oceny w codziennym podsumowaniu",
-    "scoresHint": "Wyłączona ocena nie jest pytana w podsumowaniu dnia i nie jest zapisywana. Zapisane wartości zostają.",
     "skinAreas": "Miejsca na skórze",
     "nailAreas": "Paznokcie",
     "skinAreaName": "Nowe miejsce lub nowa nazwa wybranego",
@@ -624,7 +623,12 @@
     "favMeals": "Posiłki",
     "favDrinks": "Napoje",
     "favMedications": "Leki i suplementy",
-    "favRemove": "Usuń z ulubionych: {{name}}"
+    "favRemove": "Usuń z ulubionych: {{name}}",
+    "itemsTitle": "Pozycje Zdrowia dnia",
+    "itemsHint": "Oceny mają skalę 0–10; pozycje tak/nie zapisują tylko „tak”. Zarchiwizowana pozycja nie jest już pytana, ale jej historia zostaje w raporcie i analizie.",
+    "itemScore": "Nowa pozycja to ocena",
+    "itemYesNo": "Nowa pozycja to tak/nie",
+    "itemDescription": "Opis (opcjonalnie)"
   },
   "about": {
     "title": "O aplikacji",
@@ -749,7 +753,6 @@
     "skin": "Skóra",
     "nail": "Paznokieć",
     "checkin": "Wpis dzienny",
-    "complete": "dzień zamknięty",
     "stool": "Stolec typu {{n}}",
     "treatment": "{{name}}: {{areas}}",
     "change": "{{action}} {{name}}",
@@ -777,13 +780,11 @@
   "cards": {
     "openFlare": "Rzut trwa: {{area}}",
     "endFlare": "Zakończ rzut",
-    "notComplete": "Ten dzień nie jest oznaczony jako zamknięty.",
-    "openCheckin": "Otwórz wpis dzienny",
-    "complete": "Dzień zamknięty.",
-    "reopen": "Otwórz ponownie",
+    "openCheckin": "Otwórz Zdrowie dnia",
     "noExport": "Nie było jeszcze eksportu. Dziennik jest tylko na tym telefonie.",
     "lastExport": "Ostatni eksport {{days}} dni temu.",
-    "openBackup": "Zrób kopię"
+    "openBackup": "Zrób kopię",
+    "notLogged": "Ten dzień nie ma jeszcze wpisu Zdrowie dnia."
   },
   "edit": {
     "title": "Edycja wpisu",
@@ -857,5 +858,21 @@
     "hint": "Blokuje aplikację przy uruchomieniu i po minucie w tle. Dziennik i tak zostaje na tym telefonie. W Expo Go system pyta o kod, bo Face ID wymaga osobnej aplikacji.",
     "turnOn": "Włącz blokadę",
     "turnOff": "Wyłącz blokadę"
+  },
+  "itemDescriptions": {
+    "item-wellbeing": "Jak dobrze się dziś czułeś(aś) ogólnie. 0 to bardzo źle, 10 to bardzo dobrze.",
+    "item-stress": "Jak bardzo byłeś(aś) dziś zestresowany(a). 0 to wcale, 10 to ekstremalnie.",
+    "item-sleep": "Jak spałeś(aś) ostatniej nocy. 0 to bardzo źle, 10 to bardzo dobrze.",
+    "item-abdominal-pain": "Ból brzucha dziś. 0 to brak, 10 to najgorszy możliwy.",
+    "item-bloating": "Wzdęty lub napięty brzuch dziś.",
+    "tag-illness-or-infection": "Przeziębienie, grypa lub inna infekcja dziś.",
+    "tag-antibiotics": "Antybiotyk przyjęty dziś.",
+    "tag-shaving": "Golenie dziś.",
+    "tag-heavy-sweating": "Sport lub upał – mocne pocenie się.",
+    "tag-sauna-or-pool": "Sauna lub basen.",
+    "tag-sun-exposure": "Dużo czasu w silnym słońcu.",
+    "tag-travel": "Podróż dziś.",
+    "tag-nicotine": "Papierosy lub inna nikotyna dziś.",
+    "tag-joint-symptoms": "Bolesne lub sztywne stawy dziś."
   }
 }

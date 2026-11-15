@@ -69,6 +69,8 @@ export function parseDataJson(raw: unknown): Payload {
           predefined: bool(o, 'predefined', w),
           archived: bool(o, 'archived', w),
           nameOverride: nullableText(o, 'name_override', w),
+          valueKind: oneOf(o, 'value_kind', ['score', 'yesno'] as const, w),
+          description: nullableText(o, 'description', w),
         };
       });
       unique(lists[kind].map((x) => x.id), `settings.${key}`);

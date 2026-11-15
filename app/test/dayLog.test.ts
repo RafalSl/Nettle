@@ -35,12 +35,12 @@ describe('the day log (UX-2)', () => {
     expect(await dayLog(deps, '2026-01-16')).toEqual([]);
   });
 
-  it('SK-11 the status says whether the day is complete and how many meals it has', async () => {
+  it('SK-11 the status holds the Daily health record of the day and how many meals it has', async () => {
     const deps = makeDeps(new MemoryRepo());
-    expect(await dayStatus(deps, '2026-01-15')).toMatchObject({ complete: false, mealCount: 0, checkIn: null });
+    expect(await dayStatus(deps, '2026-01-15')).toMatchObject({ mealCount: 0, checkIn: null });
     await logMeal(deps, { description: 'Synthetic oats', ingredients: [], at: d('2026-01-15T07:00:00.000Z') });
-    await saveCheckIn(deps, { at: d('2026-01-15T20:00:00.000Z'), complete: true });
-    expect(await dayStatus(deps, '2026-01-15')).toMatchObject({ complete: true, mealCount: 1 });
+    await saveCheckIn(deps, { at: d('2026-01-15T20:00:00.000Z') });
+    expect(await dayStatus(deps, '2026-01-15')).toMatchObject({ checkIn: { day: '2026-01-15' }, mealCount: 1 });
   });
 });
 
@@ -97,11 +97,11 @@ describe('entries on a chosen day (UX-2)', () => {
 });
 
 describe('days list and report preview (UX-1, EX-14)', () => {
-  it('UX-1 lists the days with entries newest first, with a count and the complete mark', async () => {
+  it('UX-1 lists the days with entries newest first, with a count and whether a Daily health record logged the day', async () => {
     const deps = makeDeps(new MemoryRepo());
     await logMeal(deps, { description: 'Synthetic oats', ingredients: [], at: d('2026-01-10T08:00:00.000Z') });
     await logMeal(deps, { description: 'Synthetic soup', ingredients: [], at: d('2026-01-12T08:00:00.000Z') });
-    await saveCheckIn(deps, { at: d('2026-01-12T20:00:00.000Z'), complete: true });
+    await saveCheckIn(deps, { at: d('2026-01-12T20:00:00.000Z') });
     expect(await daysWithEntries(deps)).toEqual([
       { day: '2026-01-12', entries: 2, complete: true },
       { day: '2026-01-10', entries: 1, complete: false },

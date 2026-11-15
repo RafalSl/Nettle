@@ -29,7 +29,7 @@ export function describeRow(row: LogRow, ctx: RowContext): { title: string; deta
         detail: `${t(`nail.stages.${row.record.stage}`)}, ${t(`nail.extents.${row.record.extent}`)}`,
       };
     case 'checkIns':
-      return { title: t('log.checkin'), detail: row.record.completedAt ? t('log.complete') : null };
+      return { title: t('log.checkin'), detail: null };
     case 'stoolEntries':
       return { title: t('log.stool', { n: row.record.bristol }), detail: null };
     case 'treatmentApplications': {

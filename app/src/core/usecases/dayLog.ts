@@ -40,9 +40,8 @@ export async function dayLog(deps: Deps, day: LocalDay): Promise<LogRow[]> {
 }
 
 export interface DayStatus {
+  /** SK-7, SK-11: the Daily health record; having one is what logs the day. */
   checkIn: CheckIn | null;
-  /** SK-11 */
-  complete: boolean;
   mealCount: number;
 }
 
@@ -50,7 +49,7 @@ export interface DayStatus {
 export async function dayStatus(deps: Deps, day: LocalDay): Promise<DayStatus> {
   const checkIn = await getCheckIn(deps, day);
   const mealCount = (await dayLog(deps, day)).filter((r) => r.kind === 'meals').length;
-  return { checkIn, complete: !!checkIn?.completedAt, mealCount };
+  return { checkIn, mealCount };
 }
 
 export interface TreatmentShortcut {
@@ -106,11 +105,11 @@ export async function daysWithEntries(deps: Deps, limit = 60): Promise<DaySummar
   const start = deps.dayStart.get();
   const days = new Map<LocalDay, DaySummary>();
   for (const kind of LOG_KINDS) {
-    for (const r of snap[kind] as { at: Stamp; completedAt?: Stamp | null }[]) {
+    for (const r of snap[kind] as { at: Stamp }[]) {
       const day = localDay(r.at.utc, r.at.tz, start);
       const cur = days.get(day) ?? { day, entries: 0, complete: false };
       cur.entries++;
-      if (kind === 'checkIns' && r.completedAt) cur.complete = true;
+      if (kind === 'checkIns') cur.complete = true; // SK-11: a Daily health record logs the day
       days.set(day, cur);
     }
   }

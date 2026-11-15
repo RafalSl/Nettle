@@ -48,12 +48,12 @@ export interface DataJson {
   range: { from: string | null; to: string | null };
   /** meals and skin_entries plus one array per flat record kind (see export/extras.ts). */
   records?: { meals: MealJson[]; skin_entries: SkinEntryJson[]; [kind: string]: unknown[] };
-  /** skin_areas plus one array per list kind (daily_tags, ...). */
+  /** skin_areas plus one array per list kind (daily_items, ...). */
   settings?: { skin_areas: SkinAreaJson[]; preferences: unknown; [list: string]: unknown };
 }
 
 /** Array name inside `settings` for each list kind. */
-export const LIST_KEYS = { dailyTags: 'daily_tags', treatments: 'treatments' } as const;
+export const LIST_KEYS = { dailyItems: 'daily_items', treatments: 'treatments' } as const;
 
 /** Name of a record kind in data.json (the array name inside `records`), used by tombstones. */
 export const recordWireKey = (kind: RecordKind): string =>
@@ -125,6 +125,8 @@ export function toDataJson(
               predefined: i.predefined,
               archived: i.archived,
               name_override: i.nameOverride,
+              value_kind: i.valueKind,
+              description: i.description,
             })),
           ]),
         ),

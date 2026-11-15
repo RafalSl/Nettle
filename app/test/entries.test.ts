@@ -118,12 +118,11 @@ describe.each(repos)('editing and deleting one entry (%s)', (_name, make) => {
 
   it('EN-1, SK-7 a check-in cannot move to a day that already has one', async () => {
     const { repo, deps } = await setup();
-    const a = await saveCheckIn(deps, { at: d('2026-01-14T10:00:00.000Z'), wellbeing: 5 });
-    const b = await saveCheckIn(deps, { at: d('2026-01-15T10:00:00.000Z'), wellbeing: 6 });
-    expect(await code(editCheckIn(deps, b.id, { at: d('2026-01-14T18:00:00.000Z'), wellbeing: 6 }))).toBe('checkin_day_taken');
-    const edited = await editCheckIn(deps, a.id, { wellbeing: 2, tags: [], complete: true, confirmEmptyDay: true });
-    expect(edited).toMatchObject({ id: a.id, day: a.day, wellbeing: 2 });
-    expect(edited.completedAt).not.toBeNull();
+    const a = await saveCheckIn(deps, { at: d('2026-01-14T10:00:00.000Z'), values: { 'item-wellbeing': 5 }, confirmEmptyDay: true });
+    const b = await saveCheckIn(deps, { at: d('2026-01-15T10:00:00.000Z'), values: { 'item-wellbeing': 6 }, confirmEmptyDay: true });
+    expect(await code(editCheckIn(deps, b.id, { at: d('2026-01-14T18:00:00.000Z'), values: { 'item-wellbeing': 6 } }))).toBe('checkin_day_taken');
+    const edited = await editCheckIn(deps, a.id, { values: { 'item-wellbeing': 2 } });
+    expect(edited).toMatchObject({ id: a.id, day: a.day, values: { 'item-wellbeing': 2 } });
     expect(await repo.listRecords('checkIns')).toHaveLength(2);
   });
 

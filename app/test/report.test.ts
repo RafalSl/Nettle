@@ -73,7 +73,7 @@ async function diary() {
     nail: await p('nailEntry', n1.id, 'nail-photo', '2026-01-12T08:05:00.000Z'),
   };
   await markFlare(deps, { areaId: 'area-chin', kind: 'start', at: at('2026-01-10T20:00:00.000Z') });
-  await saveCheckIn(deps, { at: at('2026-01-12T21:00:00.000Z'), wellbeing: 5, stress: 2, bloating: true, tags: ['tag-travel'], complete: true, confirmEmptyDay: true });
+  await saveCheckIn(deps, { at: at('2026-01-12T21:00:00.000Z'), values: { 'item-wellbeing': 5, 'item-stress': 2, 'item-bloating': true, 'tag-travel': true }, confirmEmptyDay: true });
   await logStool(deps, { bristol: 6, at: at('2026-01-12T07:00:00.000Z') });
   const cream = await addListItem(deps, 'treatments', 'Synthetic cream');
   await applyTreatment(deps, { treatmentId: cream.id, areaIds: ['area-chin'], at: at('2026-01-13T21:00:00.000Z') });
@@ -95,7 +95,7 @@ describe('export with CSV and PDF report (EX-3, EX-4, EX-5, EX-8)', () => {
     const zip = await exportBundle(deps, { csv: true });
     const files = unzipSync(zip);
     const names = Object.keys(files);
-    for (const n of ['csv/meals.csv', 'csv/skin_entries.csv', 'csv/check_ins.csv', 'csv/skin_areas.csv', 'csv/daily_tags.csv', 'csv/flare_markers.csv', 'csv/analyses.csv']) {
+    for (const n of ['csv/meals.csv', 'csv/skin_entries.csv', 'csv/check_ins.csv', 'csv/skin_areas.csv', 'csv/daily_items.csv', 'csv/flare_markers.csv', 'csv/analyses.csv']) {
       expect(names).toContain(n);
     }
     const skin = strFromU8(files['csv/skin_entries.csv']!).split('\r\n');
@@ -188,7 +188,7 @@ describe('export with CSV and PDF report (EX-3, EX-4, EX-5, EX-8)', () => {
         ...reportOptions('en'),
         records: { ...Object.fromEntries(['skinEntries', 'nailEntries', 'checkIns', 'stoolEntries', 'treatmentApplications', 'changeEvents', 'reactions', 'drinks', 'medicationEntries', 'photos', 'analyses', 'reportSummaries', 'flareMarkers'].map((k) => [k, []])), meals } as never,
         skinAreas: [],
-        dailyTags: [],
+        dailyItems: [],
         treatments: [],
         photos: new Map(),
         range: { from: null, to: null },
@@ -214,7 +214,7 @@ describe('export with CSV and PDF report (EX-3, EX-4, EX-5, EX-8)', () => {
       buildReportHtml({
         ...reportOptions('en'),
         records: { ...Object.fromEntries(['skinEntries', 'nailEntries', 'checkIns', 'stoolEntries', 'treatmentApplications', 'changeEvents', 'reactions', 'drinks', 'medicationEntries', 'photos', 'analyses', 'reportSummaries', 'flareMarkers'].map((k) => [k, []])), meals } as never,
-        skinAreas: [], dailyTags: [], treatments: [], photos: new Map(), range: { from: null, to: null }, exportedAt: { utc: '2026-01-20T10:00:00.000Z', tz: 'Europe/Warsaw' },
+        skinAreas: [], dailyItems: [], treatments: [], photos: new Map(), range: { from: null, to: null }, exportedAt: { utc: '2026-01-20T10:00:00.000Z', tz: 'Europe/Warsaw' },
       });
     const out = html([meal('a', true), meal('b', false)]);
     expect(out).toContain('[allergens.milk] [[report.aiMark]]');
@@ -246,7 +246,7 @@ describe('export with CSV and PDF report (EX-3, EX-4, EX-5, EX-8)', () => {
         ['meals', 'skinEntries', 'nailEntries', 'checkIns', 'stoolEntries', 'treatmentApplications', 'changeEvents', 'reactions', 'drinks', 'medicationEntries', 'photos', 'analyses', 'reportSummaries', 'flareMarkers'].map((k) => [k, []]),
       ) as never,
       skinAreas: [],
-      dailyTags: [],
+      dailyItems: [],
       treatments: [],
       photos: new Map(),
       range: { from: null, to: null },

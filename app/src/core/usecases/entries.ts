@@ -18,7 +18,7 @@ import type {
   ChangeEvent,
 } from '../model/types';
 import type { StorageRepository } from '../ports/storage';
-import { logStool, scoresFor, validCheckInTags, type CheckInInput } from './checkin';
+import { cleanValues, logStool, type CheckInInput } from './checkin';
 import type { Deps } from './deps';
 import { applyTreatment, logChangeEvent, logReaction, type ApplyTreatmentInput, type ChangeEventInput, type ReactionInput } from './events';
 import { afterEdit, sameIngredients } from '../model/source';
@@ -147,29 +147,18 @@ export async function editReaction(deps: Deps, id: string, input: ReactionInput)
 }
 
 /**
- * EN-1, SK-7: edit a check-in as a whole (scores, tags, note, time). Moving it to a day that already has
- * another check-in is refused: a day has one check-in.
+ * EN-1, SK-7: edit a Daily health record as a whole (values, note, time). Moving it to a day that already has
+ * another record is refused: a day has one record.
  */
 export async function editCheckIn(deps: Deps, id: string, input: CheckInInput): Promise<CheckIn> {
   const orig = (await getEntry(deps, 'checkIns', id)) as CheckIn;
-  const tags = await validCheckInTags(deps, input);
+  const values = await cleanValues(deps, input, orig);
   const at = input.at ? makeStamp(deps.clock, input.at) : orig.at;
   const day = localDay(at.utc, at.tz, deps.dayStart.get());
   if ((await deps.repo.listRecords('checkIns')).some((c) => c.day === day && c.id !== id)) {
     throw new NettleError('checkin_day_taken', day);
   }
-  const completedAt =
-    input.complete === undefined ? orig.completedAt : input.complete ? (orig.completedAt ?? makeStamp(deps.clock)) : null;
-  const record: CheckIn = {
-    id,
-    at,
-    day,
-    ...(await scoresFor(deps, input, orig)),
-    bloating: input.bloating ?? false,
-    tags,
-    note: input.note?.trim() || null,
-    completedAt,
-  };
+  const record: CheckIn = { id, at, day, values, note: input.note?.trim() || null };
   await deps.repo.putRecord('checkIns', record);
   return record;
 }

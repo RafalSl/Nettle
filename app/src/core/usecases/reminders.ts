@@ -104,7 +104,7 @@ const TAP_MARKER = 'lastReminderTap';
  * an unknown target, or a form with unsaved changes (the cards on Today cover it). A tap is marked handled even
  * when it does nothing, so it is handled once per reminder.
  *
- * - checkin: the check-in form for the day the reminder was delivered; just Today when that day is complete.
+ * - checkin: the check-in form for the day the reminder was delivered; just Today when that day already has its record.
  * - nails: the nail update form; just Today when no nail area remains.
  * - backup: Data and backup; it never exports by itself.
  */
@@ -122,7 +122,7 @@ export async function resolveReminderTap(
     case 'checkin': {
       const at = tap.deliveredAt ?? deps.clock.now();
       const day = localDay(at.toISOString(), deps.clock.timeZone(), deps.dayStart.get());
-      if ((await getCheckIn(deps, day))?.completedAt) return today;
+      if (await getCheckIn(deps, day)) return today; // SK-9: the day already has its Daily health record
       return { route: { pathname: '/form/checkin', params: { day } }, viaToday: true };
     }
     case 'nails':

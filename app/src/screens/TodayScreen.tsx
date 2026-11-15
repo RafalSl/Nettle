@@ -5,7 +5,7 @@ import { Alert, AppState, Pressable, Text, View } from 'react-native';
 import { addDays, atOnDay, localDay } from '@/core/model/time';
 import type { ListItem, SkinArea } from '@/core/model/types';
 import { backupCardDue, daysSinceExport } from '@/core/usecases/backup';
-import { logStool, setDayComplete } from '@/core/usecases/checkin';
+import { logStool } from '@/core/usecases/checkin';
 import { dayLog, dayStatus, treatmentShortcuts, type DayStatus, type LogRow, type TreatmentShortcut } from '@/core/usecases/dayLog';
 import { applyTreatment } from '@/core/usecases/events';
 import { markFlare, openFlareAreas } from '@/core/usecases/flares';
@@ -259,19 +259,10 @@ export default function TodayScreen() {
             <Button kind="secondary" title={t('cards.endFlare')} onPress={() => void run(() => markFlare(deps, { areaId, kind: 'end', at: atNow() }))} />
           </Card>
         ))}
-      {status && day <= today && (
+      {status && !status.checkIn && day <= today && (
         <Card>
-          {status.complete ? (
-            <>
-              <Text style={styles.rowText}>{t('cards.complete')}</Text>
-              <Button kind="secondary" title={t('cards.reopen')} onPress={() => void run(() => setDayComplete(deps, day, false))} />
-            </>
-          ) : (
-            <>
-              <Text style={styles.rowText}>{t('cards.notComplete')}</Text>
-              <Button kind="secondary" title={t('cards.openCheckin')} onPress={() => router.push('/form/checkin')} />
-            </>
-          )}
+          <Text style={styles.rowText}>{t('cards.notLogged')}</Text>
+          <Button kind="secondary" title={t('cards.openCheckin')} onPress={() => router.push('/form/checkin')} />
         </Card>
       )}
       {backup.due && (

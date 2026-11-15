@@ -54,6 +54,24 @@ export async function addPhoto(deps: Deps, input: AddPhotoInput): Promise<Photo>
   return photo;
 }
 
+/**
+ * SK-4: attach photos picked in a Skin or Nails form to the entry just saved, dated like the entry. A photo that
+ * cannot be saved does not undo the entry or the other photos: the number that failed is returned.
+ */
+export async function attachPhotos(deps: Deps, entryKind: PhotoEntryKind, entryId: string, uris: readonly string[], at?: Date): Promise<{ saved: number; failed: number }> {
+  let saved = 0;
+  let failed = 0;
+  for (const sourceUri of uris) {
+    try {
+      await addPhoto(deps, { entryKind, entryId, sourceUri, ...(at ? { at } : {}) });
+      saved++;
+    } catch {
+      failed++;
+    }
+  }
+  return { saved, failed };
+}
+
 async function findPhoto(deps: Deps, id: string): Promise<Photo> {
   const photo = (await deps.repo.listRecords('photos')).find((p) => p.id === id);
   if (!photo) throw new NettleError('unknown_photo', id);

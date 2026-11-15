@@ -1397,6 +1397,83 @@ describe('Suggestion settings and quick-action layout (IN-14, UX-2, UX-6)', () =
   });
 });
 
+describe('Photos in the Skin and Nails forms (SK-4)', () => {
+  beforeEach(() => {
+    mockRouter.back.mockClear();
+    mockParams.current = {};
+    jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    require('@/adapters/photos/pickPhotos').pickPhotoUris.mockResolvedValue(['file:///synthetic-skin.jpg']);
+  });
+  afterEach(() => {
+    require('@/adapters/photos/pickPhotos').pickPhotoUris.mockResolvedValue([]);
+    jest.restoreAllMocks();
+  });
+  const save = async () => {
+    let rendered!: ReactTestRenderer;
+    await act(async () => {
+      rendered = create(mockScreen.options!.headerRight!());
+    });
+    await act(async () => {
+      await rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!.props.onPress();
+    });
+    await flush();
+  };
+
+  it('SK-4 photos picked in the Skin form are saved with the entry, and dropped ones are not', async () => {
+    const deps = nowDeps();
+    const { tree } = await mount(() => require('@/app/form/skin'), deps);
+    await flush();
+    await press(tree, en.photos.library);
+    await press(tree, en.photos.library);
+    await press(tree, `${en.photos.drop} 2`);
+    await save();
+    const [entry] = await deps.repo.listSkinEntries();
+    const photos = await deps.repo.listRecords('photos');
+    expect(photos).toMatchObject([{ entryKind: 'skinEntry', entryId: entry!.id }]);
+    expect(photos[0]!.at.utc).toBe(entry!.at.utc);
+  });
+
+  it('SK-4 "No change" plus a photo is a photo-only update with the same scores', async () => {
+    const deps = nowDeps();
+    const scores = { severity: 4, itch: 3, pain: 2, dryness: 1, scaling: 0 };
+    await logSkinEntry(deps, { areaId: 'area-chin', scores, at: new Date(Date.now() - 86_400_000) });
+    const { tree } = await mount(() => require('@/app/form/skin'), deps);
+    await flush();
+    await flush(); // the area loads first, then its last scores
+    await press(tree, en.photos.library);
+    await press(tree, en.skin.noChange);
+    await flush();
+    const entries = await deps.repo.listSkinEntries();
+    expect(entries).toHaveLength(2);
+    expect(entries[0]!.scores).toEqual(scores);
+    expect(await deps.repo.listRecords('photos')).toMatchObject([{ entryKind: 'skinEntry', entryId: entries[0]!.id }]);
+    expect(mockRouter.back).toHaveBeenCalledTimes(1);
+  });
+
+  it('SK-4 cancelling the form keeps no photo', async () => {
+    const deps = nowDeps();
+    const { tree } = await mount(() => require('@/app/form/skin'), deps);
+    await flush();
+    await press(tree, en.photos.library);
+    expect(await deps.repo.listRecords('photos')).toEqual([]);
+    expect(await deps.repo.listSkinEntries()).toEqual([]);
+  });
+
+  it('SK-4 the Nails form attaches photos to the nail entry too', async () => {
+    const deps = nowDeps();
+    const nail = await addArea(deps, 'Synthetic thumb', 'nail');
+    const { tree } = await mount(() => require('@/app/form/nails'), deps);
+    await flush();
+    await press(tree, en.nail.stages.white);
+    await press(tree, en.nail.extents.none);
+    await press(tree, en.photos.camera);
+    await save();
+    const [entry] = await deps.repo.listRecords('nailEntries');
+    expect(entry!.areaId).toBe(nail.id);
+    expect(await deps.repo.listRecords('photos')).toMatchObject([{ entryKind: 'nailEntry', entryId: entry!.id }]);
+  });
+});
+
 describe('Regular medication and treatment (IN-17)', () => {
   beforeEach(() => {
     mockRouter.push.mockClear();

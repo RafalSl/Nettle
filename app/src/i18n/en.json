@@ -376,7 +376,11 @@
     "removeTitle": "Remove this photo?",
     "removeBody": "It is deleted from this device and cannot be recovered.",
     "tapToShow": "Sensitive photo. Tap to show.",
-    "none": "No photos"
+    "none": "No photos",
+    "title": "Photos",
+    "formHint": "Photos are saved with the entry. Tap one to drop it.",
+    "drop": "Drop photo",
+    "someFailed": "{{n}} photos could not be saved. The entry was saved."
   },
   "delete": {
     "title": "Delete data",

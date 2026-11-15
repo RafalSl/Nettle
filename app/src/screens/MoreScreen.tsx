@@ -25,6 +25,7 @@ export default function MoreScreen() {
       {rows.map((id) => (
         <NavRow key={id} title={entryTitle(id)} subtitle={entrySubtitle(id)} onPress={() => router.push(ENTRY_ROUTE[id])} />
       ))}
+      <NavRow title={t('nav.guide')} subtitle={t('guide.hint')} onPress={() => router.push('/guide')} />
     </Screen>
   );
 }

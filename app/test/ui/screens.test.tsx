@@ -1526,6 +1526,43 @@ describe('Photos in the Skin and Nails forms (SK-4)', () => {
   });
 });
 
+describe('Guide (UX-11)', () => {
+  beforeEach(() => mockRouter.push.mockClear());
+
+  it('UX-11 "Where do I log…?" lists everyday situations and each row opens the right form, with the entry type as its subtitle', async () => {
+    const { GUIDE } = require('@/screens/GuideScreen') as { GUIDE: { id: string; entry: keyof typeof en.entry }[] };
+    const { tree } = await mount(() => require('@/app/guide'), nowDeps());
+    expect(GUIDE.length).toBeGreaterThanOrEqual(12);
+    const routes: Record<string, string> = { meal: '/form/meal', drink: '/form/drink', medication: '/form/medication', skin: '/form/skin', nails: '/form/nails', treatment: '/form/treatment', checkin: '/form/checkin', stool: '/form/stool', reaction: '/form/reaction', change: '/form/change' };
+    for (const g of GUIDE) {
+      const label = (en.guide.items as Record<string, string>)[g.id]!;
+      expect(label).toBeTruthy();
+      await press(tree, label);
+      expect(mockRouter.push).toHaveBeenLastCalledWith(routes[g.entry]);
+    }
+    expect(hasText(tree, `${en.entry.treatment.title} · ${en.guide.notes.regularCream}`)).toBe(true); // a note says what to switch on
+    expect(hasText(tree, en.guide.intro)).toBe(true);
+  });
+
+  it('UX-11 the guide is reachable from More and from Settings, About', async () => {
+    const more = await mount(() => require('@/app/(tabs)/today/more'), nowDeps());
+    await flush();
+    await press(more.tree, en.nav.guide);
+    expect(mockRouter.push).toHaveBeenLastCalledWith('/guide');
+    const about = await mount(() => require('@/app/settings/about'), nowDeps());
+    await press(about.tree, en.nav.guide);
+    expect(mockRouter.push).toHaveBeenLastCalledWith('/guide');
+  });
+
+  it('UX-11 a treatment with a description shows it in the Treatment form', async () => {
+    const deps = nowDeps();
+    await addListItem(deps, 'treatments', 'Synthetic cream', { description: 'Thin layer, twice a day' });
+    const { tree } = await mount(() => require('@/app/form/treatment'), deps);
+    await flush();
+    expect(hasText(tree, 'Thin layer, twice a day')).toBe(true);
+  });
+});
+
 describe('Regular medication and treatment (IN-17)', () => {
   beforeEach(() => {
     mockRouter.push.mockClear();

@@ -416,3 +416,8 @@ Newest entry last. One short entry per working session or meaningful step: what 
 - **Done:** UX-10. Days | Areas, a month calendar with marks, the month's days, the "Incomplete days" filter, grouped areas with the last score or stage. 691 tests pass, iOS bundle builds.
 - **Process note:** the previous branch (photos in forms) was merged into `develop` while one new test still failed (it picked an area without an earlier entry). The test is fixed on this branch; nothing else was wrong. Merges now wait for a green `npm run check`.
 - **Next:** the guide (UX-11).
+
+## 2026-11-15: guide (branch feature/guide)
+- **Done:** UX-11. "Where do I log…?" from More and from Settings, About; descriptions on every list item and in the Treatment form; subtitles were built with the layout editor. All v0.6 requirements are now built. 694 tests pass.
+- **Cleaned:** `docs/open-questions.md` no longer lists "Decided in v0.6, not built"; stale lines about hide, flare markers and the check-in score switches are corrected.
+- **Next:** the leftovers: first-run empty states, Daily health trend charts, newest-wins merge (EX-12). Then the phone checks.

@@ -687,7 +687,8 @@
     "stool": "Stool",
     "remindersPrivacy": "Reminders and privacy",
     "regular": "Regular items",
-    "regularItem": "Regular item"
+    "regularItem": "Regular item",
+    "guide": "Where to log"
   },
   "home": {
     "quickActions": "Quick actions",
@@ -964,5 +965,35 @@
     "denied": "Notifications are turned off for this app, so reminders cannot be shown.",
     "openSystem": "Open system settings",
     "areas": "Areas: {{list}}"
+  },
+  "guide": {
+    "hint": "Which entry type fits an everyday situation",
+    "intro": "Pick the situation; it opens the form where it belongs.",
+    "items": {
+      "meal": "A meal or a snack",
+      "drink": "A drink, with or without alcohol",
+      "tablet": "A tablet or supplement I take now and then",
+      "regularTablet": "A regular tablet or supplement",
+      "cream": "A cream or other treatment I put on my skin",
+      "regularCream": "A treatment I use every day",
+      "newProduct": "A new cream, soap or detergent that touches my skin",
+      "stoppedProduct": "I stopped using a product",
+      "diet": "I started or stopped a diet",
+      "skin": "How a patch of skin looks today",
+      "flare": "A flare of my skin",
+      "nail": "How a nail looks",
+      "feeling": "How I feel: wellbeing, stress, sleep",
+      "belly": "Bloating or stomach pain",
+      "reaction": "A reaction after eating",
+      "stool": "A stool"
+    },
+    "notes": {
+      "regularTablet": "switch Regular on",
+      "regularCream": "switch Regular on",
+      "stoppedProduct": "choose Stopped",
+      "flare": "flares are worked out from severity at or above the threshold",
+      "newProduct": "choose Started",
+      "diet": "choose Started or Stopped"
+    }
   }
 }

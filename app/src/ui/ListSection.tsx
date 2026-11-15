@@ -42,7 +42,7 @@ export function ListSection({ kind }: { kind: ListKind }) {
       {daily && <Hint>{t('settings.itemsHint')}</Hint>}
       {selectedItem && itemDescription(selectedItem) && <Hint>{itemDescription(selectedItem)}</Hint>}
       <TextInput style={styles.input} placeholder={t('more.listNew')} value={name} onChangeText={setName} />
-      {daily && <TextInput style={styles.input} placeholder={t('settings.itemDescription')} value={description} onChangeText={setDescription} />}
+      <TextInput style={styles.input} placeholder={t('settings.itemDescription')} value={description} onChangeText={setDescription} />
       <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
         {daily ? (
           <>
@@ -50,7 +50,7 @@ export function ListSection({ kind }: { kind: ListKind }) {
             <Button kind="secondary" title={t('settings.itemYesNo')} onPress={() => run(() => addListItem(deps, kind, name, { valueKind: 'yesno', description }))} />
           </>
         ) : (
-          <Button kind="secondary" title={t('common.add')} onPress={() => run(() => addListItem(deps, kind, name))} />
+          <Button kind="secondary" title={t('common.add')} onPress={() => run(() => addListItem(deps, kind, name, { description }))} />
         )}
         {selected && (
           <>

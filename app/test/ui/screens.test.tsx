@@ -1526,6 +1526,31 @@ describe('Photos in the Skin and Nails forms (SK-4)', () => {
   });
 });
 
+describe('Daily health trends (SK-7, UX-1)', () => {
+  it('SK-7 the trends screen charts one score item at a time over the logged days, and an archived item keeps its history', async () => {
+    const deps = nowDeps();
+    mockRouter.push.mockClear();
+    const empty = await mount(() => require('@/app/(tabs)/review/health'), deps);
+    await flush();
+    expect(hasText(empty.tree, en.review.healthEmpty)).toBe(true);
+    await saveCheckIn(deps, { at: new Date('2026-01-10T20:00:00.000Z'), values: { 'item-stress': 2, 'item-sleep': 7 }, confirmEmptyDay: true });
+    await saveCheckIn(deps, { at: new Date('2026-01-12T20:00:00.000Z'), values: { 'item-stress': 8 }, confirmEmptyDay: true });
+    await archiveListItem(deps, 'dailyItems', 'item-stress');
+    const { tree } = await mount(() => require('@/app/(tabs)/review/health'), deps);
+    await flush();
+    const summary = (label: string, first: number, last: number, min: number, max: number) =>
+      en.review.trendSummary.replace('{{label}}', label).replace('{{from}}', '2026-01-10').replace('{{to}}', '2026-01-12').replace('{{first}}', String(first)).replace('{{last}}', String(last)).replace('{{min}}', String(min)).replace('{{max}}', String(max));
+    expect(hasText(tree, summary(en.tags['item-sleep'], 7, 7, 7, 7).replace('2026-01-12', '2026-01-10'))).toBe(true); // sleep: one day
+    await press(tree, en.tags['item-stress']);
+    await flush();
+    expect(hasText(tree, summary(en.tags['item-stress'], 2, 8, 2, 8))).toBe(true);
+    const review = await mount(() => require('@/app/(tabs)/review/index'), deps);
+    await flush();
+    await press(review.tree, en.review.healthTitle);
+    expect(mockRouter.push).toHaveBeenLastCalledWith('/review/health');
+  });
+});
+
 describe('First run (UX-1, UX-2)', () => {
   beforeEach(() => mockRouter.push.mockClear());
 

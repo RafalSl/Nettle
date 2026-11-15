@@ -688,7 +688,8 @@
     "remindersPrivacy": "Reminders and privacy",
     "regular": "Regular items",
     "regularItem": "Regular item",
-    "guide": "Where to log"
+    "guide": "Where to log",
+    "health": "Health trends"
   },
   "home": {
     "quickActions": "Quick actions",
@@ -747,7 +748,9 @@
     "incomplete": "Incomplete days",
     "incompleteHint": "Days with entries but no Daily health record.",
     "noIncomplete": "Every day with entries has a Daily health record.",
-    "goToday": "Go to Today"
+    "goToday": "Go to Today",
+    "healthTitle": "Daily health trends",
+    "healthEmpty": "Nothing to chart yet. Save Daily health records with a score first."
   },
   "day": {
     "newEntry": "New entry",

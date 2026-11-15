@@ -425,3 +425,7 @@ Newest entry last. One short entry per working session or meaningful step: what 
 ## 2026-11-15: first-run states (branch feature/empty-states)
 - **Done:** UX-1, UX-2. A first-run card on Today and a way back to Today from an empty Review. 696 tests pass.
 - **Next:** Daily health trend charts, then newest-wins merge (EX-12).
+
+## 2026-11-15: Daily health trends (branch feature/daily-health-trends)
+- **Done:** SK-7, UX-1. A trend screen for the Daily health score items. 697 tests pass.
+- **Next:** newest-wins merge (EX-12).

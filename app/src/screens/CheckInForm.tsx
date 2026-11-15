@@ -11,7 +11,7 @@ import { useServices } from '@/services';
 import { chooseAction } from '@/ui/actionSheet';
 import { FormModal, useForm } from '@/ui/FormModal';
 import { useCheckInScores } from '@/ui/useCheckInScores';
-import { Button, Chips, Hint, Label, OptionalScoreStepper, TimeField, styles } from '@/ui/components';
+import { Button, Chips, Hint, Label, ScoreInput, TimeField, styles } from '@/ui/components';
 
 interface Fields {
   wellbeing: OptionalScore;
@@ -97,7 +97,7 @@ export default function CheckInForm() {
       <Button kind="secondary" title={t('today.sameAsYesterday')} onPress={() => void sameAsYesterday()} />
       <Hint>{t('today.hint')}</Hint>
       {(['wellbeing', 'stress', 'sleep', 'abdominalPain'] as const).filter((k) => scoresOn[k]).map((k) => (
-        <OptionalScoreStepper key={k} label={t(`today.${k}`)} value={fields[k]} onChange={(v) => set(k, v)} />
+        <ScoreInput optional key={k} label={t(`today.${k}`)} value={fields[k]} onChange={(v) => set(k, v)} />
       ))}
       <View style={styles.timeRow}>
         <Label>{t('today.bloating')}</Label>

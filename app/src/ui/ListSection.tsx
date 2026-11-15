@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react';
 import { Alert, TextInput, View } from 'react-native';
 import type { ListItem, ListKind } from '@/core/model/types';
 import { addListItem, archiveListItem, renameListItem } from '@/core/usecases/lists';
-import { errorMessage, itemLabel, t } from '@/i18n';
+import { errorMessage, itemDescription, itemLabel, t } from '@/i18n';
 import { useServices } from '@/services';
 import { Button, Chips, Heading, Hint, Label, styles } from '@/ui/components';
 
@@ -13,6 +13,8 @@ export function ListSection({ kind }: { kind: ListKind }) {
   const [items, setItems] = useState<ListItem[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const daily = kind === 'dailyItems';
 
   const reload = useCallback(() => {
     deps.repo.listItems(kind).then(setItems);
@@ -23,6 +25,7 @@ export function ListSection({ kind }: { kind: ListKind }) {
     try {
       await fn();
       setName('');
+      setDescription('');
       reload();
     } catch (e) {
       Alert.alert(errorMessage(e));
@@ -30,14 +33,25 @@ export function ListSection({ kind }: { kind: ListKind }) {
   };
   const active = items.filter((i) => !i.archived);
   const archived = items.filter((i) => i.archived);
+  const selectedItem = items.find((i) => i.id === selected) ?? null;
 
   return (
     <>
       <Heading>{t(`lists.${kind}`)}</Heading>
       <Chips items={active.map((i) => ({ id: i.id, label: itemLabel(i) }))} selected={new Set(selected ? [selected] : [])} onToggle={setSelected} />
+      {daily && <Hint>{t('settings.itemsHint')}</Hint>}
+      {selectedItem && itemDescription(selectedItem) && <Hint>{itemDescription(selectedItem)}</Hint>}
       <TextInput style={styles.input} placeholder={t('more.listNew')} value={name} onChangeText={setName} />
+      {daily && <TextInput style={styles.input} placeholder={t('settings.itemDescription')} value={description} onChangeText={setDescription} />}
       <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
-        <Button kind="secondary" title={t('common.add')} onPress={() => run(() => addListItem(deps, kind, name))} />
+        {daily ? (
+          <>
+            <Button kind="secondary" title={t('settings.itemScore')} onPress={() => run(() => addListItem(deps, kind, name, { valueKind: 'score', description }))} />
+            <Button kind="secondary" title={t('settings.itemYesNo')} onPress={() => run(() => addListItem(deps, kind, name, { valueKind: 'yesno', description }))} />
+          </>
+        ) : (
+          <Button kind="secondary" title={t('common.add')} onPress={() => run(() => addListItem(deps, kind, name))} />
+        )}
         {selected && (
           <>
             <Button kind="secondary" title={t('more.rename')} onPress={() => run(() => renameListItem(deps, kind, selected, name))} />

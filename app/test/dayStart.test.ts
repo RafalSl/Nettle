@@ -91,7 +91,7 @@ describe('diary day with a start hour (NF-7)', () => {
   it('NF-7 a check-in made after midnight belongs to the evening before, and keeps its day when the setting changes', async () => {
     const deps = makeDeps(new MemoryRepo(), '2026-01-15T23:30:00.000Z'); // 00:30 on the 16th in Warsaw
     await setDayStartHour(deps, 3);
-    const c = await saveCheckIn(deps, { wellbeing: 5 });
+    const c = await saveCheckIn(deps, { values: { 'item-wellbeing': 5 }, confirmEmptyDay: true });
     expect(c.day).toBe('2026-01-15');
     expect(await getCheckIn(deps, '2026-01-15')).toMatchObject({ id: c.id });
     await setDayStartHour(deps, 0);

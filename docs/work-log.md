@@ -382,3 +382,9 @@ Newest entry last. One short entry per working session or meaningful step: what 
 - **Done:** SK-3, UX-3. One `ScoreInput` (−, slider in whole steps, +, value; optional scores show "–" with Clear) replaces `ScoreStepper` and `OptionalScoreStepper` in the Skin, check-in and edit forms. `@react-native-community/slider` added with `npx expo install`. Tests in `test/ui/scoreInput.test.tsx`; 663 tests pass.
 - **Phone check:** whole steps, value readable, thumb not hiding it.
 - **Next:** Daily health data model (phase 2).
+
+## 2026-11-15: Daily health (branch feature/daily-health)
+- **Done:** SK-7, SK-11, IN-6 (and the data side of EX-1, EX-3, LL-2, LL-4). The record is values keyed by item id; items are a list (`dailyItems`) with score or yes/no, descriptions and archive; "Mark day complete", the Day complete card and Reopen are gone (saving logs the day, the first save of a day with no meals asks). Report, CSV, analysis input and data.json follow. New migration drops the old `check_in` table (no old-data handling, prototyping phase). 665 tests pass, iOS bundle builds.
+- **Trade-off:** internal names `CheckIn`/`checkIns`/`check_in` stay (renaming touches many files for no behaviour); the UI and docs say Daily health. Polish strings added as drafts only.
+- **Not built:** Daily health trend charts; the descriptions of user items are shown in Settings only.
+- **Next:** derived flares (phase 3).

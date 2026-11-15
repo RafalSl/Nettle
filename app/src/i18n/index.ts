@@ -33,6 +33,14 @@ export function itemLabel(item: { id: string; name: string; predefined: boolean;
   return item.nameOverride ?? (item.predefined ? t(`tags.${item.id}`) : item.name);
 }
 
+/** SK-7, UX-11: a short description of a Daily health item: by id for predefined items, the user's text otherwise. */
+export function itemDescription(item: { id: string; predefined: boolean; description: string | null }): string | null {
+  if (!item.predefined) return item.description;
+  const key = `itemDescriptions.${item.id}`;
+  const text = t(key);
+  return text.startsWith('[missing') ? null : text;
+}
+
 /** LL-11: the language LLM answers should use; follows the app language. */
 export function currentLanguage(): 'en' | 'pl' {
   return i18n.locale.startsWith('pl') ? 'pl' : 'en';

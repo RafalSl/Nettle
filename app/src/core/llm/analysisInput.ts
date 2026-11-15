@@ -13,7 +13,7 @@ export const LOOKBACK_DAYS = 21;
 
 export interface AnalysisSource extends Records {
   skinAreas: SkinArea[];
-  dailyTags: ListItem[];
+  dailyItems: ListItem[];
   treatments: ListItem[];
 }
 
@@ -22,8 +22,8 @@ interface Day {
   date: string;
   /** True for days before the period that are included only for the lookback. */
   context?: true;
-  /** Closed with "day complete" (SK-11); null when there is no check-in. */
-  complete: boolean | null;
+  /** SK-11: true when the day has a Daily health record; null when it has none. */
+  logged: boolean | null;
   [key: string]: unknown;
 }
 
@@ -52,7 +52,7 @@ export function buildAnalysisInput(src: AnalysisSource, dayFrom: string, dayTo: 
   /** NF-7: the diary day of an entry, with the user's day start. */
   const dayOf = (at: { utc: string; tz: string }) => localDay(at.utc, at.tz, startHour);
   const areaName = new Map(src.skinAreas.map((a) => [a.id, label(a)]));
-  const tagName = new Map(src.dailyTags.map((t) => [t.id, label(t)]));
+  const items = new Map(src.dailyItems.map((i) => [i.id, i]));
   const treatmentName = new Map(src.treatments.map((t) => [t.id, label(t)]));
   const mealById = new Map(src.meals.map((m) => [m.id, m]));
 
@@ -64,7 +64,7 @@ export function buildAnalysisInput(src: AnalysisSource, dayFrom: string, dayTo: 
   const dayRow = (date: string): Day => {
     let d = days.get(date);
     if (!d) {
-      d = { date, complete: null, ...(inPeriod(date) ? {} : { context: true as const }) };
+      d = { date, logged: null, ...(inPeriod(date) ? {} : { context: true as const }) };
       days.set(date, d);
     }
     return d;
@@ -83,16 +83,16 @@ export function buildAnalysisInput(src: AnalysisSource, dayFrom: string, dayTo: 
   for (const c of src.checkIns) {
     if (!inScope(c.day)) continue;
     const d = dayRow(c.day);
-    d.complete = !!c.completedAt;
-    d.checkin = {
-      wellbeing: c.wellbeing,
-      stress: c.stress,
-      sleep_quality: c.sleep,
-      abdominal_pain: c.abdominalPain,
-      bloating: c.bloating,
-      tags: c.tags.map((id) => tagName.get(id) ?? id),
-      ...(c.note ? { note: c.note } : {}),
-    };
+    d.logged = true;
+    const scores: Record<string, number> = {};
+    const yes: string[] = [];
+    for (const [id, v] of Object.entries(c.values)) {
+      const item = items.get(id);
+      const name = item ? label(item) : id;
+      if (typeof v === 'number') scores[name] = v;
+      else if (v) yes.push(name);
+    }
+    d.daily_health = { scores, yes, ...(c.note ? { note: c.note } : {}) };
     counts.checkIns = (counts.checkIns ?? 0) + 1;
     if (inPeriod(c.day)) periodRecords++;
   }
@@ -136,7 +136,7 @@ export function buildAnalysisInput(src: AnalysisSource, dayFrom: string, dayTo: 
     periodDays.push(d);
     dayRow(d);
   }
-  const completeDays = periodDays.filter((d) => days.get(d)!.complete === true).length;
+  const completeDays = periodDays.filter((d) => days.get(d)!.logged === true).length;
 
   // How often each ingredient and allergen was eaten, over the days that have meals.
   const mealDays = new Set<string>();
@@ -163,7 +163,7 @@ export function buildAnalysisInput(src: AnalysisSource, dayFrom: string, dayTo: 
   counts.completeDays = completeDays;
   counts.lookbackDays = ordered.filter((d) => d.context).length;
   const json = JSON.stringify({
-    period: { from: dayFrom, to: dayTo, days: periodDays.length, days_marked_complete: completeDays, days_with_meals: mealDays.size, lookback_days_before: LOOKBACK_DAYS },
+    period: { from: dayFrom, to: dayTo, days: periodDays.length, days_logged: completeDays, days_with_meals: mealDays.size, lookback_days_before: LOOKBACK_DAYS },
     ingredient_frequency: frequency(ingredientDays, 'ingredient', 60),
     allergen_frequency: frequency(allergenDays, 'allergen', 14),
     days: ordered,

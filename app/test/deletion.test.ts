@@ -29,7 +29,7 @@ async function seeded(make: () => Promise<StorageRepository>) {
   await repo.addSkinEntry(syntheticEntry('e2', '2026-01-12T10:00:00.000Z'));
   await repo.addRecord('checkIns', syntheticCheckIn('c1', '2026-01-12T20:00:00.000Z', '2026-01-12'));
   await repo.addRecord('stoolEntries', syntheticStool('s1', '2026-01-12T07:00:00.000Z'));
-  await repo.upsertItem('treatments', { id: 'tr1', name: 'Synthetic cream', predefined: false, archived: false, nameOverride: null });
+  await repo.upsertItem('treatments', { id: 'tr1', name: 'Synthetic cream', predefined: false, archived: false, nameOverride: null, valueKind: 'yesno' as const, description: null });
   return repo;
 }
 
@@ -89,7 +89,7 @@ describe.each(repos)('bulk delete (%s)', (_name, make) => {
     const snap = await repo.snapshot();
     for (const k of RECORD_KINDS) expect(snap[k]).toEqual([]);
     expect(snap.skinAreas).toHaveLength(6);
-    expect(snap.dailyTags).toHaveLength(9);
+    expect(snap.dailyItems).toHaveLength(14);
     expect(snap.treatments).toHaveLength(1);
   });
 

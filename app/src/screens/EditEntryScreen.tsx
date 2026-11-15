@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Switch, Text, TextInput, View } from 'react-native';
+import { TextInput } from 'react-native';
 import { joinIngredients, splitIngredients } from '@/core/model/allergens';
 import { ALLERGENS, CHANGE_ACTIONS, CHANGE_CATEGORIES, MEDICATION_CATEGORIES, NAIL_EXTENTS, NAIL_STAGES, SCORE_KEYS, SYMPTOMS } from '@/core/model/types';
 import type { Allergen, ListItem, MedicationCategory, RecordKind, SkinArea } from '@/core/model/types';
@@ -24,7 +24,7 @@ import { useServices } from '@/services';
 import { FormModal, useField, useForm } from '@/ui/FormModal';
 import { DrinkFields, draftFromDrink, drinkInput, drinkMissing, type DrinkDraft } from '@/ui/DrinkFields';
 import { PhotoStrip } from '@/ui/PhotoStrip';
-import { useCheckInScores } from '@/ui/useCheckInScores';
+import { DailyHealthFields, type DailyValues } from '@/ui/DailyHealthFields';
 import { Chips, Hint, Label, ScoreInput, TimeField, styles } from '@/ui/components';
 
 type Rec<K extends LogKind> = Extract<LogRow, { kind: K }>['record'];
@@ -131,24 +131,14 @@ function NailFields({ r, areas }: { r: Rec<'nailEntries'>; areas: SkinArea[] }) 
   );
 }
 
-function CheckInFields({ r, tags }: { r: Rec<'checkIns'>; tags: ListItem[] }) {
+function CheckInFields({ r, items }: { r: Rec<'checkIns'>; items: ListItem[] }) {
   const { deps } = useServices();
   const f = useForm();
   const c = useCommon(r.note, f.touch);
-  const [v, setV] = useField({ wellbeing: r.wellbeing, stress: r.stress, sleep: r.sleep, abdominalPain: r.abdominalPain }, f.touch);
-  const scoresOn = useCheckInScores();
-  const [bloating, setBloating] = useField(r.bloating, f.touch);
-  const [picked, setPicked] = useField<Set<string>>(new Set(r.tags), f.touch);
+  const [values, setValues] = useField<DailyValues>({ ...r.values }, f.touch);
   return (
-    <FormModal dirty={f.dirty} missing={null} onSave={async () => void (await editCheckIn(deps, r.id, { ...v, bloating, tags: [...picked], note: c.note, at: c.at ?? undefined }))}>
-      {(['wellbeing', 'stress', 'sleep', 'abdominalPain'] as const).filter((k) => scoresOn[k]).map((k) => (
-        <ScoreInput optional key={k} label={t(`today.${k}`)} value={v[k]} onChange={(n) => setV({ ...v, [k]: n })} />
-      ))}
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Text style={styles.rowText}>{t('edit.bloating')}</Text>
-        <Switch value={bloating} onValueChange={setBloating} accessibilityLabel={t('edit.bloating')} />
-      </View>
-      <Chips items={tags.map((x) => ({ id: x.id, label: itemLabel(x) }))} selected={picked} onToggle={(id) => setPicked(toggled(picked, id))} />
+    <FormModal dirty={f.dirty} missing={null} onSave={async () => void (await editCheckIn(deps, r.id, { values, note: c.note, at: c.at ?? undefined }))}>
+      <DailyHealthFields items={items} values={values} onChange={setValues} />
       <CommonFields c={c} original={r.at.utc} />
     </FormModal>
   );
@@ -298,7 +288,7 @@ export default function EditEntryScreen() {
         row: { kind, id, at: (record as { at: LogRow['at'] }).at, record } as LogRow,
         areas: await deps.repo.listAreas(),
         treatments: await deps.repo.listItems('treatments'),
-        tags: await deps.repo.listItems('dailyTags'),
+        tags: await deps.repo.listItems('dailyItems'),
       });
     })().catch(() => setState('missing'));
   }, [deps, kind, id]);
@@ -312,7 +302,7 @@ export default function EditEntryScreen() {
     case 'meals': return <MealFields r={row.record} />;
     case 'skinEntries': return <SkinFields r={row.record} areas={usable(areas, [row.record.areaId])} />;
     case 'nailEntries': return <NailFields r={row.record} areas={usable(areas, [row.record.areaId])} />;
-    case 'checkIns': return <CheckInFields r={row.record} tags={usable(tags, row.record.tags)} />;
+    case 'checkIns': return <CheckInFields r={row.record} items={tags.filter((i) => !i.archived)} />;
     case 'stoolEntries': return <StoolFields r={row.record} />;
     case 'treatmentApplications':
       return <TreatmentFields r={row.record} areas={usable(areas, row.record.areaIds)} treatments={usable(treatments, [row.record.treatmentId])} />;

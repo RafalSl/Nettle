@@ -23,7 +23,7 @@ export function recordRefs(records: Records): RecordRefs {
   for (const e of records.skinEntries) refs.areas.add(e.areaId);
   for (const e of records.nailEntries) refs.areas.add(e.areaId);
   for (const f of records.flareMarkers) refs.areas.add(f.areaId);
-  for (const c of records.checkIns) c.tags.forEach((t) => refs.items.dailyTags.add(t));
+  for (const c of records.checkIns) Object.keys(c.values).forEach((id) => refs.items.dailyItems.add(id));
   for (const a of records.treatmentApplications) {
     refs.items.treatments.add(a.treatmentId);
     a.areaIds.forEach((id) => refs.areas.add(id));

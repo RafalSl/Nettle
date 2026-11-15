@@ -3,11 +3,8 @@ import { NettleError } from '../model/errors';
 import {
   defaultPreferences,
   MAX_SUGGESTION_ROWS,
-  CHECKIN_SCORES,
   QUICK_ACTIONS,
   WINDOW_DAYS,
-  type CheckInScore,
-  type CheckInScoreSettings,
   type Preferences,
   type QuickAction,
   type SuggestionSettings,
@@ -33,12 +30,6 @@ async function change(deps: Deps, edit: (p: Preferences) => void): Promise<Prefe
 export async function setDayStartHour(deps: Deps, hour: number): Promise<number> {
   if (!isDayStartHour(hour)) throw new NettleError('invalid_value', 'dayStartHour');
   return (await change(deps, (p) => void (p.dayStartHour = hour))).dayStartHour;
-}
-
-/** SK-7: switch one daily score of the check-in on or off. */
-export async function setCheckInScore(deps: Deps, score: CheckInScore, on: boolean): Promise<CheckInScoreSettings> {
-  if (!CHECKIN_SCORES.includes(score)) throw new NettleError('invalid_value', 'score');
-  return (await change(deps, (p) => void (p.checkInScores[score] = on))).checkInScores;
 }
 
 /** IN-14, UX-6: a favorite removed in Settings (the key is the suggestion identity). */

@@ -249,6 +249,25 @@ export const MIGRATIONS: string[] = [
   );
   CREATE INDEX report_summary_ts ON report_summary (ts_utc);
   `,
+  // SK-7, SK-11, IN-6: Daily health. Values keyed by item id replace the fixed scores, bloating and tags, and the
+  // day-complete mark goes; list items get a value kind and a description. Prototype data is dropped (no old-data handling).
+  `
+  DROP TABLE check_in;
+  CREATE TABLE check_in (
+    id TEXT PRIMARY KEY,
+    ts_utc TEXT NOT NULL,
+    tz TEXT NOT NULL,
+    day TEXT NOT NULL,
+    values_json TEXT NOT NULL,
+    note TEXT
+  );
+  CREATE INDEX check_in_ts ON check_in (ts_utc);
+  CREATE INDEX check_in_day ON check_in (day);
+  DELETE FROM list_item WHERE kind = 'dailyTags';
+  ALTER TABLE list_item ADD COLUMN value_kind TEXT NOT NULL DEFAULT 'yesno' CHECK (value_kind IN ('score', 'yesno'));
+  ALTER TABLE list_item ADD COLUMN description TEXT;
+  UPDATE preference SET json = json_remove(json, '$.checkInScores');
+  `,
 ];
 
 export async function migrate(db: SqlDb): Promise<void> {

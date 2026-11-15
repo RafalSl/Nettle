@@ -87,23 +87,23 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
       expect(await repo.listRecords('nailEntries')).toEqual([]);
     });
 
-    const myTag = { id: 'tag-mine', name: 'Synthetic tag', predefined: false, archived: false, nameOverride: null };
+    const myTag = { id: 'tag-mine', name: 'Synthetic tag', predefined: false, archived: false, nameOverride: null, valueKind: 'yesno' as const, description: null };
 
-    it('IN-6 seeds nine predefined daily tags and stores user tags', async () => {
-      const seeded = await repo.listItems('dailyTags');
-      expect(seeded).toHaveLength(9);
+    it('IN-6, SK-7 seeds fourteen predefined Daily health items and stores user tags', async () => {
+      const seeded = await repo.listItems('dailyItems');
+      expect(seeded).toHaveLength(14);
       expect(seeded.every((t) => t.predefined)).toBe(true);
-      await repo.upsertItem('dailyTags', myTag);
-      await repo.upsertItem('dailyTags', { ...myTag, name: 'Renamed', archived: true });
-      expect((await repo.listItems('dailyTags')).find((t) => t.id === 'tag-mine')).toEqual({ ...myTag, name: 'Renamed', archived: true });
+      await repo.upsertItem('dailyItems', myTag);
+      await repo.upsertItem('dailyItems', { ...myTag, name: 'Renamed', archived: true });
+      expect((await repo.listItems('dailyItems')).find((t) => t.id === 'tag-mine')).toEqual({ ...myTag, name: 'Renamed', archived: true });
     });
 
-    it('SK-7 stores a check-in with optional scores, tags and a completion stamp, and replaces it by id', async () => {
+    it('SK-7 stores a Daily health record keyed by item id, and replaces it by id', async () => {
       const c = syntheticCheckIn('c1', '2026-01-15T20:00:00.000Z', '2026-01-15', ['tag-travel']);
       await repo.addRecord('checkIns', c);
       expect(await repo.listRecords('checkIns')).toEqual([c]);
       await expect(repo.addRecord('checkIns', c)).rejects.toThrow();
-      const open = { ...c, stress: 9, tags: [], completedAt: null };
+      const open = { ...c, values: { 'item-stress': 9 } };
       await repo.putRecord('checkIns', open);
       expect(await repo.listRecords('checkIns')).toEqual([open]);
       await repo.putRecord('checkIns', syntheticCheckIn('c2', '2026-01-16T20:00:00.000Z', '2026-01-16'));
@@ -111,22 +111,22 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
     });
 
     it('EX-10 replace settings keeps a user tag that a check-in uses and drops an unused one', async () => {
-      await repo.upsertItem('dailyTags', myTag);
-      await repo.upsertItem('dailyTags', { ...myTag, id: 'tag-unused' });
+      await repo.upsertItem('dailyItems', myTag);
+      await repo.upsertItem('dailyItems', { ...myTag, id: 'tag-unused' });
       await repo.addRecord('checkIns', syntheticCheckIn('c1', '2026-01-15T20:00:00.000Z', '2026-01-15', ['tag-mine']));
       await repo.importData({ settings: { skinAreas: [], ...noItems } }, 'replace');
-      const ids = (await repo.listItems('dailyTags')).map((t) => t.id);
+      const ids = (await repo.listItems('dailyItems')).map((t) => t.id);
       expect(ids).toContain('tag-mine');
       expect(ids).not.toContain('tag-unused');
-      expect(ids).toHaveLength(10); // nine predefined always stay
+      expect(ids).toHaveLength(15); // fourteen predefined always stay
     });
 
     it('EX-10 merge settings keeps local tag values; replace overwrites by id and re-seeds predefined tags', async () => {
-      const travel = (await repo.listItems('dailyTags')).find((t) => t.id === 'tag-travel')!;
-      await repo.importData({ settings: { skinAreas: [], ...noItems, dailyTags: [{ ...travel, nameOverride: 'ignored' }] } }, 'merge');
-      expect((await repo.listItems('dailyTags')).find((t) => t.id === 'tag-travel')?.nameOverride).toBeNull();
-      await repo.importData({ settings: { skinAreas: [], ...noItems, dailyTags: [{ ...travel, nameOverride: 'Trip', archived: true }] } }, 'replace');
-      expect((await repo.listItems('dailyTags')).find((t) => t.id === 'tag-travel')).toMatchObject({ nameOverride: 'Trip', archived: true });
+      const travel = (await repo.listItems('dailyItems')).find((t) => t.id === 'tag-travel')!;
+      await repo.importData({ settings: { skinAreas: [], ...noItems, dailyItems: [{ ...travel, nameOverride: 'ignored' }] } }, 'merge');
+      expect((await repo.listItems('dailyItems')).find((t) => t.id === 'tag-travel')?.nameOverride).toBeNull();
+      await repo.importData({ settings: { skinAreas: [], ...noItems, dailyItems: [{ ...travel, nameOverride: 'Trip', archived: true }] } }, 'replace');
+      expect((await repo.listItems('dailyItems')).find((t) => t.id === 'tag-travel')).toMatchObject({ nameOverride: 'Trip', archived: true });
     });
 
     it('IN-10 stores allergen tags on a meal', async () => {
@@ -136,7 +136,7 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
     });
 
     it('IN-11 stores a treatment list and applications with several areas', async () => {
-      await repo.upsertItem('treatments', { id: 'tr1', name: 'Synthetic cream', predefined: false, archived: false, nameOverride: null });
+      await repo.upsertItem('treatments', { id: 'tr1', name: 'Synthetic cream', predefined: false, archived: false, nameOverride: null, valueKind: 'yesno' as const, description: null });
       expect(await repo.listItems('treatments')).toHaveLength(1);
       const app = { id: 'ta1', at: { utc: '2026-01-15T07:00:00.000Z', tz: 'Europe/Warsaw' }, treatmentId: 'tr1', areaIds: ['area-chin', 'area-neck'], note: null };
       await repo.addRecord('treatmentApplications', app);
@@ -166,8 +166,8 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
     });
 
     it('EX-10 replace settings keeps a treatment that an application uses', async () => {
-      await repo.upsertItem('treatments', { id: 'tr1', name: 'Synthetic cream', predefined: false, archived: false, nameOverride: null });
-      await repo.upsertItem('treatments', { id: 'tr2', name: 'Unused', predefined: false, archived: false, nameOverride: null });
+      await repo.upsertItem('treatments', { id: 'tr1', name: 'Synthetic cream', predefined: false, archived: false, nameOverride: null, valueKind: 'yesno' as const, description: null });
+      await repo.upsertItem('treatments', { id: 'tr2', name: 'Unused', predefined: false, archived: false, nameOverride: null, valueKind: 'yesno' as const, description: null });
       await repo.addRecord('treatmentApplications', { id: 'ta1', at: { utc: '2026-01-15T07:00:00.000Z', tz: 'UTC' }, treatmentId: 'tr1', areaIds: ['area-chin'], note: null });
       await repo.importData({ settings: { skinAreas: [], ...noItems } }, 'replace');
       expect((await repo.listItems('treatments')).map((t) => t.id)).toEqual(['tr1']);

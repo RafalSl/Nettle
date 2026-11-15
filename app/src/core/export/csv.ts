@@ -45,3 +45,9 @@ export function flattenSource(row: Record<string, unknown>): Record<string, Cell
     ai_prompt_version: s.llm?.prompt_version ?? '',
   };
 }
+
+/** SK-7, EX-5: a Daily health row for a spreadsheet: one column per item id (`item-stress`), so scores can be charted. */
+export function flattenValues(row: Record<string, unknown>): Record<string, Cell> {
+  const { values, ...rest } = row;
+  return { ...(rest as Record<string, Cell>), ...(typeof values === 'object' && values !== null ? (values as Record<string, Cell>) : {}) };
+}

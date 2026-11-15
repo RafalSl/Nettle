@@ -83,20 +83,14 @@ export const noExtra = {
 };
 
 /** The user lists (see ListKind) with no items, to complete a Settings literal. */
-export const noItems = { dailyTags: [], treatments: [] };
+export const noItems = { dailyItems: [], treatments: [] };
 
 export const syntheticCheckIn = (id: string, utc: string, day: string, tags: string[] = []): CheckIn => ({
   id,
   at: { utc, tz: TZ },
   day,
-  wellbeing: 6,
-  stress: null,
-  sleep: 4,
-  abdominalPain: 0,
-  bloating: true,
-  tags,
+  values: { 'item-wellbeing': 6, 'item-sleep': 4, 'item-abdominal-pain': 0, 'item-bloating': true, ...Object.fromEntries(tags.map((t) => [t, true])) },
   note: 'synthetic note',
-  completedAt: { utc, tz: TZ },
 });
 
 export const syntheticStool = (id: string, utc: string, bristol = 4): StoolEntry => ({

@@ -93,23 +93,21 @@ export type LocalDay = string;
 /** A 0-10 score, or null when the user left it out. */
 export type OptionalScore = number | null;
 
+/** SK-7: a Daily health item is a 0-10 score or a yes/no. */
+export type ItemValueKind = 'score' | 'yesno';
+
 /**
- * SK-7: one daily check-in per local day. `at` is when it is about (editable like every entry) and `day`
- * its local day in `at.tz`. SK-11: `completedAt` marks the day as fully logged; null while open.
+ * SK-7, SK-11: the Daily health record, one per local day (the table and type keep the older name CheckIn).
+ * `at` is when it is about (editable like every entry) and `day` its local day in `at.tz`. `values` is keyed by
+ * Daily health item id: a score 0-10, or `true` for a yes. An item with no key was not recorded (a score) or is
+ * a no (a yes/no). Saving the record logs the day (SK-11); there is no separate mark.
  */
 export interface CheckIn {
   id: string;
   at: Stamp;
   day: LocalDay;
-  wellbeing: OptionalScore;
-  stress: OptionalScore;
-  sleep: OptionalScore;
-  abdominalPain: OptionalScore;
-  bloating: boolean;
-  /** Ids of daily tags (IN-6) that were "yes" this day. */
-  tags: string[];
+  values: Record<string, number | boolean>;
   note: string | null;
-  completedAt: Stamp | null;
 }
 
 /** SK-7: Bristol type 1-7, several per day. */
@@ -338,7 +336,7 @@ export const EXTRA_KINDS: readonly ExtraKind[] = [
 ];
 
 /**
- * A user-editable list entry: daily tags (IN-6). Predefined items keep a stable id and a localized name,
+ * A user-editable list entry: Daily health items (SK-7, IN-6) and treatments (IN-11). Predefined items keep a stable id and a localized name,
  * and renaming one stores `nameOverride`, as for areas (SK-2).
  */
 export interface ListItem {
@@ -347,19 +345,24 @@ export interface ListItem {
   predefined: boolean;
   archived: boolean;
   nameOverride: string | null;
+  /** SK-7: Daily health items are scores or yes/no; other lists keep 'yesno' and ignore it. */
+  valueKind: ItemValueKind;
+  /** SK-7, UX-11: a short description of a user item; predefined items are described in the i18n files by id. */
+  description: string | null;
 }
 
 /** User configuration (EX-1 "settings"). */
 export interface Settings {
   skinAreas: SkinArea[];
-  dailyTags: ListItem[];
+  /** SK-7, IN-6: the Daily health items (scores and yes/no, daily tags included). */
+  dailyItems: ListItem[];
   /** IN-11: the saved list of topical treatments. */
   treatments: ListItem[];
 }
 
 /** Settings collections that are plain lists of ListItem. */
 export type ListKind = Exclude<keyof Settings, 'skinAreas'>;
-export const LIST_KINDS: readonly ListKind[] = ['dailyTags', 'treatments'];
+export const LIST_KINDS: readonly ListKind[] = ['dailyItems', 'treatments'];
 
 export interface Snapshot extends Records, Settings {}
 

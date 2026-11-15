@@ -407,3 +407,7 @@ Newest entry last. One short entry per working session or meaningful step: what 
 - **Done:** IN-17, IN-5, IN-11, SK-9, UX-3, UX-5. Regular items (switch on the forms, Settings screens, quick sheets on the tiles, per-item reminders with a Taken or Applied button, hide-name, Stop, export and re-scheduling after an import). The Daily health reminder is scheduled day by day for 14 days so a day with a record is skipped. 681 tests pass, iOS bundle builds.
 - **Phone check (not verified):** the action buttons in all app states (reports for old SDKs say they were unreliable; the design opens the app and logs, so it does not depend on them), a DATE trigger firing, notification categories in Expo Go.
 - **Next:** photos in the Skin and Nails forms (SK-4), Review browsing (UX-10), the guide (UX-11).
+
+## 2026-11-15: photos in the Skin and Nails forms (branch feature/photos-in-forms)
+- **Done:** SK-4. A photos control in both forms, photos attached on Save, "No change" plus a photo as a photo-only update. 687 tests pass.
+- **Next:** Review browsing (UX-10), then the guide (UX-11).

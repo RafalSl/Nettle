@@ -376,7 +376,11 @@
     "removeTitle": "Usunąć to zdjęcie?",
     "removeBody": "Zostanie usunięte z tego urządzenia i nie da się go odzyskać.",
     "tapToShow": "Wrażliwe zdjęcie. Dotknij, aby pokazać.",
-    "none": "Brak zdjęć"
+    "none": "Brak zdjęć",
+    "title": "Zdjęcia",
+    "formHint": "Zdjęcia zapisują się razem z wpisem. Dotknij zdjęcia, aby je odrzucić.",
+    "drop": "Odrzuć zdjęcie",
+    "someFailed": "Nie udało się zapisać zdjęć: {{n}}. Wpis został zapisany."
   },
   "delete": {
     "title": "Usuń dane",

@@ -3,16 +3,18 @@ import { useCallback, useState } from 'react';
 import { Alert, TextInput, View } from 'react-native';
 import { NAIL_EXTENTS, NAIL_STAGES, type NailExtent, type NailStage, type SkinArea } from '@/core/model/types';
 import { addArea, listActiveAreas, logNailEntry, repeatNailEntry } from '@/core/usecases/skin';
+import { attachPhotos } from '@/core/usecases/photos';
 import { applyReminders } from '@/core/usecases/reminders';
 import { areaLabel, errorMessage, reminderTexts, t } from '@/i18n';
 import { useServices } from '@/services';
 import { FormModal, useField, useForm } from '@/ui/FormModal';
+import { PendingPhotos } from '@/ui/PendingPhotos';
 import { useFormTime } from '@/ui/useFormTime';
 import { Button, Chips, Hint, Label, TimeField, styles } from '@/ui/components';
 
 /**
  * SK-10, SK-3: one nail area per affected nail; an entry has a stage and a rough extent instead of scores.
- * "No change" repeats the area's last stage and extent in one tap. Photos are added from the entry in the day's log.
+ * "No change" repeats the area's last stage and extent in one tap. Photos picked here are saved with the entry (SK-4).
  */
 export function NailSection() {
   const { deps } = useServices();
@@ -23,6 +25,7 @@ export function NailSection() {
   const [stage, setStage] = useField<NailStage | null>(null, f.touch);
   const [extent, setExtent] = useField<NailExtent | null>(null, f.touch);
   const [newName, setNewName] = useState('');
+  const [photos, setPhotos] = useField<string[]>([], f.touch);
   const time = useFormTime(f.touch);
 
   const reload = useCallback(() => {
@@ -43,10 +46,17 @@ export function NailSection() {
     }
   }
 
+  /** SK-4: the photos picked in this form go to the entry that was just saved; a failure never undoes the entry. */
+  async function attach(entryId: string, atUtc: string) {
+    const { failed } = await attachPhotos(deps, 'nailEntry', entryId, photos, new Date(atUtc));
+    if (failed > 0) Alert.alert(t('photos.someFailed', { n: failed }));
+  }
+
   async function noChange() {
     try {
       if (!selected) return;
-      await repeatNailEntry(deps, selected, time.atForSave);
+      const entry = await repeatNailEntry(deps, selected, time.atForSave); // SK-4: "No change" plus a photo is a photo-only update
+      await attach(entry.id, entry.at.utc);
       router.back();
     } catch (e) {
       Alert.alert(errorMessage(e));
@@ -59,7 +69,8 @@ export function NailSection() {
       dirty={f.dirty}
       missing={missing}
       onSave={async () => {
-        await logNailEntry(deps, { areaId: selected!, stage: stage!, extent: extent!, at: time.atForSave });
+        const entry = await logNailEntry(deps, { areaId: selected!, stage: stage!, extent: extent!, at: time.atForSave });
+        await attach(entry.id, entry.at.utc);
       }}>
       <View style={{ flexDirection: 'row', gap: 8 }}>
         <TextInput style={[styles.input, { flex: 1 }]} placeholder={t('more.nailAreaName')} value={newName} onChangeText={setNewName} />
@@ -75,6 +86,7 @@ export function NailSection() {
           <Chips items={NAIL_STAGES.map((s) => ({ id: s, label: t(`nail.stages.${s}`) }))} selected={new Set(stage ? [stage] : [])} onToggle={(id) => setStage(id as NailStage)} />
           <Label>{t('more.nailExtent')}</Label>
           <Chips items={NAIL_EXTENTS.map((s) => ({ id: s, label: t(`nail.extents.${s}`) }))} selected={new Set(extent ? [extent] : [])} onToggle={(id) => setExtent(id as NailExtent)} />
+          <PendingPhotos uris={photos} onChange={setPhotos} />
           <TimeField value={time.value} onChange={time.set} />
         </>
       )}

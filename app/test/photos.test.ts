@@ -2,7 +2,7 @@ import { SqliteRepo } from '@/adapters/storage/sqliteRepo';
 import { NettleError } from '@/core/model/errors';
 import type { StorageRepository } from '@/core/ports/storage';
 import { deleteData } from '@/core/usecases/deleteData';
-import { addPhoto, listPhotos, removePhoto, setPhotoSensitive } from '@/core/usecases/photos';
+import { addPhoto, attachPhotos, listPhotos, removePhoto, setPhotoSensitive } from '@/core/usecases/photos';
 import { addArea, logNailEntry, logSkinEntry } from '@/core/usecases/skin';
 import { MemoryPhotoStore } from './fakes/memoryPhotoStore';
 import { MemoryRepo } from './fakes/memoryRepo';
@@ -72,6 +72,18 @@ describe.each(repos)('photos (%s)', (_name, make) => {
     expect(await code(addPhoto(deps, { entryKind: 'skinEntry', entryId: entry.id, sourceUri: 'x' }))).toBe('photo_failed');
     expect(await repo.listRecords('photos')).toEqual([]);
     expect(store.files.size).toBe(0);
+  });
+
+  it('SK-4 photos picked in a form are attached to the saved entry, dated like it; a failed one does not undo the rest', async () => {
+    const { deps, repo, store } = await setup();
+    const at = new Date('2026-01-10T08:00:00.000Z');
+    const entry = await logSkinEntry(deps, { areaId: 'area-chin', scores, at });
+    expect(await attachPhotos(deps, 'skinEntry', entry.id, ['a', 'b'], at)).toEqual({ saved: 2, failed: 0 });
+    expect((await repo.listRecords('photos')).map((p) => p.at.utc)).toEqual([at.toISOString(), at.toISOString()]);
+    store.failNextSave = true;
+    expect(await attachPhotos(deps, 'skinEntry', entry.id, ['c', 'd'])).toEqual({ saved: 1, failed: 1 });
+    expect(await attachPhotos(deps, 'skinEntry', entry.id, [])).toEqual({ saved: 0, failed: 0 });
+    expect(await repo.listRecords('photos')).toHaveLength(3);
   });
 
   it('SK-4 removing a photo removes its record and its file', async () => {

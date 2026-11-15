@@ -361,3 +361,8 @@ Newest entry last. One short entry per working session or meaningful step: what 
 - Cause: `TodayScreen` read the clock in its render body (`deps.clock.now()`). With the React Compiler on (app.json) that call is cached because `deps` never changes, so the screen kept the day it was first rendered on until the app was reloaded. The arrow stayed disabled and the calendar fell back to "today" (UX-2, NF-7).
 - Fix: the time is state, refreshed on focus, when the app returns to the foreground and every minute. Test added (the screen moves on to the new day).
 - Next: check other screens that read the clock in a render body (Report, forms are remounted on open so they are fine).
+
+## 2026-11-15: branch pruning and the develop rule
+- Deleted 66 local branches already merged into `develop` (including `claude/*` ones and `main`'s ancestors kept). Removed 4 clean leftover worktrees under `.claude/worktrees`. Nothing was deleted on GitHub: `origin` only has `develop` and `main`.
+- Requirements v0.5.1: `develop` is never deleted, even after a release merge into `main`.
+- Next: keep pruning merged feature branches after each merge into `develop`.

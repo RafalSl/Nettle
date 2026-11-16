@@ -469,3 +469,8 @@ Newest entry last. One short entry per working session or meaningful step: what 
 - **Tests:** prompt, text tidying, model per action, no image in the request, vague name, errors; the source in export, CSV, PDF and analysis input; six UI tests (confirmation, add all keeps typed text, vague name, retry, abort, known names, drink form). The English strings are new; the Polish ones are a first draft (Polish review is not planned).
 - **Phone check (new A7):** a real call from the meal and drink forms; what Haiku answers for a dish name and for "lunch".
 - **Next:** v0.7 build, first the SK-1 area split.
+
+## 2026-11-16: intimate area split (branch feature/intimate-area-split)
+- **Done:** SK-1, SK-5. `PREDEFINED_AREAS` has eight areas: the single "intimate area" is now Penis (`area-penis`), Perineum and groin (`area-perineum-groin`) and Between the buttocks (`area-between-buttocks`), each sensitive by default; palms are not predefined. English names and a Polish draft. Tests that counted six predefined areas now count `PREDEFINED_AREAS.length`; a new test checks that each of the three starts its photos as sensitive.
+- **Old row:** predefined areas are inserted at every start (`INSERT OR IGNORE`), so a phone that already has the app gets the three new areas on the next launch. A phone that has the old `area-intimate` row would have shown a missing translation key for it, so one plain SQL migration step (the last one) turns that row into an archived area under its stored name, keeping its entries. A new database never has it. Test: the step on a database with an old row and an entry, and a fresh database.
+- **Next:** SK-3 cracks flag and optional size.

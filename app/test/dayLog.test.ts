@@ -110,7 +110,7 @@ describe('days list and report preview (UX-1, EX-14)', () => {
 
   it('EX-14 the report preview counts entries and photos of the period, and the sensitive ones apart', async () => {
     const deps = makeDeps(new MemoryRepo());
-    const inside = await logSkinEntry(deps, { areaId: 'area-intimate', scores, at: d('2026-01-12T08:00:00.000Z') });
+    const inside = await logSkinEntry(deps, { areaId: 'area-penis', scores, at: d('2026-01-12T08:00:00.000Z') });
     const outside = await logSkinEntry(deps, { areaId: 'area-chin', scores, at: d('2026-02-12T08:00:00.000Z') });
     await addPhoto(deps, { entryKind: 'skinEntry', entryId: inside.id, sourceUri: 'a' });
     await addPhoto(deps, { entryKind: 'skinEntry', entryId: inside.id, sourceUri: 'b', sensitive: false });

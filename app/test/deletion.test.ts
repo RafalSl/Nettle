@@ -1,3 +1,4 @@
+import { PREDEFINED_AREAS } from '@/core/model/areas';
 import { SqliteRepo } from '@/adapters/storage/sqliteRepo';
 import { NettleError } from '@/core/model/errors';
 import { DELETE_GROUPS } from '@/core/model/deleteGroups';
@@ -88,7 +89,7 @@ describe.each(repos)('bulk delete (%s)', (_name, make) => {
     await deleteData(makeDeps(repo), { kinds: RECORD_KINDS });
     const snap = await repo.snapshot();
     for (const k of RECORD_KINDS) expect(snap[k]).toEqual([]);
-    expect(snap.skinAreas).toHaveLength(6);
+    expect(snap.skinAreas).toHaveLength(PREDEFINED_AREAS.length);
     expect(snap.dailyItems).toHaveLength(14);
     expect(snap.treatments).toHaveLength(1);
   });

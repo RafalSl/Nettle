@@ -134,7 +134,9 @@
     "area-ears-inside": "Ears (inside)",
     "area-behind-ears": "Behind the ears",
     "area-sternum": "Sternum",
-    "area-intimate": "Intimate area"
+    "area-penis": "Penis",
+    "area-perineum-groin": "Perineum and groin",
+    "area-between-buttocks": "Between the buttocks"
   },
   "data": {
     "exportTitle": "Export",

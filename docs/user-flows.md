@@ -141,7 +141,7 @@ Each reminder carries a target in its data (`checkin`, `nails`, `backup`, and in
 | Course still running, last application within the gap (v0.7) | No time to relapse yet; reads "course running" |
 | Another treatment applied between the course end and the flare (v0.7) | Listed beside the result as a confounder |
 | Size no longer applies, the patch healed (v0.7) | Clear empties it; "No change" would keep carrying it |
-| Entries made on the old single intimate area (v0.7) | No migration in the prototyping phase; the area and its test entries are dropped |
+| Entries made on the old single intimate area (v0.7) | A small SQL step turns the old `area-intimate` row into an archived area under its stored name, with its entries; a fresh install has only the three new areas |
 | Go to date with no entry that day (v0.8) | Scrolls to the nearest earlier day with an entry and says so |
 | Go to date before the area's first entry (v0.8) | Scrolls to the oldest day and says so |
 | Delete the last entry of an area from its timeline (v0.8) | The timeline shows its empty state; the area stays |

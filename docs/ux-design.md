@@ -178,7 +178,7 @@ Read: tab bars, toolbars, sheets, modality, action sheets, settings, entering da
 17. Daily health replaces the check-in; items are user-defined scores or yes/no; saving logs the day, so there is no complete mark (SK-7, SK-11).
 18. Review has Days (month calendar) and Areas; only the "Incomplete days" filter for now (UX-10).
 19. Guide: subtitles, descriptions and a "Where do I log...?" screen (UX-11).
-20. (v0.7) The intimate area is three predefined areas: penis, perineum and groin, between the buttocks, each sensitive by default; palms are not predefined (SK-1, SK-5).
+20. The intimate area is three predefined areas: penis, perineum and groin, between the buttocks, each sensitive by default; palms are not predefined (SK-1, SK-5).
 21. (v0.7) A fixed patch is an ordinary skin area with an optional size in mm; no separate lesion kind. Skin entries get a cracks switch (SK-3).
 22. (v0.7) The reaction to a treatment is set after the fact on the edit screen, never in the one-tap path (IN-11).
 23. (v0.7) Time since the last treatment (per photo) and time to relapse (per area and treatment) are computed by the program and shown as captions and report rows; photos get no "before or after treatment" field (SK-4, SK-12).

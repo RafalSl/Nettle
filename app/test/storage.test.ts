@@ -139,6 +139,23 @@ describe('sqlite migrations', () => {
     expect(await repo.listRecords('drinks')).toMatchObject([{ id: 'd1', barcode: null, source: typed }]);
   });
 
+  it('SK-1 the last migration keeps an old single intimate area as an archived area with its entries; a new database never has it', async () => {
+    const db = createNodeSqliteDb();
+    for (const [i, sql] of MIGRATIONS.slice(0, -1).entries()) {
+      await db.exec(sql);
+      await db.exec(`PRAGMA user_version = ${i + 1}`);
+    }
+    await db.run(`INSERT INTO skin_area (id, name, predefined, sensitive_default, kind) VALUES ('area-intimate', 'Intimate area', 1, 1, 'skin')`);
+    await db.run(`INSERT INTO skin_entry (id, ts_utc, tz, area_id, severity, itch, pain, dryness, scaling) VALUES ('e1', '2026-01-01T00:00:00.000Z', 'UTC', 'area-intimate', 3, 3, 3, 3, 3)`);
+    const repo = await SqliteRepo.open(db);
+    const old = (await repo.listAreas()).find((a) => a.id === 'area-intimate');
+    expect(old).toMatchObject({ name: 'Intimate area', predefined: false, archived: true });
+    expect((await repo.listSkinEntries()).map((e) => e.areaId)).toEqual(['area-intimate']); // history stays
+    expect((await repo.listAreas()).filter((a) => a.predefined).map((a) => a.id)).toEqual(expect.arrayContaining(['area-penis', 'area-perineum-groin', 'area-between-buttocks']));
+    const fresh = await SqliteRepo.open(createNodeSqliteDb());
+    expect((await fresh.listAreas()).some((a) => a.id === 'area-intimate')).toBe(false);
+  });
+
   it('IN-4 and IN-5 enforce amount and category in the database itself', async () => {
     const db = createNodeSqliteDb();
     await SqliteRepo.open(db);

@@ -74,7 +74,7 @@ describe('no change (SK-3)', () => {
     expect(result.saved).toHaveLength(2); // chin and the nail; neck is archived
     expect(new Set(result.saved.map((e) => e.at.utc)).size).toBe(1);
     expect(result.needFirstEntry.map((a) => a.id).sort()).toEqual(
-      ['area-behind-ears', 'area-ears-inside', 'area-intimate', 'area-sternum'].sort(),
+      ['area-behind-ears', 'area-between-buttocks', 'area-ears-inside', 'area-penis', 'area-perineum-groin', 'area-sternum'].sort(),
     );
   });
 });

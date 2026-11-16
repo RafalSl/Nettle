@@ -23,6 +23,7 @@ import { useServices } from '@/services';
 import { FormModal, useField, useForm } from '@/ui/FormModal';
 import { DrinkFields, draftFromDrink, drinkInput, drinkMissing, type DrinkDraft } from '@/ui/DrinkFields';
 import { PhotoStrip } from '@/ui/PhotoStrip';
+import { parseSizeText, sizeToSave, SkinExtraFields } from '@/ui/SkinExtraFields';
 import { DailyHealthFields, type DailyValues } from '@/ui/DailyHealthFields';
 import { Chips, Hint, Label, ScoreInput, TimeField, styles } from '@/ui/components';
 
@@ -90,13 +91,18 @@ function SkinFields({ r, areas }: { r: Rec<'skinEntries'>; areas: SkinArea[] }) 
   const c = useCommon(r.note, f.touch);
   const [areaId, setAreaId] = useField(r.areaId, f.touch);
   const [scores, setScores] = useField({ ...r.scores }, f.touch);
+  const [cracks, setCracks] = useField(r.cracks, f.touch);
+  const [sizeText, setSizeText] = useField(r.sizeMm === null ? '' : String(r.sizeMm), f.touch);
+  const [detailsOpen, setDetailsOpen] = useState(r.sizeMm !== null);
+  const size = parseSizeText(sizeText);
   return (
-    <FormModal dirty={f.dirty} missing={null} onSave={async () => void (await editSkinEntry(deps, r.id, { areaId, scores, note: c.note, at: c.at ?? undefined }))}>
+    <FormModal dirty={f.dirty} missing={size.ok ? null : t('skin.sizeMissing')} onSave={async () => void (await editSkinEntry(deps, r.id, { areaId, scores, cracks, sizeMm: sizeToSave(sizeText), note: c.note, at: c.at ?? undefined }))}>
       <Chips items={areas.filter((a) => a.kind === 'skin').map((a) => ({ id: a.id, label: areaLabel(a) }))} selected={one(areaId)} onToggle={setAreaId} />
       <Label>{t('edit.scores')}</Label>
       {SCORE_KEYS.map((k) => (
         <ScoreInput key={k} label={t(`skin.scores.${k}`)} value={scores[k]} onChange={(v) => setScores({ ...scores, [k]: v })} />
       ))}
+      <SkinExtraFields cracks={cracks} onCracks={setCracks} sizeText={sizeText} onSizeText={setSizeText} open={detailsOpen} onToggleOpen={() => setDetailsOpen((o) => !o)} />
       <CommonFields c={c} original={r.at.utc} />
       <Label>{t('edit.photos')}</Label>
       <PhotoStrip entryKind="skinEntry" entryId={r.id} />

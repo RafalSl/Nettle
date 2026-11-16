@@ -1,6 +1,6 @@
 import type { IngredientSource } from '@/core/model/source';
 import type { LogRow } from '@/core/usecases/dayLog';
-import type { ListItem, SkinArea } from '@/core/model/types';
+import type { ListItem, SkinArea, SkinScores } from '@/core/model/types';
 import { areaLabel, itemLabel, t } from '@/i18n';
 
 export interface RowContext {
@@ -19,6 +19,16 @@ const categoryLabel = (ctx: RowContext, id: string) => {
   return c ? itemLabel(c) : id;
 };
 
+/** SK-3: the cracks flag and size of a skin entry as short phrases, empty when there is nothing to say. */
+export const skinExtras = (e: { cracks: boolean; sizeMm: number | null }): string[] => [
+  ...(e.cracks ? [t('log.cracks')] : []),
+  ...(e.sizeMm !== null ? [t('log.sizeMm', { n: e.sizeMm })] : []),
+];
+
+/** SK-3: the scores of a skin entry with its cracks flag and size, for a row or a timeline line. */
+export const skinSummary = (e: { scores: SkinScores; cracks: boolean; sizeMm: number | null }): string =>
+  [t('log.scores', { ...e.scores }), ...skinExtras(e)].join(', ');
+
 /** UX-2: the text of one row of the day's log. Only ids and enums are looked up; free text is shown as typed. */
 export function describeRow(row: LogRow, ctx: RowContext): { title: string; detail: string | null } {
   const area = (id: string) => {
@@ -29,7 +39,7 @@ export function describeRow(row: LogRow, ctx: RowContext): { title: string; deta
     case 'meals':
       return { title: row.record.description, detail: [row.record.ingredients.join(', '), sourceLabel(row.record.source)].filter(Boolean).join(' · ') || null };
     case 'skinEntries':
-      return { title: `${t('log.skin')}: ${area(row.record.areaId)}`, detail: t('log.scores', { ...row.record.scores }) };
+      return { title: `${t('log.skin')}: ${area(row.record.areaId)}`, detail: skinSummary(row.record) };
     case 'nailEntries':
       return {
         title: `${t('log.nail')}: ${area(row.record.areaId)}`,

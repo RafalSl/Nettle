@@ -25,6 +25,17 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
       expect(areas.filter((a) => a.sensitiveDefault).map((a) => a.id).sort()).toEqual(['area-between-buttocks', 'area-penis', 'area-perineum-groin']);
     });
 
+    it('SK-3 stores the cracks flag and the size of a skin entry, and an edit changes them', async () => {
+      const plain = syntheticEntry('e1', '2026-01-15T08:00:00.000Z');
+      const patch = { ...syntheticEntry('e2', '2026-01-15T09:00:00.000Z'), cracks: true, sizeMm: 25 };
+      await repo.addSkinEntry(plain);
+      await repo.addSkinEntry(patch);
+      expect(await repo.listSkinEntries()).toEqual([patch, plain]); // newest first; defaults are no cracks and no size
+      await repo.putSkinEntry({ ...patch, cracks: false, sizeMm: null });
+      await repo.putSkinEntry({ ...plain, sizeMm: 3 });
+      expect(await repo.listSkinEntries()).toEqual([{ ...patch, cracks: false, sizeMm: null }, { ...plain, sizeMm: 3 }]);
+    });
+
     it('IN-1 stores a meal with ordered ingredients and UTC + timezone', async () => {
       const meal = syntheticMeal('m1', '2026-01-15T08:00:00.000Z', ['b', 'a', 'c']);
       await repo.addMeal(meal);

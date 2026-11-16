@@ -88,12 +88,12 @@ export async function areasWithEntries(deps: Deps): Promise<AreaSummary[]> {
     .map(({ area, entries, lastDay }) => ({ area, entries, lastDay }));
 }
 
-/** What a trend chart can plot: one of the five skin scores, or the extent of a nail entry (0 = none to 3 = over half). */
-export type TrendKey = keyof SkinEntry['scores'] | 'extent';
+/** What a trend chart can plot: one of the five skin scores, the size in mm (SK-3), or the extent of a nail entry (0 = none to 3 = over half). */
+export type TrendKey = keyof SkinEntry['scores'] | 'extent' | 'size';
 
 export interface TrendPoint {
   day: LocalDay;
-  /** The day's average (skin scores) or worst (nail extent), to one decimal. */
+  /** The day's average (skin scores) or worst (nail extent, size), to one decimal. */
   value: number;
   /** A derived flare start or end of the area on this day, for the chart's marks. */
   flare: 'start' | 'end' | null;
@@ -109,10 +109,11 @@ export function trendPoints(days: readonly TimelineDay[], key: TrendKey): TrendP
     const values: number[] = [];
     for (const e of d.entries) {
       if (key === 'extent' && e.kind === 'nail') values.push(NAIL_EXTENTS.indexOf(e.entry.extent));
-      if (key !== 'extent' && e.kind === 'skin') values.push(e.entry.scores[key]);
+      if (key === 'size' && e.kind === 'skin' && e.entry.sizeMm !== null) values.push(e.entry.sizeMm);
+      if (key !== 'extent' && key !== 'size' && e.kind === 'skin') values.push(e.entry.scores[key]);
     }
     if (values.length === 0) continue;
-    const value = key === 'extent' ? Math.max(...values) : values.reduce((a, b) => a + b, 0) / values.length;
+    const value = key === 'extent' || key === 'size' ? Math.max(...values) : values.reduce((a, b) => a + b, 0) / values.length;
     const last = d.flares[d.flares.length - 1];
     points.push({ day: d.day, value: Math.round(value * 10) / 10, flare: last ? last.kind : null });
   }

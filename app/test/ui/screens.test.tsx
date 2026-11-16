@@ -3129,3 +3129,116 @@ describe('Today log order (UX-2, UX-5)', () => {
     expect(scroll?.props.contentInsetAdjustmentBehavior).toBe('automatic');
   });
 });
+
+describe('Cracks and size on a skin entry (SK-3, SK-8, EN-1)', () => {
+  const sc = { severity: 4, itch: 3, pain: 2, dryness: 1, scaling: 0 };
+  beforeEach(() => {
+    mockRouter.back.mockClear();
+    mockParams.current = {};
+    mockScreen.options = undefined;
+    jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+  });
+  afterEach(() => jest.restoreAllMocks());
+  const headerSave = async () => {
+    let rendered!: ReactTestRenderer;
+    await act(async () => {
+      rendered = create(mockScreen.options!.headerRight!());
+    });
+    const node = rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!;
+    await act(async () => {
+      await node.props.onPress();
+    });
+    await flush();
+    return node.props.accessibilityState as { disabled?: boolean } | undefined;
+  };
+  const switchOf = (tree: ReactTestRenderer, label: string) => tree.root.findAll((n) => n.props.accessibilityLabel === label && typeof n.props.onValueChange === 'function')[0]!;
+  const sizeInput = (tree: ReactTestRenderer) => tree.root.findAll((n) => n.props.accessibilityLabel === en.skin.sizeMm && typeof n.props.onChangeText === 'function');
+
+  it('SK-3, UX-4 the cracks switch is always there and the size sits behind Details, which stays closed for an area without a size', async () => {
+    const deps = nowDeps();
+    const { tree } = await mount(() => require('@/app/form/skin'), deps);
+    await flush();
+    expect(switchOf(tree, en.skin.cracks).props.value).toBe(false);
+    expect(sizeInput(tree)).toHaveLength(0);
+    await press(tree, en.skin.details);
+    expect(sizeInput(tree).length).toBeGreaterThan(0);
+  });
+
+  it('SK-3 a new entry saves the cracks flag and the size, and an invalid size disables Save and says what is wrong', async () => {
+    const deps = nowDeps();
+    const { tree } = await mount(() => require('@/app/form/skin'), deps);
+    await flush();
+    await act(async () => switchOf(tree, en.skin.cracks).props.onValueChange(true));
+    await press(tree, en.skin.details);
+    await type(tree, en.skin.sizeMm, '12.5');
+    expect(hasText(tree, en.errors.invalid_size)).toBe(true);
+    expect(hasText(tree, en.edit.missing.replace('{{what}}', en.skin.sizeMissing))).toBe(true);
+    expect((await headerSave())?.disabled).toBe(true);
+    expect(await deps.repo.listSkinEntries()).toEqual([]); // even a forced press saves nothing: an invalid size is an error, not "no size"
+    await type(tree, en.skin.sizeMm, '14');
+    await headerSave();
+    expect(await deps.repo.listSkinEntries()).toMatchObject([{ cracks: true, sizeMm: 14 }]);
+    expect(mockRouter.back).toHaveBeenCalledTimes(1);
+  });
+
+  it('SK-3 an empty size field saves no size, and the entry is not marked cracked unless the switch is on', async () => {
+    const deps = nowDeps();
+    await mount(() => require('@/app/form/skin'), deps);
+    await flush();
+    await headerSave();
+    expect(await deps.repo.listSkinEntries()).toMatchObject([{ cracks: false, sizeMm: null }]);
+  });
+
+  it('SK-3 an area with an earlier size opens Details by itself, prefills both, and "No change" carries them', async () => {
+    const deps = nowDeps();
+    await logSkinEntry(deps, { areaId: 'area-chin', scores: sc, cracks: true, sizeMm: 22, at: new Date(Date.now() - 86_400_000) });
+    const { tree } = await mount(() => require('@/app/form/skin'), deps);
+    await flush();
+    await press(tree, 'Chin');
+    await flush();
+    expect(switchOf(tree, en.skin.cracks).props.value).toBe(true);
+    expect(sizeInput(tree)[0]!.props.value).toBe('22'); // Details opened without a tap
+    await press(tree, en.skin.noChange);
+    await flush();
+    expect(await deps.repo.listSkinEntries()).toMatchObject([{ cracks: true, sizeMm: 22 }, { cracks: true, sizeMm: 22 }]);
+    // another area without a size shows no Details content
+    const { tree: second } = await mount(() => require('@/app/form/skin'), nowDeps());
+    await flush();
+    expect(sizeInput(second)).toHaveLength(0);
+  });
+
+  it('EN-1, SK-3 the edit form shows the saved flag and size, changes them, and clears the size with an empty field', async () => {
+    const deps = nowDeps();
+    const entry = await logSkinEntry(deps, { areaId: 'area-chin', scores: sc, cracks: true, sizeMm: 30, at: new Date(Date.now() - 3600_000) });
+    mockParams.current = { kind: 'skinEntries', id: entry.id };
+    const { tree } = await mount(() => require('@/app/form/edit'), deps);
+    await flush();
+    expect(switchOf(tree, en.skin.cracks).props.value).toBe(true);
+    expect(sizeInput(tree)[0]!.props.value).toBe('30');
+    await act(async () => switchOf(tree, en.skin.cracks).props.onValueChange(false));
+    await type(tree, en.skin.sizeMm, '');
+    await headerSave();
+    expect(await deps.repo.listSkinEntries()).toMatchObject([{ id: entry.id, cracks: false, sizeMm: null }]);
+  });
+
+  it('SK-8, UX-2 the timeline line and the day log row say cracks and size, and the chart gets a Size choice only where a size is logged', async () => {
+    const deps = nowDeps();
+    await logSkinEntry(deps, { areaId: 'area-chin', scores: sc, cracks: true, sizeMm: 18, at: new Date(Date.now() - 3 * 3600_000) });
+    await logSkinEntry(deps, { areaId: 'area-neck', scores: sc, at: new Date(Date.now() - 3 * 3600_000) });
+    mockParams.current = { id: 'area-chin' };
+    const chin = await mount(() => require('@/app/(tabs)/review/area'), deps);
+    await flush();
+    expect(hasText(chin.tree, `${en.log.cracks}, ${en.log.sizeMm.replace('{{n}}', '18')}`)).toBe(true);
+    await press(chin.tree, en.review.sizeChip);
+    expect(hasText(chin.tree, en.review.trendSummary.replace('{{label}}', en.review.sizeChip).replace('{{first}}', '18').replace('{{last}}', '18').replace('{{min}}', '18').replace('{{max}}', '18').replace('{{from}}', localDay(new Date(Date.now() - 3 * 3600_000).toISOString(), 'Europe/Warsaw')).replace('{{to}}', localDay(new Date(Date.now() - 3 * 3600_000).toISOString(), 'Europe/Warsaw')))).toBe(true);
+    mockParams.current = { id: 'area-neck' };
+    const neck = await mount(() => require('@/app/(tabs)/review/area'), deps);
+    await flush();
+    expect(hasText(neck.tree, en.review.sizeChip)).toBe(false);
+    expect(hasText(neck.tree, en.log.cracks)).toBe(false);
+    mockParams.current = {};
+    const today = await mount(() => require('@/app/(tabs)/today/index'), deps);
+    await flush();
+    expect(hasText(today.tree, en.log.sizeMm.replace('{{n}}', '18'))).toBe(true);
+  });
+});

@@ -38,7 +38,7 @@ async function seeded(make: () => Promise<StorageRepository>) {
   await repo.upsertArea({ ...chin, nameOverride: 'Synthetic jaw' }); // SK-2 override must survive the round trip
   await repo.addMeal({ ...syntheticMeal('m1', '2026-01-10T08:00:00.000Z'), allergens: ['milk', 'gluten'] }); // IN-10 survives the round trip
   await repo.addMeal(syntheticMeal('m2', '2026-01-12T08:00:00.000Z', []));
-  await repo.addSkinEntry(syntheticEntry('e1', '2026-01-10T09:00:00.000Z', 'area-penis'));
+  await repo.addSkinEntry({ ...syntheticEntry('e1', '2026-01-10T09:00:00.000Z', 'area-penis'), cracks: true, sizeMm: 12 }); // SK-3 survives the round trip
   await repo.addSkinEntry(syntheticEntry('e2', '2026-01-12T09:00:00.000Z', 'a-custom'));
   await repo.upsertArea({ ...custom, id: 'a-nail', kind: 'nail', name: 'Synthetic left thumb' });
   await repo.addRecord('nailEntries', syntheticNailEntry('n1', '2026-01-12T10:00:00.000Z', 'a-nail'));

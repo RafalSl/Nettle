@@ -25,6 +25,10 @@ export interface SkinEntryJson {
   tz: string;
   area_id: string;
   scores: { severity: number; itch: number; pain: number; dryness: number; scaling: number };
+  /** SK-3 */
+  cracks: boolean;
+  /** SK-3: whole millimetres, or null while unset. */
+  size_mm: number | null;
   note: string | null;
 }
 
@@ -91,6 +95,8 @@ export function toDataJson(
           tz: e.at.tz,
           area_id: e.areaId,
           scores: { ...e.scores },
+          cracks: e.cracks,
+          size_mm: e.sizeMm,
           note: e.note,
         })),
         ...Object.fromEntries(

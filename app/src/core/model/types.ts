@@ -68,8 +68,15 @@ export interface SkinEntry {
   at: Stamp;
   areaId: string;
   scores: SkinScores;
+  /** SK-3: cracks or open wounds, yes or no. Prefilled and carried by "No change" like the scores. */
+  cracks: boolean;
+  /** SK-3: the largest diameter in whole millimetres, for an area that is one fixed patch; null while unset. */
+  sizeMm: number | null;
   note: string | null;
 }
+
+/** SK-3: the size field takes whole millimetres from 1 to this. */
+export const MAX_SIZE_MM = 500;
 
 /** SK-10 */
 export const NAIL_STAGES = ['red_edge', 'separation', 'yellow', 'white', 'clear'] as const;

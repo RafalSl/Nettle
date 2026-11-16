@@ -54,6 +54,8 @@ interface EntryRow {
   pain: number;
   dryness: number;
   scaling: number;
+  cracks: number;
+  size_mm: number | null;
   note: string | null;
 }
 
@@ -156,8 +158,8 @@ export class SqliteRepo implements StorageRepository {
   private async insertEntry(e: SkinEntry, ignoreIfExists: boolean) {
     const verb = ignoreIfExists ? 'INSERT OR IGNORE' : 'INSERT';
     await this.db.run(
-      `${verb} INTO skin_entry (id, ts_utc, tz, area_id, severity, itch, pain, dryness, scaling, note)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `${verb} INTO skin_entry (id, ts_utc, tz, area_id, severity, itch, pain, dryness, scaling, cracks, size_mm, note)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         e.id,
         e.at.utc,
@@ -168,6 +170,8 @@ export class SqliteRepo implements StorageRepository {
         e.scores.pain,
         e.scores.dryness,
         e.scores.scaling,
+        +e.cracks,
+        e.sizeMm,
         e.note,
       ],
     );
@@ -285,6 +289,8 @@ export class SqliteRepo implements StorageRepository {
         dryness: r.dryness,
         scaling: r.scaling,
       },
+      cracks: r.cracks === 1,
+      sizeMm: r.size_mm,
       note: r.note,
     }));
   }
@@ -314,7 +320,7 @@ export class SqliteRepo implements StorageRepository {
       if (!row?.n) throw new Error('unknown entry');
       await this.db.run(
         `UPDATE skin_entry SET ts_utc = ?, tz = ?, area_id = ?, severity = ?, itch = ?, pain = ?, dryness = ?,
-           scaling = ?, note = ? WHERE id = ?`,
+           scaling = ?, cracks = ?, size_mm = ?, note = ? WHERE id = ?`,
         [
           e.at.utc,
           e.at.tz,
@@ -324,6 +330,8 @@ export class SqliteRepo implements StorageRepository {
           e.scores.pain,
           e.scores.dryness,
           e.scores.scaling,
+          +e.cracks,
+          e.sizeMm,
           e.note,
           e.id,
         ],

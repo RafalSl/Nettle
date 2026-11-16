@@ -11,7 +11,7 @@ import { PhotoCompare } from '@/ui/PhotoCompare';
 import { PhotoThumbs } from '@/ui/PhotoThumbs';
 import { TrendChart } from '@/ui/TrendChart';
 import { Button, Chips, Heading, Hint, Screen, styles } from '@/ui/components';
-import { describeRow } from '@/ui/logRow';
+import { describeRow, skinExtras } from '@/ui/logRow';
 import { useEntryActions } from '@/ui/useEntryActions';
 
 /**
@@ -55,7 +55,8 @@ export default function AreaTimelineScreen() {
   const jumpNotice = jump && jump.target.how !== 'exact' ? t(jump.target.how === 'earlier' ? 'review.jumpEarlier' : 'review.jumpOldest', { picked: jump.picked, shown: jump.target.day }) : null;
 
   const isNail = days?.some((d) => d.entries.some((e) => e.kind === 'nail')) ?? false;
-  const keys: TrendKey[] = isNail ? ['extent'] : [...SCORE_KEYS];
+  const hasSize = days?.some((d) => d.entries.some((e) => e.kind === 'skin' && e.entry.sizeMm !== null)) ?? false; // SK-3: the size is charted only where one is logged
+  const keys: TrendKey[] = isNail ? ['extent'] : [...SCORE_KEYS, ...(hasSize ? (['size'] as const) : [])];
   const key = keys.includes(trend) ? trend : keys[0]!;
   const allPhotos = days?.flatMap((d) => d.entries.flatMap((e) => e.photos)) ?? [];
   /** What was logged with a photo, for the comparison captions. */
@@ -63,7 +64,7 @@ export default function AreaTimelineScreen() {
     for (const d of days ?? []) {
       for (const e of d.entries) {
         if (e.photos.some((p) => p.id === photo.id)) {
-          return e.kind === 'skin' ? SCORE_KEYS.map((k) => `${t(`skin.scores.${k}`)} ${e.entry.scores[k]}`).join(', ') : `${t(`nail.stages.${e.entry.stage}`)}, ${t(`nail.extents.${e.entry.extent}`)}`;
+          return e.kind === 'skin' ? [...SCORE_KEYS.map((k) => `${t(`skin.scores.${k}`)} ${e.entry.scores[k]}`), ...skinExtras(e.entry)].join(', ') : `${t(`nail.stages.${e.entry.stage}`)}, ${t(`nail.extents.${e.entry.extent}`)}`;
         }
       }
     }
@@ -104,8 +105,8 @@ export default function AreaTimelineScreen() {
       {days !== null && days.length > 0 && (
         <>
           <Heading>{t('review.trend')}</Heading>
-          {!isNail && <Chips items={SCORE_KEYS.map((k) => ({ id: k, label: t(`skin.scores.${k}`) }))} selected={new Set([key])} onToggle={(id) => setTrend(id as TrendKey)} />}
-          <TrendChart points={trendPoints(days, key)} max={key === 'extent' ? 3 : 10} label={key === 'extent' ? t('review.extent') : t(`skin.scores.${key}`)} />
+          {!isNail && <Chips items={keys.map((k) => ({ id: k, label: k === 'size' ? t('review.sizeChip') : t(`skin.scores.${k}`) }))} selected={new Set([key])} onToggle={(id) => setTrend(id as TrendKey)} />}
+          <TrendChart points={trendPoints(days, key)} max={key === 'extent' ? 3 : key === 'size' ? Math.max(1, ...trendPoints(days, 'size').map((p) => p.value)) : 10} label={key === 'extent' ? t('review.extent') : key === 'size' ? t('review.sizeChip') : t(`skin.scores.${key}`)} />
         </>
       )}
       {allPhotos.length >= 2 && (
@@ -133,7 +134,7 @@ export default function AreaTimelineScreen() {
                 <Text style={styles.rowText}>
                   {`${localDateTime(e.entry.at.utc, e.entry.at.tz).slice(11)}  ${
                     e.kind === 'skin'
-                      ? SCORE_KEYS.map((k) => `${t(`skin.scores.${k}`)} ${e.entry.scores[k]}`).join(', ')
+                      ? [...SCORE_KEYS.map((k) => `${t(`skin.scores.${k}`)} ${e.entry.scores[k]}`), ...skinExtras(e.entry)].join(', ')
                       : `${t(`nail.stages.${e.entry.stage}`)}, ${t(`nail.extents.${e.entry.extent}`)}`
                   }`}
                 </Text>

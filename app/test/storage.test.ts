@@ -139,9 +139,11 @@ describe('sqlite migrations', () => {
     expect(await repo.listRecords('drinks')).toMatchObject([{ id: 'd1', barcode: null, source: typed }]);
   });
 
-  it('SK-1 the last migration keeps an old single intimate area as an archived area with its entries; a new database never has it', async () => {
+  it('SK-1 the intimate-area migration keeps an old single intimate area as an archived area with its entries; a new database never has it', async () => {
     const db = createNodeSqliteDb();
-    for (const [i, sql] of MIGRATIONS.slice(0, -1).entries()) {
+    const step = MIGRATIONS.findIndex((sql) => sql.includes("'area-intimate'")); // the step under test
+    expect(step).toBeGreaterThan(0);
+    for (const [i, sql] of MIGRATIONS.slice(0, step).entries()) {
       await db.exec(sql);
       await db.exec(`PRAGMA user_version = ${i + 1}`);
     }

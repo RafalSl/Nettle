@@ -54,6 +54,8 @@ export const syntheticEntry = (id: string, utc: string, areaId = 'area-chin'): S
   at: { utc, tz: TZ },
   areaId,
   scores: { severity: 3, itch: 5, pain: 0, dryness: 2, scaling: 10 },
+  cracks: false,
+  sizeMm: null,
   note: 'synthetic note',
 });
 

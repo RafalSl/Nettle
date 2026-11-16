@@ -1,4 +1,5 @@
 import { DEFAULT_FLARE_THRESHOLD, deriveFlares } from '../model/flares';
+import { sinceCaption, sinceLastTreatment, timeToRelapse } from '../model/derived';
 import { isAiSource, type IngredientSource } from '../model/source';
 import { localDateTime, localDay } from '../model/time';
 import type { Analysis, ListItem, Records, ReportSummary, SkinArea } from '../model/types';
@@ -159,7 +160,9 @@ export function buildReportHtml(input: ReportInput): string {
   const photos = byTime(r.photos).filter((p) => input.photos.has(p.id));
   if (photos.length > 0) {
     out.push(`<h2>${esc(tx('report.photos'))}</h2>`);
-    const figure = (p: (typeof photos)[number]) => `<figure><img src="${input.photos.get(p.id)}"/><figcaption class="note">${esc(dayOf(p.at))}</figcaption></figure>`;
+    // SK-4: each photo says how long after the last treatment on its area it was taken; computed from the timestamps.
+    const caption = (p: (typeof photos)[number]) => sinceCaption(sinceLastTreatment(entryArea.get(p.entryId) ?? '', p.at.utc, r.treatmentApplications), (id) => treatments.get(id) ?? id, tx);
+    const figure = (p: (typeof photos)[number]) => `<figure><img src="${input.photos.get(p.id)}"/><figcaption class="note">${esc(dayOf(p.at))}<br/>${esc(caption(p))}</figcaption></figure>`;
     const nailIds = new Set(r.nailEntries.map((e) => e.areaId));
     for (const id of [...new Set(photos.map((p) => entryArea.get(p.entryId) ?? ''))]) {
       const mine = photos.filter((p) => entryArea.get(p.entryId) === id);
@@ -209,6 +212,24 @@ export function buildReportHtml(input: ReportInput): string {
       table(
         [tx('report.date'), tx('report.treatment'), tx('report.areas'), ...(hasReaction ? [tx('report.treatmentReaction')] : [])],
         apps.map((a) => [when(a.at), treatments.get(a.treatmentId) ?? a.treatmentId, a.areaIds.map(area).join(', '), ...(hasReaction ? [a.reaction ? tx(`treatmentReaction.${a.reaction}`) : ''] : [])]),
+      ),
+    );
+  }
+  // SK-12: time to relapse per area and treatment, derived by the program (never by the model).
+  const relapse = timeToRelapse(r.skinEntries, r.treatmentApplications, input.flareThreshold ?? DEFAULT_FLARE_THRESHOLD, input.exportedAt.utc);
+  if (relapse.length > 0) {
+    out.push(`<h3>${esc(tx('report.relapse'))}</h3><p class="note">${esc(tx('report.relapseIntro'))}</p>`);
+    out.push(
+      table(
+        [tx('report.area'), tx('report.treatment'), tx('report.relapseCourse'), tx('report.relapseApplications'), tx('report.relapseDays'), tx('report.relapseOthers')],
+        relapse.map((x) => [
+          area(x.areaId),
+          treatments.get(x.treatmentId) ?? x.treatmentId,
+          tx('report.relapseCourseText', { from: when(x.start), to: when(x.end) }),
+          x.applications,
+          x.days === null ? tx('report.relapseNoFlare') : tx('derived.days', { n: x.days }),
+          x.otherTreatmentIds.map((id) => treatments.get(id) ?? id).join(', '),
+        ]),
       ),
     );
   }

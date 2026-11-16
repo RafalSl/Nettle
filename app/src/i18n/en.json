@@ -273,6 +273,13 @@
     "hint": "Burning, itching or redness after applying. Leave it empty if you did not note it: empty is not the same as none.",
     "row": "reaction: {{reaction}}"
   },
+  "derived": {
+    "minutes": "{{n}} min",
+    "hours": "{{n}} h",
+    "days": "{{n}} days",
+    "sinceTreatment": "{{elapsed}} after {{name}}",
+    "noTreatment": "no treatment logged"
+  },
   "tags": {
     "tag-illness-or-infection": "Illness or infection",
     "tag-antibiotics": "Antibiotics",
@@ -550,6 +557,14 @@
     "sizeMm": "Size (mm)",
     "sizeTrend": "Size in mm over time",
     "treatmentReaction": "Reaction",
+    "relapse": "Time to relapse",
+    "relapseIntro": "Days from the last application of a course to the next flare of the same area. A course ends after 7 days without an application. Computed from the timestamps; timing is only as precise as the logging.",
+    "relapseCourse": "Course",
+    "relapseApplications": "Applications",
+    "relapseDays": "To the next flare",
+    "relapseNoFlare": "no flare yet",
+    "relapseOthers": "Other treatments in between",
+    "relapseCourseText": "{{from}} to {{to}}",
     "note": "Note",
     "nails": "Nails",
     "stage": "Stage",

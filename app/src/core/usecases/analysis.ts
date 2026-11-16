@@ -1,5 +1,6 @@
 import { ANALYSIS_PROMPT_VERSION, analysisPrompt } from '../llm/analysisPrompt';
 import { buildAnalysisInput } from '../llm/analysisInput';
+import { sinceCaptionEn, sinceLastTreatment } from '../model/derived';
 import { analysisResultFromJson } from '../llm/analysisResult';
 import { parseJson } from '../llm/parse';
 import { NettleError } from '../model/errors';
@@ -47,10 +48,12 @@ export async function prepareAnalysis(deps: Deps, sel: AnalysisSelection): Promi
   if (photoIds.length > MAX_ANALYSIS_PHOTOS) throw new NettleError('too_many_photos');
 
   const snap = await deps.repo.snapshot();
-  const built = buildAnalysisInput(snap, sel.dayFrom, sel.dayTo, deps.dayStart.get(), (await getPreferences(deps)).flareThreshold);
+  const built = buildAnalysisInput(snap, sel.dayFrom, sel.dayTo, deps.dayStart.get(), (await getPreferences(deps)).flareThreshold, deps.clock.now().toISOString());
   if (built.periodRecords === 0) throw new NettleError('analysis_no_data');
 
   const areas = new Map(snap.skinAreas.map((a) => [a.id, a.nameOverride ?? a.name]));
+  const areaOfEntry = new Map([...snap.skinEntries, ...snap.nailEntries].map((e) => [e.id, e.areaId]));
+  const treatmentNames = new Map(snap.treatments.map((x) => [x.id, x.nameOverride ?? x.name]));
   const entryArea = new Map([...snap.skinEntries, ...snap.nailEntries].map((e) => [e.id, areas.get(e.areaId) ?? '']));
   const images: LlmImage[] = [];
   const photos: PreparedAnalysis['photos'] = [];
@@ -59,9 +62,11 @@ export async function prepareAnalysis(deps: Deps, sel: AnalysisSelection): Promi
     const photo = snap.photos.find((p) => p.id === id);
     if (!photo) throw new NettleError('unknown_photo', id);
     const label = `${entryArea.get(photo.entryId) ?? ''} ${localDateTime(photo.at.utc, photo.at.tz)}`.trim();
+    // SK-4: the time since the last treatment on the area is computed here and handed over, never left to the model.
+    const note = `${label} (${sinceCaptionEn(sinceLastTreatment(areaOfEntry.get(photo.entryId) ?? '', photo.at.utc, snap.treatmentApplications), (tid) => treatmentNames.get(tid) ?? tid)})`;
     images.push({ mimeType: 'image/jpeg', data: await deps.photos.read(photo.file) });
     photos.push({ id, label, sensitive: photo.sensitive });
-    notes.push(label);
+    notes.push(note);
   }
 
   const prompt = analysisPrompt(sel.language, { json: built.json, photoNotes: notes });

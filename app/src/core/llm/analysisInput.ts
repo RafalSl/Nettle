@@ -1,3 +1,4 @@
+import { timeToRelapse } from '../model/derived';
 import { DEFAULT_FLARE_THRESHOLD, deriveFlares } from '../model/flares';
 import type { IngredientSource } from '../model/source';
 import { localDateTime, localDay, addDays } from '../model/time';
@@ -50,7 +51,7 @@ const time = (utc: string, tz: string) => localDateTime(utc, tz).slice(11);
  * was eaten, so "eaten on most days" cannot be missed (LL-4). Records of the lookback window before the
  * period are limited to the kinds the lookbacks need.
  */
-export function buildAnalysisInput(src: AnalysisSource, dayFrom: string, dayTo: string, startHour = 0, flareThreshold = DEFAULT_FLARE_THRESHOLD): BuiltInput {
+export function buildAnalysisInput(src: AnalysisSource, dayFrom: string, dayTo: string, startHour = 0, flareThreshold = DEFAULT_FLARE_THRESHOLD, asOfUtc = `${dayTo}T23:59:59.999Z`): BuiltInput {
   /** NF-7: the diary day of an entry, with the user's day start. */
   const dayOf = (at: { utc: string; tz: string }) => localDay(at.utc, at.tz, startHour);
   const areaName = new Map(src.skinAreas.map((a) => [a.id, label(a)]));
@@ -135,6 +136,19 @@ export function buildAnalysisInput(src: AnalysisSource, dayFrom: string, dayTo: 
       ...(f.end ? {} : { open_at_last_entry: localDateTime(f.lastEntryAt.utc, f.lastEntryAt.tz) }),
     }));
   counts.flares = flares.length;
+  // SK-12: time to relapse per area and treatment, computed here from the timestamps and passed as numbers.
+  const relapse = timeToRelapse(src.skinEntries, src.treatmentApplications, flareThreshold, asOfUtc)
+    .filter((x) => dayOf(x.end) <= dayTo && dayOf(x.end) >= (addDays(dayFrom, -LOOKBACK_DAYS) ?? dayFrom))
+    .map((x) => ({
+      area: areaName.get(x.areaId) ?? x.areaId,
+      treatment: treatmentName.get(x.treatmentId) ?? x.treatmentId,
+      course_start: localDateTime(x.start.utc, x.start.tz),
+      course_end: localDateTime(x.end.utc, x.end.tz),
+      applications: x.applications,
+      ...(x.flareStart ? { next_flare_start: localDateTime(x.flareStart.utc, x.flareStart.tz), days_to_next_flare: x.days } : { no_flare_yet: true }),
+      ...(x.otherTreatmentIds.length ? { other_treatments_in_between: x.otherTreatmentIds.map((id) => treatmentName.get(id) ?? id) } : {}),
+    }));
+  counts.relapseCourses = relapse.length;
   for (const r of src.reactions) {
     const meal = mealById.get(r.mealId);
     add('reactions', dayOf(r.at), 'reactions', { onset: time(r.at.utc, r.at.tz), meal: meal ? `${localDateTime(meal.at.utc, meal.at.tz)} ${meal.description}` : null, symptoms: r.symptoms });
@@ -176,6 +190,7 @@ export function buildAnalysisInput(src: AnalysisSource, dayFrom: string, dayTo: 
     period: { from: dayFrom, to: dayTo, days: periodDays.length, days_logged: completeDays, days_with_meals: mealDays.size, lookback_days_before: LOOKBACK_DAYS },
     severity_threshold_for_flares: flareThreshold,
     flares,
+    ...(relapse.length ? { time_to_relapse: relapse } : {}),
     ingredient_frequency: frequency(ingredientDays, 'ingredient', 60),
     allergen_frequency: frequency(allergenDays, 'allergen', 14),
     days: ordered,

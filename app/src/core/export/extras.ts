@@ -1,6 +1,8 @@
 import {
   ALLERGENS,
   CHANGE_ACTIONS,
+  MAX_MEDICAL_TITLE,
+  MEDICAL_KINDS,
   MEDICATION_CATEGORIES,
   type Drink,
   type Analysis,
@@ -12,6 +14,7 @@ import {
   SYMPTOMS,
   TREATMENT_REACTIONS,
   type ChangeEvent,
+  type MedicalEvent,
   type CheckIn,
   type ExtraKind,
   type NailEntry,
@@ -119,6 +122,19 @@ const changeEvent: Codec<ChangeEvent> = {
     dateUnknown: bool(o, 'date_unknown', w),
     note: nullableText(o, 'note', w),
   }),
+};
+
+const medicalEvent: Codec<MedicalEvent> = {
+  key: 'medical_events',
+  toJson: (e) => ({ id: e.id, utc: e.at.utc, tz: e.at.tz, kind: e.kind, title: e.title, end_day: e.endDay, note: e.note }),
+  parse: (o, w) => {
+    const kind = oneOf(o, 'kind', MEDICAL_KINDS, w);
+    const title = str(o, 'title', w);
+    if (!title.trim() || title.length > MAX_MEDICAL_TITLE) bad(`${w}.title`);
+    const endDay = o.end_day === null ? null : str(o, 'end_day', w);
+    if (endDay !== null && (!LOCAL_DAY.test(endDay) || Number.isNaN(Date.parse(endDay)) || kind !== 'illness')) bad(`${w}.end_day`);
+    return { id: str(o, 'id', w), at: { utc: utc(o, w), tz: tz(o, w) }, kind, title, endDay, note: nullableText(o, 'note', w) };
+  },
 };
 
 const reaction: Codec<Reaction> = {
@@ -300,6 +316,7 @@ export const EXTRA_CODECS: { [K in ExtraKind]: Codec<Records[K][number]> } = {
   stoolEntries: stool,
   treatmentApplications: treatmentApplication,
   changeEvents: changeEvent,
+  medicalEvents: medicalEvent,
   reactions: reaction,
   drinks: drink,
   medicationEntries: medication,

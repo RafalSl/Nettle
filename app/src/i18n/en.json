@@ -245,7 +245,8 @@
     "invalid_barcode": "This is not a valid barcode. Check the digits.",
     "barcode_lookup_failed": "The product database could not be reached. Enter the product by hand.",
     "lock_unavailable": "Set a passcode or Face ID on this iPhone first.",
-    "lock_failed": "Could not confirm it is you. The lock was not changed."
+    "lock_failed": "Could not confirm it is you. The lock was not changed.",
+    "empty_title": "Enter a title."
   },
   "today": {
     "title": "Daily health",
@@ -421,7 +422,7 @@
     "groups": {
       "food": "Food and intake (meals, reactions, drinks, medications)",
       "skin": "Skin and nails (entries, photos, treatments applied)",
-      "health": "Daily check-ins, stool and changes",
+      "health": "Daily check-ins, stool, changes and medical events",
       "ai": "AI analyses and report summaries"
     },
     "limit": "Only a date range",
@@ -450,7 +451,8 @@
       "stoolEntries": "{{n}} stool entries",
       "changeEvents": "{{n}} change events",
       "analyses": "{{n}} AI analyses",
-      "reportSummaries": "{{n}} report summaries"
+      "reportSummaries": "{{n}} report summaries",
+      "medicalEvents": "{{n}} medical events"
     }
   },
   "exportPhotos": {
@@ -618,7 +620,11 @@
     "aiLimits": "What the data cannot show",
     "flaresBasis": "Flares are periods in which a skin area's severity was {{n}} or higher. Their timing is only as precise as the logging.",
     "openAtLastEntry": "open at last entry ({{date}})",
-    "dateUnknown": "date unknown"
+    "dateUnknown": "date unknown",
+    "medical": "Medical events",
+    "medicalKind": "Kind",
+    "medicalTitle": "Title",
+    "medicalUntil": "Until"
   },
   "export": {
     "extras": "Extra files",
@@ -736,7 +742,8 @@
     "regular": "Regular items",
     "regularItem": "Regular item",
     "guide": "Where to log",
-    "health": "Health trends"
+    "health": "Health trends",
+    "medical": "Medical event"
   },
   "home": {
     "quickActions": "Quick actions",
@@ -802,7 +809,9 @@
     "noIncomplete": "Every day with entries has a Daily health record.",
     "goToday": "Go to Today",
     "healthTitle": "Daily health trends",
-    "healthEmpty": "Nothing to chart yet. Save Daily health records with a score first."
+    "healthEmpty": "Nothing to chart yet. Save Daily health records with a score first.",
+    "medicalStart": "{{kind}}: {{title}}",
+    "medicalEnd": "Ended: {{title}}"
   },
   "day": {
     "newEntry": "New entry",
@@ -856,7 +865,9 @@
       "skinEntries": "entries",
       "nailEntries": "entries"
     },
-    "editAction": "Edit entry"
+    "editAction": "Edit entry",
+    "medical": "{{kind}}: {{title}}",
+    "medicalUntil": "until {{day}}"
   },
   "cards": {
     "openCheckin": "Open Daily health",
@@ -891,7 +902,8 @@
     "extent": "how much of the nail",
     "area": "an area",
     "photos": "Photos",
-    "type": "a stool type"
+    "type": "a stool type",
+    "titleMissing": "a title"
   },
   "doctor": {
     "range": "Period",
@@ -1003,6 +1015,10 @@
     "change": {
       "title": "Routine change",
       "hint": "A product or diet you started or stopped"
+    },
+    "medical": {
+      "title": "Medical event",
+      "hint": "A visit, test result, diagnosis or illness"
     }
   },
   "regular": {
@@ -1048,7 +1064,10 @@
       "feeling": "How I feel: wellbeing, stress, sleep",
       "belly": "Bloating or stomach pain",
       "reaction": "A reaction after eating",
-      "stool": "A stool"
+      "stool": "A stool",
+      "visit": "A doctor visit, a test result or a diagnosis",
+      "ill": "I am ill: a named illness with a start and an end",
+      "illQuick": "I am ill today: a quick yes/no on Daily health"
     },
     "notes": {
       "regularTablet": "switch Regular on",
@@ -1056,7 +1075,24 @@
       "stoppedProduct": "choose Stopped",
       "flare": "flares are worked out from severity at or above the threshold",
       "newProduct": "choose Started",
-      "diet": "choose Started or Stopped"
+      "diet": "choose Started or Stopped",
+      "ill": "the Daily health yes/no is the quick way; a medical event of kind Illness adds its name and length"
     }
+  },
+  "medical": {
+    "title": "Title",
+    "kinds": {
+      "visit": "Visit",
+      "test_result": "Test result",
+      "diagnosis": "Diagnosis",
+      "illness": "Illness",
+      "other": "Other"
+    },
+    "endDay": "Ended on",
+    "endNone": "not set",
+    "endSet": "Set end date",
+    "endChange": "Change end date",
+    "endClear": "Clear end date",
+    "endHint": "Optional. Leave it empty while the illness goes on. A Daily health yes/no for illness stays the quick way to mark a day."
   }
 }

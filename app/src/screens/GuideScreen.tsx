@@ -22,6 +22,9 @@ export const GUIDE: readonly { id: string; entry: EntryType }[] = [
   { id: 'feeling', entry: 'checkin' },
   { id: 'belly', entry: 'checkin' },
   { id: 'reaction', entry: 'reaction' },
+  { id: 'visit', entry: 'medical' },
+  { id: 'ill', entry: 'medical' },
+  { id: 'illQuick', entry: 'checkin' },
   { id: 'stool', entry: 'stool' },
 ];
 

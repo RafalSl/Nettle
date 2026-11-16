@@ -122,6 +122,9 @@ export default function AreaTimelineScreen() {
       {days?.map((d) => (
         <View key={d.day} style={{ gap: 6 }} onLayout={(e) => void (dayY.current[d.day] = e.nativeEvent.layout.y)}>
           <Text style={[styles.label, jump?.target.day === d.day && { backgroundColor: '#3b82f622', borderRadius: 6 }]}>{d.day}</Text>
+          {d.medical.map((m) => (
+            <Hint key={`${m.event.id}-${m.edge}`}>{`${t(m.edge === 'start' ? 'review.medicalStart' : 'review.medicalEnd', { kind: t(`medical.kinds.${m.event.kind}`), title: m.event.title })}`}</Hint>
+          ))}
           {d.flares.map((f) => (
             <Hint key={f.id}>{`${localDateTime(f.at.utc, f.at.tz).slice(11)}  ${t(f.kind === 'start' ? 'review.flareStart' : 'review.flareEnd')}`}</Hint>
           ))}

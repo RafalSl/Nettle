@@ -1,7 +1,7 @@
 import { localDay } from '../model/time';
 import { sinceLastTreatment, type SinceTreatment } from '../model/derived';
 import { deriveFlares } from '../model/flares';
-import { NAIL_EXTENTS, type ListItem, type LocalDay, type NailEntry, type Stamp, type Photo, type SkinArea, type SkinEntry } from '../model/types';
+import { NAIL_EXTENTS, type ListItem, type MedicalEvent, type LocalDay, type NailEntry, type Stamp, type Photo, type SkinArea, type SkinEntry } from '../model/types';
 import type { Deps } from './deps';
 import { getPreferences } from './preferences';
 import { openFlare } from './flares';
@@ -20,6 +20,8 @@ export interface TimelineDay {
   entries: TimelineEntry[];
   /** SK-6: the start and end of this area's derived flares that fall on the day. */
   flares: { id: string; kind: 'start' | 'end'; at: Stamp }[];
+  /** IN-18: medical events that start or end on the day, as markers; the same events appear on every area's timeline. */
+  medical: { event: MedicalEvent; edge: 'start' | 'end' }[];
 }
 
 /** SK-8: the entries, photos and derived flare marks of one area grouped by the entry's own local day, newest day first. */
@@ -31,7 +33,7 @@ export async function areaTimeline(deps: Deps, areaId: string): Promise<Timeline
   const since = (areaId: string, ps: Photo[]): SinceByPhoto => Object.fromEntries(ps.map((p) => [p.id, sinceLastTreatment(areaId, p.at.utc, applications)]));
   const days = new Map<LocalDay, TimelineDay>();
   const dayOf = (day: LocalDay) => {
-    const cur = days.get(day) ?? { day, entries: [], flares: [] };
+    const cur = days.get(day) ?? { day, entries: [], flares: [], medical: [] };
     days.set(day, cur);
     return cur;
   };
@@ -51,6 +53,15 @@ export async function areaTimeline(deps: Deps, areaId: string): Promise<Timeline
     d.entries.sort((a, b) => a.entry.at.utc.localeCompare(b.entry.at.utc) || a.entry.id.localeCompare(b.entry.id));
     d.flares.sort((a, b) => a.at.utc.localeCompare(b.at.utc));
   }
+  // IN-18: medical events are markers on every timeline (the day an event starts, and the day an illness ends), but
+  // only once the area has an entry, so an unused area still shows its empty state.
+  if (days.size > 0) {
+    for (const event of await deps.repo.listRecords('medicalEvents')) {
+      dayOf(localDay(event.at.utc, event.at.tz, deps.dayStart.get())).medical.push({ event, edge: 'start' });
+      if (event.endDay) dayOf(event.endDay).medical.push({ event, edge: 'end' });
+    }
+  }
+  for (const d of days.values()) d.medical.sort((a, b) => a.event.at.utc.localeCompare(b.event.at.utc) || a.event.id.localeCompare(b.event.id));
   return [...days.values()].sort((a, b) => b.day.localeCompare(a.day));
 }
 

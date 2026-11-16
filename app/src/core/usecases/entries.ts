@@ -15,11 +15,12 @@ import type {
   StoolEntry,
   TreatmentApplication,
   ChangeEvent,
+  MedicalEvent,
 } from '../model/types';
 import type { StorageRepository } from '../ports/storage';
 import { cleanValues, logStool, type CheckInInput } from './checkin';
 import type { Deps } from './deps';
-import { applyTreatment, logChangeEvent, logReaction, type ApplyTreatmentInput, type ChangeEventInput, type ReactionInput } from './events';
+import { applyTreatment, logChangeEvent, logMedicalEvent, logReaction, type ApplyTreatmentInput, type ChangeEventInput, type MedicalEventInput, type ReactionInput } from './events';
 import { afterEdit, sameIngredients } from '../model/source';
 import { logDrink, logMedication, type LogDrinkInput } from './intake';
 import { logMeal, type LogMealInput } from './logMeal';
@@ -131,6 +132,14 @@ export async function editTreatmentApplication(
     editing(deps, id, { at: keepAt(orig, input.at), used: [orig.treatmentId, ...orig.areaIds] }),
     input,
   );
+}
+
+export async function editMedicalEvent(deps: Deps, id: string, input: MedicalEventInput): Promise<MedicalEvent> {
+  const orig = (await getEntry(deps, 'medicalEvents', id)) as MedicalEvent;
+  const edit = editing(deps, id, { at: keepAt(orig, input.at) });
+  // The end date is checked against the day the event is on. An unchanged date keeps its own stamp, so validate with it too.
+  const same = input.at === undefined ? { clock: { now: () => new Date(orig.at.utc), timeZone: () => orig.at.tz } } : {};
+  return logMedicalEvent({ ...edit, ...same }, input);
 }
 
 export async function editChangeEvent(deps: Deps, id: string, input: ChangeEventInput): Promise<ChangeEvent> {

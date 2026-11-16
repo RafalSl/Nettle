@@ -147,7 +147,7 @@ describe('cracks and size in the doctor report (EX-3, SK-3)', () => {
       text: (key: string) => `[${key}]`,
       areaName: (a: { name: string }) => a.name,
       itemName: (i: { name: string }) => i.name,
-      records: { ...Object.fromEntries(['meals', 'nailEntries', 'checkIns', 'stoolEntries', 'treatmentApplications', 'changeEvents', 'reactions', 'drinks', 'medicationEntries', 'photos', 'analyses', 'reportSummaries', 'tombstones'].map((k) => [k, []])), skinEntries },
+      records: { ...Object.fromEntries(['meals', 'nailEntries', 'checkIns', 'stoolEntries', 'treatmentApplications', 'changeEvents', 'medicalEvents', 'reactions', 'drinks', 'medicationEntries', 'photos', 'analyses', 'reportSummaries', 'tombstones'].map((k) => [k, []])), skinEntries },
       skinAreas: [{ id: 'area-chin', kind: 'skin', name: 'Chin', predefined: true, archived: false, sensitiveDefault: false, nameOverride: null }],
       dailyItems: [],
       changeCategories: [],

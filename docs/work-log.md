@@ -493,3 +493,9 @@ Newest entry last. One short entry per working session or meaningful step: what 
 - **Tests:** the rules (window edge at exactly 7 days, ties, several areas, nail areas, threshold, finished versus running), the analysis input and photo notes, the timeline, the PDF, and one UI test. Phone checks F10 and F11.
 - **Status column:** EX-1, EX-3 and LL-2 still wait for medical events (IN-18).
 - **Next:** IN-18 medical event.
+
+## 2026-11-16: medical events (branch feature/medical-event)
+- **Done:** IN-18, which completes v0.7. `MedicalEvent` is a flat record kind with a kind (visit, test result, diagnosis, illness, other), a title (1 to 120 characters), a note and, for an illness only, an optional end day not before its start. Use cases `logMedicalEvent` and `editMedicalEvent` (an unchanged date validates the end day against its own stamp), a table with CHECKs, `data.json` `medical_events` (required), the health delete group, a day log row, an eleventh entry type `medical` listed in More, the `/form/medical` form and the edit screen on shared `MedicalFields`, two Guide rows plus a quick-yes/no row, markers on every area timeline (start day, illness end day) once the area has entries, a PDF table, and the analysis input: events as context (also from the lookback) and an `illness_day` flag set once per day when the Daily health tag or an illness event covers it (`analysis-9`, `summary-8`).
+- **Tests:** rules, storage constraints, export and import validation, delete, analysis input and the illness-day rule, timeline markers, the PDF table, and five UI tests. Phone check F12.
+- **Status:** IN-18, LL-2, EX-1 and EX-3 are Done, and requirements v0.8.1 says everything in v0.7 and v0.8 is built; only IN-20 and LL-15 (Later) remain.
+- **Next:** IN-20 and LL-15, as asked.

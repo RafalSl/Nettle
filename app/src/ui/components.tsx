@@ -1,11 +1,12 @@
 import Slider from '@react-native-community/slider';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import type { ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import type { ReactNode, Ref } from 'react';
+import { Pressable, ScrollView, type ScrollViewInstance, StyleSheet, Text, View } from 'react-native';
 import { t } from '@/i18n';
 
-export const Screen = ({ children }: { children: ReactNode }) => (
-  <ScrollView contentContainerStyle={styles.screen} contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled">
+/** `scrollRef` lets a screen scroll itself (the area timeline's date jump). */
+export const Screen = ({ children, scrollRef }: { children: ReactNode; scrollRef?: Ref<ScrollViewInstance> }) => (
+  <ScrollView ref={scrollRef} contentContainerStyle={styles.screen} contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled">
     {children}
   </ScrollView>
 );

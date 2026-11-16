@@ -48,6 +48,24 @@ export async function areaTimeline(deps: Deps, areaId: string): Promise<Timeline
   return [...days.values()].sort((a, b) => b.day.localeCompare(a.day));
 }
 
+/** SK-8: where a date jump lands. `exact` is the picked day, `earlier` the nearest earlier day with an entry, `oldest` the first day when the picked date is before every entry. */
+export interface JumpTarget {
+  day: LocalDay;
+  how: 'exact' | 'earlier' | 'oldest';
+}
+
+/**
+ * SK-8: the day of the timeline a picked date leads to. It is navigation, not a filter, so the answer is always a day
+ * that exists in `days` (newest first, as `areaTimeline` returns them), or null when the area has no entries.
+ */
+export function resolveJumpDay(days: readonly TimelineDay[], picked: LocalDay): JumpTarget | null {
+  if (days.length === 0) return null;
+  if (days.some((d) => d.day === picked)) return { day: picked, how: 'exact' };
+  const earlier = days.find((d) => d.day < picked); // newest first, so the first one below the pick is the nearest
+  if (earlier) return { day: earlier.day, how: 'earlier' };
+  return { day: days[days.length - 1]!.day, how: 'oldest' };
+}
+
 export interface AreaSummary {
   area: SkinArea;
   entries: number;

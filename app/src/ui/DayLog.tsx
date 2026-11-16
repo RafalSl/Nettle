@@ -1,15 +1,12 @@
-import { useRouter } from 'expo-router';
-import { Alert, Pressable, Text } from 'react-native';
+import { Pressable, Text } from 'react-native';
 import { localDateTime } from '@/core/model/time';
 import type { ListItem, SkinArea } from '@/core/model/types';
 import type { LogRow } from '@/core/usecases/dayLog';
-import { deleteEntry, previewEntryDelete } from '@/core/usecases/entries';
-import { errorMessage, t } from '@/i18n';
-import { useServices } from '@/services';
-import { chooseAction } from '@/ui/actionSheet';
+import { t } from '@/i18n';
 import { Heading, Hint, styles } from '@/ui/components';
 import { describeRow } from '@/ui/logRow';
 import { NavRow } from '@/ui/NavRow';
+import { useEntryActions } from '@/ui/useEntryActions';
 
 /** UX-2: Today shows this many of the day's newest entries and a "Show all (n)" row for the rest. */
 export const TODAY_LOG_LIMIT = 8;
@@ -36,32 +33,10 @@ export function DayLog({
   /** Ids of entries to tint for a moment (UX-2: the row that was just added). */
   highlight?: ReadonlySet<string>;
 }) {
-  const { deps } = useServices();
-  const router = useRouter();
+  const openEntry = useEntryActions(onChanged);
   const newestFirst = [...rows].reverse();
   const shown = limit === undefined ? newestFirst : newestFirst.slice(0, limit);
-
-  async function onRow(row: LogRow) {
-    try {
-      const also = await previewEntryDelete(deps, row.kind, row.id);
-      const list = Object.entries(also)
-        .map(([kind, n]) => `${n} ${t(`log.kinds.${kind}`)}`)
-        .join(', ');
-      const { title } = describeRow(row, ctx);
-      const choice = await chooseAction({
-        title,
-        message: list ? t('log.also', { list }) : undefined,
-        actions: [{ label: t('log.editAction') }, { label: t('log.deleteAction'), destructive: true }],
-      });
-      if (choice === 0) router.push({ pathname: '/form/edit', params: { kind: row.kind, id: row.id } });
-      else if (choice === 1) {
-        await deleteEntry(deps, row.kind, row.id);
-        onChanged();
-      }
-    } catch (e) {
-      Alert.alert(errorMessage(e));
-    }
-  }
+  const onRow = (row: LogRow) => openEntry(row.kind, row.id, describeRow(row, ctx).title);
 
   return (
     <>

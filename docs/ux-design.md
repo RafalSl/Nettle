@@ -1,6 +1,6 @@
 # UX design: information architecture
 
-Status: accepted 2026-11-14 and built, then revised 2026-11-15 after the first phone tests (requirements v0.6). The revised parts are decided but not built; `docs/open-questions.md` ("Status of the decided work", "Decided in v0.6, not built") lists what is built and what is not. Requirements are in `docs/requirements.md` (v0.6). Flows and edge cases: `docs/user-flows.md`. This file holds the screen map, the rules behind it and the HIG audit.
+Status: accepted 2026-11-14 and built, then revised 2026-11-15 after the first phone tests (requirements v0.6). The revised parts are decided but not built; `docs/open-questions.md` ("Status of the decided work", "Decided in v0.6, not built") lists what is built and what is not. Revised again 2026-11-16 (requirements v0.7): everything marked "(v0.7)" is decided but not built. Requirements are in `docs/requirements.md` (v0.7). Flows and edge cases: `docs/user-flows.md`. This file holds the screen map, the rules behind it and the HIG audit.
 
 ## Why
 
@@ -23,7 +23,7 @@ Edit (on Today)    On Today: ordered list, up / down, Move to More
 
 More (pushed list)  every entry type that is not pinned, each row with a one-line subtitle
                     (catalog: Meal, Drink, Medication or supplement, Skin, Nails, Treatment,
-                    Daily health, Stool, Reaction, Routine change)
+                    Daily health, Stool, Reaction, Routine change, Medical event (v0.7))
                     + "Where do I log...?" (guide, UX-11)
 
 Quick sheets (tile tap)
@@ -33,6 +33,9 @@ Quick sheets (tile tap)
 Forms (full-height modal, one at a time)
   Cancel | title | Save          time chip "Now"
   Skin and Nails forms carry a photos control (SK-4)
+  (v0.7) Skin form: "Cracks or open wounds" switch; size in mm behind a Details row (SK-3)
+  (v0.7) Treatment application, edit screen only: Reaction  None | Mild | Strong (IN-11)
+  (v0.7) Medical event form: kind, title, date, note; an illness adds an optional end date (IN-18)
 
 Review
   Doctor report (export preset)  |  AI analysis
@@ -41,6 +44,8 @@ Review
            the month's days; filter "Incomplete days"
     Areas: Skin / Nails groups with last score or stage and date; flaring areas first
   per-area timeline (SK-8, later)
+  (v0.7) photos on the timeline and in the report carry a caption: time since the last treatment
+         on that area (SK-4); the report adds time to relapse (SK-12) and medical events (IN-18)
 
 Settings (pushed above the tabs, Back, no Done; grouped list, chevrons)
   Logging: Suggestions, Day start, Flare threshold, Daily health items, Skin and nail areas,
@@ -60,6 +65,8 @@ Route sketch (expo-router): `(tabs)/today`, `(tabs)/review`, `today/more` as sta
 - No always-visible hints and no "Recent" lists on forms (suggestions are the only exception).
 - More than about eight chips collapse into a summary plus Edit.
 - Rare and destructive actions only at the bottom of Settings; details behind switches.
+- (v0.7) The Skin form already shows five scores, so it gets one more visible control at most: the "Cracks or open wounds" switch. Size in mm sits behind a Details row, which opens by itself only for an area that already has a size (SK-3).
+- (v0.7) A reaction to a treatment is never asked at logging time, so one-tap logging keeps its budget; it is a field on the application's edit screen (IN-11).
 - Tap budgets (NF-2): repeated meal 3 taps, favorite treatment 1, stool 2, regular medication 2 (tile, item), skin "no change for all" 2.
 
 ## Suggestions (IN-14)
@@ -81,6 +88,9 @@ A pure core function `rankSuggestions(history, favorites, now, options)` over ex
 | Daily health | explicit "same as yesterday" for all items, never a silent prefill; scores use a slider with − and + |
 | Regular medication, regular treatment | quick sheet of regular items; reminder button Taken or Applied (IN-17) |
 | Stool, reaction | fixed lists |
+| Treatment reaction (v0.7) | three choices on the edit screen, empty by default; no suggestion |
+| Skin cracks and size (v0.7) | prefilled with the last values and carried by "No change", like the scores |
+| Medical event (v0.7) | fixed list of kinds (visit, test result, diagnosis, illness, other); title typed, no suggestions |
 
 ## Editing, deleting, tombstones (EN-1, EX-13)
 
@@ -130,3 +140,8 @@ Read: tab bars, toolbars, sheets, modality, action sheets, settings, entering da
 17. Daily health replaces the check-in; items are user-defined scores or yes/no; saving logs the day, so there is no complete mark (SK-7, SK-11).
 18. Review has Days (month calendar) and Areas; only the "Incomplete days" filter for now (UX-10).
 19. Guide: subtitles, descriptions and a "Where do I log...?" screen (UX-11).
+20. (v0.7) The intimate area is three predefined areas: penis, perineum and groin, between the buttocks, each sensitive by default; palms are not predefined (SK-1, SK-5).
+21. (v0.7) A fixed patch is an ordinary skin area with an optional size in mm; no separate lesion kind. Skin entries get a cracks switch (SK-3).
+22. (v0.7) The reaction to a treatment is set after the fact on the edit screen, never in the one-tap path (IN-11).
+23. (v0.7) Time since the last treatment (per photo) and time to relapse (per area and treatment) are computed by the program and shown as captions and report rows; photos get no "before or after treatment" field (SK-4, SK-12).
+24. (v0.7) Medical event is an entry type in More: visits, test results, diagnoses and named illnesses. The daily tag stays the quick yes/no for an illness day (IN-18, IN-6).

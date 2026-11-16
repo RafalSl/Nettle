@@ -429,3 +429,15 @@ Newest entry last. One short entry per working session or meaningful step: what 
 ## 2026-11-15: Daily health trends (branch feature/daily-health-trends)
 - **Done:** SK-7, UX-1. A trend screen for the Daily health score items. 697 tests pass.
 - **Next:** newest-wins merge (EX-12).
+
+## 2026-11-16: requirements v0.7 (docs only, no code)
+- **Done:** `docs/requirements.md` is v0.7, written in a claude.ai session and left uncommitted. New: IN-18 (medical event), SK-12 (time to relapse, derived). Changed: IN-6 (two more daily tags), IN-11 (reaction after applying, set after the fact), SK-1 and SK-5 (the intimate area becomes three areas), SK-3 (cracks flag, optional size in mm), SK-4 (time since the last treatment per photo, derived), LL-2, EX-1, EX-3, UX-2.
+- **Decisions:** a fixed patch is an ordinary skin area with a size field, not a new area kind; palms are not predefined; time since treatment and time to relapse are computed by the program and passed to the LLM as numbers; no "before or after treatment" field on photos; a course ends after 7 days without an application (SK-12), one gap for all treatments.
+- **Added later the same day:** IN-18 gets the kind "illness" with an optional end date; the daily tag stays for the quick yes/no.
+- **Docs aligned:** `ux-design.md` and `user-flows.md` carry the v0.7 screens, flows and edge cases, marked "(v0.7)".
+- **Not built:** all of the above; the Status column marks it ("Not built", "Done; v0.7 change not built").
+- **Next:** commit the doc, then build in order of cost: SK-1 split, SK-3 fields, IN-11 reaction, IN-6 tags, SK-4 and SK-12 derivations, IN-18.
+
+## 2026-11-16: phone test plan (docs only, no code)
+- **Done:** `docs/phone-test-plan.md`, 85 checks in 11 sections with Pass and Notes columns, P0/P1/P2 priorities, exit criteria. Synthetic data only; the time-dependent and AI sections are last.
+- **Next:** run the P0 sections (1 to 4, 7, 8) on a phone and record results in the Pass and Notes columns.

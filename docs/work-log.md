@@ -452,3 +452,8 @@ Newest entry last. One short entry per working session or meaningful step: what 
 - **Decisions:** a result file is imported, the model never edits `data.json`; fills wait in a "Suggestions to review" queue and never change an entry by themselves; the Settings Back bug has no UX change (it is in `docs/open-questions.md`).
 - **Open:** how a Claude chat takes the pack (requirements, Open).
 - **Next:** unchanged: Back button, area timeline, IN-19. IN-20 and LL-15 wait until the user says so.
+
+## 2026-11-16: Settings Back button (branch feature/settings-back-button)
+- **Done:** UX-1 bug fixed. The first Settings screen now has a Back button in its header (`ui/BackButton`): it pops the root stack, or opens Today when there is no history (a reminder tap can open `/settings/data` first). Test checks both cases and fails without the fix. The bug entry is removed from `docs/open-questions.md` and UX-1 is Done again. The test router mock gained `replace` and `canGoBack`, and the `Stack.Screen` mock keeps options per screen name.
+- **Phone check:** N1 and N2 of the phone test plan, including the swipe-back gesture still working.
+- **Next:** area timeline date jump and Edit/Delete (SK-8, EN-1).

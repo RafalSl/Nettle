@@ -30,7 +30,7 @@ The file has five parts: undecided questions, accepted limits, known bugs, decid
 
 Built requirements that do not behave as written. Remove an entry when it is fixed and note the fix in `docs/work-log.md`.
 
-- **Settings has no visible Back button (UX-1).** Found 2026-11-16 while using the app. UX-1 and `docs/ux-design.md` say Settings is a pushed screen with Back and no Done, but the Settings list shows no Back button; the only way out is the iOS edge swipe, which a user has to know. Cause: `settings` is a nested stack inside the root stack with `headerShown: false`, so its first screen (`settings/index`) has nothing to go back to inside its own stack and renders no Back; only the child screens (Logging, Privacy and so on) show one. Fix: a Back button in the header of `settings/index` that calls `router.back()`, or opens Today when there is no history (a reminder tap goes straight to `/settings/data`). No requirement change. Phone test N1 and N2 should fail until it is fixed.
+None at the moment.
 
 ## Status of the decided work
 

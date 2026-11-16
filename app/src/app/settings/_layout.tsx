@@ -1,5 +1,6 @@
 import { Stack } from 'expo-router';
 import { t } from '@/i18n';
+import { BackButton } from '@/ui/BackButton';
 
 /**
  * UX-1, UX-6: Settings is a stack above the tabs, so the tab bar is hidden inside it and Back returns to the tab it was
@@ -8,7 +9,7 @@ import { t } from '@/i18n';
 export default function SettingsStack() {
   return (
     <Stack screenOptions={{ headerBackTitle: t('common.back') }}>
-      <Stack.Screen name="index" options={{ title: t('nav.settings') }} />
+      <Stack.Screen name="index" options={{ title: t('nav.settings'), headerLeft: () => <BackButton /> }} />
       <Stack.Screen name="logging" options={{ title: t('nav.logging') }} />
       <Stack.Screen name="areas" options={{ title: t('nav.areas') }} />
       <Stack.Screen name="favorites" options={{ title: t('nav.favorites') }} />

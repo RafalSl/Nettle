@@ -394,12 +394,12 @@ describe('screen flows (NF-2, NF-3)', () => {
     const { tree } = await mount(() => require('@/app/settings/ai'), deps);
     for (const label of Object.values(en.llm.action)) expect(hasText(tree, label)).toBe(true);
     const selected = () => tree.root.findAll((n) => n.props.accessibilityLabel === 'Haiku' && n.props.accessibilityState?.selected === true && typeof n.props.onPress === 'function');
-    expect(selected()).toHaveLength(5);
+    expect(selected()).toHaveLength(Object.keys(en.llm.action).length);
     await press(tree, 'Sonnet'); // the first "Sonnet" chip belongs to the first action, the label scan
     await flush();
     expect(await deps.settings.get('llm_model.label_scan')).toBe('claude-sonnet-5-5');
     expect(await deps.settings.get('llm_model.analysis')).toBeNull();
-    expect(selected()).toHaveLength(4);
+    expect(selected()).toHaveLength(Object.keys(en.llm.action).length - 1);
   });
 
   it('SE-9, UX-6 Delete data names the counts in an action sheet, offers Export first, then asks a second time', async () => {
@@ -2175,6 +2175,153 @@ describe('Inline photo estimate (IN-3, LL-12, IN-10)', () => {
     await flush();
     expect(hasText(tree, en.meal.estimateAddAll)).toBe(true);
     expect(llm.requests).toHaveLength(2);
+  });
+
+  const saveMeal = async () => {
+    let rendered!: ReactTestRenderer;
+    await act(async () => {
+      rendered = create(mockScreen.options!.headerRight!());
+    });
+    await act(async () => {
+      await rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!.props.onPress();
+    });
+    await flush();
+  };
+  /** Opens a new meal in the review phase with a description, then presses "from the name" and reads the confirmation. */
+  async function startNameEstimate(llm: LlmProvider, description = 'Synthetic pancakes with jam') {
+    const deps = nowDeps(llm);
+    await saveApiKey(deps, 'sk-synthetic-secret');
+    const { tree } = await mount(meal, deps);
+    await type(tree, en.meal.description, description);
+    await press(tree, en.meal.continue);
+    return { deps, tree };
+  }
+
+  it('IN-19, LL-5 the name button shows only with a description; the confirmation lists the exact text and the billing notice before anything is sent', async () => {
+    const llm = new FakeLlm(['{"ingredients":["wheat flour","milk","egg","jam"],"uncertainty":"Recipes differ."}']);
+    const { deps, tree } = await startNameEstimate(llm);
+    await type(tree, en.meal.description, '   '); // an empty description hides the button
+    expect(hasText(tree, en.meal.fromName)).toBe(false);
+    await type(tree, en.meal.description, 'Synthetic   pancakes with jam');
+    await press(tree, en.meal.fromName);
+    const [title, body] = alert.mock.calls.at(-1) as unknown as [string, string];
+    expect(title).toBe(en.meal.nameConfirmTitle);
+    expect(body).toContain('“Synthetic pancakes with jam”'); // exactly what is sent
+    expect(body).toContain('bills this separately');
+    expect(body).toContain('no photo');
+    expect(llm.requests).toHaveLength(0);
+    await type(tree, en.meal.ingredientPlaceholder, 'my own rice');
+    await act(async () => {
+      void buttonOf(en.meal.nameSend).onPress();
+    });
+    await flush();
+    expect(llm.requests).toHaveLength(1);
+    expect(llm.requests[0]!.images).toBeUndefined();
+    expect(llm.requests[0]!.user).toContain('Synthetic pancakes with jam');
+    expect(hasText(tree, en.meal.nameSuggested)).toBe(true);
+    expect(hasText(tree, en.meal.unsure.replace('{{text}}', 'Recipes differ.'))).toBe(true);
+    await press(tree, en.meal.estimateAddAll);
+    const values = tree.root.findAll((n) => n.props.placeholder === en.meal.ingredientPlaceholder).map((n) => n.props.value);
+    expect([...new Set(values)]).toEqual(['my own rice', 'wheat flour', 'milk', 'egg', 'jam', '']); // typed text kept, names added
+    const selected = (label: string) => tree.root.findAll((n) => n.props.accessibilityLabel === label && n.props.accessibilityState)[0]!.props.accessibilityState.selected;
+    expect(selected(en.allergens.milk)).toBe(false); // IN-10: the estimate never selects a tag
+    expect(await deps.repo.listMeals()).toEqual([]); // nothing saved until Save
+    await saveMeal();
+    expect((await deps.repo.listMeals())[0]).toMatchObject({
+      description: 'Synthetic   pancakes with jam', // the entry keeps what was typed; only the sent text is tidied
+      allergens: [],
+      source: { kind: 'name_estimate', edited: false, llm: { model: 'fake-model', promptVersion: 'name-1' }, aiTags: false },
+    });
+  });
+
+  it('IN-19 a vague name returns no names: the form says so, shows the note, and offers nothing to add', async () => {
+    const llm = new FakeLlm(['{"ingredients":[],"uncertainty":"Lunch names no dish."}']);
+    const { tree } = await startNameEstimate(llm, 'lunch');
+    await press(tree, en.meal.fromName);
+    await act(async () => {
+      void buttonOf(en.meal.nameSend).onPress();
+    });
+    await flush();
+    expect(hasText(tree, en.meal.nameEmpty)).toBe(true);
+    expect(hasText(tree, 'Lunch names no dish.')).toBe(true);
+    expect(hasText(tree, en.meal.estimateAddAll)).toBe(false);
+    await press(tree, en.meal.estimateDismiss);
+    expect(hasText(tree, en.meal.nameEmpty)).toBe(false);
+  });
+
+  it('IN-19, LL-12 waiting is inline and cancellable, a failure keeps the text for a one-tap retry, and nothing is stored', async () => {
+    const { NettleError } = require('@/core/model/errors');
+    const llm = new FakeLlm([new NettleError('llm_rate_limited'), '{"ingredients":["rice"],"uncertainty":null}']);
+    const { deps, tree } = await startNameEstimate(llm);
+    await press(tree, en.meal.fromName);
+    await act(async () => {
+      void buttonOf(en.meal.nameSend).onPress();
+    });
+    await flush();
+    expect(hasText(tree, en.errors.llm_rate_limited)).toBe(true);
+    expect(await deps.repo.listMeals()).toEqual([]);
+    alert.mockClear();
+    await press(tree, en.meal.estimateRetry); // no second confirmation: the same text was already confirmed
+    await flush();
+    expect(alert).not.toHaveBeenCalled();
+    expect(llm.requests).toHaveLength(2);
+    expect(llm.requests[1]!.user).toBe(llm.requests[0]!.user);
+    expect(hasText(tree, en.meal.nameSuggested)).toBe(true);
+  });
+
+  it('IN-19, LL-12 the request is aborted when the form is left or the wait is cancelled after 30 seconds', async () => {
+    jest.useFakeTimers({ doNotFake: ['setImmediate', 'nextTick'] });
+    let signal: AbortSignal | undefined;
+    const llm = { completeJson: (req: { signal?: AbortSignal }) => new Promise<never>((_r, reject) => ((signal = req.signal), req.signal?.addEventListener('abort', () => reject(new Error('aborted'))))) };
+    const { tree } = await startNameEstimate(llm);
+    await press(tree, en.meal.fromName);
+    await act(async () => {
+      void buttonOf(en.meal.nameSend).onPress();
+    });
+    expect(hasText(tree, en.meal.estimatingName)).toBe(true);
+    await act(async () => {
+      jest.advanceTimersByTime(30_000);
+    });
+    await press(tree, en.meal.estimateCancel);
+    expect(signal!.aborted).toBe(true);
+    expect(hasText(tree, en.meal.estimatingName)).toBe(false);
+  });
+
+  it('IN-19, LL-5 with "prefer my ingredient names" on, the confirmation says how many known names go with the text', async () => {
+    const llm = new FakeLlm(['{"ingredients":["rice"],"uncertainty":null}']);
+    const deps = nowDeps(llm);
+    await saveApiKey(deps, 'sk-synthetic-secret');
+    await logMeal(deps, { description: 'Synthetic earlier', ingredients: ['rice', 'oat milk'], at: new Date(Date.now() - 3600_000) });
+    await updateSuggestionSettings(deps, { knownNames: true });
+    const { tree } = await mount(meal, deps);
+    await type(tree, en.meal.description, 'Synthetic risotto');
+    await press(tree, en.meal.continue);
+    await press(tree, en.meal.fromName);
+    expect(String(alert.mock.calls.at(-1)![1])).toContain(en.meal.knownNamesSentName.replace('{{n}}', '2'));
+    await act(async () => {
+      void buttonOf(en.meal.nameSend).onPress();
+    });
+    await flush();
+    expect(llm.requests[0]!.system).toContain('["oat milk","rice"]');
+  });
+
+  it('IN-19, IN-4 a drink can be filled from its name too, and is saved with the name estimate as its source', async () => {
+    const llm = new FakeLlm(['{"ingredients":["milk","banana"],"uncertainty":null}']);
+    const deps = nowDeps(llm);
+    await saveApiKey(deps, 'sk-synthetic-secret');
+    const { tree } = await mount(() => require('@/app/form/drink'), deps);
+    expect(hasText(tree, en.meal.fromName)).toBe(false);
+    await type(tree, en.more.drinkName, 'Synthetic banana smoothie');
+    await type(tree, en.more.drinkAmount, '300');
+    await press(tree, en.meal.fromName);
+    expect(String(alert.mock.calls.at(-1)![1])).toContain('“Synthetic banana smoothie”');
+    await act(async () => {
+      void buttonOf(en.meal.nameSend).onPress();
+    });
+    await flush();
+    await press(tree, en.meal.estimateAddAll);
+    await saveMeal();
+    expect((await deps.repo.listRecords('drinks'))[0]).toMatchObject({ name: 'Synthetic banana smoothie', ingredients: ['milk', 'banana'], source: { kind: 'name_estimate', edited: false, llm: { promptVersion: 'name-1' } } });
   });
 
   const LABEL = JSON.stringify({ ingredients: ['mleko (3,2%)', 'cukier'], allergens: ['milk'], traces: ['peanuts'], text_read: 'Składniki: mleko, cukier. Może zawierać orzeszki ziemne.', note: 'The last line is cut off.' });

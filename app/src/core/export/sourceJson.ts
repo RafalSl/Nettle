@@ -1,4 +1,4 @@
-import { SOURCE_KINDS, type IngredientSource } from '../model/source';
+import { LLM_SOURCE_KINDS, SOURCE_KINDS, type IngredientSource } from '../model/source';
 import { CANONICAL_UTC } from '../model/time';
 import { bad, bool, isObj, nullableText, oneOf, str, type Obj } from './guards';
 
@@ -17,7 +17,7 @@ export function parseSource(o: Obj, where: string): IngredientSource {
   const w = `${where}.source`;
   const kind = oneOf(s, 'kind', SOURCE_KINDS, w);
   const edited = bool(s, 'edited', w);
-  const isLlm = kind === 'label_scan' || kind === 'photo_estimate';
+  const isLlm = LLM_SOURCE_KINDS.includes(kind);
   let llm: IngredientSource['llm'] = null;
   if (isLlm) {
     if (!isObj(s.llm)) return bad(`${w}.llm`);

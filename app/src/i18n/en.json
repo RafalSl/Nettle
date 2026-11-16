@@ -56,6 +56,14 @@
     "knownNamesSent": "{{n}} ingredient names from your diary are sent with the photo, because \"Prefer my ingredient names\" is on.",
     "photoSend": "Send photo",
     "suggested": "Suggested ingredients. Check and edit them before saving.",
+    "fromName": "Suggest ingredients from the name",
+    "nameConfirmTitle": "Send this name to Anthropic?",
+    "nameConfirmBody": "This text is sent over the internet to Anthropic (no photo) to list the ingredients the dish usually contains:\n\n“{{text}}”\n\nNothing is saved from the answer until you review it. Anthropic bills this separately to your API account (a small amount); a Claude subscription does not cover it.",
+    "knownNamesSentName": "{{n}} ingredient names from your diary are sent with the name, because \"Prefer my ingredient names\" is on.",
+    "nameSend": "Send name",
+    "nameSuggested": "Typical ingredients of this dish, not necessarily what you ate. Add what applies and edit the list.",
+    "nameEmpty": "The name is too vague to list ingredients. Nothing was suggested.",
+    "estimatingName": "Looking up the usual ingredients from the name. You can keep entering the meal.",
     "unsure": "Unsure about: {{text}}",
     "chooseTitle": "Choose or type a meal",
     "chooseHint": "Pick an earlier meal to fill the form, or type a new one and continue. Nothing is saved until you save.",
@@ -449,7 +457,8 @@
       "meal_photo": "Meal photo",
       "analysis": "AI analysis",
       "report_summary": "Report summary",
-      "allergen_suggest": "Allergen suggestions"
+      "allergen_suggest": "Allergen suggestions",
+      "meal_name": "Meal name"
     },
     "saved": "Saved"
   },
@@ -556,7 +565,7 @@
     "summaryEdited": "edited by the person after it was written",
     "aiMark": "AI",
     "aiMarkEdited": "AI, edited",
-    "aiMarkLegend": "[AI] after the ingredients: they were read by an AI model from a photo, and the person reviewed and confirmed them before saving. [AI, edited]: the person changed them afterwards. [AI] after the allergens: the tags were suggested by an AI model and selected by the person.",
+    "aiMarkLegend": "[AI] after the ingredients: they were read by an AI model from a photo or a label, or listed by it from the name of the dish (a typical recipe, not necessarily what was eaten), and the person reviewed and confirmed them before saving. [AI, edited]: the person changed them afterwards. [AI] after the allergens: the tags were suggested by an AI model and selected by the person.",
     "reactions": "Reactions after meals",
     "onset": "Onset",
     "symptoms": "Symptoms",
@@ -779,6 +788,7 @@
     "open_food_facts": "Open Food Facts",
     "label_scan": "AI label scan",
     "photo_estimate": "AI photo estimate",
+    "name_estimate": "AI name estimate",
     "edited": "edited"
   },
   "log": {

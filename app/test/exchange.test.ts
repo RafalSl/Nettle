@@ -267,7 +267,9 @@ describe('data.json validation of treatments, events, reactions and allergens (I
     const withSource = (source: unknown, barcode: unknown = null) => file(records({ meals: [{ ...meal, source, barcode }] }));
     expect(err(withSource({ kind: 'label_scan', edited: true, llm }, '5900000000008'))).toBe('no error');
     expect(parseDataJson(withSource({ kind: 'photo_estimate', edited: false, llm })).records?.meals[0]?.source).toEqual({ kind: 'photo_estimate', edited: false, llm: { model: 'm', at: llm.at, promptVersion: 'p' }, aiTags: false });
+    expect(parseDataJson(withSource({ kind: 'name_estimate', edited: true, llm })).records?.meals[0]?.source).toEqual({ kind: 'name_estimate', edited: true, llm: { model: 'm', at: llm.at, promptVersion: 'p' }, aiTags: false }); // IN-19
     for (const bad of [
+      { kind: 'name_estimate', edited: false, llm: null, aiTags: false },
       { kind: 'label_scan', edited: false, llm: null, aiTags: false },
       { kind: 'typed', edited: false, llm },
       { kind: 'typed', edited: true, llm: null, aiTags: false },

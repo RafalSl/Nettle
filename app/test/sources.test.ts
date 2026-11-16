@@ -14,7 +14,7 @@ describe('source of ingredients (IN-16)', () => {
     const deps = makeDeps(new MemoryRepo());
     expect((await logMeal(deps, { description: 'Synthetic', ingredients: [] })).source).toEqual(typedSource());
     const bad = (s: object) => logMeal(deps, { description: 'x', ingredients: [], source: s as never });
-    for (const s of [{ kind: 'photo_estimate', edited: false, llm: null, aiTags: false }, { kind: 'typed', edited: false, llm }, { kind: 'typed', edited: true, llm: null, aiTags: false }, { kind: 'gps', edited: false, llm: null, aiTags: false }]) {
+    for (const s of [{ kind: 'photo_estimate', edited: false, llm: null, aiTags: false }, { kind: 'name_estimate', edited: false, llm: null, aiTags: false }, { kind: 'typed', edited: false, llm }, { kind: 'typed', edited: true, llm: null, aiTags: false }, { kind: 'gps', edited: false, llm: null, aiTags: false }]) {
       await expect(bad(s)).rejects.toBeInstanceOf(NettleError);
     }
   });

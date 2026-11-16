@@ -168,6 +168,7 @@ export function DrinkSection() {
         <Button kind="secondary" title={t('meal.scan')} onPress={() => setScanning(true)} />
       )}
       <Button kind="secondary" title={t('meal.fromLabel')} onPress={() => run.start('label')} />
+      {draft.name.trim() !== '' && <Button kind="secondary" title={t('meal.fromName')} onPress={() => void run.startName(draft.name)} />}
       <IngredientRunPanel hook={run} onAdd={addRun} />
       {scanNote && <Hint>{scanNote}</Hint>}
       {pendingTags.length > 0 && draft.allergens.size < pendingTags.length && (

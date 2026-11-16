@@ -1,4 +1,5 @@
 import { localDay } from '../model/time';
+import { sinceLastTreatment, type SinceTreatment } from '../model/derived';
 import { deriveFlares } from '../model/flares';
 import { NAIL_EXTENTS, type ListItem, type LocalDay, type NailEntry, type Stamp, type Photo, type SkinArea, type SkinEntry } from '../model/types';
 import type { Deps } from './deps';
@@ -7,8 +8,11 @@ import { openFlare } from './flares';
 
 /** SK-8: one skin or nail entry of an area with its photos, so scores and photos sit side by side. */
 export type TimelineEntry =
-  | { kind: 'skin'; entry: SkinEntry; photos: Photo[] }
-  | { kind: 'nail'; entry: NailEntry; photos: Photo[] };
+  | { kind: 'skin'; entry: SkinEntry; photos: Photo[]; sinceTreatment: SinceByPhoto }
+  | { kind: 'nail'; entry: NailEntry; photos: Photo[]; sinceTreatment: SinceByPhoto };
+
+/** SK-4: per photo id, the last treatment on the entry's area and how long before the photo; null is "no treatment logged". */
+export type SinceByPhoto = Record<string, SinceTreatment | null>;
 
 export interface TimelineDay {
   day: LocalDay;
@@ -23,6 +27,8 @@ export async function areaTimeline(deps: Deps, areaId: string): Promise<Timeline
   const photos = await deps.repo.listRecords('photos');
   const photosOf = (kind: Photo['entryKind'], id: string) =>
     photos.filter((p) => p.entryKind === kind && p.entryId === id).sort((a, b) => a.at.utc.localeCompare(b.at.utc));
+  const applications = await deps.repo.listRecords('treatmentApplications');
+  const since = (areaId: string, ps: Photo[]): SinceByPhoto => Object.fromEntries(ps.map((p) => [p.id, sinceLastTreatment(areaId, p.at.utc, applications)]));
   const days = new Map<LocalDay, TimelineDay>();
   const dayOf = (day: LocalDay) => {
     const cur = days.get(day) ?? { day, entries: [], flares: [] };
@@ -30,10 +36,10 @@ export async function areaTimeline(deps: Deps, areaId: string): Promise<Timeline
     return cur;
   };
   for (const entry of await deps.repo.listSkinEntries()) {
-    if (entry.areaId === areaId) dayOf(localDay(entry.at.utc, entry.at.tz, deps.dayStart.get())).entries.push({ kind: 'skin', entry, photos: photosOf('skinEntry', entry.id) });
+    if (entry.areaId === areaId) dayOf(localDay(entry.at.utc, entry.at.tz, deps.dayStart.get())).entries.push({ kind: 'skin', entry, photos: photosOf('skinEntry', entry.id), sinceTreatment: since(areaId, photosOf('skinEntry', entry.id)) });
   }
   for (const entry of await deps.repo.listRecords('nailEntries')) {
-    if (entry.areaId === areaId) dayOf(localDay(entry.at.utc, entry.at.tz, deps.dayStart.get())).entries.push({ kind: 'nail', entry, photos: photosOf('nailEntry', entry.id) });
+    if (entry.areaId === areaId) dayOf(localDay(entry.at.utc, entry.at.tz, deps.dayStart.get())).entries.push({ kind: 'nail', entry, photos: photosOf('nailEntry', entry.id), sinceTreatment: since(areaId, photosOf('nailEntry', entry.id)) });
   }
   const threshold = (await getPreferences(deps)).flareThreshold;
   const skin = (await deps.repo.listSkinEntries()).filter((e) => e.areaId === areaId);

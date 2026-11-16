@@ -186,7 +186,7 @@ describe.each(repos)('prepare and run an analysis (%s)', (_name, make) => {
     const { deps, llm } = await diary(make);
     const prepared = await prepareAnalysis(deps, sel);
     expect(llm.requests).toHaveLength(0);
-    expect(prepared).toMatchObject({ dayFrom: '2026-01-10', dayTo: '2026-01-14', model: 'claude-haiku-5-5', promptVersion: 'analysis-7' });
+    expect(prepared).toMatchObject({ dayFrom: '2026-01-10', dayTo: '2026-01-14', model: 'claude-haiku-5-5', promptVersion: 'analysis-8' });
     expect(prepared.counts).toMatchObject({ meals: 3, skinEntries: 1, nailEntries: 1, reactions: 1, treatmentApplications: 1, checkIns: 2, days: 5, completeDays: 2, photos: 0 });
     expect(prepared.counts.changeEvents).toBe(1); // lookback
     expect(prepared.sentCharacters).toBeGreaterThan(500);
@@ -230,7 +230,7 @@ describe.each(repos)('prepare and run an analysis (%s)', (_name, make) => {
     const prepared = await prepareAnalysis(deps, sel);
     const analysis = await runAnalysis(deps, prepared);
     expect(llm.requests[0]).toBe(prepared.request); // exactly what was confirmed
-    expect(analysis).toMatchObject({ dayFrom: '2026-01-10', dayTo: '2026-01-14', model: 'fake-model', promptVersion: 'analysis-7', language: 'en', at: { utc: '2026-01-20T10:00:00.000Z' } });
+    expect(analysis).toMatchObject({ dayFrom: '2026-01-10', dayTo: '2026-01-14', model: 'fake-model', promptVersion: 'analysis-8', language: 'en', at: { utc: '2026-01-20T10:00:00.000Z' } });
     expect(analysis.result.hypotheses[0]?.title).toBe('Synthetic hypothesis');
     expect(await listAnalyses(deps)).toEqual([analysis]);
     const after = await repo.snapshot();

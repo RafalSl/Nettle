@@ -2,10 +2,11 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import { Alert, Pressable, type ScrollViewInstance, Text, View } from 'react-native';
+import { sinceCaption } from '@/core/model/derived';
 import { areaTimeline, resolveJumpDay, trendPoints, type JumpTarget, type TimelineDay, type TimelineEntry, type TrendKey } from '@/core/usecases/timeline';
 import { SCORE_KEYS, type Photo, type SkinArea } from '@/core/model/types';
 import { localDateTime, localDay } from '@/core/model/time';
-import { areaLabel, errorMessage, t } from '@/i18n';
+import { areaLabel, errorMessage, itemLabel, t } from '@/i18n';
 import { useServices } from '@/services';
 import { PhotoCompare } from '@/ui/PhotoCompare';
 import { PhotoThumbs } from '@/ui/PhotoThumbs';
@@ -24,6 +25,7 @@ export default function AreaTimelineScreen() {
   const [days, setDays] = useState<TimelineDay[] | null>(null);
   const [name, setName] = useState('');
   const [areas, setAreas] = useState<SkinArea[]>([]);
+  const [treatmentNames, setTreatmentNames] = useState<Record<string, string>>({});
   const [trend, setTrend] = useState<TrendKey>('severity');
   const [comparing, setComparing] = useState(false);
   const [picked, setPicked] = useState<Photo[]>([]);
@@ -37,6 +39,7 @@ export default function AreaTimelineScreen() {
       const all = await deps.repo.listAreas();
       const area = all.find((a) => a.id === id);
       setAreas(all);
+      setTreatmentNames(Object.fromEntries((await deps.repo.listItems('treatments')).map((x) => [x.id, itemLabel(x)])));
       setName(area ? areaLabel(area) : '');
       setDays(await areaTimeline(deps, id));
     })().catch((e) => Alert.alert(errorMessage(e)));
@@ -141,6 +144,10 @@ export default function AreaTimelineScreen() {
               </Pressable>
               {e.entry.note ? <Hint>{e.entry.note}</Hint> : null}
               <PhotoThumbs photos={e.photos} {...(comparing ? { onPick: pick, picked: new Set(picked.map((p) => p.id)) } : {})} />
+              {/* SK-4: how long after the last treatment on this area each photo was taken; computed from the timestamps. */}
+              {[...new Set(e.photos.map((p) => sinceCaption(e.sinceTreatment[p.id] ?? null, (id) => treatmentNames[id] ?? id, t)))].map((c) => (
+                <Hint key={c}>{c}</Hint>
+              ))}
             </View>
           ))}
         </View>

@@ -273,6 +273,13 @@
     "hint": "Pieczenie, swędzenie lub zaczerwienienie po nałożeniu. Zostaw puste, jeśli nie zanotowano: puste to nie to samo co brak.",
     "row": "reakcja: {{reaction}}"
   },
+  "derived": {
+    "minutes": "{{n}} min",
+    "hours": "{{n}} godz.",
+    "days": "{{n}} dni",
+    "sinceTreatment": "{{elapsed}} po {{name}}",
+    "noTreatment": "brak zapisanego leczenia"
+  },
   "tags": {
     "tag-illness-or-infection": "Choroba lub infekcja",
     "tag-antibiotics": "Antybiotyki",
@@ -550,6 +557,14 @@
     "sizeMm": "Rozmiar (mm)",
     "sizeTrend": "Rozmiar w mm w czasie",
     "treatmentReaction": "Reakcja",
+    "relapse": "Czas do nawrotu",
+    "relapseIntro": "Liczba dni od ostatniego zastosowania kuracji do następnego zaostrzenia tego samego miejsca. Kuracja kończy się po 7 dniach bez zastosowania. Obliczone z czasów wpisów; dokładność zależy od zapisu.",
+    "relapseCourse": "Kuracja",
+    "relapseApplications": "Zastosowania",
+    "relapseDays": "Do następnego zaostrzenia",
+    "relapseNoFlare": "jeszcze bez zaostrzenia",
+    "relapseOthers": "Inne leczenie w międzyczasie",
+    "relapseCourseText": "{{from}} do {{to}}",
     "note": "Notatka",
     "nails": "Paznokcie",
     "stage": "Etap",

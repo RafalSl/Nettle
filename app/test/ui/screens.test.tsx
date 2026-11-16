@@ -3304,3 +3304,21 @@ describe('Reaction after applying a treatment, and the new tags (IN-11, IN-6)', 
     }
   });
 });
+
+describe('Time since the last treatment on a photo (SK-4)', () => {
+  it('SK-4, SK-8 the area timeline says how long after the last treatment each photo was taken, or that none was logged', async () => {
+    const deps = nowDeps();
+    const cream = await addListItem(deps, 'treatments', 'Synthetic cream');
+    const first = await logSkinEntry(deps, { areaId: 'area-chin', scores, at: new Date('2026-01-10T08:00:00.000Z') });
+    await addPhoto(deps, { entryKind: 'skinEntry', entryId: first.id, sourceUri: 'before', at: new Date('2026-01-10T08:05:00.000Z') });
+    await applyTreatment(deps, { treatmentId: cream.id, areaIds: ['area-chin'], at: new Date('2026-01-12T08:00:00.000Z') });
+    const second = await logSkinEntry(deps, { areaId: 'area-chin', scores, at: new Date('2026-01-12T22:00:00.000Z') });
+    await addPhoto(deps, { entryKind: 'skinEntry', entryId: second.id, sourceUri: 'after', at: new Date('2026-01-12T22:05:00.000Z') });
+    mockParams.current = { id: 'area-chin' };
+    const { tree } = await mount(() => require('@/app/(tabs)/review/area'), deps);
+    await flush();
+    expect(hasText(tree, en.derived.noTreatment)).toBe(true);
+    expect(hasText(tree, en.derived.sinceTreatment.replace('{{elapsed}}', en.derived.hours.replace('{{n}}', '14')).replace('{{name}}', 'Synthetic cream'))).toBe(true);
+    mockParams.current = {};
+  });
+});

@@ -245,7 +245,8 @@
     "invalid_barcode": "To nie jest prawidłowy kod kreskowy. Sprawdź cyfry.",
     "barcode_lookup_failed": "Nie udało się połączyć z bazą produktów. Wpisz produkt ręcznie.",
     "lock_unavailable": "Najpierw ustaw kod lub Face ID na tym iPhonie.",
-    "lock_failed": "Nie udało się potwierdzić, że to Ty. Blokada nie została zmieniona."
+    "lock_failed": "Nie udało się potwierdzić, że to Ty. Blokada nie została zmieniona.",
+    "empty_title": "Wpisz tytuł."
   },
   "today": {
     "title": "Zdrowie dnia",
@@ -421,7 +422,7 @@
     "groups": {
       "food": "Jedzenie i przyjmowane substancje (posiłki, reakcje, napoje, leki)",
       "skin": "Skóra i paznokcie (wpisy, zdjęcia, zastosowane zabiegi)",
-      "health": "Codzienne kontrole, stolec i zmiany",
+      "health": "Zdrowie dnia, stolce, zmiany i zdarzenia medyczne",
       "ai": "Analizy AI i podsumowania raportu"
     },
     "limit": "Tylko zakres dat",
@@ -450,7 +451,8 @@
       "stoolEntries": "wpisy o stolcu: {{n}}",
       "changeEvents": "zmiany: {{n}}",
       "analyses": "analizy AI: {{n}}",
-      "reportSummaries": "podsumowania raportu: {{n}}"
+      "reportSummaries": "podsumowania raportu: {{n}}",
+      "medicalEvents": "{{n}} zdarzeń medycznych"
     }
   },
   "exportPhotos": {
@@ -618,7 +620,11 @@
     "aiLimits": "Czego dane nie pokazują",
     "flaresBasis": "Zaostrzenia to okresy, w których nasilenie zmiany skórnej wynosiło {{n}} lub więcej. Czas jest tak dokładny, jak zapisy.",
     "openAtLastEntry": "trwa do ostatniego wpisu ({{date}})",
-    "dateUnknown": "data nieznana"
+    "dateUnknown": "data nieznana",
+    "medical": "Zdarzenia medyczne",
+    "medicalKind": "Rodzaj",
+    "medicalTitle": "Tytuł",
+    "medicalUntil": "Do"
   },
   "export": {
     "extras": "Dodatkowe pliki",
@@ -736,7 +742,8 @@
     "regular": "Stałe pozycje",
     "regularItem": "Stała pozycja",
     "guide": "Gdzie zapisać",
-    "health": "Trendy zdrowia"
+    "health": "Trendy zdrowia",
+    "medical": "Zdarz. med."
   },
   "home": {
     "quickActions": "Szybkie akcje",
@@ -802,7 +809,9 @@
     "noIncomplete": "Każdy dzień z wpisami ma wpis Zdrowie dnia.",
     "goToday": "Przejdź do Dziś",
     "healthTitle": "Trendy Zdrowia dnia",
-    "healthEmpty": "Brak danych do wykresu. Najpierw zapisz Zdrowie dnia z oceną."
+    "healthEmpty": "Brak danych do wykresu. Najpierw zapisz Zdrowie dnia z oceną.",
+    "medicalStart": "{{kind}}: {{title}}",
+    "medicalEnd": "Koniec: {{title}}"
   },
   "day": {
     "newEntry": "Nowy wpis",
@@ -856,7 +865,9 @@
       "skinEntries": "wpisy",
       "nailEntries": "wpisy"
     },
-    "editAction": "Edytuj wpis"
+    "editAction": "Edytuj wpis",
+    "medical": "{{kind}}: {{title}}",
+    "medicalUntil": "do {{day}}"
   },
   "cards": {
     "openCheckin": "Otwórz Zdrowie dnia",
@@ -891,7 +902,8 @@
     "extent": "zakresu na paznokciu",
     "area": "miejsca",
     "photos": "Zdjęcia",
-    "type": "typu stolca"
+    "type": "typu stolca",
+    "titleMissing": "tytuł"
   },
   "doctor": {
     "range": "Okres",
@@ -1003,6 +1015,10 @@
     "change": {
       "title": "Zmiana rutyny",
       "hint": "Produkt lub dieta, które zaczęto lub przerwano"
+    },
+    "medical": {
+      "title": "Zdarzenie medyczne",
+      "hint": "Wizyta, wynik badania, diagnoza lub choroba"
     }
   },
   "regular": {
@@ -1048,7 +1064,10 @@
       "feeling": "Jak się czuję: samopoczucie, stres, sen",
       "belly": "Wzdęcia lub ból brzucha",
       "reaction": "Reakcja po jedzeniu",
-      "stool": "Stolec"
+      "stool": "Stolec",
+      "visit": "Wizyta u lekarza, wynik badania lub diagnoza",
+      "ill": "Jestem chory: nazwana choroba z początkiem i końcem",
+      "illQuick": "Jestem dziś chory: szybkie tak/nie w Zdrowiu dnia"
     },
     "notes": {
       "regularTablet": "włącz Stałe",
@@ -1056,7 +1075,24 @@
       "stoppedProduct": "wybierz Przerwano",
       "flare": "zaostrzenia wynikają z nasilenia równego progowi lub wyższego",
       "newProduct": "wybierz Zaczęto",
-      "diet": "wybierz Zaczęto lub Przerwano"
+      "diet": "wybierz Zaczęto lub Przerwano",
+      "ill": "tak/nie w Zdrowiu dnia to szybki sposób; zdarzenie medyczne typu Choroba dodaje nazwę i czas trwania"
     }
+  },
+  "medical": {
+    "title": "Tytuł",
+    "kinds": {
+      "visit": "Wizyta",
+      "test_result": "Wynik badania",
+      "diagnosis": "Diagnoza",
+      "illness": "Choroba",
+      "other": "Inne"
+    },
+    "endDay": "Zakończona",
+    "endNone": "nie ustawiono",
+    "endSet": "Ustaw datę końca",
+    "endChange": "Zmień datę końca",
+    "endClear": "Usuń datę końca",
+    "endHint": "Opcjonalnie. Zostaw puste, dopóki choroba trwa. Tak/nie w Zdrowiu dnia nadal jest szybkim sposobem oznaczenia dnia."
   }
 }

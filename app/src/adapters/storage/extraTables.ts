@@ -9,6 +9,8 @@ import type {
   MedicationEntry,
   ChangeAction,
   ChangeEvent,
+  MedicalEvent,
+  MedicalKind,
   CheckIn,
   ExtraKind,
   NailEntry,
@@ -103,6 +105,20 @@ const changeEvent: ExtraTable<ChangeEvent> = {
     category: r.category as string,
     name: r.name as string,
     dateUnknown: !!r.date_unknown,
+    note: r.note as string | null,
+  }),
+};
+
+const medicalEvent: ExtraTable<MedicalEvent> = {
+  table: 'medical_event',
+  columns: ['kind', 'title', 'end_day', 'note'],
+  toValues: (e) => [e.kind, e.title, e.endDay, e.note],
+  fromRow: (r) => ({
+    id: r.id as string,
+    at: { utc: r.ts_utc as string, tz: r.tz as string },
+    kind: r.kind as MedicalKind,
+    title: r.title as string,
+    endDay: r.end_day as string | null,
     note: r.note as string | null,
   }),
 };
@@ -208,6 +224,7 @@ export const EXTRA_TABLES: { [K in ExtraKind]: ExtraTable<Records[K][number]> } 
   stoolEntries: stool,
   treatmentApplications: treatmentApplication,
   changeEvents: changeEvent,
+  medicalEvents: medicalEvent,
   reactions: reaction,
   drinks: drink,
   medicationEntries: medication,

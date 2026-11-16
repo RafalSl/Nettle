@@ -4,6 +4,7 @@ export const ERROR_CODES = [
   'empty_description',
   'invalid_score',
   'invalid_size',
+  'empty_title',
   'unknown_area',
   'area_archived',
   'wrong_area_kind',

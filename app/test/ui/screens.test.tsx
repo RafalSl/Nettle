@@ -19,7 +19,7 @@ import { applyImport, exportBundle, previewImport } from '@/core/usecases/exchan
 import { deleteEntry } from '@/core/usecases/entries';
 import { addRegularMedication } from '@/core/usecases/regular';
 import { pinEntryType, unpinEntryType, toggleFavoriteDrink, toggleFavoriteMeal, updateSuggestionSettings } from '@/core/usecases/preferences';
-import { applyTreatment, logChangeEvent, logReaction } from '@/core/usecases/events';
+import { applyTreatment, logChangeEvent, logMedicalEvent, logReaction } from '@/core/usecases/events';
 import { addListItem, archiveListItem } from '@/core/usecases/lists';
 import { saveApiKey } from '@/core/usecases/llm';
 import { prepareAnalysis } from '@/core/usecases/analysis';
@@ -1605,7 +1605,7 @@ describe('Guide (UX-11)', () => {
     const { GUIDE } = require('@/screens/GuideScreen') as { GUIDE: { id: string; entry: keyof typeof en.entry }[] };
     const { tree } = await mount(() => require('@/app/guide'), nowDeps());
     expect(GUIDE.length).toBeGreaterThanOrEqual(12);
-    const routes: Record<string, string> = { meal: '/form/meal', drink: '/form/drink', medication: '/form/medication', skin: '/form/skin', nails: '/form/nails', treatment: '/form/treatment', checkin: '/form/checkin', stool: '/form/stool', reaction: '/form/reaction', change: '/form/change' };
+    const routes: Record<string, string> = { meal: '/form/meal', drink: '/form/drink', medication: '/form/medication', skin: '/form/skin', nails: '/form/nails', treatment: '/form/treatment', checkin: '/form/checkin', stool: '/form/stool', reaction: '/form/reaction', change: '/form/change', medical: '/form/medical' };
     for (const g of GUIDE) {
       const label = (en.guide.items as Record<string, string>)[g.id]!;
       expect(label).toBeTruthy();
@@ -3319,6 +3319,115 @@ describe('Time since the last treatment on a photo (SK-4)', () => {
     await flush();
     expect(hasText(tree, en.derived.noTreatment)).toBe(true);
     expect(hasText(tree, en.derived.sinceTreatment.replace('{{elapsed}}', en.derived.hours.replace('{{n}}', '14')).replace('{{name}}', 'Synthetic cream'))).toBe(true);
+    mockParams.current = {};
+  });
+});
+
+describe('Medical events (IN-18, UX-2, UX-11, SK-8)', () => {
+  beforeEach(() => {
+    mockRouter.back.mockClear();
+    mockParams.current = {};
+    mockScreen.options = undefined;
+    mockPicker.last = undefined;
+    jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+  });
+  afterEach(() => jest.restoreAllMocks());
+  const headerSave = async () => {
+    let rendered!: ReactTestRenderer;
+    await act(async () => {
+      rendered = create(mockScreen.options!.headerRight!());
+    });
+    const node = rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!;
+    await act(async () => {
+      await node.props.onPress();
+    });
+    await flush();
+    return node.props.accessibilityState as { disabled?: boolean } | undefined;
+  };
+  const inDays = (n: number) => new Date(Date.now() + n * 86_400_000);
+  const dayOf = (d: Date) => localDay(d.toISOString(), 'Europe/Warsaw');
+
+  it('IN-18 the form saves a visit with a title and a note, and Save stays off until there is a title', async () => {
+    const deps = nowDeps();
+    const { tree } = await mount(() => require('@/app/form/medical'), deps);
+    expect(hasText(tree, en.medical.endDay)).toBe(false); // only an illness has an end date
+    expect(hasText(tree, en.edit.missing.replace('{{what}}', en.edit.titleMissing))).toBe(true);
+    expect((await headerSave())?.disabled).toBe(true);
+    await type(tree, en.medical.title, 'Synthetic dermatology visit');
+    await type(tree, en.common.note, 'a cream was prescribed');
+    await headerSave();
+    expect(await deps.repo.listRecords('medicalEvents')).toMatchObject([{ kind: 'visit', title: 'Synthetic dermatology visit', note: 'a cream was prescribed', endDay: null }]);
+    expect(mockRouter.back).toHaveBeenCalledTimes(1);
+  });
+
+  it('IN-18 an illness offers an end date, which can be set, cleared and left empty; other kinds drop it', async () => {
+    const deps = nowDeps();
+    const { tree } = await mount(() => require('@/app/form/medical'), deps);
+    await press(tree, en.medical.kinds.illness);
+    expect(hasText(tree, en.medical.endNone)).toBe(true);
+    await type(tree, en.medical.title, 'Synthetic throat infection');
+    await press(tree, en.medical.endSet);
+    const end = dayOf(inDays(3));
+    await act(async () => mockPicker.last!.onValueChange({}, new Date(`${end}T12:00:00`)));
+    expect(hasText(tree, end)).toBe(true);
+    await press(tree, en.medical.endClear);
+    expect(hasText(tree, en.medical.endNone)).toBe(true);
+    await press(tree, en.medical.endSet);
+    await act(async () => mockPicker.last!.onValueChange({}, new Date(`${end}T12:00:00`)));
+    await press(tree, en.medical.kinds.visit); // switching away from illness drops the end date
+    await headerSave();
+    expect(await deps.repo.listRecords('medicalEvents')).toMatchObject([{ kind: 'visit', endDay: null }]);
+    const second = await mount(() => require('@/app/form/medical'), deps);
+    await press(second.tree, en.medical.kinds.illness);
+    await type(second.tree, en.medical.title, 'Synthetic flu');
+    await press(second.tree, en.medical.endSet);
+    await act(async () => mockPicker.last!.onValueChange({}, new Date(`${end}T12:00:00`)));
+    await headerSave();
+    expect((await deps.repo.listRecords('medicalEvents')).find((e) => e.title === 'Synthetic flu')).toMatchObject({ kind: 'illness', endDay: end });
+  });
+
+  it('IN-18, EN-1 a log row names the kind and title (and until when), and the edit form changes and clears the end date', async () => {
+    const deps = nowDeps();
+    const e = await logMedicalEvent(deps, { kind: 'illness', title: 'Synthetic cold', at: new Date(Date.now() - 3600_000), endDay: dayOf(inDays(2)) });
+    const today = await mount(() => require('@/app/(tabs)/today/index'), deps);
+    await flush();
+    expect(hasText(today.tree, en.log.medical.replace('{{kind}}', en.medical.kinds.illness).replace('{{title}}', 'Synthetic cold'))).toBe(true);
+    expect(hasText(today.tree, en.log.medicalUntil.replace('{{day}}', dayOf(inDays(2))))).toBe(true);
+    mockParams.current = { kind: 'medicalEvents', id: e.id };
+    const { tree } = await mount(() => require('@/app/form/edit'), deps);
+    await flush();
+    expect(hasText(tree, dayOf(inDays(2)))).toBe(true);
+    await press(tree, en.medical.endClear);
+    await type(tree, en.medical.title, 'Synthetic cold, ended');
+    await headerSave();
+    expect(await deps.repo.listRecords('medicalEvents')).toMatchObject([{ id: e.id, title: 'Synthetic cold, ended', endDay: null }]);
+  });
+
+  it('UX-2, UX-11 Medical event is listed in More with its hint, and "Where do I log…?" has a visit row and the two ways to log an illness', async () => {
+    const deps = nowDeps();
+    const more = await mount(() => require('@/app/(tabs)/today/more'), deps);
+    await flush();
+    expect(hasText(more.tree, en.entry.medical.title)).toBe(true);
+    expect(hasText(more.tree, en.entry.medical.hint)).toBe(true);
+    await press(more.tree, en.entry.medical.title);
+    expect(mockRouter.push).toHaveBeenLastCalledWith('/form/medical');
+    const guide = await mount(() => require('@/app/guide'), deps);
+    await press(guide.tree, en.guide.items.visit);
+    expect(mockRouter.push).toHaveBeenLastCalledWith('/form/medical');
+    expect(hasText(guide.tree, en.guide.notes.ill)).toBe(true);
+    await press(guide.tree, en.guide.items.illQuick);
+    expect(mockRouter.push).toHaveBeenLastCalledWith('/form/checkin');
+  });
+
+  it('SK-8 an area timeline shows the medical event markers next to the entries', async () => {
+    const deps = nowDeps();
+    await logSkinEntry(deps, { areaId: 'area-chin', scores, at: new Date('2026-01-12T08:00:00.000Z') });
+    await logMedicalEvent(deps, { kind: 'illness', title: 'Synthetic cold', at: new Date('2026-01-12T07:00:00.000Z'), endDay: '2026-01-14' });
+    mockParams.current = { id: 'area-chin' };
+    const { tree } = await mount(() => require('@/app/(tabs)/review/area'), deps);
+    await flush();
+    expect(hasText(tree, en.review.medicalStart.replace('{{kind}}', en.medical.kinds.illness).replace('{{title}}', 'Synthetic cold'))).toBe(true);
+    expect(hasText(tree, en.review.medicalEnd.replace('{{title}}', 'Synthetic cold'))).toBe(true);
     mockParams.current = {};
   });
 });

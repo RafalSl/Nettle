@@ -64,6 +64,11 @@ export function describeRow(row: LogRow, ctx: RowContext): { title: string; deta
         title: t('log.change', { action: t(`change.actions.${row.record.action}`), name: row.record.name }),
         detail: [categoryLabel(ctx, row.record.category), row.record.dateUnknown ? t('change.dateUnknownShort') : ''].filter(Boolean).join(' · '),
       };
+    case 'medicalEvents':
+      return {
+        title: t('log.medical', { kind: t(`medical.kinds.${row.record.kind}`), title: row.record.title }),
+        detail: row.record.endDay ? t('log.medicalUntil', { day: row.record.endDay }) : null,
+      };
     case 'reactions':
       return { title: t('log.reaction', { symptoms: row.record.symptoms.map((s) => t(`symptoms.${s}`)).join(', ') }), detail: null };
     case 'drinks':

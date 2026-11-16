@@ -41,7 +41,7 @@ export interface SuggestionSettings {
 }
 
 /** UX-2: the ten entry types; the user pins any of them to Today, the rest are listed in More. */
-export const ENTRY_TYPES = ['meal', 'drink', 'medication', 'skin', 'nails', 'treatment', 'checkin', 'stool', 'reaction', 'change'] as const;
+export const ENTRY_TYPES = ['meal', 'drink', 'medication', 'skin', 'nails', 'treatment', 'checkin', 'stool', 'reaction', 'change', 'medical'] as const;
 export type EntryType = (typeof ENTRY_TYPES)[number];
 /** UX-2: the default pins. */
 export const DEFAULT_PINNED: readonly EntryType[] = ['meal', 'skin', 'treatment', 'checkin', 'stool'];

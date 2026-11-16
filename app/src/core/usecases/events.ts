@@ -1,11 +1,16 @@
 import { NettleError } from '../model/errors';
-import { makeStamp } from '../model/time';
+import { addDays, localDay, makeStamp } from '../model/time';
 import {
   CHANGE_ACTIONS,
+  MAX_MEDICAL_TITLE,
+  MEDICAL_KINDS,
   SYMPTOMS,
   TREATMENT_REACTIONS,
   type ChangeAction,
   type ChangeEvent,
+  type LocalDay,
+  type MedicalEvent,
+  type MedicalKind,
   type Reaction,
   type Symptom,
   type TreatmentApplication,
@@ -79,6 +84,34 @@ export async function logChangeEvent(deps: Deps, input: ChangeEventInput): Promi
     note: input.note?.trim() || null,
   };
   await deps.repo.addRecord('changeEvents', event);
+  return event;
+}
+
+export interface MedicalEventInput {
+  kind: MedicalKind;
+  title: string;
+  /** The date of the event; defaults to now. */
+  at?: Date;
+  /** IN-18: an illness may have an end date (a calendar day, not before the day it started). Other kinds have none. */
+  endDay?: LocalDay | null;
+  note?: string;
+}
+
+/** IN-18: a visit, test result, diagnosis, illness or other medical event, with a short title. */
+export async function logMedicalEvent(deps: Deps, input: MedicalEventInput): Promise<MedicalEvent> {
+  if (!MEDICAL_KINDS.includes(input.kind)) throw new NettleError('invalid_value', 'kind');
+  const title = input.title.trim();
+  if (!title) throw new NettleError('empty_title');
+  if (title.length > MAX_MEDICAL_TITLE) throw new NettleError('invalid_value', 'title');
+  const at = makeStamp(deps.clock, input.at);
+  const endDay = input.endDay ?? null;
+  if (endDay !== null) {
+    if (input.kind !== 'illness') throw new NettleError('invalid_value', 'endDay');
+    if (addDays(endDay, 0) !== endDay) throw new NettleError('invalid_value', 'endDay');
+    if (endDay < localDay(at.utc, at.tz, deps.dayStart.get())) throw new NettleError('invalid_value', 'endDay'); // not before the day it started
+  }
+  const event: MedicalEvent = { id: deps.ids(), at, kind: input.kind, title, endDay, note: input.note?.trim() || null };
+  await deps.repo.addRecord('medicalEvents', event);
   return event;
 }
 

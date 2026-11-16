@@ -2,7 +2,7 @@ import { languageName } from './prompts';
 import type { Language } from '../ports/llm';
 
 /** LL-7: bump when the analysis prompt or schema changes. */
-export const ANALYSIS_PROMPT_VERSION = 'analysis-8';
+export const ANALYSIS_PROMPT_VERSION = 'analysis-9';
 
 /** LL-4: the answer shape. Strength has no "strong": these are hypotheses, never conclusions. */
 export const ANALYSIS_SCHEMA = {
@@ -47,6 +47,7 @@ export function analysisPrompt(language: Language, input: { json: string; photoN
     'A skin entry may carry "cracks": true (the person marked cracks or open wounds) and "size_mm" (the largest diameter of one fixed patch, in whole millimetres, as the person estimated it). Cracks and a growing or shrinking size can say more than the 0 to 10 scores; an entry without "size_mm" has no size logged, which is not a size of zero.',
     'A treatment application may carry "reaction": "none", "mild" or "strong" (burning, itching or redness the person noted after applying it). An application without "reaction" has no reaction recorded, which is not the same as none. A strong reaction may explain a worse area after a treatment.',
     'The "time_to_relapse" list is computed by the program, not by the person or by you: for each finished course of one treatment on one area (applications with no gap longer than 7 days) it gives the days from the last application to the next flare of that area, or "no_flare_yet", and lists other treatments applied in between as confounders. Use these numbers as given and do not recompute them; two real courses less than a week apart count as one course. Attached photos are labelled with the time since the last treatment on their area, also computed by the program; "no treatment logged" means none was logged in the 7 days before the photo, not that none was applied.',
+    'A day with "illness_day": true was an illness day: the person marked illness in Daily health or logged a medical event of kind illness that covers the day. Count such a day once. "medical" lists visits, test results, diagnoses and illnesses (with "until" when an illness has an end date) as context only: they are what the person recorded, not something you can confirm or extend into a diagnosis.',
     'Treatments applied to an area change how it looks, so treat them as confounders and say when they weaken a hypothesis.',
     'Days without a "daily_health" record ("logged": false) may have missing meals or intake. Count and discount them: do not treat a missing entry as "nothing happened", and say how many days were incomplete when it matters.',
     'The "flares" list is derived, not reported by the person: a flare is a period in which a skin area\'s severity was at or above "severity_threshold_for_flares", ending at the first later entry below it ("open_at_last_entry" means no later entry below it exists). Its timing is only as precise as the logging.',

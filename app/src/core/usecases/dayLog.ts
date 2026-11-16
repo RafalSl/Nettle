@@ -14,6 +14,7 @@ export const LOG_KINDS = [
   'stoolEntries',
   'treatmentApplications',
   'changeEvents',
+  'medicalEvents',
   'reactions',
   'drinks',
   'medicationEntries',

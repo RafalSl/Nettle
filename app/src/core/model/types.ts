@@ -160,6 +160,26 @@ export interface ChangeEvent {
   note: string | null;
 }
 
+/** IN-18 */
+export const MEDICAL_KINDS = ['visit', 'test_result', 'diagnosis', 'illness', 'other'] as const;
+export type MedicalKind = (typeof MEDICAL_KINDS)[number];
+/** IN-18: the longest title of a medical event. */
+export const MAX_MEDICAL_TITLE = 120;
+
+/**
+ * IN-18: what happens on the medical side: a visit, a test result, a diagnosis, an illness or something else, with a
+ * date (`at`, the day it is on), a short title and a free note. An illness can also have an end date, so its length
+ * is known; `endDay` is a calendar day and only illnesses have one. No attachments.
+ */
+export interface MedicalEvent {
+  id: string;
+  at: Stamp;
+  kind: MedicalKind;
+  title: string;
+  endDay: LocalDay | null;
+  note: string | null;
+}
+
 /** IN-13 */
 export const SYMPTOMS = ['hives', 'mouth_tingling', 'swelling', 'stomach'] as const;
 export type Symptom = (typeof SYMPTOMS)[number];
@@ -297,6 +317,7 @@ export interface Records {
   stoolEntries: StoolEntry[];
   treatmentApplications: TreatmentApplication[];
   changeEvents: ChangeEvent[];
+  medicalEvents: MedicalEvent[];
   reactions: Reaction[];
   drinks: Drink[];
   medicationEntries: MedicationEntry[];
@@ -329,6 +350,7 @@ export const EXTRA_KINDS: readonly ExtraKind[] = [
   'stoolEntries',
   'treatmentApplications',
   'changeEvents',
+  'medicalEvents',
   'reactions',
   'drinks',
   'medicationEntries',

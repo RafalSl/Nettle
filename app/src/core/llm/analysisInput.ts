@@ -107,6 +107,21 @@ export function buildAnalysisInput(src: AnalysisSource, dayFrom: string, dayTo: 
     add('medicationEntries', dayOf(m.at), 'medication', { time: time(m.at.utc, m.at.tz), kind: m.category, name: m.name, ...(m.dose ? { dose: m.dose } : {}) }, true);
   }
 
+  // IN-18: medical events are context like change events, so they also appear in the lookback before the period.
+  for (const e of src.medicalEvents) {
+    add('medicalEvents', dayOf(e.at), 'medical', { time: time(e.at.utc, e.at.tz), kind: e.kind, title: e.title, ...(e.endDay ? { until: e.endDay } : {}), ...(e.note ? { note: e.note } : {}) }, true);
+  }
+  // IN-18, IN-6: a day is an illness day when the Daily health tag says so or an illness event covers it (an illness
+  // without an end date covers its own day). One flag, so the model does not count the same illness twice.
+  const illnessDays = new Set<string>();
+  for (const c of src.checkIns) if (c.values['tag-illness-or-infection'] === true) illnessDays.add(c.day);
+  for (const e of src.medicalEvents) {
+    if (e.kind !== 'illness') continue;
+    const start = dayOf(e.at);
+    for (let d: string | null = start; d && d <= (e.endDay && e.endDay >= start ? e.endDay : start); d = addDays(d, 1)) illnessDays.add(d);
+  }
+  for (const d of illnessDays) if (inScope(d)) dayRow(d).illness_day = true;
+
   // Period-only kinds.
   for (const m of src.meals) {
     add('meals', dayOf(m.at), 'meals', { time: time(m.at.utc, m.at.tz), description: m.description, ingredients: m.ingredients, allergens: m.allergens, ...sourceOf(m.source), ...(m.note ? { note: m.note } : {}) });

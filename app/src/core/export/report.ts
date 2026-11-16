@@ -238,6 +238,12 @@ export function buildReportHtml(input: ReportInput): string {
     out.push(`<h2>${esc(tx('report.changes'))}</h2>`);
     out.push(table([tx('report.date'), tx('report.what'), tx('report.name')], events.map((e) => [e.dateUnknown ? tx('report.dateUnknown') : when(e.at), `${tx(`change.actions.${e.action}`)} (${categoryName(e.category)})`, e.name])));
   }
+  // IN-18: medical events as recorded; an illness shows its end date when it has one.
+  const medical = byTime(r.medicalEvents);
+  if (medical.length > 0) {
+    out.push(`<h2>${esc(tx('report.medical'))}</h2>`);
+    out.push(table([tx('report.date'), tx('report.medicalKind'), tx('report.medicalTitle'), tx('report.medicalUntil'), tx('report.note')], medical.map((e) => [when(e.at).slice(0, 10), tx(`medical.kinds.${e.kind}`), e.title, e.endDay, e.note])));
+  }
   const meds = byTime(r.medicationEntries);
   if (meds.length > 0) {
     out.push(`<h2>${esc(tx('report.medication'))}</h2>`);

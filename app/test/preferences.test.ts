@@ -85,12 +85,12 @@ describe.each(repos)('preferences (%s)', (_name, make) => {
     await unpinEntryType(deps, 'stool');
     let prefs = await getPreferences(deps);
     expect(pinnedEntryTypes(prefs)).toEqual(['meal', 'skin', 'checkin', 'treatment']);
-    expect(unpinnedEntryTypes(prefs)).toEqual(['drink', 'medication', 'nails', 'stool', 'reaction', 'change']);
+    expect(unpinnedEntryTypes(prefs)).toEqual(['drink', 'medication', 'nails', 'stool', 'reaction', 'change', 'medical']);
     await pinEntryType(deps, 'drink');
     await pinEntryType(deps, 'drink'); // pinning twice keeps one
     prefs = await getPreferences(deps);
     expect(pinnedEntryTypes(prefs)).toEqual(['meal', 'skin', 'checkin', 'treatment', 'drink']);
-    expect(pinnedEntryTypes(prefs).length + unpinnedEntryTypes(prefs).length).toBe(10); // nothing is hidden
+    expect(pinnedEntryTypes(prefs).length + unpinnedEntryTypes(prefs).length).toBe(11); // nothing is hidden
     expect(await code(pinEntryType(deps, 'more' as never))).toBe('invalid_value');
   });
 

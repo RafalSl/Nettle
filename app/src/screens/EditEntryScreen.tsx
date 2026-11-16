@@ -3,10 +3,11 @@ import { useEffect, useState } from 'react';
 import { Switch, Text, TextInput, View } from 'react-native';
 import { joinIngredients, splitIngredients } from '@/core/model/allergens';
 import { ALLERGENS, CHANGE_ACTIONS, MEDICATION_CATEGORIES, NAIL_EXTENTS, NAIL_STAGES, SCORE_KEYS, SYMPTOMS, TREATMENT_REACTIONS } from '@/core/model/types';
-import type { Allergen, ListItem, MedicationCategory, RecordKind, SkinArea, TreatmentReaction } from '@/core/model/types';
+import type { Allergen, ListItem, LocalDay, MedicalKind, MedicationCategory, RecordKind, SkinArea, TreatmentReaction } from '@/core/model/types';
 import {
   editDrink,
   editChangeEvent,
+  editMedicalEvent,
   editCheckIn,
   editMeal,
   editMedication,
@@ -23,6 +24,7 @@ import { useServices } from '@/services';
 import { FormModal, useField, useForm } from '@/ui/FormModal';
 import { DrinkFields, draftFromDrink, drinkInput, drinkMissing, type DrinkDraft } from '@/ui/DrinkFields';
 import { PhotoStrip } from '@/ui/PhotoStrip';
+import { MedicalFields } from '@/ui/MedicalFields';
 import { parseSizeText, sizeToSave, SkinExtraFields } from '@/ui/SkinExtraFields';
 import { DailyHealthFields, type DailyValues } from '@/ui/DailyHealthFields';
 import { Chips, Hint, Label, ScoreInput, TimeField, styles } from '@/ui/components';
@@ -186,6 +188,24 @@ function TreatmentFields({ r, areas, treatments }: { r: Rec<'treatmentApplicatio
   );
 }
 
+function MedicalEditFields({ r }: { r: Rec<'medicalEvents'> }) {
+  const { deps } = useServices();
+  const f = useForm();
+  const c = useCommon(r.note, f.touch);
+  const [kind, setKind] = useField<MedicalKind>(r.kind, f.touch);
+  const [title, setTitle] = useField(r.title, f.touch);
+  const [endDay, setEndDay] = useField<LocalDay | null>(r.endDay, f.touch);
+  return (
+    <FormModal
+      dirty={f.dirty}
+      missing={title.trim() ? null : t('edit.titleMissing')}
+      onSave={async () => void (await editMedicalEvent(deps, r.id, { kind, title, ...(kind === 'illness' ? { endDay } : {}), note: c.note, at: c.at ?? undefined }))}>
+      <MedicalFields kind={kind} onKind={setKind} title={title} onTitle={setTitle} endDay={endDay} onEndDay={setEndDay} />
+      <CommonFields c={c} original={r.at.utc} />
+    </FormModal>
+  );
+}
+
 function ChangeFields({ r, categories }: { r: Rec<'changeEvents'>; categories: ListItem[] }) {
   const { deps } = useServices();
   const f = useForm();
@@ -314,6 +334,7 @@ export default function EditEntryScreen() {
     case 'treatmentApplications':
       return <TreatmentFields r={row.record} areas={usable(areas, row.record.areaIds)} treatments={usable(treatments, [row.record.treatmentId])} />;
     case 'changeEvents': return <ChangeFields r={row.record} categories={state.categories} />;
+    case 'medicalEvents': return <MedicalEditFields r={row.record} />;
     case 'reactions': return <ReactionFields r={row.record} />;
     case 'drinks': return <DrinkEdit r={row.record} />;
     case 'medicationEntries': return <MedicationFields r={row.record} />;

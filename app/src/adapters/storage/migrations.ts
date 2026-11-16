@@ -303,6 +303,19 @@ export const MIGRATIONS: string[] = [
   `
   ALTER TABLE treatment_application ADD COLUMN reaction TEXT CHECK (reaction IS NULL OR reaction IN ('none', 'mild', 'strong'));
   `,
+  // IN-18: medical events (visit, test result, diagnosis, illness, other); an illness may have an end day.
+  `
+  CREATE TABLE medical_event (
+    id TEXT PRIMARY KEY,
+    ts_utc TEXT NOT NULL,
+    tz TEXT NOT NULL,
+    kind TEXT NOT NULL CHECK (kind IN ('visit', 'test_result', 'diagnosis', 'illness', 'other')),
+    title TEXT NOT NULL CHECK (length(title) BETWEEN 1 AND 120),
+    end_day TEXT CHECK (end_day IS NULL OR kind = 'illness'),
+    note TEXT
+  );
+  CREATE INDEX medical_event_ts ON medical_event (ts_utc);
+  `,
 ];
 
 export async function migrate(db: SqlDb): Promise<void> {

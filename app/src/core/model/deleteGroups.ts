@@ -4,7 +4,7 @@ import type { RecordKind } from './types';
 export const DELETE_GROUPS = {
   food: ['meals', 'reactions', 'drinks', 'medicationEntries'],
   skin: ['skinEntries', 'nailEntries', 'photos', 'treatmentApplications'],
-  health: ['checkIns', 'stoolEntries', 'changeEvents'],
+  health: ['checkIns', 'stoolEntries', 'changeEvents', 'medicalEvents'],
   ai: ['analyses', 'reportSummaries'],
 } as const satisfies Record<string, readonly RecordKind[]>;
 

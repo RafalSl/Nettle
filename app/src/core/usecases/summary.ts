@@ -49,7 +49,7 @@ export async function summaryDays(deps: Deps, days: { from?: string; to?: string
   let dayFrom = days.from;
   if (!dayFrom) {
     const snap = await deps.repo.snapshot();
-    const all = [...snap.meals, ...snap.skinEntries, ...snap.nailEntries, ...snap.checkIns, ...snap.drinks, ...snap.stoolEntries].map((r) => localDay(r.at.utc, r.at.tz, start));
+    const all = [...snap.meals, ...snap.skinEntries, ...snap.nailEntries, ...snap.checkIns, ...snap.drinks, ...snap.stoolEntries, ...snap.medicalEvents].map((r) => localDay(r.at.utc, r.at.tz, start));
     dayFrom = all.sort()[0];
   }
   const dayTo = days.to ?? today;

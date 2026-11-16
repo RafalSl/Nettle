@@ -75,6 +75,7 @@ export const noExtra = {
   stoolEntries: [],
   treatmentApplications: [],
   changeEvents: [],
+  medicalEvents: [],
   reactions: [],
   drinks: [],
   medicationEntries: [],

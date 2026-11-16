@@ -36,7 +36,7 @@ describe('report summary (LL-14, EX-3, EX-4)', () => {
     expect(p.system).toContain('Polish');
     expect(p.user).toContain('{"days":[]}');
     expect(p.schema.required).toEqual(['summary']);
-    expect(SUMMARY_PROMPT_VERSION).toBe('summary-7');
+    expect(SUMMARY_PROMPT_VERSION).toBe('summary-8');
   });
 
   it('LL-14 only a non-empty summary string is an answer', () => {
@@ -49,7 +49,7 @@ describe('report summary (LL-14, EX-3, EX-4)', () => {
     await setModel(deps, 'report_summary', 'claude-sonnet-5-5');
     const prepared = await prepareSummary(deps, sel);
     expect(llm.requests).toHaveLength(0);
-    expect(prepared).toMatchObject({ model: 'claude-sonnet-5-5', promptVersion: 'summary-7', counts: { days: 5 } });
+    expect(prepared).toMatchObject({ model: 'claude-sonnet-5-5', promptVersion: 'summary-8', counts: { days: 5 } });
     expect(prepared.request.images).toBeUndefined();
     expect(await code(prepareSummary(deps, { ...sel, dayFrom: '2026-01-15', dayTo: '2026-01-14' }))).toBe('invalid_range');
     expect(await code(prepareSummary(deps, { ...sel, dayFrom: '2026-03-01', dayTo: '2026-03-02' }))).toBe('analysis_no_data');
@@ -106,7 +106,7 @@ describe('report summary (LL-14, EX-3, EX-4)', () => {
   });
 
   it('EX-4 the summary text is escaped and an unedited one carries no "edited" note', () => {
-    const base = { language: 'en' as const, text: (k: string) => `[${k}]`, areaName: () => '', itemName: () => '', records: Object.fromEntries(['meals', 'skinEntries', 'nailEntries', 'checkIns', 'stoolEntries', 'treatmentApplications', 'changeEvents', 'reactions', 'drinks', 'medicationEntries', 'photos', 'analyses', 'reportSummaries'].map((k) => [k, []])) as never, skinAreas: [], dailyItems: [], changeCategories: [], treatments: [], photos: new Map(), range: { from: null, to: null }, exportedAt: { utc: '2026-01-20T10:00:00.000Z', tz: 'UTC' } };
+    const base = { language: 'en' as const, text: (k: string) => `[${k}]`, areaName: () => '', itemName: () => '', records: Object.fromEntries(['meals', 'skinEntries', 'nailEntries', 'checkIns', 'stoolEntries', 'treatmentApplications', 'changeEvents', 'medicalEvents', 'reactions', 'drinks', 'medicationEntries', 'photos', 'analyses', 'reportSummaries'].map((k) => [k, []])) as never, skinAreas: [], dailyItems: [], changeCategories: [], treatments: [], photos: new Map(), range: { from: null, to: null }, exportedAt: { utc: '2026-01-20T10:00:00.000Z', tz: 'UTC' } };
     const s = { id: 's', at: base.exportedAt, dayFrom: '2026-01-01', dayTo: '2026-01-02', language: 'en' as const, model: 'm', promptVersion: 'p', counts: {}, generated: '<b>x</b>', text: '<b>x</b>' };
     const html = buildReportHtml({ ...base, summary: s });
     expect(html).toContain('&lt;b&gt;x&lt;/b&gt;');

@@ -1,6 +1,6 @@
 # User flows and edge cases
 
-Status: accepted 2026-11-14 and built, then revised 2026-11-15 (requirements v0.6). Flows marked "(v0.6)" are decided but not built; `docs/open-questions.md` ("Status of the decided work", "Decided in v0.6, not built") lists them. Revised again 2026-11-16 (requirements v0.7): flows marked "(v0.7)" are decided but not built. Requirements: `docs/requirements.md` v0.7. Screens and rules: `docs/ux-design.md`.
+Status: accepted 2026-11-14 and built, then revised 2026-11-15 (requirements v0.6). Flows marked "(v0.6)" are decided but not built; `docs/open-questions.md` ("Status of the decided work", "Decided in v0.6, not built") lists them. Revised again 2026-11-16 (requirements v0.7): flows marked "(v0.7)" are decided but not built. Revised again 2026-11-16 (requirements v0.8): flows marked "(v0.8)" are decided but not built, and flows marked "(Later)" are designed but not planned. Requirements: `docs/requirements.md` v0.8. Screens and rules: `docs/ux-design.md`.
 
 ## Flow rules
 
@@ -20,6 +20,8 @@ Status: accepted 2026-11-14 and built, then revised 2026-11-15 (requirements v0.
 6. *Packaged product (IN-2):* scan. The diary's own history is checked first (a hit shows its date and "Scan label again"; an in-store code still asks to confirm the match), then Open Food Facts: found (review), not found (label scan, IN-15, or manual entry) or an in-store code (warning, confirm the match).
 7. *Photo (IN-3):* see "Waiting for the LLM". The estimate arrives as an editable list and lands in the review phase.
 8. *Label (IN-15):* offered when a barcode is not found or incomplete, or from the scan phase for a product without a barcode. Photograph the ingredient label; after the billing confirmation (LL-5) the result lands in the review phase as editable chips with the text the model read beside them. Allergen tags stay unselected.
+9. *Name (v0.8, IN-19):* once a description is typed, "Suggest ingredients from the name" sits beside the photo and label buttons. After the billing confirmation (LL-5) the typical ingredients arrive as an editable list in the same panel as a photo estimate: Add all, pick items or Dismiss. Allergen tags stay unselected, and the AI allergen button can follow. A name that is too vague returns an empty list and a note.
+10. *Fill later (Later, IN-20):* a switch under the description marks the meal or drink for the next AI pack. Save as usual; the log row says "waiting for AI".
 
 **Stool and treatment (1 to 2 taps).**
 - Stool tile opens a quick sheet while Stool is pinned. Tapping a Bristol type saves it now. "Earlier…" opens the full form. From More, Stool opens the full form.
@@ -42,17 +44,30 @@ Status: accepted 2026-11-14 and built, then revised 2026-11-15 (requirements v0.
 
 **Reaction.** Started from a meal row ("Reaction after this meal") or from More, which offers the last 24 hours of meals. No meals: "Log a meal first". The onset cannot be before the meal. The urgent-care advice is always visible on this form (the one exception to the no-hints rule).
 
-**Edit and delete (EN-1).** Tap a row in the log, then Edit or Delete. Delete opens an action sheet naming what else goes: "also deletes 3 photos", "also deletes 1 reaction".
+**Edit and delete (EN-1).** Tap a row in the log, then Edit or Delete. Delete opens an action sheet naming what else goes: "also deletes 3 photos", "also deletes 1 reaction". (v0.8) The same sheet opens from a skin or nail entry on its area's timeline (Review, Areas, the area); after Save or Delete the timeline reloads.
 
 ## Review, backup and import
 
 - **Browsing (v0.6, UX-10):** below the two output rows, Days | Areas. Days: month with ‹ › and a jump picker, a calendar grid, then the month's days; "Incomplete days" is the only filter. Areas: Skin and Nails groups with the last score or stage and date; flaring areas first when opened from the flare card.
+- **Area timeline (v0.8, SK-8, EN-1):** Review, Areas, tap an area. "Go to date" opens a date picker and scrolls to that day, or to the nearest earlier day with an entry and says so; the chart and the list stay complete. Tap an entry's line for Edit or Delete (the sheet names the photos that go with it). Flare lines are derived and not tappable. While comparing photos, taps pick photos and the entry sheet is off.
 - **Doctor report (Review):** range (default since the last export), counts and photo count, sensitive photos off by default, then the share sheet. An optional AI summary (LL-14) is generated here after the billing confirmation, shown for review and editable, and opens the PDF. Nothing in the range disables Export and says why.
 - **Settings (v0.6):** the gear on either tab pushes Settings above the tabs; Back returns to that tab.
 - **Full backup (Settings, Data and backup, EX-14):** records and settings, all photos including sensitive, optional password. The Doctor report defaults would silently drop sensitive photos, which is wrong for a backup or a migration from Expo Go.
 - **Import and restore:** pick the file; password if protected; preview with counts, new versus duplicate and entries skipped by a tombstone, with the restore switch (EX-10); choose records, settings or both and merge or replace. Replace asks again in an action sheet and offers an export first. All or nothing, then a summary. A file that needs settings the app lacks says so and offers to import settings too.
 - **(v0.7) Derived lines:** a photo on the timeline and in the report carries a caption such as "14 h after <treatment>" or "no treatment logged" (SK-4). The Doctor report lists, per area and treatment, the days from the end of each course to the next flare (SK-12), and shows medical events on its timeline (IN-18). Both numbers come from the program; the analysis receives them as numbers.
 - **AI analysis:** range, review of exactly what will be sent plus the billing notice (LL-5), confirm, progress screen, result stored as tentative hypotheses.
+
+## Using my Claude plan (Later, LL-15, IN-20)
+
+Designed, not planned. A manual handoff so a stronger model on the user's own Claude subscription can analyze the diary and fill gaps, with nothing sent by the app itself.
+
+1. *Mark (IN-20):* on a meal or drink, switch on "Fill later with AI" and save with just a description. The log row says "waiting for AI".
+2. *Prepare (LL-15):* Review, AI analysis, "Use my Claude plan", "Prepare a pack". Choose the date range and photos (sensitive photos off by default; no meal photos exist). The screen lists what is inside (counts and marked entries) and says that the file leaves the phone only by your act, that a Claude plan chat is under the consumer terms, and that the app bills nothing. Prepare opens the share sheet; the ZIP never goes anywhere by itself.
+3. *Hand over:* outside the app, give the ZIP to a model in a Claude chat. `INSTRUCTIONS.md` in the pack says what to do and which file to return.
+4. *Import:* "Import a result", pick `result.json`. The preview shows the analysis (range, model), whether a report summary is included, how many suggestions come with it and how many are skipped. Import stores the analysis like any other one, labelled manual, and queues the suggestions.
+5. *Review suggestions (IN-20):* a Today card, "3 AI suggestions to review", opens the list. A row opens that entry's edit screen with the suggestion in the same panel as a photo estimate. Add all or pick, edit, Save: the mark clears and the source reads name estimate (manual). Dismiss removes the suggestion and keeps the mark.
+
+The model never edits `data.json`, and an import never changes an entry by itself.
 
 ## Waiting for the LLM (LL-12)
 
@@ -64,8 +79,8 @@ Status: accepted 2026-11-14 and built, then revised 2026-11-15 (requirements v0.
 | Leaving the app | The request may be interrupted. On return: "Interrupted, nothing was saved" with a one-tap retry on the same prepared request. |
 | Cancel | Aborts the request and stores nothing. The note says work already started may still be billed. |
 | Failure | Clear message, nothing stored (LL-8). |
-| Meal photo or label | Inline in the form, which stays editable. After 30 seconds: "Still working, keep entering the meal" and a Cancel link. |
-| Meal photo result | A banner with the suggested ingredients: Add all, pick items, or Dismiss. Added items are normal chips, so they can be renamed and removed, and the user's own can be added. Never overwrites typed text. LLM allergen tags stay unselected. |
+| Meal photo, label or name (v0.8) | Inline in the form, which stays editable. After 30 seconds: "Still working, keep entering the meal" and a Cancel link. |
+| Meal photo or name result | A banner with the suggested ingredients: Add all, pick items, or Dismiss. Added items are normal chips, so they can be renamed and removed, and the user's own can be added. Never overwrites typed text. LLM allergen tags stay unselected. A name that is too vague returns an empty list and the model's note (v0.8). |
 | Save or leave the form while waiting | Save uses the fields as they are and drops the estimate. Leaving aborts it. |
 
 Built: a timeout is never retried (so a call can no longer run about 30 minutes), the analysis screen has elapsed time and Cancel, both confirmations say the call is billed separately, the inline photo estimate with Cancel, keep-awake, the running card in Review and the interrupted state with retry. Keep-awake and the behavior when the app is backgrounded are unverified on a device. Streaming (`expo/fetch`, unverified) or the Message Batches API are options if long runs time out in practice; neither is planned.
@@ -127,6 +142,21 @@ Each reminder carries a target in its data (`checkin`, `nails`, `backup`, and in
 | Another treatment applied between the course end and the flare (v0.7) | Listed beside the result as a confounder |
 | Size no longer applies, the patch healed (v0.7) | Clear empties it; "No change" would keep carrying it |
 | Entries made on the old single intimate area (v0.7) | No migration in the prototyping phase; the area and its test entries are dropped |
+| Go to date with no entry that day (v0.8) | Scrolls to the nearest earlier day with an entry and says so |
+| Go to date before the area's first entry (v0.8) | Scrolls to the oldest day and says so |
+| Delete the last entry of an area from its timeline (v0.8) | The timeline shows its empty state; the area stays |
+| Edit an entry's time so it falls on another day, from the timeline (v0.8) | It appears under the new day after the reload; flares are recomputed |
+| Tap an entry while comparing photos (v0.8) | Nothing opens; taps pick photos until compare mode ends |
+| Name estimate with an empty description (v0.8) | The button is hidden |
+| Name too vague, for example "lunch" (v0.8) | An empty list and the model's note; nothing is added |
+| Name estimate on a meal chosen from history (v0.8) | Allowed; it behaves like a photo estimate there (IN-16) and never replaces confirmed ingredients |
+| The same name estimated twice (v0.8) | Each run is a new call; the diary's history is the cache (IN-7), nothing separate is stored |
+| Result for a different pack (Later) | Refused, showing the pack id it answers |
+| The same result imported twice (Later) | Skipped: "already imported" |
+| Result is not valid or fails the schema (Later) | Refused whole with the reason; nothing is stored |
+| Suggestion for an entry deleted since the pack (Later) | Skipped and counted in the preview |
+| Suggestion for an entry that now has ingredients (Later) | Shown beside them; never replaces them |
+| Suggestion dismissed (Later) | Removed; the mark stays, so the next pack asks again |
 | Delete all data | Offers an export first, asks twice; does not delete the API key (it has its own remove button) |
 
 ## Risks and open checks
@@ -139,3 +169,4 @@ Each reminder carries a target in its data (`checkin`, `nails`, `backup`, and in
 - (v0.7) A course ends after 7 days without an application (SK-12, decided 2026-11-16), so maintenance use twice a week stays one course. Accepted cost: two real courses less than a week apart merge into one. A gap per treatment is the fallback if that hides too much.
 - (v0.7) The Skin form grows by a switch and a Details row on top of five scores; check on the phone that an update with no change is still one tap and the form does not need scrolling for a typical area.
 - (v0.6) The slider row (−, slider, +) is a design bet: check on the phone that whole-number steps feel right and that the value is readable under the thumb.
+- (Later) The AI pack (LL-15) is unverified on the Claude side: whether a chat opens a ZIP with photos, how many files and how large, which models and usage limits the plan gives, and what the account's privacy setting does to retention. Test with a synthetic pack before building anything.

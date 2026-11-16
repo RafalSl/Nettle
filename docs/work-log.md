@@ -441,3 +441,14 @@ Newest entry last. One short entry per working session or meaningful step: what 
 ## 2026-11-16: phone test plan (docs only, no code)
 - **Done:** `docs/phone-test-plan.md`, 85 checks in 11 sections with Pass and Notes columns, P0/P1/P2 priorities, exit criteria. Synthetic data only; the time-dependent and AI sections are last.
 - **Next:** run the P0 sections (1 to 4, 7, 8) on a phone and record results in the Pass and Notes columns.
+
+## 2026-11-16: requirements v0.8 and a bug (docs only, no code)
+- **Done:** `docs/requirements.md` is v0.8. New: IN-19 (meal name estimate, text only, own source). Changed: IN-16, LL-4, LL-5, LL-9, EX-4 (name estimates), SK-8 (date jump on the area timeline), EN-1 (edit and delete from the area timeline). UX-1 is marked Bug. The Days list in Review needs no change: tapping a date already opens its day.
+- **Bug recorded:** Settings has no Back button (`docs/open-questions.md`, Known bugs).
+- **Next:** fix the Back button (small), then the area timeline (SK-8, EN-1), then IN-19.
+
+## 2026-11-16: UX and flows for v0.8, and the Claude plan handoff (docs only, no code)
+- **Done:** `docs/ux-design.md` and `docs/user-flows.md` describe the name estimate (IN-19), the area timeline's date jump and Edit and Delete (SK-8, EN-1), and edge cases for both. New requirements marked Later and not planned: IN-20 (fill later with AI) and LL-15 (AI pack and result import, so a stronger model on a Claude plan can analyze and fill gaps). Meal photos are out of scope for them.
+- **Decisions:** a result file is imported, the model never edits `data.json`; fills wait in a "Suggestions to review" queue and never change an entry by themselves; the Settings Back bug has no UX change (it is in `docs/open-questions.md`).
+- **Open:** how a Claude chat takes the pack (requirements, Open).
+- **Next:** unchanged: Back button, area timeline, IN-19. IN-20 and LL-15 wait until the user says so.

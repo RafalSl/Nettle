@@ -2,7 +2,7 @@
 
 Undecided items only. Decisions go into `docs/requirements.md` (canonical, edited directly) and are removed from here.
 
-The file has four parts: undecided questions, accepted limits, decided work that is not built yet, and the phone checklist.
+The file has five parts: undecided questions, accepted limits, known bugs, decided work that is not built yet, and the phone checklist.
 
 ## Open (undecided)
 
@@ -25,6 +25,12 @@ The file has four parts: undecided questions, accepted limits, decided work that
 - **`schema_version` stays 1 in development.** Exports made before the current required sections will not import.
 - **Export memory.** Photos are read one at a time, but the whole ZIP is held in memory (about the sum of the photos). Fine for months of daily photos; watch it on a large archive.
 - **Backup exclusion of photos (SE-7).** Expo Go cannot mark files as excluded from iOS backup; revisit in a standalone build (`isExcludedFromBackup` through a config plugin or native code).
+
+## Known bugs
+
+Built requirements that do not behave as written. Remove an entry when it is fixed and note the fix in `docs/work-log.md`.
+
+- **Settings has no visible Back button (UX-1).** Found 2026-11-16 while using the app. UX-1 and `docs/ux-design.md` say Settings is a pushed screen with Back and no Done, but the Settings list shows no Back button; the only way out is the iOS edge swipe, which a user has to know. Cause: `settings` is a nested stack inside the root stack with `headerShown: false`, so its first screen (`settings/index`) has nothing to go back to inside its own stack and renders no Back; only the child screens (Logging, Privacy and so on) show one. Fix: a Back button in the header of `settings/index` that calls `router.back()`, or opens Today when there is no history (a reminder tap goes straight to `/settings/data`). No requirement change. Phone test N1 and N2 should fail until it is fixed.
 
 ## Status of the decided work
 

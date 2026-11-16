@@ -7,7 +7,7 @@ import { saveCheckIn, logStool } from '@/core/usecases/checkin';
 import { applyTreatment, logReaction } from '@/core/usecases/events';
 import { logMeal } from '@/core/usecases/logMeal';
 import { addArea, archiveSkinArea, logNailEntry, logSkinEntry } from '@/core/usecases/skin';
-import { areasWithEntries, areaTimeline, trendPoints } from '@/core/usecases/timeline';
+import { areasWithEntries, areaTimeline, resolveJumpDay, trendPoints } from '@/core/usecases/timeline';
 import { MemoryRepo } from './fakes/memoryRepo';
 import { makeDeps } from './helpers/fixtures';
 
@@ -138,6 +138,21 @@ describe('area timeline (SK-8)', () => {
     expect(days[1]!.entries[0]).toMatchObject({ kind: 'skin', photos: [{ id: p1.id }] });
     expect(await areaTimeline(deps, nail.id)).toMatchObject([{ day: '2026-01-12', entries: [{ kind: 'nail', photos: [] }] }]);
     expect(await areaTimeline(deps, 'area-sternum')).toEqual([]);
+  });
+
+  it('SK-8 a date jump lands on the day, the nearest earlier day with an entry, or the oldest day, and never filters', async () => {
+    const deps = makeDeps(new MemoryRepo());
+    expect(resolveJumpDay(await areaTimeline(deps, 'area-chin'), '2026-01-11')).toBeNull(); // no entries, nowhere to go
+    await logSkinEntry(deps, { areaId: 'area-chin', scores, at: d('2026-01-10T08:00:00.000Z') });
+    await logSkinEntry(deps, { areaId: 'area-chin', scores, at: d('2026-01-14T08:00:00.000Z') });
+    await logSkinEntry(deps, { areaId: 'area-chin', scores, at: d('2026-01-20T08:00:00.000Z') });
+    const days = await areaTimeline(deps, 'area-chin'); // newest first: 20, 14, 10
+    expect(resolveJumpDay(days, '2026-01-14')).toEqual({ day: '2026-01-14', how: 'exact' });
+    expect(resolveJumpDay(days, '2026-01-17')).toEqual({ day: '2026-01-14', how: 'earlier' }); // not the later 20th
+    expect(resolveJumpDay(days, '2026-01-13')).toEqual({ day: '2026-01-10', how: 'earlier' });
+    expect(resolveJumpDay(days, '2026-02-01')).toEqual({ day: '2026-01-20', how: 'earlier' }); // after the last entry
+    expect(resolveJumpDay(days, '2026-01-02')).toEqual({ day: '2026-01-10', how: 'oldest' }); // before the first entry
+    expect(days.map((x) => x.day)).toEqual(['2026-01-20', '2026-01-14', '2026-01-10']); // the list itself is untouched
   });
 
   it('SK-8 trend points average a day, go oldest first, carry the derived flare marks, and skip other kinds', async () => {

@@ -86,6 +86,8 @@ How to read it: each check has an ID, what to do, and what you should see. Mark 
 | R5 | Segmented control to Areas. | Skin and Nails groups with last severity or stage and date; archived areas hidden. |  |  |
 | R6 | Daily health trends. | One chart per score item; archived items keep history. |  |  |
 | R7 | Day view: "Show all" and open on Today. | Works from Today's "Show all (n)". |  |  |
+| R8 | Area timeline, "Go to date": pick a day with an entry, a day without one, and a date before the first entry. | The list scrolls so the day sits just under the header (not hidden by it); the day is tinted; a line says which day is shown when the picked day has no entry. Chart and list stay complete. |  |  |
+| R9 | Area timeline: tap an entry line, then Edit, then Save; then Delete on another entry. While "Compare two photos" is on, tap an entry line. | Sheet names the photos that go with the entry. After Save or Delete the timeline reloads at the same place. While comparing, entry lines do nothing and taps pick photos. |  |  |
 
 ## 7. Regular items and reminders (P0 for notifications)
 

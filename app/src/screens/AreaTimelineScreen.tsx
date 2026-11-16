@@ -1,33 +1,58 @@
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { useCallback, useState } from 'react';
-import { Alert, Text, View } from 'react-native';
-import { areaTimeline, trendPoints, type TimelineDay, type TrendKey } from '@/core/usecases/timeline';
-import { SCORE_KEYS, type Photo } from '@/core/model/types';
-import { localDateTime } from '@/core/model/time';
+import { useCallback, useRef, useState } from 'react';
+import { Alert, Pressable, type ScrollViewInstance, Text, View } from 'react-native';
+import { areaTimeline, resolveJumpDay, trendPoints, type JumpTarget, type TimelineDay, type TimelineEntry, type TrendKey } from '@/core/usecases/timeline';
+import { SCORE_KEYS, type Photo, type SkinArea } from '@/core/model/types';
+import { localDateTime, localDay } from '@/core/model/time';
 import { areaLabel, errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
 import { PhotoCompare } from '@/ui/PhotoCompare';
 import { PhotoThumbs } from '@/ui/PhotoThumbs';
 import { TrendChart } from '@/ui/TrendChart';
 import { Button, Chips, Heading, Hint, Screen, styles } from '@/ui/components';
+import { describeRow } from '@/ui/logRow';
+import { useEntryActions } from '@/ui/useEntryActions';
 
-/** SK-8: one area across dates: the scores or nail stage of each entry with its photos beside them, newest day first. */
+/**
+ * SK-8, EN-1: one area across dates: the scores or nail stage of each entry with its photos beside them, newest day
+ * first. "Go to date" scrolls to a day (navigation, not a filter); a tap on an entry opens the day log's Edit and Delete sheet.
+ */
 export default function AreaTimelineScreen() {
   const { deps } = useServices();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [days, setDays] = useState<TimelineDay[] | null>(null);
   const [name, setName] = useState('');
+  const [areas, setAreas] = useState<SkinArea[]>([]);
   const [trend, setTrend] = useState<TrendKey>('severity');
   const [comparing, setComparing] = useState(false);
   const [picked, setPicked] = useState<Photo[]>([]);
+  const [picking, setPicking] = useState(false);
+  const [pickerMax, setPickerMax] = useState(() => deps.clock.now());
+  const [jump, setJump] = useState<{ target: JumpTarget; picked: string } | null>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
+  const dayY = useRef<Record<string, number>>({});
   const load = useCallback(() => {
     (async () => {
-      const area = (await deps.repo.listAreas()).find((a) => a.id === id);
+      const all = await deps.repo.listAreas();
+      const area = all.find((a) => a.id === id);
+      setAreas(all);
       setName(area ? areaLabel(area) : '');
       setDays(await areaTimeline(deps, id));
     })().catch((e) => Alert.alert(errorMessage(e)));
   }, [deps, id]);
   useFocusEffect(load);
+  const openEntry = useEntryActions(load);
+
+  /** SK-8: the picked calendar day leads to that day, or the nearest earlier one; the list and chart stay complete. */
+  function jumpTo(picked: string) {
+    setPicking(false);
+    const target = resolveJumpDay(days ?? [], picked);
+    setJump(target ? { target, picked } : null);
+    const y = target ? dayY.current[target.day] : undefined;
+    if (y !== undefined) scrollRef.current?.scrollTo({ y: Math.max(0, y - 8), animated: true });
+  }
+  const jumpNotice = jump && jump.target.how !== 'exact' ? t(jump.target.how === 'earlier' ? 'review.jumpEarlier' : 'review.jumpOldest', { picked: jump.picked, shown: jump.target.day }) : null;
 
   const isNail = days?.some((d) => d.entries.some((e) => e.kind === 'nail')) ?? false;
   const keys: TrendKey[] = isNail ? ['extent'] : [...SCORE_KEYS];
@@ -44,12 +69,37 @@ export default function AreaTimelineScreen() {
     }
     return '';
   };
+  /** The sheet's title, the same words as the day's log. */
+  const entryTitle = (e: TimelineEntry) =>
+    describeRow(
+      e.kind === 'skin' ? { kind: 'skinEntries', id: e.entry.id, at: e.entry.at, record: e.entry } : { kind: 'nailEntries', id: e.entry.id, at: e.entry.at, record: e.entry },
+      { areas, treatments: [], categories: [] },
+    ).title;
   const pick = (photo: Photo) =>
     setPicked((cur) => (cur.some((p) => p.id === photo.id) ? cur.filter((p) => p.id !== photo.id) : [...cur, photo].slice(-2))); // a third pick replaces the oldest
 
   return (
-    <Screen>
+    <Screen scrollRef={scrollRef}>
       <Heading>{name}</Heading>
+      {days !== null && days.length > 0 && (
+        <>
+          <Button
+            kind="secondary"
+            title={t('review.goToDate')}
+            onPress={() => (setPickerMax(deps.clock.now()), setPicking((p) => !p))}
+          />
+          {picking && (
+            <DateTimePicker
+              mode="date"
+              display="inline"
+              value={new Date(`${jump?.target.day ?? days[0]!.day}T12:00:00`)}
+              maximumDate={pickerMax}
+              onValueChange={(_e, d) => jumpTo(localDay(d.toISOString(), deps.clock.timeZone()))}
+            />
+          )}
+          {jumpNotice && <Hint>{jumpNotice}</Hint>}
+        </>
+      )}
       {days !== null && days.length === 0 && <Hint>{t('review.timelineEmpty')}</Hint>}
       {days !== null && days.length > 0 && (
         <>
@@ -66,20 +116,28 @@ export default function AreaTimelineScreen() {
         </>
       )}
       {days?.map((d) => (
-        <View key={d.day} style={{ gap: 6 }}>
-          <Text style={styles.label}>{d.day}</Text>
+        <View key={d.day} style={{ gap: 6 }} onLayout={(e) => void (dayY.current[d.day] = e.nativeEvent.layout.y)}>
+          <Text style={[styles.label, jump?.target.day === d.day && { backgroundColor: '#3b82f622', borderRadius: 6 }]}>{d.day}</Text>
           {d.flares.map((f) => (
             <Hint key={f.id}>{`${localDateTime(f.at.utc, f.at.tz).slice(11)}  ${t(f.kind === 'start' ? 'review.flareStart' : 'review.flareEnd')}`}</Hint>
           ))}
           {d.entries.map((e) => (
             <View key={e.entry.id} style={{ gap: 4 }}>
-              <Text style={styles.rowText}>
-                {`${localDateTime(e.entry.at.utc, e.entry.at.tz).slice(11)}  ${
-                  e.kind === 'skin'
-                    ? SCORE_KEYS.map((k) => `${t(`skin.scores.${k}`)} ${e.entry.scores[k]}`).join(', ')
-                    : `${t(`nail.stages.${e.entry.stage}`)}, ${t(`nail.extents.${e.entry.extent}`)}`
-                }`}
-              </Text>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`${localDateTime(e.entry.at.utc, e.entry.at.tz).slice(11)} ${entryTitle(e)}`}
+                accessibilityHint={t('review.entryHint')}
+                disabled={comparing} // while comparing, taps pick photos (UX-10)
+                onPress={() => void openEntry(e.kind === 'skin' ? 'skinEntries' : 'nailEntries', e.entry.id, entryTitle(e))}
+                style={({ pressed }) => pressed && { opacity: 0.6 }}>
+                <Text style={styles.rowText}>
+                  {`${localDateTime(e.entry.at.utc, e.entry.at.tz).slice(11)}  ${
+                    e.kind === 'skin'
+                      ? SCORE_KEYS.map((k) => `${t(`skin.scores.${k}`)} ${e.entry.scores[k]}`).join(', ')
+                      : `${t(`nail.stages.${e.entry.stage}`)}, ${t(`nail.extents.${e.entry.extent}`)}`
+                  }`}
+                </Text>
+              </Pressable>
               {e.entry.note ? <Hint>{e.entry.note}</Hint> : null}
               <PhotoThumbs photos={e.photos} {...(comparing ? { onPick: pick, picked: new Set(picked.map((p) => p.id)) } : {})} />
             </View>

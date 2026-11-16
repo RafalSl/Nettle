@@ -2594,6 +2594,90 @@ describe('Area timeline (SK-8)', () => {
     mockParams.current = {};
   });
 
+  it('SK-8 Go to date scrolls to the day, or the nearest earlier day, says so, and leaves the chart and the list complete', async () => {
+    const deps = nowDeps();
+    await logSkinEntry(deps, { areaId: 'area-chin', scores, at: new Date('2026-01-10T08:00:00.000Z') });
+    await logSkinEntry(deps, { areaId: 'area-chin', scores, at: new Date('2026-01-14T08:00:00.000Z') });
+    mockParams.current = { id: 'area-chin' };
+    const { tree } = await mount(() => require('@/app/(tabs)/review/area'), deps);
+    await flush();
+    const scrollTo = tree.root.findAll((n) => n.instance && typeof n.instance.scrollTo === 'function')[0]!.instance.scrollTo as jest.Mock; // the jest ScrollView mock
+    scrollTo.mockClear();
+    const layoutOf = (day: string, y: number) =>
+      act(async () => {
+        const node = tree.root.findAll((n) => typeof n.props.onLayout === 'function' && n.findAll((c) => c.children.includes(day)).length > 0)[0]!;
+        node.props.onLayout({ nativeEvent: { layout: { y } } });
+      });
+    await layoutOf('2026-01-14', 40);
+    await layoutOf('2026-01-10', 400);
+    mockPicker.last = undefined;
+    await press(tree, en.review.goToDate);
+    expect(mockPicker.last!.maximumDate).toBeInstanceOf(Date);
+    const pick = (iso: string) => act(async () => mockPicker.last!.onValueChange({}, new Date(`${iso}T12:00:00`)));
+    await pick('2026-01-12'); // no entry that day: the nearest earlier one is the 10th
+    expect(scrollTo).toHaveBeenLastCalledWith({ y: 392, animated: true });
+    expect(hasText(tree, en.review.jumpEarlier.replace('{{picked}}', '2026-01-12').replace('{{shown}}', '2026-01-10'))).toBe(true);
+    expect(hasText(tree, '2026-01-14')).toBe(true); // navigation, not a filter
+    mockPicker.last = undefined;
+    await press(tree, en.review.goToDate);
+    await pick('2026-01-14'); // an exact hit says nothing
+    expect(scrollTo).toHaveBeenLastCalledWith({ y: 32, animated: true });
+    expect(hasText(tree, 'No entry on')).toBe(false);
+    mockPicker.last = undefined;
+    await press(tree, en.review.goToDate);
+    await pick('2026-01-02'); // before the first entry
+    expect(scrollTo).toHaveBeenLastCalledWith({ y: 392, animated: true });
+    expect(hasText(tree, en.review.jumpOldest.replace('{{picked}}', '2026-01-02').replace('{{shown}}', '2026-01-10'))).toBe(true);
+    mockParams.current = {};
+  });
+
+  it('EN-1, SK-8 a tap on an entry opens the day log sheet naming its photos; Edit opens the form and Delete reloads the timeline', async () => {
+    const deps = nowDeps();
+    const keep = await logSkinEntry(deps, { areaId: 'area-chin', scores, at: new Date('2026-01-10T08:00:00.000Z') });
+    const doomed = await logSkinEntry(deps, { areaId: 'area-chin', scores: { ...scores, severity: 7 }, at: new Date('2026-01-12T08:00:00.000Z') });
+    await addPhoto(deps, { entryKind: 'skinEntry', entryId: doomed.id, sourceUri: 'doomed-photo' });
+    mockParams.current = { id: 'area-chin' };
+    const sheet = jest.spyOn(ActionSheetIOS, 'showActionSheetWithOptions').mockImplementation((_o, cb) => cb(0)); // Edit
+    const { tree } = await mount(() => require('@/app/(tabs)/review/area'), deps);
+    await flush();
+    const entries = () => tree.root.findAll((n) => n.props.accessibilityHint === en.review.entryHint && typeof n.props.onPress === 'function');
+    expect(entries()).toHaveLength(2); // flare lines are derived and have no tap target
+    await act(async () => entries()[0]!.props.onPress()); // newest day first: the 12th
+    await flush();
+    const [opts] = sheet.mock.calls[0] as unknown as [{ title: string; message: string; options: string[]; destructiveButtonIndex: number[] }];
+    expect(opts.title).toBe(`${en.log.skin}: ${en.areas['area-chin']}`);
+    expect(opts.message).toContain(`1 ${en.log.kinds.photos}`);
+    expect(opts.options).toEqual([en.log.editAction, en.log.deleteAction, en.common.cancel]);
+    expect(mockRouter.push).toHaveBeenLastCalledWith({ pathname: '/form/edit', params: { kind: 'skinEntries', id: doomed.id } });
+    sheet.mockImplementation((_o, cb) => cb(1)); // Delete
+    await act(async () => entries()[0]!.props.onPress());
+    await flush();
+    expect((await deps.repo.listSkinEntries()).map((e) => e.id)).toEqual([keep.id]);
+    expect((await deps.repo.listTombstones()).map((x) => x.id)).toContain(doomed.id);
+    expect(hasText(tree, '2026-01-12')).toBe(false); // the timeline reloaded
+    expect(entries()).toHaveLength(1);
+    jest.restoreAllMocks();
+    mockParams.current = {};
+  });
+
+  it('SK-8, UX-10 while comparing photos the entry lines are off, so taps pick photos', async () => {
+    const deps = nowDeps();
+    const a = await logSkinEntry(deps, { areaId: 'area-chin', scores, at: new Date('2026-01-10T08:00:00.000Z') });
+    const b = await logSkinEntry(deps, { areaId: 'area-chin', scores, at: new Date('2026-01-12T08:00:00.000Z') });
+    await addPhoto(deps, { entryKind: 'skinEntry', entryId: a.id, sourceUri: 'one' });
+    await addPhoto(deps, { entryKind: 'skinEntry', entryId: b.id, sourceUri: 'two' });
+    mockParams.current = { id: 'area-chin' };
+    const { tree } = await mount(() => require('@/app/(tabs)/review/area'), deps);
+    await flush();
+    const disabled = () => tree.root.findAll((n) => n.props.accessibilityHint === en.review.entryHint && typeof n.props.onPress === 'function').map((n) => n.props.disabled);
+    expect(disabled()).toEqual([false, false]);
+    await press(tree, en.review.compare);
+    expect(disabled()).toEqual([true, true]);
+    await press(tree, en.review.compareDone);
+    expect(disabled()).toEqual([false, false]);
+    mockParams.current = {};
+  });
+
   it('SK-8 an area without entries explains it is empty', async () => {
     mockParams.current = { id: 'area-sternum' };
     const { tree } = await mount(() => require('@/app/(tabs)/review/area'), nowDeps());

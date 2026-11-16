@@ -114,7 +114,7 @@ export function buildAnalysisInput(src: AnalysisSource, dayFrom: string, dayTo: 
     add('drinks', dayOf(a.at), 'drinks', { time: time(a.at.utc, a.at.tz), name: a.name, ml: a.amountMl, alcohol: a.alcohol, ...(a.ingredients.length ? { ingredients: a.ingredients } : {}), ...(a.allergens.length ? { allergens: a.allergens } : {}), ...sourceOf(a.source), ...(a.note ? { note: a.note } : {}) });
   }
   for (const t of src.treatmentApplications) {
-    add('treatmentApplications', dayOf(t.at), 'treatments', { time: time(t.at.utc, t.at.tz), name: treatmentName.get(t.treatmentId) ?? t.treatmentId, areas: t.areaIds.map((id) => areaName.get(id) ?? id) });
+    add('treatmentApplications', dayOf(t.at), 'treatments', { time: time(t.at.utc, t.at.tz), name: treatmentName.get(t.treatmentId) ?? t.treatmentId, areas: t.areaIds.map((id) => areaName.get(id) ?? id), ...(t.reaction ? { reaction: t.reaction } : {}) });
   }
   for (const s of src.stoolEntries) {
     add('stoolEntries', dayOf(s.at), 'stool', { time: time(s.at.utc, s.at.tz), bristol: s.bristol });

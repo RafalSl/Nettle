@@ -56,7 +56,7 @@ export function describeRow(row: LogRow, ctx: RowContext): { title: string; deta
           name: treatment ? itemLabel(treatment) : row.record.treatmentId,
           areas: row.record.areaIds.map(area).join(', '),
         }),
-        detail: null,
+        detail: row.record.reaction ? t('treatmentReaction.row', { reaction: t(`treatmentReaction.${row.record.reaction}`) }) : null,
       };
     }
     case 'changeEvents':

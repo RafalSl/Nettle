@@ -90,7 +90,7 @@ describe.each(repos)('bulk delete (%s)', (_name, make) => {
     const snap = await repo.snapshot();
     for (const k of RECORD_KINDS) expect(snap[k]).toEqual([]);
     expect(snap.skinAreas).toHaveLength(PREDEFINED_AREAS.length);
-    expect(snap.dailyItems).toHaveLength(14);
+    expect(snap.dailyItems).toHaveLength(16);
     expect(snap.treatments).toHaveLength(1);
   });
 

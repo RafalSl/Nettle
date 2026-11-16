@@ -30,7 +30,7 @@ describe('Daily health items (SK-7, IN-6)', () => {
   it('IN-6 seeds the five scores and yes/no items and the nine tags, and lets the user add, rename and archive', async () => {
     const deps = makeDeps(new MemoryRepo());
     const seeded = await listActiveItems(deps, 'dailyItems');
-    expect(seeded).toHaveLength(14);
+    expect(seeded).toHaveLength(16);
     expect(seeded.every((t) => t.predefined)).toBe(true);
     expect(seeded.filter((i) => i.valueKind === 'score').map((i) => i.id).sort()).toEqual(['item-abdominal-pain', 'item-sleep', 'item-stress', 'item-wellbeing']);
 

@@ -2,8 +2,8 @@ import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Switch, Text, TextInput, View } from 'react-native';
 import { joinIngredients, splitIngredients } from '@/core/model/allergens';
-import { ALLERGENS, CHANGE_ACTIONS, MEDICATION_CATEGORIES, NAIL_EXTENTS, NAIL_STAGES, SCORE_KEYS, SYMPTOMS } from '@/core/model/types';
-import type { Allergen, ListItem, MedicationCategory, RecordKind, SkinArea } from '@/core/model/types';
+import { ALLERGENS, CHANGE_ACTIONS, MEDICATION_CATEGORIES, NAIL_EXTENTS, NAIL_STAGES, SCORE_KEYS, SYMPTOMS, TREATMENT_REACTIONS } from '@/core/model/types';
+import type { Allergen, ListItem, MedicationCategory, RecordKind, SkinArea, TreatmentReaction } from '@/core/model/types';
 import {
   editDrink,
   editChangeEvent,
@@ -168,14 +168,19 @@ function TreatmentFields({ r, areas, treatments }: { r: Rec<'treatmentApplicatio
   const c = useCommon(r.note, f.touch);
   const [treatmentId, setTreatmentId] = useField(r.treatmentId, f.touch);
   const [areaIds, setAreaIds] = useField<Set<string>>(new Set(r.areaIds), f.touch);
+  const [reaction, setReaction] = useField<TreatmentReaction | null>(r.reaction, f.touch);
   return (
     <FormModal
       dirty={f.dirty}
       missing={areaIds.size === 0 ? t('edit.areas') : null}
-      onSave={async () => void (await editTreatmentApplication(deps, r.id, { treatmentId, areaIds: [...areaIds], note: c.note, at: c.at ?? undefined }))}>
+      onSave={async () => void (await editTreatmentApplication(deps, r.id, { treatmentId, areaIds: [...areaIds], reaction, note: c.note, at: c.at ?? undefined }))}>
       <Chips items={treatments.map((x) => ({ id: x.id, label: itemLabel(x) }))} selected={one(treatmentId)} onToggle={setTreatmentId} />
       <Label>{t('more.treatmentAreas')}</Label>
       <Chips items={areas.map((a) => ({ id: a.id, label: areaLabel(a) }))} selected={areaIds} onToggle={(id) => setAreaIds(toggled(areaIds, id))} />
+      {/* IN-11: what the skin did after applying; a tap on the chosen one clears it, because empty means not recorded. */}
+      <Label>{t('treatmentReaction.title')}</Label>
+      <Chips items={TREATMENT_REACTIONS.map((x) => ({ id: x, label: t(`treatmentReaction.${x}`) }))} selected={new Set(reaction ? [reaction] : [])} onToggle={(id) => setReaction(id === reaction ? null : (id as TreatmentReaction))} />
+      <Hint>{t('treatmentReaction.hint')}</Hint>
       <CommonFields c={c} original={r.at.utc} />
     </FormModal>
   );

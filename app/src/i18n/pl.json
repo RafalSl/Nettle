@@ -265,6 +265,14 @@
     "noYesterday": "Nie ma wpisu dziennego z poprzedniego dnia.",
     "stoolSave": "Zapisz stolec"
   },
+  "treatmentReaction": {
+    "title": "Reakcja po nałożeniu",
+    "none": "Brak",
+    "mild": "Łagodna",
+    "strong": "Silna",
+    "hint": "Pieczenie, swędzenie lub zaczerwienienie po nałożeniu. Zostaw puste, jeśli nie zanotowano: puste to nie to samo co brak.",
+    "row": "reakcja: {{reaction}}"
+  },
   "tags": {
     "tag-illness-or-infection": "Choroba lub infekcja",
     "tag-antibiotics": "Antybiotyki",
@@ -275,6 +283,8 @@
     "tag-travel": "Podróż",
     "tag-nicotine": "Nikotyna",
     "tag-joint-symptoms": "Objawy stawowe",
+    "tag-hot-shower": "Gorący lub długi prysznic",
+    "tag-intimate-friction": "Tarcie w okolicy intymnej",
     "item-wellbeing": "Samopoczucie",
     "item-stress": "Stres",
     "item-sleep": "Jakość snu",
@@ -539,6 +549,7 @@
     "cracksYes": "tak",
     "sizeMm": "Rozmiar (mm)",
     "sizeTrend": "Rozmiar w mm w czasie",
+    "treatmentReaction": "Reakcja",
     "note": "Notatka",
     "nails": "Paznokcie",
     "stage": "Etap",
@@ -932,6 +943,8 @@
     "tag-travel": "Podróż dziś.",
     "tag-nicotine": "Papierosy lub inna nikotyna dziś.",
     "tag-joint-symptoms": "Bolesne lub sztywne stawy dziś.",
+    "tag-hot-shower": "Gorący lub długi prysznic albo kąpiel dziś.",
+    "tag-intimate-friction": "Ciasne ubranie, jazda na rowerze lub inne tarcie w okolicy intymnej dziś.",
     "cat-product": "Wszystko, co dotyka skóry lub jej otoczenia: kosmetyki, detergenty, ubrania, biżuteria. Zapisz raz na początku i raz na końcu.",
     "cat-diet": "Sposób odżywiania, który zaczęto lub przerwano, np. bez glutenu lub bez nabiału. Nie zastępuje zapisu posiłków."
   },

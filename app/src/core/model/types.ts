@@ -131,8 +131,14 @@ export interface TreatmentApplication {
   at: Stamp;
   treatmentId: string;
   areaIds: string[];
+  /** IN-11: what the skin did after applying (burning, itching, redness). Set afterwards; null means not recorded, which is not "none". */
+  reaction: TreatmentReaction | null;
   note: string | null;
 }
+
+/** IN-11 */
+export const TREATMENT_REACTIONS = ['none', 'mild', 'strong'] as const;
+export type TreatmentReaction = (typeof TREATMENT_REACTIONS)[number];
 
 /** IN-12 */
 export const CHANGE_ACTIONS = ['started', 'stopped'] as const;

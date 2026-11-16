@@ -105,7 +105,7 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
 
     it('IN-6, SK-7 seeds fourteen predefined Daily health items and stores user tags', async () => {
       const seeded = await repo.listItems('dailyItems');
-      expect(seeded).toHaveLength(14);
+      expect(seeded).toHaveLength(16);
       expect(seeded.every((t) => t.predefined)).toBe(true);
       await repo.upsertItem('dailyItems', myTag);
       await repo.upsertItem('dailyItems', { ...myTag, name: 'Renamed', archived: true });
@@ -132,7 +132,7 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
       const ids = (await repo.listItems('dailyItems')).map((t) => t.id);
       expect(ids).toContain('tag-mine');
       expect(ids).not.toContain('tag-unused');
-      expect(ids).toHaveLength(15); // fourteen predefined always stay
+      expect(ids).toHaveLength(17); // sixteen predefined always stay
     });
 
     it('EX-10 merge settings keeps local tag values; replace overwrites by id and re-seeds predefined tags', async () => {
@@ -152,9 +152,10 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
     it('IN-11 stores a treatment list and applications with several areas', async () => {
       await repo.upsertItem('treatments', { id: 'tr1', name: 'Synthetic cream', predefined: false, archived: false, nameOverride: null, valueKind: 'yesno' as const, description: null });
       expect(await repo.listItems('treatments')).toHaveLength(1);
-      const app = { id: 'ta1', at: { utc: '2026-01-15T07:00:00.000Z', tz: 'Europe/Warsaw' }, treatmentId: 'tr1', areaIds: ['area-chin', 'area-neck'], note: null };
+      const app = { id: 'ta1', at: { utc: '2026-01-15T07:00:00.000Z', tz: 'Europe/Warsaw' }, treatmentId: 'tr1', areaIds: ['area-chin', 'area-neck'], reaction: 'mild' as const, note: null };
       await repo.addRecord('treatmentApplications', app);
-      expect(await repo.listRecords('treatmentApplications')).toEqual([app]);
+      await repo.addRecord('treatmentApplications', { ...app, id: 'ta2', reaction: null }); // IN-11: not recorded is not none
+      expect(await repo.listRecords('treatmentApplications')).toEqual([app, { ...app, id: 'ta2', reaction: null }]);
     });
 
     it('IN-12 stores change events', async () => {
@@ -182,7 +183,7 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
     it('EX-10 replace settings keeps a treatment that an application uses', async () => {
       await repo.upsertItem('treatments', { id: 'tr1', name: 'Synthetic cream', predefined: false, archived: false, nameOverride: null, valueKind: 'yesno' as const, description: null });
       await repo.upsertItem('treatments', { id: 'tr2', name: 'Unused', predefined: false, archived: false, nameOverride: null, valueKind: 'yesno' as const, description: null });
-      await repo.addRecord('treatmentApplications', { id: 'ta1', at: { utc: '2026-01-15T07:00:00.000Z', tz: 'UTC' }, treatmentId: 'tr1', areaIds: ['area-chin'], note: null });
+      await repo.addRecord('treatmentApplications', { id: 'ta1', at: { utc: '2026-01-15T07:00:00.000Z', tz: 'UTC' }, treatmentId: 'tr1', areaIds: ['area-chin'], reaction: null, note: null });
       await repo.importData({ settings: { skinAreas: [], ...noItems } }, 'replace');
       expect((await repo.listItems('treatments')).map((t) => t.id)).toEqual(['tr1']);
     });

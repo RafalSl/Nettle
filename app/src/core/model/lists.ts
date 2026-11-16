@@ -28,6 +28,8 @@ export const PREDEFINED_ITEMS: Record<ListKind, readonly ListItem[]> = {
       'tag-travel',
       'tag-nicotine',
       'tag-joint-symptoms',
+      'tag-hot-shower',
+      'tag-intimate-friction',
     ].map((id) => item(id, 'yesno')),
   ],
   // IN-12: Product and Diet; medication and treatments are not categories (IN-5, IN-11).

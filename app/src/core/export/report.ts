@@ -203,7 +203,14 @@ export function buildReportHtml(input: ReportInput): string {
   const apps = byTime(r.treatmentApplications);
   if (apps.length > 0) {
     out.push(`<h2>${esc(tx('report.treatments'))}</h2>`);
-    out.push(table([tx('report.date'), tx('report.treatment'), tx('report.areas')], apps.map((a) => [when(a.at), treatments.get(a.treatmentId) ?? a.treatmentId, a.areaIds.map(area).join(', ')])));
+    // IN-11: the reaction column only where one was recorded; an empty cell means not recorded.
+    const hasReaction = apps.some((a) => a.reaction !== null);
+    out.push(
+      table(
+        [tx('report.date'), tx('report.treatment'), tx('report.areas'), ...(hasReaction ? [tx('report.treatmentReaction')] : [])],
+        apps.map((a) => [when(a.at), treatments.get(a.treatmentId) ?? a.treatmentId, a.areaIds.map(area).join(', '), ...(hasReaction ? [a.reaction ? tx(`treatmentReaction.${a.reaction}`) : ''] : [])]),
+      ),
+    );
   }
   const events = byTime(r.changeEvents);
   if (events.length > 0) {

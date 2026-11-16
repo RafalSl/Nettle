@@ -3242,3 +3242,65 @@ describe('Cracks and size on a skin entry (SK-3, SK-8, EN-1)', () => {
     expect(hasText(today.tree, en.log.sizeMm.replace('{{n}}', '18'))).toBe(true);
   });
 });
+
+describe('Reaction after applying a treatment, and the new tags (IN-11, IN-6)', () => {
+  beforeEach(() => {
+    mockRouter.back.mockClear();
+    mockParams.current = {};
+    mockScreen.options = undefined;
+    jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+  });
+  afterEach(() => jest.restoreAllMocks());
+  const headerSave = async () => {
+    let rendered!: ReactTestRenderer;
+    await act(async () => {
+      rendered = create(mockScreen.options!.headerRight!());
+    });
+    await act(async () => {
+      await rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!.props.onPress();
+    });
+    await flush();
+  };
+  const selected = (tree: ReactTestRenderer, label: string) => tree.root.findAll((n) => n.props.accessibilityLabel === label && n.props.accessibilityState)[0]!.props.accessibilityState.selected;
+
+  it('IN-11 the edit screen sets the reaction afterwards, a second tap clears it, and an untouched application stays not recorded', async () => {
+    const deps = nowDeps();
+    const cream = await addListItem(deps, 'treatments', 'Synthetic cream');
+    const app = await applyTreatment(deps, { treatmentId: cream.id, areaIds: ['area-chin'], at: new Date(Date.now() - 3600_000) });
+    mockParams.current = { kind: 'treatmentApplications', id: app.id };
+    const { tree } = await mount(() => require('@/app/form/edit'), deps);
+    await flush();
+    for (const x of ['none', 'mild', 'strong'] as const) expect(selected(tree, en.treatmentReaction[x])).toBe(false); // empty by default
+    expect(hasText(tree, en.treatmentReaction.hint)).toBe(true);
+    await press(tree, en.treatmentReaction.strong);
+    expect(selected(tree, en.treatmentReaction.strong)).toBe(true);
+    await headerSave();
+    expect((await deps.repo.listRecords('treatmentApplications'))[0]).toMatchObject({ id: app.id, reaction: 'strong' });
+    // reopen: shown as chosen; the day log says so; a tap on the chosen one clears it
+    const again = await mount(() => require('@/app/form/edit'), deps);
+    await flush();
+    expect(selected(again.tree, en.treatmentReaction.strong)).toBe(true);
+    await press(again.tree, en.treatmentReaction.strong);
+    await headerSave();
+    expect((await deps.repo.listRecords('treatmentApplications'))[0]!.reaction).toBeNull();
+  });
+
+  it('IN-11 the day log row names a recorded reaction, and the quick path never asks for one', async () => {
+    const deps = nowDeps();
+    const cream = await addListItem(deps, 'treatments', 'Synthetic cream');
+    await applyTreatment(deps, { treatmentId: cream.id, areaIds: ['area-chin'], reaction: 'mild', at: new Date(Date.now() - 3600_000) });
+    const today = await mount(() => require('@/app/(tabs)/today/index'), deps);
+    await flush();
+    expect(hasText(today.tree, en.treatmentReaction.row.replace('{{reaction}}', en.treatmentReaction.mild))).toBe(true);
+    expect(hasText(today.tree, en.treatmentReaction.title)).toBe(false);
+  });
+
+  it('IN-6 Daily health offers the two new tags as yes/no switches', async () => {
+    const deps = nowDeps();
+    const { tree } = await mount(() => require('@/app/form/checkin'), deps);
+    await flush();
+    for (const id of ['tag-hot-shower', 'tag-intimate-friction'] as const) {
+      expect(hasText(tree, en.tags[id])).toBe(true);
+    }
+  });
+});

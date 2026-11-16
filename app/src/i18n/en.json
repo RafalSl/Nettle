@@ -265,6 +265,14 @@
     "stoolSave": "Save stool entry",
     "closeAnyway": "Save anyway"
   },
+  "treatmentReaction": {
+    "title": "Reaction after applying",
+    "none": "None",
+    "mild": "Mild",
+    "strong": "Strong",
+    "hint": "Burning, itching or redness after applying. Leave it empty if you did not note it: empty is not the same as none.",
+    "row": "reaction: {{reaction}}"
+  },
   "tags": {
     "tag-illness-or-infection": "Illness or infection",
     "tag-antibiotics": "Antibiotics",
@@ -275,6 +283,8 @@
     "tag-travel": "Travel",
     "tag-nicotine": "Nicotine",
     "tag-joint-symptoms": "Joint symptoms",
+    "tag-hot-shower": "Hot or long shower",
+    "tag-intimate-friction": "Friction in the intimate area",
     "item-wellbeing": "Wellbeing",
     "item-stress": "Stress",
     "item-sleep": "Sleep quality",
@@ -539,6 +549,7 @@
     "cracksYes": "yes",
     "sizeMm": "Size (mm)",
     "sizeTrend": "Size in mm over time",
+    "treatmentReaction": "Reaction",
     "note": "Note",
     "nails": "Nails",
     "stage": "Stage",
@@ -932,6 +943,8 @@
     "tag-travel": "You travelled today.",
     "tag-nicotine": "Cigarettes or other nicotine today.",
     "tag-joint-symptoms": "Painful or stiff joints today.",
+    "tag-hot-shower": "A hot or long shower or bath today.",
+    "tag-intimate-friction": "Tight clothing, cycling or other friction in the intimate area today.",
     "cat-product": "Anything that touches the skin or its surroundings: cosmetics, detergents, clothing, jewelry. Log it once when it starts and once when it stops.",
     "cat-diet": "A way of eating you started or stopped, for example gluten-free or no dairy. It does not replace logging meals."
   },

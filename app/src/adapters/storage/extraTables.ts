@@ -20,6 +20,7 @@ import type {
   StoolEntry,
   Symptom,
   TreatmentApplication,
+  TreatmentReaction,
 } from '@/core/model/types';
 import { normalizeSource } from '@/core/model/source';
 import type { SqlValue } from './sqlDb';
@@ -79,13 +80,14 @@ const stool: ExtraTable<StoolEntry> = {
 
 const treatmentApplication: ExtraTable<TreatmentApplication> = {
   table: 'treatment_application',
-  columns: ['treatment_id', 'area_ids_json', 'note'],
-  toValues: (a) => [a.treatmentId, JSON.stringify(a.areaIds), a.note],
+  columns: ['treatment_id', 'area_ids_json', 'reaction', 'note'],
+  toValues: (a) => [a.treatmentId, JSON.stringify(a.areaIds), a.reaction, a.note],
   fromRow: (r) => ({
     id: r.id as string,
     at: { utc: r.ts_utc as string, tz: r.tz as string },
     treatmentId: r.treatment_id as string,
     areaIds: JSON.parse(r.area_ids_json as string) as string[],
+    reaction: r.reaction as TreatmentReaction | null,
     note: r.note as string | null,
   }),
 };

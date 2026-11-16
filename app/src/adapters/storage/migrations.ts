@@ -299,6 +299,10 @@ export const MIGRATIONS: string[] = [
   ALTER TABLE skin_entry ADD COLUMN cracks INTEGER NOT NULL DEFAULT 0 CHECK (cracks IN (0, 1));
   ALTER TABLE skin_entry ADD COLUMN size_mm INTEGER CHECK (size_mm IS NULL OR size_mm BETWEEN 1 AND 500);
   `,
+  // IN-11: what the skin did after a treatment was applied, set afterwards; NULL is "not recorded".
+  `
+  ALTER TABLE treatment_application ADD COLUMN reaction TEXT CHECK (reaction IS NULL OR reaction IN ('none', 'mild', 'strong'));
+  `,
 ];
 
 export async function migrate(db: SqlDb): Promise<void> {

@@ -73,7 +73,7 @@ describe('sqlite migrations', () => {
       await db.exec(`PRAGMA user_version = ${i + 1}`);
     }
     const repo = await SqliteRepo.open(db);
-    expect(await repo.listItems('dailyItems')).toHaveLength(14);
+    expect(await repo.listItems('dailyItems')).toHaveLength(16);
     expect(await repo.listRecords('checkIns')).toEqual([]);
   });
 

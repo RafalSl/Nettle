@@ -4,7 +4,7 @@ import { pickPhotoUris } from '@/adapters/photos/pickPhotos';
 import { NettleError } from '@/core/model/errors';
 import type { LlmProvenance, SourceKind } from '@/core/model/source';
 import type { Allergen } from '@/core/model/types';
-import { estimateIngredients, knownIngredientNames, scanLabel } from '@/core/usecases/llm';
+import { estimateIngredients, estimateIngredientsFromName, knownIngredientNames, nameEstimateText, scanLabel } from '@/core/usecases/llm';
 import { currentLanguage, errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
 import { Button, Chips, Hint } from '@/ui/components';
@@ -12,13 +12,16 @@ import { Button, Chips, Hint } from '@/ui/components';
 /** LL-12: after this long the form says the call is still working. */
 export const SLOW_ESTIMATE_MS = 30_000;
 
-/** IN-3 (meal photo) and IN-15 (label scan): both read a photo into a list of ingredient names. */
-export type RunKind = 'photo' | 'label';
-export const SOURCE_OF: Record<RunKind, SourceKind> = { photo: 'photo_estimate', label: 'label_scan' };
+/** IN-3 (meal photo), IN-15 (label scan) and IN-19 (name estimate): each produces a list of ingredient names to review. */
+export type RunKind = 'photo' | 'label' | 'name';
+export const SOURCE_OF: Record<RunKind, SourceKind> = { photo: 'photo_estimate', label: 'label_scan', name: 'name_estimate' };
+
+/** What a run was started with, kept for the one-tap retry: a temporary photo, or the text of a name estimate. */
+type Job = { kind: 'photo' | 'label'; uri: string; knownNames: readonly string[] } | { kind: 'name'; description: string; knownNames: readonly string[] };
 
 export type Run =
   | { status: 'idle' }
-  | { status: 'running'; slow: boolean }
+  | { status: 'running'; slow: boolean; kind: RunKind }
   | {
       status: 'ready';
       kind: RunKind;
@@ -33,7 +36,7 @@ export type Run =
   | { status: 'failed'; error: unknown };
 
 /**
- * LL-12, IN-3, IN-15: one inline run of a photo to ingredients call. The form stays editable while it runs; after 30
+ * LL-12, IN-3, IN-15, IN-19: one inline run of a photo or name to ingredients call. The form stays editable while it runs; after 30
  * seconds it says so and offers Cancel. Cancel, a failure, saving and leaving the form store nothing and abort the
  * request. The picked photo is a temporary file and is deleted when the run ends, is dismissed or the form closes.
  */
@@ -41,13 +44,14 @@ export function useIngredientRun() {
   const { deps } = useServices();
   const [run, setRun] = useState<Run>({ status: 'idle' });
   const ctl = useRef<AbortController | null>(null);
-  const photo = useRef<{ uri: string; kind: RunKind; knownNames: readonly string[] } | null>(null);
+  const job = useRef<Job | null>(null);
   const slowTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
+  /** Forgets the job; a photo job also deletes its temporary file. */
   const discard = () => {
-    const p = photo.current;
-    photo.current = null;
-    if (p) deps.photos.discardTemp(p.uri).catch(() => undefined);
+    const j = job.current;
+    job.current = null;
+    if (j && j.kind !== 'name') deps.photos.discardTemp(j.uri).catch(() => undefined);
   };
   const abort = () => {
     ctl.current?.abort();
@@ -63,29 +67,37 @@ export function useIngredientRun() {
     [],
   );
 
-  async function execute(uri: string, kind: RunKind, knownNames: readonly string[] = []) {
+  async function execute(next: Job) {
     abort();
     const controller = new AbortController();
     ctl.current = controller;
-    if (photo.current && photo.current.uri !== uri) discard();
-    photo.current = { uri, kind, knownNames };
-    setRun({ status: 'running', slow: false });
-    slowTimer.current = setTimeout(() => setRun((r) => (r.status === 'running' ? { status: 'running', slow: true } : r)), SLOW_ESTIMATE_MS);
+    const prev = job.current;
+    if (prev && prev.kind !== 'name' && !(next.kind !== 'name' && next.uri === prev.uri)) discard();
+    job.current = next;
+    const kind = next.kind;
+    setRun({ status: 'running', slow: false, kind });
+    slowTimer.current = setTimeout(() => setRun((r) => (r.status === 'running' ? { ...r, slow: true } : r)), SLOW_ESTIMATE_MS);
     try {
-      const data = await deps.photos.compress(uri, kind === 'label' ? 1600 : 1024);
-      const input = { image: { mimeType: 'image/jpeg' as const, data }, language: currentLanguage(), signal: controller.signal };
-      let next: Run;
-      if (kind === 'label') {
-        const r = await scanLabel(deps, input);
-        const label = { textRead: r.textRead, allergens: r.allergens, traces: r.traces };
-        next = { status: 'ready', kind, names: r.ingredients, picked: new Set(), uncertainty: r.note, provenance: r.provenance, label };
+      const language = currentLanguage();
+      let answer: Run;
+      if (next.kind === 'name') {
+        const r = await estimateIngredientsFromName(deps, { description: next.description, language, signal: controller.signal, knownNames: next.knownNames });
+        answer = { status: 'ready', kind, names: r.names, picked: new Set(), uncertainty: r.uncertainty, provenance: r.provenance, label: null };
       } else {
-        const r = await estimateIngredients(deps, { ...input, knownNames });
-        next = { status: 'ready', kind, names: r.names, picked: new Set(), uncertainty: r.uncertainty, provenance: r.provenance, label: null };
+        const data = await deps.photos.compress(next.uri, next.kind === 'label' ? 1600 : 1024);
+        const input = { image: { mimeType: 'image/jpeg' as const, data }, language, signal: controller.signal };
+        if (next.kind === 'label') {
+          const r = await scanLabel(deps, input);
+          const label = { textRead: r.textRead, allergens: r.allergens, traces: r.traces };
+          answer = { status: 'ready', kind, names: r.ingredients, picked: new Set(), uncertainty: r.note, provenance: r.provenance, label };
+        } else {
+          const r = await estimateIngredients(deps, { ...input, knownNames: next.knownNames });
+          answer = { status: 'ready', kind, names: r.names, picked: new Set(), uncertainty: r.uncertainty, provenance: r.provenance, label: null };
+        }
       }
       if (controller.signal.aborted) return;
-      setRun(next);
-      discard(); // the answer is in memory; the photo is no longer needed
+      setRun(answer);
+      discard(); // the answer is in memory; a photo is no longer needed
     } catch (e) {
       if (controller.signal.aborted || (e instanceof NettleError && e.code === 'llm_cancelled')) {
         // A run replaced by a newer one must not touch the newer run's photo or state.
@@ -93,7 +105,7 @@ export function useIngredientRun() {
         discard();
         return setRun({ status: 'idle' });
       }
-      setRun({ status: 'failed', error: e }); // the photo is kept for the one-tap retry
+      setRun({ status: 'failed', error: e }); // the job (photo or text) is kept for the one-tap retry
     } finally {
       if (ctl.current === controller) {
         clearTimeout(slowTimer.current);
@@ -103,7 +115,7 @@ export function useIngredientRun() {
   }
 
   /** LL-5: pick a photo, then confirm that it is sent before anything leaves the phone. */
-  function start(kind: RunKind) {
+  function start(kind: 'photo' | 'label') {
     const title = t(kind === 'label' ? 'meal.labelConfirmTitle' : 'meal.photoConfirmTitle');
     const send = async (source: 'camera' | 'library') => {
       try {
@@ -114,7 +126,7 @@ export function useIngredientRun() {
         const body = `${t(kind === 'label' ? 'meal.labelConfirmBody' : 'meal.photoConfirmBody')}${known.length > 0 ? `\n\n${t('meal.knownNamesSent', { n: known.length })}` : ''}`;
         Alert.alert(title, body, [
           { text: t('common.cancel'), style: 'cancel', onPress: () => void deps.photos.discardTemp(uri).catch(() => undefined) },
-          { text: t('meal.photoSend'), onPress: () => void execute(uri, kind, known) },
+          { text: t('meal.photoSend'), onPress: () => void execute({ kind, uri, knownNames: known }) },
         ]);
       } catch (e) {
         Alert.alert(errorMessage(e));
@@ -127,9 +139,28 @@ export function useIngredientRun() {
     ]);
   }
 
+  /**
+   * IN-19, LL-5: a name estimate sends the typed description as text only. The confirmation shows exactly that text
+   * (and how many known names go with it), and the billing notice, before anything leaves the phone.
+   */
+  async function startName(description: string) {
+    try {
+      const text = nameEstimateText(description);
+      const known = await knownIngredientNames(deps);
+      const body = `${t('meal.nameConfirmBody', { text })}${known.length > 0 ? `\n\n${t('meal.knownNamesSentName', { n: known.length })}` : ''}`;
+      Alert.alert(t('meal.nameConfirmTitle'), body, [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('meal.nameSend'), onPress: () => void execute({ kind: 'name', description: text, knownNames: known }) },
+      ]);
+    } catch (e) {
+      Alert.alert(errorMessage(e));
+    }
+  }
+
   return {
     run,
     start,
+    startName,
     cancel: () => {
       abort();
       discard();
@@ -139,7 +170,7 @@ export function useIngredientRun() {
       discard();
       setRun({ status: 'idle' });
     },
-    retry: () => photo.current && void execute(photo.current.uri, photo.current.kind, photo.current.knownNames),
+    retry: () => job.current && void execute(job.current),
     toggle: (id: string) =>
       setRun((r) => {
         if (r.status !== 'ready') return r;
@@ -162,7 +193,7 @@ export function IngredientRunPanel({
   if (run.status === 'running') {
     return (
       <>
-        <Hint>{run.slow ? t('meal.estimateSlow') : t('meal.estimating')}</Hint>
+        <Hint>{run.slow ? t('meal.estimateSlow') : t(run.kind === 'name' ? 'meal.estimatingName' : 'meal.estimating')}</Hint>
         {run.slow && <Button kind="secondary" title={t('meal.estimateCancel')} onPress={hook.cancel} />}
       </>
     );
@@ -170,11 +201,11 @@ export function IngredientRunPanel({
   if (run.status === 'ready') {
     return (
       <>
-        <Hint>{run.kind === 'label' ? t('meal.labelSuggested') : t('meal.suggested')}</Hint>
+        <Hint>{t(run.kind === 'label' ? 'meal.labelSuggested' : run.kind === 'name' ? (run.names.length === 0 ? 'meal.nameEmpty' : 'meal.nameSuggested') : 'meal.suggested')}</Hint>
         {run.label && run.label.textRead !== '' && <Hint>{t('meal.labelRead', { text: run.label.textRead })}</Hint>}
         {run.uncertainty !== null && <Hint>{t(run.kind === 'label' ? 'meal.labelNote' : 'meal.unsure', { text: run.uncertainty })}</Hint>}
         <Chips items={run.names.map((n) => ({ id: n, label: n }))} selected={run.picked} onToggle={hook.toggle} />
-        <Button title={t('meal.estimateAddAll')} onPress={() => onAdd(run.names, run)} />
+        {(run.kind !== 'name' || run.names.length > 0) && <Button title={t('meal.estimateAddAll')} onPress={() => onAdd(run.names, run)} />}
         {run.picked.size > 0 && <Button kind="secondary" title={t('meal.estimateAddPicked')} onPress={() => onAdd([...run.picked], run)} />}
         <Button kind="secondary" title={t('meal.estimateDismiss')} onPress={hook.dismiss} />
       </>

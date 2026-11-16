@@ -1,10 +1,13 @@
 import { NettleError } from './errors';
 
 /** IN-16: where an entry's ingredient list and allergen tags came from. */
-export const SOURCE_KINDS = ['typed', 'open_food_facts', 'label_scan', 'photo_estimate'] as const;
+export const SOURCE_KINDS = ['typed', 'open_food_facts', 'label_scan', 'photo_estimate', 'name_estimate'] as const;
 export type SourceKind = (typeof SOURCE_KINDS)[number];
 
-/** The LLM run behind a label scan or a photo estimate. */
+/** IN-16: the sources an LLM produces. `name_estimate` (IN-19) is the roughest: a typical recipe for a name, not what was eaten. */
+export const LLM_SOURCE_KINDS: readonly SourceKind[] = ['label_scan', 'photo_estimate', 'name_estimate'];
+
+/** The LLM run behind a label scan, a photo estimate or a name estimate. */
 export interface LlmProvenance {
   model: string;
   /** UTC instant of the answer. */
@@ -16,7 +19,7 @@ export interface IngredientSource {
   kind: SourceKind;
   /** The user changed the ingredients or tags after they were filled from `kind`. Never true for `typed`. */
   edited: boolean;
-  /** Only for the two LLM sources (`label_scan`, `photo_estimate`). */
+  /** Only for the three LLM sources (`LLM_SOURCE_KINDS`). */
   llm: LlmProvenance | null;
   /** The allergen tags were selected from an AI suggestion (label scan or allergen suggestion), whatever the ingredients' source. */
   aiTags: boolean;
@@ -27,8 +30,8 @@ export const typedSource = (): IngredientSource => ({ kind: 'typed', edited: fal
 /** A saved source from before `aiTags` existed has none. */
 export const normalizeSource = (s: Omit<IngredientSource, 'aiTags'> & { aiTags?: boolean }): IngredientSource => ({ ...s, aiTags: s.aiTags === true });
 
-/** The label scan and the photo estimate are AI-derived (EX-4 marks them). */
-export const isAiSource = (s: IngredientSource): boolean => s.kind === 'label_scan' || s.kind === 'photo_estimate';
+/** The label scan, the photo estimate and the name estimate are AI-derived (EX-4 marks them). */
+export const isAiSource = (s: IngredientSource): boolean => LLM_SOURCE_KINDS.includes(s.kind);
 
 /** IN-16: editing the list or the tags of a filled entry marks it edited; typed entries have nothing to mark. */
 export const afterEdit = (s: IngredientSource, changed: boolean): IngredientSource =>

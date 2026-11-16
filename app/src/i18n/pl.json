@@ -56,6 +56,14 @@
     "knownNamesSent": "Wraz ze zdjęciem wysyłanych jest {{n}} nazw składników z Twojego dziennika, bo włączono \"Preferuj moje nazwy składników\".",
     "photoSend": "Wyślij zdjęcie",
     "suggested": "Proponowane składniki. Sprawdź je i popraw przed zapisem.",
+    "fromName": "Zaproponuj składniki z nazwy",
+    "nameConfirmTitle": "Wysłać tę nazwę do Anthropic?",
+    "nameConfirmBody": "Ten tekst zostanie wysłany przez internet do Anthropic (bez zdjęcia), aby wypisać składniki, które zwykle zawiera danie:\n\n„{{text}}”\n\nNic z odpowiedzi nie zostanie zapisane, dopóki jej nie sprawdzisz. Anthropic rozlicza to osobno na Twoim koncie API (niewielka kwota); subskrypcja Claude tego nie obejmuje.",
+    "knownNamesSentName": "Razem z nazwą wysyłamy {{n}} nazw składników z Twojego dziennika, bo włączono „Preferuj moje nazwy składników”.",
+    "nameSend": "Wyślij nazwę",
+    "nameSuggested": "Typowe składniki tego dania, niekoniecznie to, co zjadłeś. Dodaj to, co pasuje, i popraw listę.",
+    "nameEmpty": "Nazwa jest zbyt ogólna, by wypisać składniki. Nic nie zaproponowano.",
+    "estimatingName": "Sprawdzam typowe składniki na podstawie nazwy. Możesz dalej wpisywać posiłek.",
     "unsure": "Niepewne: {{text}}",
     "chooseTitle": "Wybierz lub wpisz posiłek",
     "chooseHint": "Wybierz wcześniejszy posiłek, aby wypełnić formularz, albo wpisz nowy i przejdź dalej. Nic nie jest zapisywane, dopóki nie zapiszesz.",
@@ -449,7 +457,8 @@
       "meal_photo": "Zdjęcie posiłku",
       "analysis": "Analiza AI",
       "report_summary": "Podsumowanie raportu",
-      "allergen_suggest": "Podpowiedzi alergenów"
+      "allergen_suggest": "Podpowiedzi alergenów",
+      "meal_name": "Nazwa posiłku"
     },
     "saved": "Zapisano"
   },
@@ -556,7 +565,7 @@
     "summaryEdited": "poprawione przez osobę po napisaniu",
     "aiMark": "AI",
     "aiMarkEdited": "AI, poprawione",
-    "aiMarkLegend": "[AI] przy składnikach: odczytał je model AI ze zdjęcia, a osoba sprawdziła je i potwierdziła przed zapisem. [AI, poprawione]: osoba zmieniła je później. [AI] przy alergenach: tagi zasugerował model AI, a osoba je zaznaczyła.",
+    "aiMarkLegend": "[AI] przy składnikach: odczytał je model AI ze zdjęcia lub etykiety albo wypisał z nazwy dania (typowy przepis, niekoniecznie to, co zjedzono), a osoba sprawdziła je i potwierdziła przed zapisem. [AI, poprawione]: osoba zmieniła je później. [AI] przy alergenach: tagi zasugerował model AI, a osoba je zaznaczyła.",
     "reactions": "Reakcje po posiłkach",
     "onset": "Początek",
     "symptoms": "Objawy",
@@ -779,6 +788,7 @@
     "open_food_facts": "Open Food Facts",
     "label_scan": "skan etykiety (AI)",
     "photo_estimate": "szacunek ze zdjęcia (AI)",
+    "name_estimate": "szacunek z nazwy (AI)",
     "edited": "poprawione"
   },
   "log": {

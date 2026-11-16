@@ -1,4 +1,4 @@
-import { ALLERGEN_PROMPT_VERSION, allergenPrompt, INGREDIENTS_PROMPT_VERSION, LABEL_PROMPT_VERSION, MAX_KNOWN_NAMES, ingredientsPrompt, labelPrompt } from '../llm/prompts';
+import { ALLERGEN_PROMPT_VERSION, allergenPrompt, INGREDIENTS_PROMPT_VERSION, LABEL_PROMPT_VERSION, MAX_KNOWN_NAMES, NAME_PROMPT_VERSION, ingredientsPrompt, labelPrompt, namePrompt } from '../llm/prompts';
 import type { LlmProvenance } from '../model/source';
 import { parseAllergenSuggestion, parseIngredientEstimate, parseLabelScan, type IngredientEstimate, type LabelScan } from '../llm/parse';
 import { NettleError } from '../model/errors';
@@ -78,6 +78,33 @@ export async function scanLabel(
   const response = await provider.completeJson({ ...prompt, images: [input.image], ...(input.signal ? { signal: input.signal } : {}) });
   const provenance: LlmProvenance = { model: response.model, at: deps.clock.now().toISOString(), promptVersion: LABEL_PROMPT_VERSION };
   return { ...parseLabelScan(response.text), provenance };
+}
+
+/** IN-19: the longest description sent for a name estimate. */
+export const MAX_NAME_ESTIMATE_CHARS = 200;
+
+/** IN-19: the text a name estimate sends: trimmed, single spaces; `empty_description` when nothing is typed. */
+export function nameEstimateText(description: string): string {
+  const text = description.trim().replace(/\s+/g, ' ').slice(0, MAX_NAME_ESTIMATE_CHARS);
+  if (!text) throw new NettleError('empty_description');
+  return text;
+}
+
+/**
+ * IN-19, LL-5: ask the model for the typical ingredients of a meal or drink from its name alone (no photo). The
+ * caller must have shown the confirmation that lists this text; the result only fills a form for review, nothing is
+ * saved here. A name too vague to list returns no names and the model's note.
+ */
+export async function estimateIngredientsFromName(
+  deps: Deps,
+  input: { description: string; language: Language; signal?: AbortSignal; knownNames?: readonly string[] },
+): Promise<IngredientEstimate & { provenance: LlmProvenance }> {
+  const description = nameEstimateText(input.description);
+  const { provider } = await currentProvider(deps, 'meal_name');
+  const prompt = namePrompt(input.language, description, input.knownNames ?? []);
+  const response = await provider.completeJson({ ...prompt, ...(input.signal ? { signal: input.signal } : {}) });
+  const provenance: LlmProvenance = { model: response.model, at: deps.clock.now().toISOString(), promptVersion: NAME_PROMPT_VERSION };
+  return { ...parseIngredientEstimate(response.text), provenance };
 }
 
 /**

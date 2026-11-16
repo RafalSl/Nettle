@@ -145,6 +145,7 @@ Notifications from Expo Go can behave differently from a standalone build; recor
 | A3 | Run one analysis over a short range. | Hypotheses with uncertainty, flare periods and Daily health used; the running card shows on Review. |  |  |
 | A4 | Leave the app during a run. | Shows interrupted with a retry. |  |  |
 | A5 | Report summary in the Doctor report. | Editable; goes under the AI label in the PDF. |  |  |
+| A7 | Meal review phase: type "pancakes with jam", tap "Suggest ingredients from the name". Repeat on the Drink form with a name. Then try "lunch". | Button only with a description. The confirmation shows the exact text and the billing notice; no photo. The answer is an editable list (add all or pick) that never overwrites typed ingredients; tags stay unselected. "Lunch" gives "too vague" and no names. The saved entry shows "AI name estimate" and the PDF marks it AI. |  |  |
 | A6 | Polish products: scan three you actually buy. | Note how many Open Food Facts knows. |  |  |
 
 ## 11. Guide and routine changes (P2)

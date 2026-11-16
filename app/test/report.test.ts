@@ -197,8 +197,10 @@ describe('export with CSV and PDF report (EX-3, EX-4, EX-5, EX-8)', () => {
       meal('b', { kind: 'label_scan', edited: true, llm }),
       meal('c', { kind: 'open_food_facts', edited: false, llm: null }),
       meal('d', { kind: 'typed', edited: false, llm: null }),
+      meal('e', { kind: 'name_estimate', edited: false, llm }), // IN-19
     ]);
     expect(out).toContain('rice-a [[report.aiMark]]');
+    expect(out).toContain('rice-e [[report.aiMark]]');
     expect(out).toContain('rice-b [[report.aiMarkEdited]]');
     expect(out).toContain('[report.aiMarkLegend]');
     expect(out).not.toMatch(/rice-[cd] \[/);
@@ -226,6 +228,7 @@ describe('export with CSV and PDF report (EX-3, EX-4, EX-5, EX-8)', () => {
     const llm = { model: 'm', at: '2026-01-10T00:00:00.000Z', promptVersion: 'p' };
     await logMeal(deps, { description: 'Synthetic scanned', ingredients: ['rice'], source: { kind: 'label_scan', edited: true, llm, aiTags: true } });
     await logMeal(deps, { description: 'Synthetic typed', ingredients: ['oats'] });
+    await logMeal(deps, { description: 'Synthetic named', ingredients: ['milk'], source: { kind: 'name_estimate', edited: false, llm, aiTags: false } });
     const files = unzipSync(await exportBundle(deps, { csv: true, parts: { records: true, settings: false } }));
     const rows = strFromU8(files['csv/meals.csv']!).trim().split('\r\n');
     const header = rows[0]!.split(',');
@@ -235,6 +238,8 @@ describe('export with CSV and PDF report (EX-3, EX-4, EX-5, EX-8)', () => {
     const typed = rows.find((r) => r.includes('Synthetic typed'))!;
     expect([col(scanned, 'ingredients_source'), col(scanned, 'ingredients_ai'), col(scanned, 'ingredients_edited'), col(scanned, 'allergens_ai'), col(scanned, 'ai_model')]).toEqual(['label_scan', 'yes', 'yes', 'yes', 'm']);
     expect([col(typed, 'ingredients_source'), col(typed, 'ingredients_ai'), col(typed, 'allergens_ai')]).toEqual(['typed', 'no', 'no']);
+    const named = rows.find((r) => r.includes('Synthetic named'))!;
+    expect([col(named, 'ingredients_source'), col(named, 'ingredients_ai'), col(named, 'ingredients_edited')]).toEqual(['name_estimate', 'yes', 'no']); // IN-19
   });
 
   it('EX-3 an empty diary still produces a valid page with a title and the disclaimer', () => {

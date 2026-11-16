@@ -269,6 +269,7 @@ export default function MealScreen() {
 
           <Button kind="secondary" title={t('meal.fromPhoto')} onPress={() => ingredientRun.start('photo')} />
           <Button kind="secondary" title={t('meal.fromLabel')} onPress={() => ingredientRun.start('label')} />
+          {description.trim() !== '' && <Button kind="secondary" title={t('meal.fromName')} onPress={() => void ingredientRun.startName(description)} />}
           <IngredientRunPanel hook={ingredientRun} onAdd={addRun} />
           <Label>{t('meal.ingredients')}</Label>
           {ingredients.map((value, i) => (

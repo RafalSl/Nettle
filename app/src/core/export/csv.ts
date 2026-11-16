@@ -1,3 +1,5 @@
+import { LLM_SOURCE_KINDS, type SourceKind } from '../model/source';
+
 /** EX-5: one CSV file per table, for spreadsheets. */
 
 type Cell = string | number | boolean | null | undefined | readonly unknown[] | object;
@@ -33,7 +35,7 @@ export function flattenSource(row: Record<string, unknown>): Record<string, Cell
   const { source, ...rest } = row;
   if (typeof source !== 'object' || source === null) return rest as Record<string, Cell>;
   const s = source as { kind?: string; edited?: boolean; llm?: { model?: string; at?: string; prompt_version?: string } | null; ai_tags?: boolean };
-  const ai = s.kind === 'label_scan' || s.kind === 'photo_estimate';
+  const ai = LLM_SOURCE_KINDS.includes(s.kind as SourceKind);
   return {
     ...(rest as Record<string, Cell>),
     ingredients_source: s.kind ?? 'typed',

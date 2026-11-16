@@ -30,13 +30,14 @@ import { MemoryPhotoStore } from '../fakes/memoryPhotoStore';
 import { MemoryRepo } from '../fakes/memoryRepo';
 import { makeDeps } from '../helpers/fixtures';
 
-const mockRouter = { push: jest.fn(), back: jest.fn(), navigate: jest.fn() };
+const mockRouter = { push: jest.fn(), back: jest.fn(), navigate: jest.fn(), replace: jest.fn(), canGoBack: jest.fn(() => true) };
 const mockCamera: { props?: { onBarcodeScanned?: (e: { data: string }) => void } } = {};
 const mockPermission: { current: { granted: boolean; canAskAgain: boolean } | null } = { current: { granted: true, canAskAgain: true } };
 const mockParams: { current: Record<string, string> } = { current: {} };
 type MockPickerProps = { maximumDate?: Date; value?: Date; onValueChange: (e: object, d: Date) => void };
 const mockPicker: { last?: MockPickerProps; all: MockPickerProps[] } = { all: [] };
-const mockScreen: { options?: { headerLeft?: () => React.ReactElement; headerRight?: () => React.ReactElement; gestureEnabled?: boolean } } = {};
+type MockScreenOptions = { headerLeft?: () => React.ReactElement; headerRight?: () => React.ReactElement; gestureEnabled?: boolean };
+const mockScreen: { options?: MockScreenOptions; byName: Record<string, MockScreenOptions | undefined> } = { byName: {} };
 
 // Native modules and the router are replaced; everything else (screens, components, i18n, use cases) is real.
 jest.mock('expo-router', () => {
@@ -49,8 +50,9 @@ jest.mock('expo-router', () => {
     Tabs: Object.assign(({ children }: { children: unknown }) => children, { Screen: () => null }),
     // The header buttons a form puts into its Stack.Screen options are kept, so a test can press them.
     Stack: Object.assign(({ children }: { children: unknown }) => children, {
-      Screen: ({ options }: { options?: unknown }) => {
+      Screen: ({ name, options }: { name?: string; options?: unknown }) => {
         mockScreen.options = options as typeof mockScreen.options;
+        if (name) mockScreen.byName[name] = options as MockScreenOptions;
         return null;
       },
     }),
@@ -670,6 +672,24 @@ describe('navigation shell (UX-1, UX-2, UX-3, UX-6)', () => {
     const { tree } = await mount(() => ({ default: require('@/ui/GearButton').GearButton }), nowDeps());
     await press(tree, en.nav.gear);
     expect(mockRouter.push).toHaveBeenLastCalledWith('/settings');
+  });
+
+  it('UX-1 the first Settings screen has a Back button: it goes back, or to Today when there is no history', async () => {
+    await mount(() => require('@/app/settings/_layout'), nowDeps());
+    const headerLeft = mockScreen.byName['index']?.headerLeft;
+    expect(headerLeft).toBeDefined();
+    let tree!: ReactTestRenderer;
+    await act(async () => {
+      tree = create(headerLeft!());
+    });
+    mockRouter.back.mockClear();
+    mockRouter.replace.mockClear();
+    await press(tree, en.common.back);
+    expect(mockRouter.back).toHaveBeenCalledTimes(1);
+    mockRouter.canGoBack.mockReturnValueOnce(false); // a reminder tap opened `/settings/data` as the first screen
+    await press(tree, en.common.back);
+    expect(mockRouter.replace).toHaveBeenCalledWith('/today');
+    expect(mockRouter.back).toHaveBeenCalledTimes(1);
   });
 
   it('UX-1 every screen a layout declares has a route file, and titles stay under 15 characters', () => {

@@ -51,12 +51,12 @@ function table(headers: string[], rows: (string | number | null)[][]): string {
     .join('')}</table>`;
 }
 
-/** A tiny line chart of one score over time, drawn as inline SVG so it works in any PDF renderer. */
-function sparkline(values: number[]): string {
+/** A tiny line chart of one value over time, drawn as inline SVG so it works in any PDF renderer. `max` is the top of the scale (10 for a score). */
+function sparkline(values: number[], max = 10): string {
   if (values.length < 2) return '';
   const w = 160;
   const h = 28;
-  const points = values.map((v, i) => `${Math.round((i / (values.length - 1)) * w)},${Math.round(h - (v / 10) * h)}`).join(' ');
+  const points = values.map((v, i) => `${Math.round((i / (values.length - 1)) * w)},${Math.round(h - (v / max) * h)}`).join(' ');
   return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><polyline points="${points}" fill="none" stroke="#c0392b" stroke-width="1.5"/></svg>`;
 }
 
@@ -114,14 +114,34 @@ export function buildReportHtml(input: ReportInput): string {
   const skinAreas = [...new Set(skin.map((e) => e.areaId))];
   if (skinAreas.length > 0) {
     out.push(`<h2>${esc(tx('report.skin'))}</h2>`);
-    const heads = [tx('report.date'), ...['severity', 'itch', 'pain', 'dryness', 'scaling'].map((k) => tx(`report.scores.${k}`)), tx('report.note')];
     for (const id of skinAreas) {
       const entries = skin.filter((e) => e.areaId === id);
+      // SK-3, EX-3: entries with cracks or open wounds are marked, and a size in mm is a column and a trend where one is logged.
+      const hasCracks = entries.some((e) => e.cracks);
+      const sizes = entries.flatMap((e) => (e.sizeMm === null ? [] : [e.sizeMm]));
+      const heads = [
+        tx('report.date'),
+        ...['severity', 'itch', 'pain', 'dryness', 'scaling'].map((k) => tx(`report.scores.${k}`)),
+        ...(hasCracks ? [tx('report.cracks')] : []),
+        ...(sizes.length > 0 ? [tx('report.sizeMm')] : []),
+        tx('report.note'),
+      ];
       out.push(`<h3>${esc(area(id))}</h3>${sparkline(entries.map((e) => e.scores.severity))}`);
+      if (sizes.length >= 2) out.push(`<p class="note">${esc(tx('report.sizeTrend'))}</p>${sparkline(sizes, Math.max(...sizes))}`);
       out.push(
         table(
           heads,
-          entries.map((e) => [when(e.at), e.scores.severity, e.scores.itch, e.scores.pain, e.scores.dryness, e.scores.scaling, e.note]),
+          entries.map((e) => [
+            when(e.at),
+            e.scores.severity,
+            e.scores.itch,
+            e.scores.pain,
+            e.scores.dryness,
+            e.scores.scaling,
+            ...(hasCracks ? [e.cracks ? tx('report.cracksYes') : ''] : []),
+            ...(sizes.length > 0 ? [e.sizeMm] : []),
+            e.note,
+          ]),
         ),
       );
     }

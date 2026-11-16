@@ -97,7 +97,7 @@ describe('export with CSV and PDF report (EX-3, EX-4, EX-5, EX-8)', () => {
       expect(names).toContain(n);
     }
     const skin = strFromU8(files['csv/skin_entries.csv']!).split('\r\n');
-    expect(skin[0]).toBe('id,utc,tz,area_id,scores,note'.replace('scores', 'scores'));
+    expect(skin[0]).toBe('id,utc,tz,area_id,scores,cracks,size_mm,note');
     expect(skin).toHaveLength(5); // header, 3 entries, trailing empty
     expect(strFromU8(files['csv/meals.csv']!)).toContain('Synthetic <pasta> & sauce');
     expect(names.some((n) => n.includes('key'))).toBe(false);

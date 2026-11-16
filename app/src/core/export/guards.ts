@@ -1,5 +1,6 @@
 import { NettleError } from '../model/errors';
 import { CANONICAL_UTC } from '../model/time';
+import { MAX_SIZE_MM } from '../model/types';
 
 export type Obj = Record<string, unknown>;
 
@@ -46,6 +47,12 @@ export const nullableScore = (o: Obj, k: string, where: string): number | null =
   const v = o[k];
   if (v === null) return null;
   return typeof v === 'number' && Number.isInteger(v) && v >= 0 && v <= 10 ? v : bad(`${where}.${k}`);
+};
+/** SK-3: a size in whole millimetres from 1 to 500, or null. */
+export const nullableSize = (o: Obj, k: string, where: string): number | null => {
+  const v = o[k];
+  if (v === null) return null;
+  return typeof v === 'number' && Number.isInteger(v) && v >= 1 && v <= MAX_SIZE_MM ? v : bad(`${where}.${k}`);
 };
 export const stringList = (o: Obj, k: string, where: string): string[] => {
   const v = o[k];

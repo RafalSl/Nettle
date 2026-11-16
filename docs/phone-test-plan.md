@@ -61,6 +61,7 @@ How to read it: each check has an ID, what to do, and what you should see. Mark 
 | F4 | Log severity 2 for both areas. | Card disappears. |  |  |
 | F5 | Settings, Logging, Flares: change the threshold. | Flares recompute at once (card appears or goes away). |  |  |
 | F6 | Area timeline. | Trend chart with flare marks; text summary under it. |  |  |
+| F7 | Skin form: switch "Cracks or open wounds"; open Details and enter a size in mm; save. Open the form again for the same area; try 12.5 and 600. | Switch and size are prefilled and Details opens by itself; "No change" keeps both. An invalid size shows a hint and Save stays off. The area timeline line says cracks and size, the chart offers Size, and the PDF has the columns. |  |  |
 
 ## 5. Photos (P1)
 

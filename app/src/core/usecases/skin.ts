@@ -4,6 +4,7 @@ import {
   NAIL_EXTENTS,
   NAIL_STAGES,
   SCORE_KEYS,
+  MAX_SIZE_MM,
   type AreaKind,
   type NailEntry,
   type NailExtent,
@@ -17,6 +18,10 @@ import type { Deps } from './deps';
 export interface LogSkinEntryInput {
   areaId: string;
   scores: SkinScores;
+  /** SK-3: cracks or open wounds; no by default. */
+  cracks?: boolean;
+  /** SK-3: largest diameter in whole mm; unset by default. */
+  sizeMm?: number | null;
   at?: Date;
   note?: string;
 }
@@ -24,11 +29,16 @@ export interface LogSkinEntryInput {
 export const isScore = (n: unknown): n is number =>
   typeof n === 'number' && Number.isInteger(n) && n >= 0 && n <= 10;
 
-/** SK-3: separate 0-10 scores per area and entry. */
+/** SK-3: a size is whole millimetres from 1 to 500. */
+export const isSizeMm = (n: unknown): n is number => typeof n === 'number' && Number.isInteger(n) && n >= 1 && n <= MAX_SIZE_MM;
+
+/** SK-3: separate 0-10 scores per area and entry, a cracks flag and an optional size in mm. */
 export async function logSkinEntry(deps: Deps, input: LogSkinEntryInput): Promise<SkinEntry> {
   for (const key of SCORE_KEYS) {
     if (!isScore(input.scores[key])) throw new NettleError('invalid_score', key);
   }
+  const sizeMm = input.sizeMm ?? null;
+  if (sizeMm !== null && !isSizeMm(sizeMm)) throw new NettleError('invalid_size');
   const area = (await deps.repo.listAreas()).find((a) => a.id === input.areaId);
   if (!area) throw new NettleError('unknown_area', input.areaId);
   if (area.kind !== 'skin') throw new NettleError('wrong_area_kind', input.areaId);
@@ -38,6 +48,8 @@ export async function logSkinEntry(deps: Deps, input: LogSkinEntryInput): Promis
     at: makeStamp(deps.clock, input.at),
     areaId: input.areaId,
     scores: { ...input.scores },
+    cracks: input.cracks === true,
+    sizeMm,
     note: input.note?.trim() || null,
   };
   await deps.repo.addSkinEntry(entry);
@@ -140,17 +152,27 @@ export async function logNailEntry(deps: Deps, input: LogNailEntryInput): Promis
   return entry;
 }
 
-/** SK-3: the scores of the area's most recent entry, to prefill a new one; null when there is none yet. */
-export async function lastSkinScores(deps: Deps, areaId: string): Promise<SkinScores | null> {
+/** SK-3: the values of the area's most recent entry, to prefill a new one; null when there is none yet. */
+export interface LastSkinValues {
+  scores: SkinScores;
+  cracks: boolean;
+  sizeMm: number | null;
+}
+export async function lastSkinValues(deps: Deps, areaId: string): Promise<LastSkinValues | null> {
   const last = (await deps.repo.listSkinEntries()).find((e) => e.areaId === areaId); // newest first
-  return last ? { ...last.scores } : null;
+  return last ? { scores: { ...last.scores }, cracks: last.cracks, sizeMm: last.sizeMm } : null;
 }
 
-/** SK-3 "no change": saves a new entry with the area's last scores in one call. */
+/** SK-3: just the scores of the area's most recent entry; null when there is none yet. */
+export async function lastSkinScores(deps: Deps, areaId: string): Promise<SkinScores | null> {
+  return (await lastSkinValues(deps, areaId))?.scores ?? null;
+}
+
+/** SK-3 "no change": saves a new entry with the area's last scores, cracks flag and size in one call. */
 export async function repeatSkinEntry(deps: Deps, areaId: string, at?: Date): Promise<SkinEntry> {
-  const scores = await lastSkinScores(deps, areaId);
-  if (!scores) throw new NettleError('no_previous_entry', areaId);
-  return logSkinEntry(deps, { areaId, scores, at });
+  const last = await lastSkinValues(deps, areaId);
+  if (!last) throw new NettleError('no_previous_entry', areaId);
+  return logSkinEntry(deps, { areaId, ...last, at });
 }
 
 /** SK-3 "no change" for a nail area: a new entry with the area's last stage and extent. */

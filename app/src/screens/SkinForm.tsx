@@ -3,18 +3,20 @@ import { useCallback, useEffect, useState } from 'react';
 import { Alert, TextInput } from 'react-native';
 import { SCORE_KEYS, type SkinArea, type SkinScores } from '@/core/model/types';
 import { attachPhotos } from '@/core/usecases/photos';
-import { lastSkinScores, listActiveAreas, logSkinEntry, repeatAllAreas, repeatSkinEntry } from '@/core/usecases/skin';
+import { lastSkinValues, listActiveAreas, logSkinEntry, repeatAllAreas, repeatSkinEntry } from '@/core/usecases/skin';
 import { areaLabel, errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
 import { FormModal, useField, useForm } from '@/ui/FormModal';
 import { PendingPhotos } from '@/ui/PendingPhotos';
+import { parseSizeText, sizeToSave, SkinExtraFields } from '@/ui/SkinExtraFields';
 import { useFormTime } from '@/ui/useFormTime';
 import { Button, Chips, Hint, Label, ScoreInput, TimeField, styles } from '@/ui/components';
 
 const ZERO: SkinScores = { severity: 0, itch: 0, pain: 0, dryness: 0, scaling: 0 };
 
 /**
- * SK-1 to SK-3, SK-6: a per-area entry with five separate 0-10 scores, prefilled from the area's last values.
+ * SK-1 to SK-3, SK-6: a per-area entry with five separate 0-10 scores, a cracks switch and an optional size in mm,
+ * all prefilled from the area's last values.
  * "No change" saves it in one tap, and "No change for all areas" saves every area that has an earlier entry.
  * Flares are derived from severity (SK-6). Photos picked here are saved with the entry (SK-4); "No change" with a
  * photo is a photo-only update.
@@ -26,6 +28,9 @@ export default function SkinForm() {
   const [areas, setAreas] = useState<SkinArea[]>([]);
   const [areaId, setAreaId] = useField<string | null>(null, f.touch);
   const [scores, setScores] = useState<SkinScores>(ZERO);
+  const [cracks, setCracks] = useState(false);
+  const [sizeText, setSizeText] = useState('');
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [note, setNote] = useField('', f.touch);
   const [hasLast, setHasLast] = useState(false);
   const [photos, setPhotos] = useField<string[]>([], f.touch);
@@ -37,14 +42,18 @@ export default function SkinForm() {
   useFocusEffect(reload);
   const selected = areaId && areas.some((a) => a.id === areaId) ? areaId : (areas[0]?.id ?? null);
 
-  /** SK-3: start from the area's last scores so a small change is a tap or two. */
+  /** SK-3: start from the area's last values so a small change is a tap or two; Details opens by itself for an area with a size. */
   useEffect(() => {
     if (!selected) return;
-    lastSkinScores(deps, selected).then((last) => {
+    lastSkinValues(deps, selected).then((last) => {
       setHasLast(!!last);
-      setScores(last ?? ZERO);
+      setScores(last?.scores ?? ZERO);
+      setCracks(last?.cracks ?? false);
+      setSizeText(last?.sizeMm != null ? String(last.sizeMm) : '');
+      setDetailsOpen(last?.sizeMm != null);
     });
   }, [deps, selected]);
+  const size = parseSizeText(sizeText);
 
   const act = async (fn: () => Promise<unknown>, close: boolean) => {
     try {
@@ -77,9 +86,9 @@ export default function SkinForm() {
   return (
     <FormModal
       dirty={f.dirty}
-      missing={selected ? null : t('edit.area')}
+      missing={!selected ? t('edit.area') : size.ok ? null : t('skin.sizeMissing')}
       onSave={async () => {
-        const entry = await logSkinEntry(deps, { areaId: selected!, scores, note, at: time.atForSave });
+        const entry = await logSkinEntry(deps, { areaId: selected!, scores, cracks, sizeMm: sizeToSave(sizeText), note, at: time.atForSave });
         await attach(entry.id, entry.at.utc);
       }}>
       <Label>{t('skin.area')}</Label>
@@ -102,6 +111,14 @@ export default function SkinForm() {
       {SCORE_KEYS.map((k) => (
         <ScoreInput key={k} label={t(`skin.scores.${k}`)} value={scores[k]} onChange={(v) => (f.touch(), setScores((s) => ({ ...s, [k]: v })))} />
       ))}
+      <SkinExtraFields
+        cracks={cracks}
+        onCracks={(v) => (f.touch(), setCracks(v))}
+        sizeText={sizeText}
+        onSizeText={(v) => (f.touch(), setSizeText(v))}
+        open={detailsOpen}
+        onToggleOpen={() => setDetailsOpen((o) => !o)}
+      />
       <PendingPhotos uris={photos} onChange={setPhotos} />
       <TimeField value={time.value} onChange={time.set} />
       <Label>{t('common.note')}</Label>

@@ -120,7 +120,7 @@ export function buildAnalysisInput(src: AnalysisSource, dayFrom: string, dayTo: 
     add('stoolEntries', dayOf(s.at), 'stool', { time: time(s.at.utc, s.at.tz), bristol: s.bristol });
   }
   for (const e of src.skinEntries) {
-    add('skinEntries', dayOf(e.at), 'skin', { time: time(e.at.utc, e.at.tz), area: areaName.get(e.areaId) ?? e.areaId, ...e.scores, ...(e.note ? { note: e.note } : {}) });
+    add('skinEntries', dayOf(e.at), 'skin', { time: time(e.at.utc, e.at.tz), area: areaName.get(e.areaId) ?? e.areaId, ...e.scores, ...(e.cracks ? { cracks: true } : {}), ...(e.sizeMm !== null ? { size_mm: e.sizeMm } : {}), ...(e.note ? { note: e.note } : {}) });
   }
   for (const e of src.nailEntries) {
     add('nailEntries', dayOf(e.at), 'nails', { time: time(e.at.utc, e.at.tz), nail: areaName.get(e.areaId) ?? e.areaId, stage: e.stage, extent: e.extent });

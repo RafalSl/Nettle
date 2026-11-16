@@ -294,6 +294,11 @@ export const MIGRATIONS: string[] = [
   `
   UPDATE skin_area SET predefined = 0, archived = 1 WHERE id = 'area-intimate';
   `,
+  // SK-3: a cracks or open wounds flag and an optional size in whole mm on every skin entry.
+  `
+  ALTER TABLE skin_entry ADD COLUMN cracks INTEGER NOT NULL DEFAULT 0 CHECK (cracks IN (0, 1));
+  ALTER TABLE skin_entry ADD COLUMN size_mm INTEGER CHECK (size_mm IS NULL OR size_mm BETWEEN 1 AND 500);
+  `,
 ];
 
 export async function migrate(db: SqlDb): Promise<void> {

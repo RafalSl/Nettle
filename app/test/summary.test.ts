@@ -36,7 +36,7 @@ describe('report summary (LL-14, EX-3, EX-4)', () => {
     expect(p.system).toContain('Polish');
     expect(p.user).toContain('{"days":[]}');
     expect(p.schema.required).toEqual(['summary']);
-    expect(SUMMARY_PROMPT_VERSION).toBe('summary-5');
+    expect(SUMMARY_PROMPT_VERSION).toBe('summary-6');
   });
 
   it('LL-14 only a non-empty summary string is an answer', () => {
@@ -49,7 +49,7 @@ describe('report summary (LL-14, EX-3, EX-4)', () => {
     await setModel(deps, 'report_summary', 'claude-sonnet-5-5');
     const prepared = await prepareSummary(deps, sel);
     expect(llm.requests).toHaveLength(0);
-    expect(prepared).toMatchObject({ model: 'claude-sonnet-5-5', promptVersion: 'summary-5', counts: { days: 5 } });
+    expect(prepared).toMatchObject({ model: 'claude-sonnet-5-5', promptVersion: 'summary-6', counts: { days: 5 } });
     expect(prepared.request.images).toBeUndefined();
     expect(await code(prepareSummary(deps, { ...sel, dayFrom: '2026-01-15', dayTo: '2026-01-14' }))).toBe('invalid_range');
     expect(await code(prepareSummary(deps, { ...sel, dayFrom: '2026-03-01', dayTo: '2026-03-02' }))).toBe('analysis_no_data');

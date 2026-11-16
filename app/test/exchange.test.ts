@@ -52,6 +52,7 @@ async function seeded(make: () => Promise<StorageRepository>) {
     at: { utc: '2026-01-12T21:00:00.000Z', tz: TZ },
     treatmentId: 'tr1',
     areaIds: ['area-chin', 'a-nail'],
+    reaction: 'strong' as const, // IN-11 survives the round trip
     note: null,
   });
   await repo.addRecord('changeEvents', {
@@ -227,7 +228,7 @@ describe('data.json validation of alcohol and medication entries (IN-4, IN-5)', 
 
 describe('data.json validation of treatments, events, reactions and allergens (IN-10 to IN-13)', () => {
   const at = { utc: '2026-01-10T20:00:00.000Z', tz: 'Europe/Warsaw' };
-  const application = { id: 'ta1', utc: at.utc, tz: at.tz, treatment_id: 'tr1', area_ids: ['area-chin'], note: null };
+  const application = { id: 'ta1', utc: at.utc, tz: at.tz, treatment_id: 'tr1', area_ids: ['area-chin'], reaction: null, note: null };
   const event = { id: 'ce1', utc: at.utc, tz: at.tz, action: 'started', category: 'cat-product', name: 'x', date_unknown: false, note: null };
   const reaction = { id: 'r1', utc: at.utc, tz: at.tz, meal_id: 'm1', symptoms: ['hives'], note: null };
   const meal = { id: 'm1', utc: at.utc, tz: at.tz, description: 'x', ingredients: [], allergens: ['milk'], barcode: null, source: { kind: 'typed', edited: false, llm: null, aiTags: false }, note: null };
@@ -287,6 +288,8 @@ describe('data.json validation of treatments, events, reactions and allergens (I
     expect(err(file(records({ meals: [{ ...meal, allergens: ['dust'] }] })))).toBe('import_invalid_data');
     expect(err(file(records({ meals: [{ ...meal, allergens: undefined }] })))).toBe('import_invalid_data');
     expect(err(file(records({ treatment_applications: [{ ...application, area_ids: [] }] })))).toBe('import_invalid_data');
+    for (const reaction of [undefined, 'burning', 3, '']) expect(err(file(records({ treatment_applications: [{ ...application, reaction }] })))).toBe('import_invalid_data'); // IN-11: the key is required, null means not recorded
+    for (const reaction of [null, 'none', 'mild', 'strong']) expect(err(file(records({ treatment_applications: [{ ...application, reaction }] })))).toBe('no error');
     expect(err(file(records({ change_events: [{ ...event, action: 'paused' }] })))).toBe('import_invalid_data');
     expect(err(file(records({ change_events: [{ ...event, date_unknown: 'no' }] })))).toBe('import_invalid_data');
     expect(err(file(records({ reactions: [{ ...reaction, symptoms: [] }] })))).toBe('import_invalid_data');
@@ -329,7 +332,7 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
       analyses: 0,
       reportSummaries: 0,
       skinAreas: PREDEFINED_AREAS.length + 2,
-      dailyItems: 15,
+      dailyItems: 17,
       changeCategories: 2,
       treatments: 1,
     });
@@ -370,7 +373,7 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
       analyses: 0,
       reportSummaries: 0,
       skinAreas: PREDEFINED_AREAS.length,
-      dailyItems: 14,
+      dailyItems: 16,
       changeCategories: 2,
       treatments: 0,
     });

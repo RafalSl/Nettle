@@ -10,6 +10,7 @@ import {
   NAIL_EXTENTS,
   NAIL_STAGES,
   SYMPTOMS,
+  TREATMENT_REACTIONS,
   type ChangeEvent,
   type CheckIn,
   type ExtraKind,
@@ -91,7 +92,7 @@ const stool: Codec<StoolEntry> = {
 
 const treatmentApplication: Codec<TreatmentApplication> = {
   key: 'treatment_applications',
-  toJson: (a) => ({ id: a.id, utc: a.at.utc, tz: a.at.tz, treatment_id: a.treatmentId, area_ids: [...a.areaIds], note: a.note }),
+  toJson: (a) => ({ id: a.id, utc: a.at.utc, tz: a.at.tz, treatment_id: a.treatmentId, area_ids: [...a.areaIds], reaction: a.reaction, note: a.note }),
   parse: (o, w) => {
     const areaIds = stringList(o, 'area_ids', w);
     if (areaIds.length === 0) bad(`${w}.area_ids`);
@@ -100,6 +101,7 @@ const treatmentApplication: Codec<TreatmentApplication> = {
       at: { utc: utc(o, w), tz: tz(o, w) },
       treatmentId: str(o, 'treatment_id', w),
       areaIds,
+      reaction: o.reaction === null ? null : oneOf(o, 'reaction', TREATMENT_REACTIONS, w),
       note: nullableText(o, 'note', w),
     };
   },

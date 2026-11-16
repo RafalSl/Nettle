@@ -3,11 +3,13 @@ import { makeStamp } from '../model/time';
 import {
   CHANGE_ACTIONS,
   SYMPTOMS,
+  TREATMENT_REACTIONS,
   type ChangeAction,
   type ChangeEvent,
   type Reaction,
   type Symptom,
   type TreatmentApplication,
+  type TreatmentReaction,
 } from '../model/types';
 import type { Deps } from './deps';
 
@@ -16,12 +18,16 @@ export interface ApplyTreatmentInput {
   areaIds: string[];
   at?: Date;
   note?: string;
+  /** IN-11: set afterwards from the application's edit screen; the one-tap path leaves it out (not recorded). */
+  reaction?: TreatmentReaction | null;
 }
 
 /** IN-11: apply a saved treatment to one or more areas, timestamped. */
 export async function applyTreatment(deps: Deps, input: ApplyTreatmentInput): Promise<TreatmentApplication> {
   const areaIds = [...new Set(input.areaIds)];
   if (areaIds.length === 0) throw new NettleError('no_areas_selected');
+  const reaction = input.reaction ?? null;
+  if (reaction !== null && !TREATMENT_REACTIONS.includes(reaction)) throw new NettleError('invalid_value', 'reaction');
   const treatment = (await deps.repo.listItems('treatments')).find((t) => t.id === input.treatmentId);
   if (!treatment) throw new NettleError('unknown_item', input.treatmentId);
   if (treatment.archived) throw new NettleError('area_archived', input.treatmentId);
@@ -36,6 +42,7 @@ export async function applyTreatment(deps: Deps, input: ApplyTreatmentInput): Pr
     at: makeStamp(deps.clock, input.at),
     treatmentId: input.treatmentId,
     areaIds,
+    reaction,
     note: input.note?.trim() || null,
   };
   await deps.repo.addRecord('treatmentApplications', record);

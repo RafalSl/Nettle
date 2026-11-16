@@ -61,7 +61,7 @@ async function diary() {
   await logReaction(deps, { mealId: meal.id, symptoms: ['hives'], at: at('2026-01-10T12:00:00.000Z') });
   const e1 = await logSkinEntry(deps, { areaId: 'area-chin', scores: { severity: 3, itch: 4, pain: 0, dryness: 2, scaling: 1 }, at: at('2026-01-10T20:00:00.000Z') });
   const e2 = await logSkinEntry(deps, { areaId: 'area-chin', scores: { severity: 8, itch: 8, pain: 2, dryness: 5, scaling: 4 }, at: at('2026-01-13T20:00:00.000Z') });
-  const priv = await logSkinEntry(deps, { areaId: 'area-intimate', scores: { severity: 5, itch: 5, pain: 5, dryness: 5, scaling: 5 }, at: at('2026-01-11T20:00:00.000Z') });
+  const priv = await logSkinEntry(deps, { areaId: 'area-penis', scores: { severity: 5, itch: 5, pain: 5, dryness: 5, scaling: 5 }, at: at('2026-01-11T20:00:00.000Z') });
   const nail = await addArea(deps, 'Left thumb', 'nail');
   const n1 = await logNailEntry(deps, { areaId: nail.id, stage: 'yellow', extent: 'under_quarter', at: at('2026-01-12T08:00:00.000Z') });
   const p = (kind: 'skinEntry' | 'nailEntry', id: string, uri: string, when: string) => addPhoto(deps, { entryKind: kind, entryId: id, sourceUri: uri, at: at(when) });

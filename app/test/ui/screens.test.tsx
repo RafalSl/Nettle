@@ -930,7 +930,7 @@ describe('Data and backup (EX-14, EX-10, EX-13)', () => {
 
   it('EX-14, EX-11 the full backup holds records, settings and sensitive photos, and remembers the export', async () => {
     const deps = nowDeps();
-    const entry = await logSkinEntry(deps, { areaId: 'area-intimate', scores });
+    const entry = await logSkinEntry(deps, { areaId: 'area-penis', scores });
     await addPhoto(deps, { entryKind: 'skinEntry', entryId: entry.id, sourceUri: 'secret' });
     const { tree, fileShare } = await mount(data, deps);
     expect(await deps.settings.get('lastExportAt')).toBeNull();
@@ -1260,7 +1260,7 @@ describe('Review (UX-1, EX-14)', () => {
 
   it('EX-14, EX-7 the doctor report counts the period, leaves sensitive photos out until asked, and remembers the export', async () => {
     const deps = nowDeps();
-    const entry = await logSkinEntry(deps, { areaId: 'area-intimate', scores, at: new Date(Date.now() - 86_400_000) });
+    const entry = await logSkinEntry(deps, { areaId: 'area-penis', scores, at: new Date(Date.now() - 86_400_000) });
     await addPhoto(deps, { entryKind: 'skinEntry', entryId: entry.id, sourceUri: 'secret' });
     const { tree, fileShare } = await mount(() => require('@/app/(tabs)/review/report'), deps);
     await flush();
@@ -2727,9 +2727,9 @@ describe('Area timeline (SK-8)', () => {
 
   it('SK-8, SK-5 the timeline shows scores beside photos, and a sensitive photo stays blurred until tapped', async () => {
     const deps = nowDeps();
-    const entry = await logSkinEntry(deps, { areaId: 'area-intimate', scores, at: new Date('2026-01-10T08:00:00.000Z') });
+    const entry = await logSkinEntry(deps, { areaId: 'area-penis', scores, at: new Date('2026-01-10T08:00:00.000Z') });
     await addPhoto(deps, { entryKind: 'skinEntry', entryId: entry.id, sourceUri: 'secret' }); // sensitive by the area default
-    mockParams.current = { id: 'area-intimate' };
+    mockParams.current = { id: 'area-penis' };
     const { tree } = await mount(() => require('@/app/(tabs)/review/area'), deps);
     await flush();
     expect(hasText(tree, '2026-01-10')).toBe(true);
@@ -2843,7 +2843,7 @@ describe('Photo selection for an export (EX-7, EX-8)', () => {
   it('EX-7 the user picks single photos, sensitive ones only when picked, and only those go into the ZIP', async () => {
     const deps = nowDeps();
     const chin = await logSkinEntry(deps, { areaId: 'area-chin', scores, at: new Date('2026-01-10T08:00:00.000Z') });
-    const intimate = await logSkinEntry(deps, { areaId: 'area-intimate', scores, at: new Date('2026-01-11T08:00:00.000Z') });
+    const intimate = await logSkinEntry(deps, { areaId: 'area-penis', scores, at: new Date('2026-01-11T08:00:00.000Z') });
     await addPhoto(deps, { entryKind: 'skinEntry', entryId: chin.id, sourceUri: 'one' });
     await addPhoto(deps, { entryKind: 'skinEntry', entryId: chin.id, sourceUri: 'two' });
     await addPhoto(deps, { entryKind: 'skinEntry', entryId: intimate.id, sourceUri: 'three' }); // sensitive by the area default
@@ -2854,7 +2854,7 @@ describe('Photo selection for an export (EX-7, EX-8)', () => {
     const chips = () => [...new Set(tree.root.findAll((n) => typeof n.props.accessibilityLabel === 'string' && n.props.accessibilityState?.selected !== undefined && /\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(n.props.accessibilityLabel)).map((n) => n.props.accessibilityLabel as string))];
     expect(chips()).toHaveLength(2); // the two chin photos share a label (same minute); the third is the sensitive one
     const sensitiveLabel = chips().find((l) => l.includes(en.analysis.sensitiveMark))!;
-    expect(sensitiveLabel).toContain(en.areas['area-intimate']);
+    expect(sensitiveLabel).toContain(en.areas['area-penis']);
     const plain = chips().filter((l) => !l.includes(en.analysis.sensitiveMark));
     await press(tree, plain[0]!); // pick exactly one ordinary photo
     await press(tree, en.data.exportButton);

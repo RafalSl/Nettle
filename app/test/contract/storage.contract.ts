@@ -1,3 +1,4 @@
+import { PREDEFINED_AREAS } from '@/core/model/areas';
 import type { StorageRepository } from '@/core/ports/storage';
 import { noExtra, noItems, syntheticCheckIn, syntheticEntry, syntheticMeal, syntheticNailEntry, syntheticStool } from '../helpers/fixtures';
 
@@ -9,17 +10,19 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
       repo = await make();
     });
 
-    it('SK-1 seeds the six predefined areas, intimate area sensitive by default', async () => {
+    it('SK-1, SK-5 seeds the eight predefined areas; the three intimate ones are sensitive by default and there is no single intimate area', async () => {
       const areas = await repo.listAreas();
       expect(areas.map((a) => a.id).sort()).toEqual([
         'area-behind-ears',
+        'area-between-buttocks',
         'area-chin',
         'area-ears-inside',
-        'area-intimate',
         'area-neck',
+        'area-penis',
+        'area-perineum-groin',
         'area-sternum',
       ]);
-      expect(areas.filter((a) => a.sensitiveDefault).map((a) => a.id)).toEqual(['area-intimate']);
+      expect(areas.filter((a) => a.sensitiveDefault).map((a) => a.id).sort()).toEqual(['area-between-buttocks', 'area-penis', 'area-perineum-groin']);
     });
 
     it('IN-1 stores a meal with ordered ingredients and UTC + timezone', async () => {
@@ -279,7 +282,7 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
       expect(ids).toContain('a-custom'); // still referenced by e1
       expect(ids).not.toContain('a-unused');
       expect(ids).toContain('area-chin');
-      expect(ids).toHaveLength(7);
+      expect(ids).toHaveLength(PREDEFINED_AREAS.length + 1);
     });
 
     it('EX-10 merge settings adds new areas and keeps local versions of existing ones', async () => {
@@ -367,7 +370,7 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
       await repo.addMeal(syntheticMeal('m2', '2026-02-01T08:00:00.000Z'));
       const snap = await repo.snapshot({ from: '2026-01-15T00:00:00.000Z' });
       expect(snap.meals.map((m) => m.id)).toEqual(['m2']);
-      expect(snap.skinAreas).toHaveLength(6);
+      expect(snap.skinAreas).toHaveLength(PREDEFINED_AREAS.length);
     });
   });
 }

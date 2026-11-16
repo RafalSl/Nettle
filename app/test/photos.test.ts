@@ -48,7 +48,7 @@ describe.each(repos)('photos (%s)', (_name, make) => {
 
   it('SK-5 the sensitive flag starts from the area default and can be overridden per photo', async () => {
     const { deps } = await setup();
-    const intimate = await logSkinEntry(deps, { areaId: 'area-intimate', scores });
+    const intimate = await logSkinEntry(deps, { areaId: 'area-penis', scores });
     const chin = await logSkinEntry(deps, { areaId: 'area-chin', scores });
     const a = await addPhoto(deps, { entryKind: 'skinEntry', entryId: intimate.id, sourceUri: 'a' });
     const b = await addPhoto(deps, { entryKind: 'skinEntry', entryId: intimate.id, sourceUri: 'b', sensitive: false });
@@ -57,6 +57,14 @@ describe.each(repos)('photos (%s)', (_name, make) => {
     await setPhotoSensitive(deps, c.id, true);
     expect((await listPhotos(deps, 'skinEntry', chin.id))[0]?.sensitive).toBe(true);
     expect(await code(setPhotoSensitive(deps, 'nope', true))).toBe('unknown_photo');
+  });
+
+  it('SK-1, SK-5 each of the three intimate areas starts its photos as sensitive', async () => {
+    const { deps } = await setup();
+    for (const areaId of ['area-penis', 'area-perineum-groin', 'area-between-buttocks']) {
+      const entry = await logSkinEntry(deps, { areaId, scores });
+      expect((await addPhoto(deps, { entryKind: 'skinEntry', entryId: entry.id, sourceUri: areaId })).sensitive).toBe(true);
+    }
   });
 
   it('SK-4 refuses an unknown entry without storing a file', async () => {

@@ -288,6 +288,12 @@ export const MIGRATIONS: string[] = [
   );
   CREATE INDEX change_event_ts ON change_event (ts_utc);
   `,
+  // SK-1: the single "intimate area" became three predefined areas (penis, perineum and groin, between the buttocks).
+  // A database that still has the old row keeps it as an archived area under its stored name, so nothing that points
+  // at it breaks and no translation key is needed; a new database never has it. Prototype data only.
+  `
+  UPDATE skin_area SET predefined = 0, archived = 1 WHERE id = 'area-intimate';
+  `,
 ];
 
 export async function migrate(db: SqlDb): Promise<void> {

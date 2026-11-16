@@ -39,7 +39,7 @@ describe('export bookkeeping (EX-11, UX-2)', () => {
 describe('export presets (EX-14)', () => {
   async function setup() {
     const deps = makeDeps(new MemoryRepo());
-    const e = await logSkinEntry(deps, { areaId: 'area-intimate', scores });
+    const e = await logSkinEntry(deps, { areaId: 'area-penis', scores });
     await addPhoto(deps, { entryKind: 'skinEntry', entryId: e.id, sourceUri: 'secret' }); // intimate area: sensitive by default
     return deps;
   }

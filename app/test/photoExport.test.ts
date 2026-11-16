@@ -34,7 +34,7 @@ async function seeded(make: () => Promise<StorageRepository>) {
   const repo = await make();
   const deps = makeDeps(repo);
   const chin = await logSkinEntry(deps, { areaId: 'area-chin', scores, at: new Date('2026-01-10T08:00:00.000Z') });
-  const intimate = await logSkinEntry(deps, { areaId: 'area-intimate', scores, at: new Date('2026-01-10T09:00:00.000Z') });
+  const intimate = await logSkinEntry(deps, { areaId: 'area-penis', scores, at: new Date('2026-01-10T09:00:00.000Z') });
   const nail = await addArea(deps, 'Synthetic thumb', 'nail');
   const nailEntry = await logNailEntry(deps, { areaId: nail.id, stage: 'clear', extent: 'none', at: new Date('2026-01-20T08:00:00.000Z') });
   const p = (entryKind: 'skinEntry' | 'nailEntry', entryId: string, uri: string, at: string) =>
@@ -87,7 +87,7 @@ describe('photo selection and names (EX-2, EX-7)', () => {
   it('EX-2 names photos by local day, a short label and a counter, and hides sensitive ones', () => {
     const areas: Record<string, { id: string; kind: 'skin' | 'nail'; predefined: boolean }> = {
       a: { id: 'area-chin', kind: 'skin', predefined: true },
-      b: { id: 'area-intimate', kind: 'skin', predefined: true },
+      b: { id: 'area-penis', kind: 'skin', predefined: true },
       c: { id: 'user-1', kind: 'nail', predefined: false },
     };
     const more = [...photos, photo('d', '2026-01-10T08:30:00.000Z')];

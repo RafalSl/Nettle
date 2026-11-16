@@ -1,3 +1,4 @@
+import { PREDEFINED_AREAS } from '@/core/model/areas';
 import { defaultPreferences } from '@/core/model/preferences';
 import { preferencesToJson } from '@/core/export/preferencesJson';
 import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate';
@@ -37,7 +38,7 @@ async function seeded(make: () => Promise<StorageRepository>) {
   await repo.upsertArea({ ...chin, nameOverride: 'Synthetic jaw' }); // SK-2 override must survive the round trip
   await repo.addMeal({ ...syntheticMeal('m1', '2026-01-10T08:00:00.000Z'), allergens: ['milk', 'gluten'] }); // IN-10 survives the round trip
   await repo.addMeal(syntheticMeal('m2', '2026-01-12T08:00:00.000Z', []));
-  await repo.addSkinEntry(syntheticEntry('e1', '2026-01-10T09:00:00.000Z', 'area-intimate'));
+  await repo.addSkinEntry(syntheticEntry('e1', '2026-01-10T09:00:00.000Z', 'area-penis'));
   await repo.addSkinEntry(syntheticEntry('e2', '2026-01-12T09:00:00.000Z', 'a-custom'));
   await repo.upsertArea({ ...custom, id: 'a-nail', kind: 'nail', name: 'Synthetic left thumb' });
   await repo.addRecord('nailEntries', syntheticNailEntry('n1', '2026-01-12T10:00:00.000Z', 'a-nail'));
@@ -327,7 +328,7 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
       photos: 0,
       analyses: 0,
       reportSummaries: 0,
-      skinAreas: 8,
+      skinAreas: PREDEFINED_AREAS.length + 2,
       dailyItems: 15,
       changeCategories: 2,
       treatments: 1,
@@ -368,7 +369,7 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
       photos: 0,
       analyses: 0,
       reportSummaries: 0,
-      skinAreas: 6,
+      skinAreas: PREDEFINED_AREAS.length,
       dailyItems: 14,
       changeCategories: 2,
       treatments: 0,
@@ -442,7 +443,7 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
     const source = await seeded(make);
     const json = dataJson(await exportBundle(makeDeps(source), { parts: SETTINGS }));
     expect(json.records).toBeUndefined();
-    expect(json.settings.skin_areas).toHaveLength(8);
+    expect(json.settings.skin_areas).toHaveLength(PREDEFINED_AREAS.length + 2);
     expect(json.settings.skin_areas.find((a: { id: string }) => a.id === 'area-chin').name_override).toBe('Synthetic jaw');
   });
 
@@ -493,7 +494,7 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
     const json = dataJson(zip);
     expect(json.records.meals.map((m: { id: string }) => m.id)).toEqual(['m2']);
     expect(json.records.skin_entries.map((e: { id: string }) => e.id)).toEqual(['e2']);
-    expect(json.settings.skin_areas).toHaveLength(8);
+    expect(json.settings.skin_areas).toHaveLength(PREDEFINED_AREAS.length + 2);
     expect(json.range).toEqual({ from: '2026-01-11T00:00:00.000Z', to: null });
   });
 });

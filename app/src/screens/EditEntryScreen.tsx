@@ -1,7 +1,8 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Switch, Text, TextInput, View } from 'react-native';
-import { joinIngredients, splitIngredients } from '@/core/model/allergens';
+import { addIngredients, joinIngredients, splitIngredients } from '@/core/model/allergens';
+import { completeSuggestion } from '@/core/usecases/aiPack';
 import { ALLERGENS, CHANGE_ACTIONS, MEDICATION_CATEGORIES, NAIL_EXTENTS, NAIL_STAGES, SCORE_KEYS, SYMPTOMS, TREATMENT_REACTIONS } from '@/core/model/types';
 import type { Allergen, ListItem, LocalDay, MedicalKind, MedicationCategory, RecordKind, SkinArea, TreatmentReaction } from '@/core/model/types';
 import {
@@ -23,7 +24,9 @@ import { areaLabel, itemLabel, t } from '@/i18n';
 import { useServices } from '@/services';
 import { FormModal, useField, useForm } from '@/ui/FormModal';
 import { DrinkFields, draftFromDrink, drinkInput, drinkMissing, type DrinkDraft } from '@/ui/DrinkFields';
+import { FillLaterSwitch } from '@/ui/FillLaterSwitch';
 import { PhotoStrip } from '@/ui/PhotoStrip';
+import { SuggestionPanel } from '@/ui/SuggestionPanel';
 import { MedicalFields } from '@/ui/MedicalFields';
 import { parseSizeText, sizeToSave, SkinExtraFields } from '@/ui/SkinExtraFields';
 import { DailyHealthFields, type DailyValues } from '@/ui/DailyHealthFields';
@@ -55,13 +58,33 @@ function CommonFields({ c, original }: { c: ReturnType<typeof useCommon>; origin
   );
 }
 
-function MealFields({ r }: { r: Rec<'meals'> }) {
+const sameList = (a: readonly string[], b: readonly string[]) => {
+  // addIngredients ends the list with an empty slot for the next name; it is not content.
+  const x = a.filter(Boolean);
+  const y = b.filter(Boolean);
+  return x.length === y.length && x.every((v, i) => v === y[i]);
+};
+
+/**
+ * IN-20: the state of one suggestion that is being applied in an edit form. Adding names makes them ordinary rows;
+ * the list as just filled is kept, so a later change marks the entry edited (IN-16). Nothing is stored until Save.
+ */
+function useSuggestionState(suggestionId: string | null) {
+  const [open, setOpen] = useState(suggestionId !== null);
+  const [baseline, setBaseline] = useState<string[] | null>(null);
+  const [aiTags, setAiTags] = useState(false);
+  return { open, setOpen, baseline, setBaseline, aiTags, setAiTags };
+}
+
+function MealFields({ r, suggestionId }: { r: Rec<'meals'>; suggestionId: string | null }) {
   const { deps } = useServices();
   const f = useForm();
   const c = useCommon(r.note, f.touch);
   const [description, setDescription] = useField(r.description, f.touch);
   const [ingredients, setIngredients] = useField(joinIngredients(r.ingredients), f.touch);
   const [allergens, setAllergens] = useField<Set<string>>(new Set(r.allergens), f.touch);
+  const [fillLater, setFillLater] = useField(r.fillLater === true, f.touch);
+  const sug = useSuggestionState(suggestionId);
   return (
     <FormModal
       dirty={f.dirty}
@@ -71,17 +94,36 @@ function MealFields({ r }: { r: Rec<'meals'> }) {
           description,
           ingredients: splitIngredients(ingredients),
           allergens: [...allergens] as Allergen[],
+          fillLater,
           note: c.note,
           at: c.at ?? undefined,
         });
+        // IN-20: names were added from a suggestion: the mark clears and the source reads name estimate (manual).
+if (suggestionId && sug.baseline) await completeSuggestion(deps, suggestionId, { edited: !sameList(sug.baseline, splitIngredients(ingredients)), aiTags: sug.aiTags });
       }}>
       <Label>{t('meal.description')}</Label>
       <TextInput style={styles.input} accessibilityLabel={t('meal.description')} value={description} onChangeText={setDescription} />
+      {suggestionId && sug.open && (
+        <SuggestionPanel
+          suggestionId={suggestionId}
+          onAdd={(names) => {
+            const next = addIngredients(splitIngredients(ingredients), names);
+            setIngredients(joinIngredients(next));
+            sug.setBaseline(next);
+          }}
+          onSelectTags={(tags) => {
+            setAllergens(new Set([...allergens, ...tags]));
+            sug.setAiTags(true);
+          }}
+          onDismissed={() => sug.setOpen(false)}
+        />
+      )}
       <Label>{t('meal.ingredients')}</Label>
       <TextInput style={styles.input} accessibilityLabel={t('meal.ingredients')} value={ingredients} onChangeText={setIngredients} />
       <Hint>{t('edit.ingredientsHint')}</Hint>
       <Label>{t('meal.allergens')}</Label>
       <Chips items={ALLERGENS.map((a) => ({ id: a, label: t(`allergens.${a}`) }))} selected={allergens} onToggle={(id) => setAllergens(toggled(allergens, id))} />
+      <FillLaterSwitch value={fillLater} onChange={setFillLater} />
       <CommonFields c={c} original={r.at.utc} />
     </FormModal>
   );
@@ -259,13 +301,35 @@ function ReactionFields({ r }: { r: Rec<'reactions'> }) {
   );
 }
 
-function DrinkEdit({ r }: { r: Rec<'drinks'> }) {
+function DrinkEdit({ r, suggestionId }: { r: Rec<'drinks'>; suggestionId: string | null }) {
   const { deps } = useServices();
   const f = useForm();
   const c = useCommon(r.note, f.touch);
   const [draft, setDraft] = useField<DrinkDraft>(draftFromDrink(r), f.touch);
+  const sug = useSuggestionState(suggestionId);
   return (
-    <FormModal dirty={f.dirty} missing={drinkMissing(draft)} onSave={async () => void (await editDrink(deps, r.id, { ...drinkInput(draft), note: c.note, at: c.at ?? undefined }))}>
+    <FormModal
+      dirty={f.dirty}
+      missing={drinkMissing(draft)}
+      onSave={async () => {
+        await editDrink(deps, r.id, { ...drinkInput(draft), note: c.note, at: c.at ?? undefined });
+        if (suggestionId && sug.baseline) await completeSuggestion(deps, suggestionId, { edited: !sameList(sug.baseline, splitIngredients(draft.ingredients)), aiTags: sug.aiTags });
+      }}>
+      {suggestionId && sug.open && (
+        <SuggestionPanel
+          suggestionId={suggestionId}
+          onAdd={(names) => {
+            const next = addIngredients(splitIngredients(draft.ingredients), names);
+            setDraft({ ...draft, ingredients: joinIngredients(next) });
+            sug.setBaseline(next);
+          }}
+          onSelectTags={(tags) => {
+            setDraft({ ...draft, allergens: new Set([...draft.allergens, ...tags]) });
+            sug.setAiTags(true);
+          }}
+          onDismissed={() => sug.setOpen(false)}
+        />
+      )}
       <DrinkFields draft={draft} onChange={setDraft} />
       <CommonFields c={c} original={r.at.utc} />
     </FormModal>
@@ -303,7 +367,8 @@ function MedicationFields({ r }: { r: Rec<'medicationEntries'> }) {
  */
 export default function EditEntryScreen() {
   const { deps } = useServices();
-  const { kind, id } = useLocalSearchParams<{ kind: string; id: string }>();
+  const { kind, id, suggestion } = useLocalSearchParams<{ kind: string; id: string; suggestion?: string }>();
+  const suggestionId = typeof suggestion === 'string' && suggestion ? suggestion : null; // IN-20: opened from "Suggestions to review"
   const [state, setState] = useState<{ row: LogRow; areas: SkinArea[]; treatments: ListItem[]; tags: ListItem[]; categories: ListItem[] } | 'missing' | null>(null);
 
   useEffect(() => {
@@ -326,7 +391,7 @@ export default function EditEntryScreen() {
   // Areas and items that are archived stay listed only when the entry already uses them.
   const usable = <T extends { id: string; archived: boolean }>(l: T[], used: string[]) => l.filter((x) => !x.archived || used.includes(x.id));
   switch (row.kind) {
-    case 'meals': return <MealFields r={row.record} />;
+    case 'meals': return <MealFields r={row.record} suggestionId={suggestionId} />;
     case 'skinEntries': return <SkinFields r={row.record} areas={usable(areas, [row.record.areaId])} />;
     case 'nailEntries': return <NailFields r={row.record} areas={usable(areas, [row.record.areaId])} />;
     case 'checkIns': return <CheckInFields r={row.record} items={tags.filter((i) => !i.archived)} />;
@@ -336,7 +401,7 @@ export default function EditEntryScreen() {
     case 'changeEvents': return <ChangeFields r={row.record} categories={state.categories} />;
     case 'medicalEvents': return <MedicalEditFields r={row.record} />;
     case 'reactions': return <ReactionFields r={row.record} />;
-    case 'drinks': return <DrinkEdit r={row.record} />;
+    case 'drinks': return <DrinkEdit r={row.record} suggestionId={suggestionId} />;
     case 'medicationEntries': return <MedicationFields r={row.record} />;
   }
 }

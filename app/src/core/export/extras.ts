@@ -26,7 +26,7 @@ import {
 } from '../model/types';
 import { analysisResultFromJson, analysisResultToJson } from '../llm/analysisResult';
 import { parseBarcode, parseSource, sourceToJson } from './sourceJson';
-import { bad, bool, enumList, nullableText, oneOf, str, stringList, tz, utc, type Obj } from './guards';
+import { bad, bool, enumList, nullableText, optionalFlag, parseFillLater, oneOf, str, stringList, tz, utc, type Obj } from './guards';
 
 /**
  * data.json wire format for the flat record kinds (see ExtraKind): `key` is the snake_case array name inside
@@ -166,6 +166,7 @@ const drink: Codec<Drink> = {
     allergens: [...e.allergens],
     barcode: e.barcode,
     source: sourceToJson(e.source),
+    ...(e.fillLater ? { fill_later: true } : {}),
     note: e.note,
   }),
   parse: (o, w) => {
@@ -184,6 +185,7 @@ const drink: Codec<Drink> = {
       allergens: enumList(o, 'allergens', ALLERGENS, w),
       barcode: parseBarcode(o, w),
       source: parseSource(o, w),
+      ...(parseFillLater(o, w) ? { fillLater: true as const } : {}),
       note: nullableText(o, 'note', w),
     };
   },
@@ -248,6 +250,7 @@ const analysis: Codec<Analysis> = {
     language: a.language,
     counts: a.counts,
     result: analysisResultToJson(a.result),
+    ...(a.manual ? { manual: true } : {}),
   }),
   parse: (o, w) => {
     const counts = o.counts;
@@ -268,6 +271,7 @@ const analysis: Codec<Analysis> = {
       language: oneOf(o, 'language', ['en', 'pl'] as const, w),
       counts: counts as Record<string, number>,
       result: result!,
+      ...(optionalFlag(o, 'manual', w) ? { manual: true as const } : {}),
     };
   },
 };
@@ -287,6 +291,7 @@ const reportSummary: Codec<ReportSummary> = {
     counts: s.counts,
     generated: s.generated,
     text: s.text,
+    ...(s.manual ? { manual: true } : {}),
   }),
   parse: (o, w) => {
     const counts = o.counts;
@@ -306,6 +311,7 @@ const reportSummary: Codec<ReportSummary> = {
       counts: counts as Record<string, number>,
       generated: str(o, 'generated', w),
       text: str(o, 'text', w),
+      ...(optionalFlag(o, 'manual', w) ? { manual: true as const } : {}),
     };
   },
 };

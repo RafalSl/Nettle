@@ -31,6 +31,7 @@ export function AnalysisView({ analysis }: { analysis: Analysis }) {
           prompt: analysis.promptVersion,
         })}
       </Hint>
+      {analysis.manual && <Hint>{t('plan.manualLabel', { model: analysis.model })}</Hint>}
       <Heading>{t('analysis.summary')}</Heading>
       <Text style={styles.rowText}>{r.summary}</Text>
       <Heading>{t('analysis.hypotheses')}</Heading>

@@ -13,6 +13,8 @@ export interface LlmProvenance {
   /** UTC instant of the answer. */
   at: string;
   promptVersion: string;
+  /** LL-15, IN-20: the answer came from a chat the user ran by hand on their Claude plan and imported; absent otherwise. */
+  manual?: true;
 }
 
 export interface IngredientSource {

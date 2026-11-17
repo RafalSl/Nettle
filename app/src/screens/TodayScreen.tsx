@@ -1,3 +1,4 @@
+import { listSuggestions } from '@/core/usecases/aiPack';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -51,6 +52,7 @@ export default function TodayScreen() {
   const [shortcuts, setShortcuts] = useState<TreatmentShortcut[]>([]);
   const [flare, setFlare] = useState<OpenFlare | null>(null);
   const [backup, setBackup] = useState<{ due: boolean; days: number | null }>({ due: false, days: null });
+  const [waiting, setWaiting] = useState(0); // IN-20: AI suggestions to review
   const [stoolOpen, setStoolOpen] = useState(false);
   /** UX-1: nothing has ever been logged: the first-run card explains where to start. */
   const [diaryEmpty, setDiaryEmpty] = useState(false);
@@ -111,6 +113,7 @@ export default function TodayScreen() {
       setShortcuts(await treatmentShortcuts(deps));
       setFlare(await openFlareSummary(deps));
       setBackup({ due: await backupCardDue(deps), days: await daysSinceExport(deps) });
+      setWaiting((await listSuggestions(deps)).length);
       const prefs = await getPreferences(deps);
       setLayout(prefs.quickActions);
       setRegular(prefs.regular);
@@ -323,6 +326,12 @@ export default function TodayScreen() {
         <Card>
           <Text style={styles.rowText}>{t('cards.notLogged')}</Text>
           <Button kind="secondary" title={t('cards.openCheckin')} onPress={() => router.push('/form/checkin')} />
+        </Card>
+      )}
+      {waiting > 0 && (
+        <Card>
+          <Text style={styles.rowText}>{t('cards.suggestions', { n: waiting })}</Text>
+          <Button kind="secondary" title={t('cards.openSuggestions')} onPress={() => router.push('/today/suggestions')} />
         </Card>
       )}
       {backup.due && (

@@ -1,5 +1,5 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, View } from 'react-native';
 import { NettleError } from '@/core/model/errors';
@@ -10,6 +10,7 @@ import { listAnalyses, prepareAnalysis } from '@/core/usecases/analysis';
 import { areaLabel, currentLanguage, errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
 import { AnalysisView } from '@/ui/AnalysisView';
+import { NavRow } from '@/ui/NavRow';
 import { useAnalysisRun } from '@/ui/useAnalysisRun';
 import { Button, Chips, Heading, Hint, Label, Screen, styles } from '@/ui/components';
 
@@ -36,6 +37,7 @@ const clock = (seconds: number) => `${Math.floor(seconds / 60)}:${String(seconds
 
 export default function AnalysisScreen() {
   const { deps } = useServices();
+  const router = useRouter();
   const tz = deps.clock.timeZone();
   const [from, setFrom] = useState(() => daysAgo(14));
   const [to, setTo] = useState(() => new Date());
@@ -117,6 +119,7 @@ export default function AnalysisScreen() {
     <Screen>
       <Heading>{t('analysis.title')}</Heading>
       <Hint>{t('analysis.disclaimer')}</Hint>
+      <NavRow title={t('plan.link')} subtitle={t('plan.linkHint')} onPress={() => router.push('/review/pack')} />
       <View style={styles.timeRow}>
         <Label>{t('analysis.from')}</Label>
         <DateTimePicker mode="date" value={from} onValueChange={(_e, d) => setFrom(d)} />

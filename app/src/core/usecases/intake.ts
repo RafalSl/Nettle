@@ -25,6 +25,8 @@ export interface LogDrinkInput {
   note?: string;
   barcode?: string | null;
   source?: IngredientSource;
+  /** IN-20 */
+  fillLater?: boolean;
 }
 
 /** IN-4: any beverage, with an alcohol switch and optional ingredients and allergen tags. */
@@ -46,6 +48,7 @@ export async function logDrink(deps: Deps, input: LogDrinkInput): Promise<Drink>
     allergens,
     barcode: input.barcode ?? null,
     source,
+    ...(input.fillLater ? { fillLater: true as const } : {}),
     note: input.note?.trim() || null,
   };
   await deps.repo.addRecord('drinks', entry);

@@ -18,6 +18,7 @@ import { confirmDestructive } from '@/ui/actionSheet';
 import { BarcodeScanner } from '@/ui/BarcodeScanner';
 import { FormModal } from '@/ui/FormModal';
 import { AllergenAiControls, useAllergenAi } from '@/ui/useAllergenAi';
+import { FillLaterSwitch } from '@/ui/FillLaterSwitch';
 import { IngredientRunPanel, SOURCE_OF, useIngredientRun, type Run } from '@/ui/useIngredientRun';
 import { Button, Chips, Hint, Label, TimeField, styles } from '@/ui/components';
 
@@ -66,6 +67,7 @@ export default function MealScreen() {
   const [ingredients, setIngredients] = useState<string[]>(['']);
   const [allergens, setAllergens] = useState<Set<string>>(new Set());
   const [note, setNote] = useState('');
+  const [fillLater, setFillLater] = useState(false);
   const ingredientRun = useIngredientRun();
   // IN-10: the AI's allergen suggestion lands as a hint with a select button; nothing is selected by itself.
   const allergenAi = useAllergenAi((tags, note) =>
@@ -227,7 +229,7 @@ export default function MealScreen() {
       missing={missing}
       onSave={async () => {
         ingredientRun.cancel(); // Save uses the fields as they are and drops a running call
-        await logMeal(deps, { description, ...saveFields(), note, at: at ?? (day ? defaultAt : undefined) });
+        await logMeal(deps, { description, ...saveFields(), fillLater, note, at: at ?? (day ? defaultAt : undefined) });
       }}>
       {phase === 'choose' ? (
         <>
@@ -325,6 +327,7 @@ export default function MealScreen() {
           <AllergenAiControls hook={allergenAi} ingredients={ingredients} />
           <Button kind="secondary" title={t('meal.suggestAllergens')} onPress={() => touch(setAllergens)(new Set(suggestAllergens(ingredients)))} />
           <Hint>{t('meal.allergensHint')}</Hint>
+          <FillLaterSwitch value={fillLater} onChange={touch(setFillLater)} />
 
           <TimeField value={at ?? defaultAt} onChange={touch(setAt)} />
           <Label>{t('common.note')}</Label>

@@ -12,8 +12,8 @@ export interface Clock {
 /** EX-9 / EX-10: hand a file to the user, and let them pick one back. */
 export interface FileShare {
   saveAndShare(fileName: string, bytes: Uint8Array, mimeType: string): Promise<void>;
-  /** null when the user cancels. */
-  pickFile(): Promise<Uint8Array | null>;
+  /** null when the user cancels. `json` picks a result file for LL-15, `zip` (the default) an export for EX-10. */
+  pickFile(kind?: 'zip' | 'json'): Promise<Uint8Array | null>;
 }
 
 /**

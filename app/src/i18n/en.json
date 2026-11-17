@@ -246,7 +246,11 @@
     "barcode_lookup_failed": "The product database could not be reached. Enter the product by hand.",
     "lock_unavailable": "Set a passcode or Face ID on this iPhone first.",
     "lock_failed": "Could not confirm it is you. The lock was not changed.",
-    "empty_title": "Enter a title."
+    "empty_title": "Enter a title.",
+    "result_invalid": "This is not a result file made for a pack.",
+    "result_wrong_pack": "This result answers a pack that this phone did not make.",
+    "result_unknown_entry": "This result refers to entries that are not in its pack.",
+    "suggestion_gone": "That suggestion is no longer there."
   },
   "today": {
     "title": "Daily health",
@@ -624,7 +628,8 @@
     "medical": "Medical events",
     "medicalKind": "Kind",
     "medicalTitle": "Title",
-    "medicalUntil": "Until"
+    "medicalUntil": "Until",
+    "manual": "made by hand in a chat on the user's own Claude plan"
   },
   "export": {
     "extras": "Extra files",
@@ -743,7 +748,9 @@
     "regularItem": "Regular item",
     "guide": "Where to log",
     "health": "Health trends",
-    "medical": "Medical event"
+    "medical": "Medical event",
+    "aiSuggestions": "AI suggestions",
+    "pack": "Claude plan"
   },
   "home": {
     "quickActions": "Quick actions",
@@ -837,7 +844,8 @@
     "label_scan": "AI label scan",
     "photo_estimate": "AI photo estimate",
     "name_estimate": "AI name estimate",
-    "edited": "edited"
+    "edited": "edited",
+    "manual": "manual"
   },
   "log": {
     "meal": "Meal",
@@ -879,7 +887,9 @@
     "openFlareOne": "Flare: {{area}}, severity {{severity}} since {{since}}",
     "openFlareMany": "Flare in {{n}} areas, worst: {{area}}",
     "firstRun": "Your diary is empty. Start with a meal, or see where each kind of entry goes.",
-    "firstMeal": "Log a meal"
+    "firstMeal": "Log a meal",
+    "suggestions": "{{n}} AI suggestions to review",
+    "openSuggestions": "Review suggestions"
   },
   "edit": {
     "title": "Edit entry",
@@ -1094,5 +1104,51 @@
     "endChange": "Change end date",
     "endClear": "Clear end date",
     "endHint": "Optional. Leave it empty while the illness goes on. A Daily health yes/no for illness stays the quick way to mark a day."
+  },
+  "fillLater": {
+    "title": "Fill later with AI",
+    "hint": "Saved as typed. The next AI pack for your Claude plan will ask for its ingredients; nothing is filled in by itself.",
+    "waiting": "waiting for AI",
+    "panelIntro": "A suggestion from {{model}}, made in a chat on your own Claude plan. Add what applies, then edit and save.",
+    "panelEmpty": "The model could not suggest ingredients for this name.",
+    "panelTags": "The model lists these allergens: {{list}}. They are not selected until you select them.",
+    "dismiss": "Dismiss the suggestion"
+  },
+  "aiSuggestions": {
+    "intro": "Ingredients that came back from a pack. Open one to look at it; nothing changes until you save.",
+    "none": "No suggestions to review.",
+    "row": "{{n}} ingredients from {{model}}"
+  },
+  "plan": {
+    "link": "Use my Claude plan",
+    "linkHint": "Analyse with a chat on your own Claude plan, without the paid API",
+    "title": "My Claude plan",
+    "intro": "Prepare a pack, give it to a chat on your own Claude plan, and import the result.json that comes back. The app sends nothing itself and bills nothing. A model never edits your diary: the result is checked, shown to you first, and only adds an analysis, a summary and suggestions.",
+    "prepareTitle": "Prepare a pack",
+    "prepare": "Prepare the pack",
+    "prepareHint": "Opens the share sheet. The ZIP goes nowhere unless you send it.",
+    "markedCount": "{{n}} meals and drinks are marked \"Fill later with AI\" and go in whatever their date.",
+    "confirmTitle": "Prepare this pack?",
+    "confirmIntro": "The pack is one ZIP file with these contents:",
+    "markedLine": "To fill: {{text}}",
+    "noteLeaves": "The file leaves this phone only if you send it.",
+    "noteTerms": "A chat on a Claude plan falls under the consumer terms: whether it is used for training and how long it is kept depend on your account's privacy setting, not on the API terms.",
+    "noteBilling": "The app bills nothing. Your plan's own limits apply.",
+    "importTitle": "Import a result",
+    "importHint": "Pick the result.json from the chat. It must answer a pack made on this phone.",
+    "import": "Import a result",
+    "previewTitle": "Import this result?",
+    "previewModel": "Model: {{model}}",
+    "previewRange": "For the pack of {{from}} to {{to}}",
+    "previewAnalysis": "An analysis, stored as AI-generated and tentative",
+    "previewSummary": "A report summary",
+    "previewFills": "{{n}} suggestions to review ({{skipped}} skipped)",
+    "previewNoChange": "No entry is changed.",
+    "alreadyTitle": "Already imported",
+    "alreadyBody": "The result for {{id}} was imported before. Nothing was changed.",
+    "importedTitle": "Imported",
+    "importedBody": "Nothing in your diary was changed. Suggestions wait on Today.",
+    "manualLabel": "Made by hand in a chat on your own Claude plan with {{model}}, then imported.",
+    "useImported": "Use the summary from {{model}} (my Claude plan)"
   }
 }

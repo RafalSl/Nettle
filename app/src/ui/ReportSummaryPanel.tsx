@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Alert, TextInput } from 'react-native';
 import { NettleError } from '@/core/model/errors';
 import type { ReportSummary } from '@/core/model/types';
-import { prepareSummary, runSummary, saveSummary, summaryDays, type SummaryDraft } from '@/core/usecases/summary';
+import { listSummaries, prepareSummary, runSummary, saveSummary, summaryDays, type SummaryDraft } from '@/core/usecases/summary';
 import { errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
 import { Button, Hint, Label, styles } from '@/ui/components';
@@ -37,6 +37,15 @@ export function ReportSummaryPanel({
   const [phase, setPhase] = useState<Phase>({ s: 'idle' });
   const [elapsed, setElapsed] = useState(0);
   const ctl = useRef<AbortController | null>(null);
+  // LL-15: summaries imported from a chat on the user's own Claude plan, for this period and language.
+  const [imported, setImported] = useState<ReportSummary[]>([]);
+  useEffect(() => {
+    (async () => {
+      const range = await summaryDays(deps, await days());
+      const all = await listSummaries(deps);
+      setImported(range ? all.filter((s) => s.manual && s.dayFrom === range.dayFrom && s.dayTo === range.dayTo && s.language === language) : []);
+    })().catch(() => setImported([]));
+  }, [deps, days, language]);
 
   useEffect(
     () => () => {
@@ -159,6 +168,17 @@ export function ReportSummaryPanel({
       {phase.s === 'failed' && <Hint>{`${errorMessage(phase.error)} ${t('doctor.summaryFailed')}`}</Hint>}
       <Button kind="secondary" title={t('doctor.summaryButton')} onPress={() => void ask()} />
       <Hint>{t('doctor.summaryHint')}</Hint>
+      {imported.map((s) => (
+        <Button
+          key={s.id}
+          kind="secondary"
+          title={t('plan.useImported', { model: s.model })}
+          onPress={() => {
+            setPhase({ s: 'included', summary: s });
+            onChange(s);
+          }}
+        />
+      ))}
     </>
   );
 }

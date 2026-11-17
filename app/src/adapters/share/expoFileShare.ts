@@ -18,9 +18,9 @@ export const expoFileShare: FileShare = {
     }
   },
 
-  async pickFile() {
+  async pickFile(kind = 'zip') {
     const result = await DocumentPicker.getDocumentAsync({
-      type: ['application/zip', 'application/x-zip-compressed'],
+      type: kind === 'json' ? ['application/json', 'text/plain'] : ['application/zip', 'application/x-zip-compressed'],
       copyToCacheDirectory: true,
       multiple: false,
     });

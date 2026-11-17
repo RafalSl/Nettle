@@ -5,6 +5,7 @@ import { ALLERGENS, type Allergen } from '@/core/model/types';
 import type { DrinkSnapshot } from '@/core/usecases/preferences';
 import { t } from '@/i18n';
 import { Chips, Label, styles } from '@/ui/components';
+import { FillLaterSwitch } from '@/ui/FillLaterSwitch';
 
 /** The editable part of a drink (IN-4, IN-10) as form state: amount as text, ingredients as a comma list. */
 export interface DrinkDraft {
@@ -17,6 +18,8 @@ export interface DrinkDraft {
   barcode: string | null;
   source: IngredientSource;
   filled: { ingredients: string[]; allergens: string[] };
+  /** IN-20: wait for an AI fill. */
+  fillLater: boolean;
 }
 
 export const emptyDrinkDraft = (): DrinkDraft => ({
@@ -28,9 +31,10 @@ export const emptyDrinkDraft = (): DrinkDraft => ({
   barcode: null,
   source: typedSource(),
   filled: { ingredients: [], allergens: [] },
+  fillLater: false,
 });
 
-export const draftFromDrink = (d: DrinkSnapshot): DrinkDraft => ({
+export const draftFromDrink = (d: DrinkSnapshot & { fillLater?: true }): DrinkDraft => ({
   name: d.name,
   amount: String(d.amountMl),
   alcohol: d.alcohol,
@@ -39,6 +43,7 @@ export const draftFromDrink = (d: DrinkSnapshot): DrinkDraft => ({
   barcode: d.barcode,
   source: d.source,
   filled: { ingredients: [...d.ingredients], allergens: [...d.allergens] },
+  fillLater: d.fillLater === true,
 });
 
 /** Input for `logDrink` and `editDrink` from the form state. */
@@ -53,6 +58,7 @@ export const drinkInput = (d: DrinkDraft) => {
     allergens,
     barcode: d.barcode,
     source: afterEdit(d.source, !sameIngredients(d.filled, { ingredients, allergens })),
+    fillLater: d.fillLater,
   };
 };
 
@@ -87,6 +93,7 @@ export function DrinkFields({ draft, onChange, names = [] }: { draft: DrinkDraft
           set('allergens', next);
         }}
       />
+      <FillLaterSwitch value={draft.fillLater} onChange={(v) => set('fillLater', v)} />
     </>
   );
 }

@@ -36,6 +36,8 @@ export interface Meal {
   barcode: string | null;
   /** IN-16 */
   source: IngredientSource;
+  /** IN-20: marked "fill later with AI"; only ever true, absent otherwise. */
+  fillLater?: true;
   note: string | null;
 }
 
@@ -210,6 +212,8 @@ export interface Drink {
   barcode: string | null;
   /** IN-16 */
   source: IngredientSource;
+  /** IN-20 */
+  fillLater?: true;
   note: string | null;
 }
 
@@ -287,6 +291,8 @@ export interface Analysis {
   /** What was sent: record counts by kind, plus `days`, `completeDays` and `photos`. */
   counts: Record<string, number>;
   result: AnalysisResult;
+  /** LL-15: made by hand in a chat on the user's own Claude plan and imported; absent for a run made through the API. */
+  manual?: true;
 }
 
 /**
@@ -306,6 +312,8 @@ export interface ReportSummary {
   counts: Record<string, number>;
   generated: string;
   text: string;
+  /** LL-15: imported from a chat on the user's own Claude plan. */
+  manual?: true;
 }
 
 /** What the user logged (EX-1 "records"). */

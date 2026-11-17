@@ -153,6 +153,9 @@ Notifications from Expo Go can behave differently from a standalone build; recor
 | A5 | Report summary in the Doctor report. | Editable; goes under the AI label in the PDF. |  |  |
 | A7 | Meal review phase: type "pancakes with jam", tap "Suggest ingredients from the name". Repeat on the Drink form with a name. Then try "lunch". | Button only with a description. The confirmation shows the exact text and the billing notice; no photo. The answer is an editable list (add all or pick) that never overwrites typed ingredients; tags stay unselected. "Lunch" gives "too vague" and no names. The saved entry shows "AI name estimate" and the PDF marks it AI. |  |  |
 | A6 | Polish products: scan three you actually buy. | Note how many Open Food Facts knows. |  |  |
+| A8 | Meal form: switch "Fill later with AI" on, save with only a description. Open it from the log. | The log row says it is waiting for AI. The edit screen has the switch and can clear it. |  |  |
+| A9 | Review, AI analysis, Use my Claude plan: pick a range, include photos, create the pack, share it to Files. Open the ZIP in Files. | A confirmation lists what is in the pack and the three privacy points. The ZIP has `pack.json`, `INSTRUCTIONS.md` and the photos; sensitive photos are left out by default. |  |  |
+| A10 | Give the ZIP to a chat on your Claude plan, save its `result.json`, then Import a result. Try the wrong pack's result and a cancelled picker. | Counts shown before applying; a wrong pack is refused. A fill shows as the Today card and under Suggestions to review; adding it and saving clears the mark and the row reads name estimate (manual). An imported analysis is labelled manual; an imported summary is offered in the Doctor report. Note what the chat accepted (ZIP, photo count, size). |  |  |
 
 ## 11. Guide and routine changes (P2)
 

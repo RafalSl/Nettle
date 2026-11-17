@@ -12,7 +12,7 @@ export interface RowContext {
 
 /** IN-16: the source shown on an entry; typed entries say nothing. */
 const sourceLabel = (s: IngredientSource): string =>
-  s.kind === 'typed' ? '' : `${t(`source.${s.kind}`)}${s.edited ? `, ${t('source.edited')}` : ''}`;
+  s.kind === 'typed' ? '' : `${t(`source.${s.kind}`)}${s.llm?.manual ? ` (${t('source.manual')})` : ''}${s.edited ? `, ${t('source.edited')}` : ''}`;
 
 const categoryLabel = (ctx: RowContext, id: string) => {
   const c = ctx.categories.find((x) => x.id === id);
@@ -37,7 +37,7 @@ export function describeRow(row: LogRow, ctx: RowContext): { title: string; deta
   };
   switch (row.kind) {
     case 'meals':
-      return { title: row.record.description, detail: [row.record.ingredients.join(', '), sourceLabel(row.record.source)].filter(Boolean).join(' · ') || null };
+      return { title: row.record.description, detail: [row.record.ingredients.join(', '), sourceLabel(row.record.source), row.record.fillLater ? t('fillLater.waiting') : ''].filter(Boolean).join(' · ') || null };
     case 'skinEntries':
       return { title: `${t('log.skin')}: ${area(row.record.areaId)}`, detail: skinSummary(row.record) };
     case 'nailEntries':
@@ -72,7 +72,7 @@ export function describeRow(row: LogRow, ctx: RowContext): { title: string; deta
     case 'reactions':
       return { title: t('log.reaction', { symptoms: row.record.symptoms.map((s) => t(`symptoms.${s}`)).join(', ') }), detail: null };
     case 'drinks':
-      return { title: t('log.drink', { name: row.record.name, ml: row.record.amountMl }), detail: [row.record.alcohol ? t('log.alcoholic') : '', sourceLabel(row.record.source)].filter(Boolean).join(' · ') || null };
+      return { title: t('log.drink', { name: row.record.name, ml: row.record.amountMl }), detail: [row.record.alcohol ? t('log.alcoholic') : '', sourceLabel(row.record.source), row.record.fillLater ? t('fillLater.waiting') : ''].filter(Boolean).join(' · ') || null };
     case 'medicationEntries':
       return { title: t('log.medication', { name: row.record.name }), detail: row.record.dose };
   }

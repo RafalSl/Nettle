@@ -8,6 +8,7 @@ export default function TodayStack() {
     <Stack>
       <Stack.Screen name="index" options={{ title: t('tabs.today'), headerRight: () => <GearButton /> }} />
       <Stack.Screen name="more" options={{ title: t('nav.more') }} />
+      <Stack.Screen name="suggestions" options={{ title: t('nav.aiSuggestions') }} />
     </Stack>
   );
 }

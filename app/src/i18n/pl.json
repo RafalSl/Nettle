@@ -246,7 +246,11 @@
     "barcode_lookup_failed": "Nie udało się połączyć z bazą produktów. Wpisz produkt ręcznie.",
     "lock_unavailable": "Najpierw ustaw kod lub Face ID na tym iPhonie.",
     "lock_failed": "Nie udało się potwierdzić, że to Ty. Blokada nie została zmieniona.",
-    "empty_title": "Wpisz tytuł."
+    "empty_title": "Wpisz tytuł.",
+    "result_invalid": "To nie jest plik wyniku przygotowany dla paczki.",
+    "result_wrong_pack": "Ten wynik odpowiada paczce, której ten telefon nie przygotował.",
+    "result_unknown_entry": "Ten wynik dotyczy wpisów, których nie ma w jego paczce.",
+    "suggestion_gone": "Tej sugestii już nie ma."
   },
   "today": {
     "title": "Zdrowie dnia",
@@ -624,7 +628,8 @@
     "medical": "Zdarzenia medyczne",
     "medicalKind": "Rodzaj",
     "medicalTitle": "Tytuł",
-    "medicalUntil": "Do"
+    "medicalUntil": "Do",
+    "manual": "wykonane ręcznie w czacie na własnym planie Claude użytkownika"
   },
   "export": {
     "extras": "Dodatkowe pliki",
@@ -743,7 +748,9 @@
     "regularItem": "Stała pozycja",
     "guide": "Gdzie zapisać",
     "health": "Trendy zdrowia",
-    "medical": "Zdarz. med."
+    "medical": "Zdarz. med.",
+    "aiSuggestions": "Sugestie AI",
+    "pack": "Plan Claude"
   },
   "home": {
     "quickActions": "Szybkie akcje",
@@ -837,7 +844,8 @@
     "label_scan": "skan etykiety (AI)",
     "photo_estimate": "szacunek ze zdjęcia (AI)",
     "name_estimate": "szacunek z nazwy (AI)",
-    "edited": "poprawione"
+    "edited": "poprawione",
+    "manual": "ręcznie"
   },
   "log": {
     "meal": "Posiłek",
@@ -879,7 +887,9 @@
     "openFlareOne": "Zaostrzenie: {{area}}, nasilenie {{severity}} od {{since}}",
     "openFlareMany": "Zaostrzenie w {{n}} miejscach, najgorsze: {{area}}",
     "firstRun": "Dziennik jest pusty. Zacznij od posiłku albo zobacz, gdzie zapisać każdy rodzaj wpisu.",
-    "firstMeal": "Zapisz posiłek"
+    "firstMeal": "Zapisz posiłek",
+    "suggestions": "Sugestie AI do przejrzenia: {{n}}",
+    "openSuggestions": "Przejrzyj sugestie"
   },
   "edit": {
     "title": "Edycja wpisu",
@@ -1094,5 +1104,51 @@
     "endChange": "Zmień datę końca",
     "endClear": "Usuń datę końca",
     "endHint": "Opcjonalnie. Zostaw puste, dopóki choroba trwa. Tak/nie w Zdrowiu dnia nadal jest szybkim sposobem oznaczenia dnia."
+  },
+  "fillLater": {
+    "title": "Uzupełnij później przez AI",
+    "hint": "Zapisane tak, jak wpisano. Następna paczka AI dla Twojego planu Claude poprosi o składniki; nic nie uzupełnia się samo.",
+    "waiting": "czeka na AI",
+    "panelIntro": "Sugestia od {{model}}, wykonana w czacie na Twoim planie Claude. Dodaj to, co pasuje, popraw i zapisz.",
+    "panelEmpty": "Model nie potrafił zaproponować składników dla tej nazwy.",
+    "panelTags": "Model wymienia te alergeny: {{list}}. Nie są zaznaczone, dopóki ich nie zaznaczysz.",
+    "dismiss": "Odrzuć sugestię"
+  },
+  "aiSuggestions": {
+    "intro": "Składniki, które wróciły z paczki. Otwórz wpis, aby je obejrzeć; nic się nie zmienia, dopóki nie zapiszesz.",
+    "none": "Brak sugestii do przejrzenia.",
+    "row": "Składników: {{n}} od {{model}}"
+  },
+  "plan": {
+    "link": "Użyj mojego planu Claude",
+    "linkHint": "Analiza w czacie na Twoim planie Claude, bez płatnego API",
+    "title": "Mój plan Claude",
+    "intro": "Przygotuj paczkę, daj ją czatowi na własnym planie Claude i zaimportuj wrócony plik result.json. Aplikacja niczego sama nie wysyła i niczego nie rozlicza. Model nigdy nie zmienia dziennika: wynik jest sprawdzany, najpierw pokazywany Tobie i tylko dodaje analizę, podsumowanie i sugestie.",
+    "prepareTitle": "Przygotuj paczkę",
+    "prepare": "Przygotuj paczkę",
+    "prepareHint": "Otwiera okno udostępniania. Plik ZIP nigdzie nie trafi, jeśli go nie wyślesz.",
+    "markedCount": "Posiłków i napojów oznaczonych „Uzupełnij później przez AI”: {{n}}; trafiają do paczki niezależnie od daty.",
+    "confirmTitle": "Przygotować tę paczkę?",
+    "confirmIntro": "Paczka to jeden plik ZIP z taką zawartością:",
+    "markedLine": "Do uzupełnienia: {{text}}",
+    "noteLeaves": "Plik opuszcza ten telefon tylko wtedy, gdy go wyślesz.",
+    "noteTerms": "Czat na planie Claude podlega warunkom konsumenckim: to, czy służy do uczenia i jak długo jest przechowywany, zależy od ustawienia prywatności konta, a nie od warunków API.",
+    "noteBilling": "Aplikacja niczego nie rozlicza. Obowiązują limity Twojego planu.",
+    "importTitle": "Zaimportuj wynik",
+    "importHint": "Wybierz plik result.json z czatu. Musi odpowiadać paczce przygotowanej na tym telefonie.",
+    "import": "Zaimportuj wynik",
+    "previewTitle": "Zaimportować ten wynik?",
+    "previewModel": "Model: {{model}}",
+    "previewRange": "Dla paczki z okresu {{from}} do {{to}}",
+    "previewAnalysis": "Analiza, zapisana jako wygenerowana przez AI i wstępna",
+    "previewSummary": "Podsumowanie raportu",
+    "previewFills": "Sugestie do przejrzenia: {{n}} (pominięte: {{skipped}})",
+    "previewNoChange": "Żaden wpis nie zostanie zmieniony.",
+    "alreadyTitle": "Już zaimportowano",
+    "alreadyBody": "Wynik dla {{id}} został już zaimportowany. Nic nie zmieniono.",
+    "importedTitle": "Zaimportowano",
+    "importedBody": "Nic w Twoim dzienniku nie zostało zmienione. Sugestie czekają na ekranie Dziś.",
+    "manualLabel": "Wykonane ręcznie w czacie na Twoim planie Claude przez {{model}}, potem zaimportowane.",
+    "useImported": "Użyj podsumowania od {{model}} (mój plan Claude)"
   }
 }

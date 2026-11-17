@@ -8,7 +8,7 @@ import { readZip, writeZip } from './zip';
 
 export const DATA_FILE = 'data.json';
 /** Reject absurdly large data.json before parsing (zip-bomb guard). 50 MB is far above years of text-only diary data. */
-const MAX_DATA_BYTES = 50 * 1024 * 1024;
+export const MAX_DATA_BYTES = 50 * 1024 * 1024;
 
 export const PHOTO_DIR = 'photos/';
 /** One photo may not inflate beyond this (zip-bomb guard); stored photos are a few hundred KB. */

@@ -2,6 +2,7 @@ import { countPlan, planDeletion, type DeleteSelection } from '../model/deletion
 import { NettleError } from '../model/errors';
 import type { RecordKind } from '../model/types';
 import type { Deps } from './deps';
+import { clearAiPackState } from './aiPack';
 import { clearAllergenCache } from './llm';
 
 async function plan(deps: Deps, selection: DeleteSelection) {
@@ -29,6 +30,9 @@ export async function deleteData(deps: Deps, selection: DeleteSelection): Promis
     if (doomed.has(photo.id)) await deps.photos.remove(photo.file);
   }
   // IN-10: the saved allergen suggestions are AI output derived from the diary's ingredients; they go with the AI group.
-  if (selection.kinds.includes('analyses')) await clearAllergenCache(deps);
+  if (selection.kinds.includes('analyses')) {
+    await clearAllergenCache(deps);
+    await clearAiPackState(deps); // LL-15: packs, imported results and suggestions are AI data too; the marks on entries stay
+  }
   return countPlan(p);
 }

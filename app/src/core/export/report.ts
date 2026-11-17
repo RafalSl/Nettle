@@ -93,7 +93,7 @@ export function buildReportHtml(input: ReportInput): string {
       `<div class="ai"><h2>${esc(tx('report.summaryTitle'))}</h2><p><strong>${esc(tx('report.aiWarning'))}</strong></p>${s.text
         .split(/\n{2,}/)
         .map((p) => `<p>${esc(p.trim()).replace(/\n/g, '<br/>')}</p>`)
-        .join('')}<div class="note">${esc(tx('report.summaryMeta', { date: when(s.at), from: s.dayFrom, to: s.dayTo, model: s.model }))}${s.text === s.generated ? '' : ` · ${esc(tx('report.summaryEdited'))}`}</div></div>`,
+        .join('')}<div class="note">${esc(tx('report.summaryMeta', { date: when(s.at), from: s.dayFrom, to: s.dayTo, model: s.model }))}${s.manual ? ` · ${esc(tx('report.manual'))}` : ''}${s.text === s.generated ? '' : ` · ${esc(tx('report.summaryEdited'))}`}</div></div>`,
     );
   }
 
@@ -279,7 +279,7 @@ function analysesHtml(input: ReportInput, analyses: Analysis[]): string {
   const list = (title: string, items: string[]) => (items.length === 0 ? '' : `<h3>${esc(title)}</h3><ul>${items.map((i) => `<li>${esc(i)}</li>`).join('')}</ul>`);
   const body = analyses
     .map(
-      (a) => `<div class="ai"><div class="note">${esc(tx('report.aiMeta', { date: when(a.at), from: a.dayFrom, to: a.dayTo, model: a.model }))}</div>
+      (a) => `<div class="ai"><div class="note">${esc(tx('report.aiMeta', { date: when(a.at), from: a.dayFrom, to: a.dayTo, model: a.model }))}${a.manual ? ` · ${esc(tx('report.manual'))}` : ''}</div>
 <h3>${esc(tx('report.aiSummary'))}</h3><p>${esc(a.result.summary)}</p>
 ${a.result.hypotheses
   .map(

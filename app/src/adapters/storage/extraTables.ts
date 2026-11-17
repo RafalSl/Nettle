@@ -138,8 +138,8 @@ const reaction: ExtraTable<Reaction> = {
 
 const drink: ExtraTable<Drink> = {
   table: 'drink',
-  columns: ['name', 'amount_ml', 'alcohol', 'ingredients_json', 'allergens_json', 'barcode', 'source_json', 'note'],
-  toValues: (e) => [e.name, e.amountMl, +e.alcohol, JSON.stringify(e.ingredients), JSON.stringify(e.allergens), e.barcode, JSON.stringify(e.source), e.note],
+  columns: ['name', 'amount_ml', 'alcohol', 'ingredients_json', 'allergens_json', 'barcode', 'source_json', 'fill_later', 'note'],
+  toValues: (e) => [e.name, e.amountMl, +e.alcohol, JSON.stringify(e.ingredients), JSON.stringify(e.allergens), e.barcode, JSON.stringify(e.source), e.fillLater ? 1 : 0, e.note],
   fromRow: (r) => ({
     id: r.id as string,
     at: { utc: r.ts_utc as string, tz: r.tz as string },
@@ -150,6 +150,7 @@ const drink: ExtraTable<Drink> = {
     allergens: JSON.parse(r.allergens_json as string) as Allergen[],
     barcode: r.barcode as string | null,
     source: normalizeSource(JSON.parse(r.source_json as string)),
+    ...(r.fill_later ? { fillLater: true as const } : {}),
     note: r.note as string | null,
   }),
 };
@@ -184,8 +185,8 @@ const photo: ExtraTable<Photo> = {
 
 const analysis: ExtraTable<Analysis> = {
   table: 'analysis',
-  columns: ['day_from', 'day_to', 'model', 'prompt_version', 'language', 'counts_json', 'result_json'],
-  toValues: (a) => [a.dayFrom, a.dayTo, a.model, a.promptVersion, a.language, JSON.stringify(a.counts), JSON.stringify(analysisResultToJson(a.result))],
+  columns: ['day_from', 'day_to', 'model', 'prompt_version', 'language', 'counts_json', 'result_json', 'manual'],
+  toValues: (a) => [a.dayFrom, a.dayTo, a.model, a.promptVersion, a.language, JSON.stringify(a.counts), JSON.stringify(analysisResultToJson(a.result)), a.manual ? 1 : 0],
   fromRow: (r) => ({
     id: r.id as string,
     at: { utc: r.ts_utc as string, tz: r.tz as string },
@@ -197,13 +198,14 @@ const analysis: ExtraTable<Analysis> = {
     counts: JSON.parse(r.counts_json as string) as Record<string, number>,
     // Written by this app from a validated result, so the shape is known.
     result: analysisResultFromJson(JSON.parse(r.result_json as string))!,
+    ...(r.manual ? { manual: true as const } : {}),
   }),
 };
 
 const reportSummary: ExtraTable<ReportSummary> = {
   table: 'report_summary',
-  columns: ['day_from', 'day_to', 'language', 'model', 'prompt_version', 'counts_json', 'generated', 'text'],
-  toValues: (s) => [s.dayFrom, s.dayTo, s.language, s.model, s.promptVersion, JSON.stringify(s.counts), s.generated, s.text],
+  columns: ['day_from', 'day_to', 'language', 'model', 'prompt_version', 'counts_json', 'generated', 'text', 'manual'],
+  toValues: (s) => [s.dayFrom, s.dayTo, s.language, s.model, s.promptVersion, JSON.stringify(s.counts), s.generated, s.text, s.manual ? 1 : 0],
   fromRow: (r) => ({
     id: r.id as string,
     at: { utc: r.ts_utc as string, tz: r.tz as string },
@@ -215,6 +217,7 @@ const reportSummary: ExtraTable<ReportSummary> = {
     counts: JSON.parse(r.counts_json as string) as Record<string, number>,
     generated: r.generated as string,
     text: r.text as string,
+    ...(r.manual ? { manual: true as const } : {}),
   }),
 };
 

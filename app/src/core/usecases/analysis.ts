@@ -39,7 +39,7 @@ export interface PreparedAnalysis {
   request: LlmRequest;
 }
 
-const validDay = (d: string) => /^\d{4}-\d{2}-\d{2}$/.test(d) && addDays(d, 0) === d;
+export const validDay = (d: string) => /^\d{4}-\d{2}-\d{2}$/.test(d) && addDays(d, 0) === d;
 
 /** LL-2, LL-3, LL-5, LL-6: build the request from the diary for a date range. Makes no network call and changes nothing. */
 export async function prepareAnalysis(deps: Deps, sel: AnalysisSelection): Promise<PreparedAnalysis> {

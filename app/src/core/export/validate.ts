@@ -16,7 +16,7 @@ import { isScore } from '../usecases/skin';
 import { EXTRA_CODECS } from './extras';
 import { parsePreferences } from './preferencesJson';
 import { parseBarcode, parseSource } from './sourceJson';
-import { bad, bool, enumList, oneOf, isObj, list, nullableSize, nullableText, str, tz, unique, utc, type Obj } from './guards';
+import { bad, bool, enumList, parseFillLater, oneOf, isObj, list, nullableSize, nullableText, str, tz, unique, utc, type Obj } from './guards';
 import { LIST_KEYS, recordWireKey, SCHEMA_VERSION } from './schema';
 
 const obj = (o: Obj, k: string, where: string): Obj => (isObj(o[k]) ? (o[k] as Obj) : bad(`${where}.${k}`));
@@ -93,6 +93,7 @@ export function parseDataJson(raw: unknown): Payload {
         allergens: enumList(o, 'allergens', ALLERGENS, w),
         barcode: parseBarcode(o, w),
         source: parseSource(o, w),
+        ...(parseFillLater(o, w) ? { fillLater: true as const } : {}),
         note: nullableText(o, 'note', w),
       };
     });

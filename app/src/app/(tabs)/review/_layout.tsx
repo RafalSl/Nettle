@@ -11,6 +11,7 @@ export default function ReviewStack() {
       <Stack.Screen name="health" options={{ title: t('nav.health') }} />
       <Stack.Screen name="report" options={{ title: t('nav.report') }} />
       <Stack.Screen name="analysis" options={{ title: t('nav.analysis') }} />
+      <Stack.Screen name="pack" options={{ title: t('nav.pack') }} />
     </Stack>
   );
 }

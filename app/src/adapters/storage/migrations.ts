@@ -316,6 +316,13 @@ export const MIGRATIONS: string[] = [
   );
   CREATE INDEX medical_event_ts ON medical_event (ts_utc);
   `,
+  // IN-20, LL-15: the "fill later with AI" mark on meals and drinks, and the manual flag of an imported analysis or summary.
+  `
+  ALTER TABLE meal ADD COLUMN fill_later INTEGER NOT NULL DEFAULT 0 CHECK (fill_later IN (0, 1));
+  ALTER TABLE drink ADD COLUMN fill_later INTEGER NOT NULL DEFAULT 0 CHECK (fill_later IN (0, 1));
+  ALTER TABLE analysis ADD COLUMN manual INTEGER NOT NULL DEFAULT 0 CHECK (manual IN (0, 1));
+  ALTER TABLE report_summary ADD COLUMN manual INTEGER NOT NULL DEFAULT 0 CHECK (manual IN (0, 1));
+  `,
 ];
 
 export async function migrate(db: SqlDb): Promise<void> {

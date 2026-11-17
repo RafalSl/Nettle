@@ -17,6 +17,8 @@ export interface LogMealInput {
   barcode?: string | null;
   /** IN-16: where the ingredients and tags came from; typed when left out. */
   source?: IngredientSource;
+  /** IN-20: wait for an AI fill (the next pack asks for it). */
+  fillLater?: boolean;
 }
 
 /** IN-1: free-text description plus editable ingredient list. */
@@ -35,6 +37,7 @@ export async function logMeal(deps: Deps, input: LogMealInput): Promise<Meal> {
     allergens,
     barcode: input.barcode ?? null,
     source,
+    ...(input.fillLater ? { fillLater: true as const } : {}),
     note: input.note?.trim() || null,
   };
   await deps.repo.addMeal(meal);

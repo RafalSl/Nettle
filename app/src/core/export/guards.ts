@@ -48,6 +48,10 @@ export const nullableScore = (o: Obj, k: string, where: string): number | null =
   if (v === null) return null;
   return typeof v === 'number' && Number.isInteger(v) && v >= 0 && v <= 10 ? v : bad(`${where}.${k}`);
 };
+/** IN-20 / LL-15: an optional flag (fill_later, manual) that is only ever written as true; absent and false both mean no. */
+export const optionalFlag = (o: Obj, k: string, where: string): boolean => (o[k] === undefined ? false : bool(o, k, where));
+export const parseFillLater = (o: Obj, where: string): boolean => optionalFlag(o, 'fill_later', where);
+
 /** SK-3: a size in whole millimetres from 1 to 500, or null. */
 export const nullableSize = (o: Obj, k: string, where: string): number | null => {
   const v = o[k];

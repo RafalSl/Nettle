@@ -16,6 +16,8 @@ export interface MealJson {
   allergens: string[];
   barcode: string | null;
   source: Record<string, unknown>;
+  /** IN-20: only present (true) while the entry waits for an AI fill. */
+  fill_later?: true;
   note: string | null;
 }
 
@@ -87,6 +89,7 @@ export function toDataJson(
           allergens: [...m.allergens],
           barcode: m.barcode,
           source: sourceToJson(m.source),
+          ...(m.fillLater ? { fill_later: true } : {}),
           note: m.note,
         })),
         skin_entries: snap.skinEntries.map((e) => ({

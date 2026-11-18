@@ -130,7 +130,9 @@ export async function saveReminderSettings(deps: Deps, next: ReminderSettings, t
 }
 
 /** SK-9: the permission and the number of scheduled reminders, so a silent failure can be seen. */
-export const reminderStatus = (deps: Deps): Promise<ReminderStatus> => deps.notifier.status();
+export async function reminderStatus(deps: Deps): Promise<ReminderStatus> {
+  return deps.notifier.status(); // async, so a notifier that fails becomes a rejection the screen can ignore
+}
 
 /**
  * SK-9: one notification a few seconds from now, with fixed text and no diary data. Asks for permission first;

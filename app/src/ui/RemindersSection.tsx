@@ -7,11 +7,14 @@ import { NavRow } from '@/ui/NavRow';
 import {
   DEFAULT_REMINDERS,
   loadReminderSettings,
+  reminderStatus,
   saveReminderSettings,
+  sendTestReminder,
   type ReminderSettings,
 } from '@/core/usecases/reminders';
 import { errorMessage, reminderTexts, t } from '@/i18n';
 import { useServices } from '@/services';
+import type { ReminderStatus } from '@/core/ports/notifier';
 import { Button, Chips, Heading, Hint, Label, styles } from '@/ui/components';
 
 const at = (hour: number, minute: number) => {
@@ -29,9 +32,11 @@ export function RemindersSection() {
   const router = useRouter();
   const [regular, setRegular] = useState({ n: 0, withReminders: 0 });
   const [denied, setDenied] = useState(false);
+  const [status, setStatus] = useState<ReminderStatus | null>(null);
 
   const load = useCallback(() => {
     loadReminderSettings(deps).then(setS).catch(() => undefined);
+    reminderStatus(deps).then(setStatus, () => setStatus(null));
     listRegular(deps).then((r) => setRegular({ n: r.length, withReminders: r.filter((x) => x.times.length > 0).length }), () => undefined);
   }, [deps]);
   useFocusEffect(load);
@@ -42,10 +47,21 @@ export function RemindersSection() {
       await saveReminderSettings(deps, next, reminderTexts());
       setS(next);
       setDenied(false);
+      reminderStatus(deps).then(setStatus, () => undefined);
     } catch (e) {
       setDenied(e instanceof Error && 'code' in e && (e as { code: string }).code === 'notifications_denied');
       Alert.alert(errorMessage(e));
     }
+  }
+
+  async function sendTest() {
+    try {
+      await sendTestReminder(deps, t('reminders.test.title'), t('reminders.test.body'));
+      Alert.alert(t('reminders.test.sent'));
+    } catch (e) {
+      Alert.alert(errorMessage(e));
+    }
+    reminderStatus(deps).then(setStatus, () => undefined);
   }
 
   const row = (label: string, value: boolean, onChange: (v: boolean) => void) => (
@@ -71,6 +87,8 @@ export function RemindersSection() {
           <Button kind="secondary" title={t('regular.openSystem')} onPress={() => void Linking.openSettings()} />
         </>
       )}
+      {status && <Hint>{t(`reminders.status.${status.permission}`, { n: status.scheduled })}</Hint>}
+      <Button kind="secondary" title={t('reminders.test.button')} onPress={() => void sendTest()} />
       <NavRow title={t('regular.title')} subtitle={t('regular.summary', { n: regular.n, m: regular.withReminders })} onPress={() => router.push('/settings/regular')} />
 
       {row(t('reminders.checkIn'), s.checkIn.enabled, (enabled) => change({ ...s, checkIn: { ...s.checkIn, enabled } }))}

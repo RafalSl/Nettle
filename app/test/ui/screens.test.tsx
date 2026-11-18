@@ -183,6 +183,16 @@ const toggle = async (tree: ReactTestRenderer, label: string) => {
 };
 const flush = () => act(async () => new Promise((r) => setTimeout(r, 0)));
 
+// Only the date is pinned (to midday), so a test that logs an entry "3 hours ago" does not land on yesterday when the
+// suite runs between midnight and 03:00. Timers stay real.
+const DATE_ONLY = ['hrtime', 'nextTick', 'performance', 'queueMicrotask', 'requestAnimationFrame', 'cancelAnimationFrame', 'requestIdleCallback', 'cancelIdleCallback', 'setImmediate', 'clearImmediate', 'setInterval', 'clearInterval', 'setTimeout', 'clearTimeout'] as const;
+beforeEach(() => {
+  jest.useFakeTimers({ now: new Date('2026-06-15T10:00:00.000Z'), doNotFake: [...DATE_ONLY] });
+});
+afterEach(() => {
+  jest.useRealTimers();
+});
+
 describe('screen flows (NF-2, NF-3)', () => {
   let alert: jest.SpyInstance;
   beforeEach(() => {
@@ -602,6 +612,24 @@ describe('screen flows (NF-2, NF-3)', () => {
     await flush();
     expect(alert.mock.calls.some((c) => c[0] === en.errors.notifications_denied)).toBe(true);
     expect(second.tree.root.findAll((n) => n.props.accessibilityLabel === en.reminders.backup && n.props.value === true)).toHaveLength(0);
+  });
+
+  it('SK-9 the reminders section shows the permission and the number scheduled, and the test button sends one reminder', async () => {
+    const deps = nowDeps();
+    const { tree } = await mount(() => require('@/app/settings/reminders'), deps);
+    await flush();
+    expect(hasText(tree, en.reminders.status.granted.replace('{{n}}', '0'))).toBe(true);
+    await press(tree, en.reminders.test.button);
+    expect((deps.notifier as unknown as FakeNotifier).tests).toEqual([{ title: en.reminders.test.title, body: en.reminders.test.body }]);
+    expect(alert.mock.calls.some((c) => c[0] === en.reminders.test.sent)).toBe(true);
+    const refused = nowDeps();
+    (refused.notifier as unknown as FakeNotifier).granted = false;
+    const second = await mount(() => require('@/app/settings/reminders'), refused);
+    await flush();
+    expect(hasText(second.tree, en.reminders.status.denied.replace('{{n}}', '0'))).toBe(true);
+    await press(second.tree, en.reminders.test.button);
+    expect(alert.mock.calls.some((c) => c[0] === en.errors.notifications_denied)).toBe(true);
+    expect((refused.notifier as unknown as FakeNotifier).tests).toEqual([]);
   });
 });
 
@@ -3457,7 +3485,7 @@ describe('Fill later with AI and My Claude plan (IN-20, LL-15)', () => {
   const buttonOf = (name: string) => alert.mock.calls.at(-1)![2].find((b: { text: string }) => b.text === name) as { onPress: () => unknown };
   const bytesOf = (o: object) => new TextEncoder().encode(JSON.stringify(o));
   const answer = (packId: string, over: object = {}) => ({ pack_id: packId, model: 'Synthetic Model 9', ...over });
-  const longAgo = new Date(Date.now() - 3 * 86_400_000);
+  const longAgo = new Date('2026-06-12T10:00:00.000Z'); // three days before the pinned test date
   const days = () => ({ dayFrom: localDay(longAgo.toISOString(), 'Europe/Warsaw'), dayTo: localDay(new Date().toISOString(), 'Europe/Warsaw'), language: 'en' as const });
 
   it('IN-20 the meal and drink forms have the switch; the entry is saved as typed and its log row says it waits for AI', async () => {

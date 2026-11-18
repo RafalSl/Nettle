@@ -30,6 +30,13 @@ export interface ReminderTap {
   itemId?: string | null;
 }
 
+/** SK-9: what the phone says about reminders, for a self-check in Settings. */
+export interface ReminderStatus {
+  permission: 'granted' | 'denied' | 'undetermined';
+  /** How many reminders are scheduled with the system right now. */
+  scheduled: number;
+}
+
 /** SK-9: local notifications only (no push, no server). Texts never contain diary data. */
 export interface Notifier {
   /**
@@ -39,6 +46,10 @@ export interface Notifier {
   onTap(handler: (tap: ReminderTap) => void | Promise<void>): () => void;
   /** Asks the user for permission if needed; true when reminders may be shown. */
   requestPermission(): Promise<boolean>;
+  /** What the system holds: the permission and the number of scheduled reminders. */
+  status(): Promise<ReminderStatus>;
+  /** Shows one notification a few seconds from now, to check that this phone shows them at all. */
+  sendTest(title: string, body: string): Promise<void>;
   /** Cancels every reminder the app scheduled and schedules exactly these. */
   replaceAll(specs: ReminderSpec[]): Promise<void>;
 }

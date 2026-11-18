@@ -671,6 +671,17 @@
       "regularBody": "Tap to log it.",
       "taken": "Taken",
       "applied": "Applied"
+    },
+    "status": {
+      "granted": "Notifications are allowed. Scheduled reminders: {{n}}.",
+      "undetermined": "Notifications are not allowed yet; switching a reminder on asks. Scheduled reminders: {{n}}.",
+      "denied": "Notifications are blocked for this app in iOS Settings. Scheduled reminders: {{n}}."
+    },
+    "test": {
+      "button": "Send a test reminder",
+      "title": "Test reminder",
+      "body": "If you see this, reminders work on this phone.",
+      "sent": "A test reminder arrives in about 5 seconds. Leave the app or lock the phone to see it as a banner."
     }
   },
   "settings": {

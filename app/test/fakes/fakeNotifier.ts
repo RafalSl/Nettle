@@ -1,4 +1,4 @@
-import type { Notifier, ReminderSpec, ReminderTap } from '@/core/ports/notifier';
+import type { Notifier, ReminderSpec, ReminderStatus, ReminderTap } from '@/core/ports/notifier';
 
 export class FakeNotifier implements Notifier {
   scheduled: ReminderSpec[] = [];
@@ -18,6 +18,13 @@ export class FakeNotifier implements Notifier {
   /** Test helper: the user taps a reminder. */
   async tap(tap: ReminderTap) {
     await this.handler?.(tap);
+  }
+  tests: { title: string; body: string }[] = [];
+  async status(): Promise<ReminderStatus> {
+    return { permission: this.granted ? 'granted' : 'denied', scheduled: this.scheduled.length };
+  }
+  async sendTest(title: string, body: string) {
+    this.tests.push({ title, body });
   }
   async replaceAll(specs: ReminderSpec[]) {
     this.scheduled = specs.map((s) => ({ ...s }));

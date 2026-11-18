@@ -13,7 +13,7 @@ import { useAnalysisRun } from '@/ui/useAnalysisRun';
 function ReminderSync() {
   const { deps } = useServices();
   useEffect(() => {
-    applyReminders(deps, reminderTexts()).catch(() => undefined); // reminders are a convenience; never block the app
+    applyReminders(deps, reminderTexts()).catch((e: unknown) => console.warn('Reminders could not be scheduled:', e instanceof Error ? e.message : 'unknown error')); // a convenience: never block the app, but do not hide the failure
   }, [deps]);
   return null;
 }

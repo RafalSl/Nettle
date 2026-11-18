@@ -101,6 +101,7 @@ Notifications from Expo Go can behave differently from a standalone build; recor
 
 | ID | Do | Expect | Pass | Notes |
 | --- | --- | --- | --- | --- |
+| G0 | Settings, Reminders: read the status line, then tap "Send a test reminder" and lock the phone (or leave the app). | The status says notifications are allowed and how many reminders are scheduled. A "Test reminder" banner arrives after about 5 seconds, listed as Expo Go. If it does not: iOS Settings, Notifications, Expo Go (allowed, not in a Focus that hides it), and note what the status line said. Then switch on a daily reminder a minute ahead and compare. |  |  |
 | G1 | Medication form: name, dose, Regular on, Save. | Entry logged; Settings, Logging, Regular items lists it. |  |  |
 | G2 | Treatment form with areas, Regular on, Save. | Same. |  |  |
 | G3 | Pin Medication and Treatment. Tap the Medication tile. | A quick sheet with the regular items. One tap logs one at the current time. |  |  |

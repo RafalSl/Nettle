@@ -671,6 +671,17 @@
       "regularBody": "Dotknij, aby zapisać.",
       "taken": "Przyjęto",
       "applied": "Zastosowano"
+    },
+    "status": {
+      "granted": "Powiadomienia są dozwolone. Zaplanowane przypomnienia: {{n}}.",
+      "undetermined": "Powiadomienia nie są jeszcze dozwolone; włączenie przypomnienia o to zapyta. Zaplanowane przypomnienia: {{n}}.",
+      "denied": "Powiadomienia są zablokowane dla tej aplikacji w Ustawieniach iOS. Zaplanowane przypomnienia: {{n}}."
+    },
+    "test": {
+      "button": "Wyślij testowe przypomnienie",
+      "title": "Testowe przypomnienie",
+      "body": "Jeśli to widzisz, przypomnienia działają na tym telefonie.",
+      "sent": "Testowe przypomnienie pojawi się za około 5 sekund. Wyjdź z aplikacji lub zablokuj telefon, aby zobaczyć baner."
     }
   },
   "settings": {

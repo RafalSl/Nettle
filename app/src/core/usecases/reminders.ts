@@ -1,6 +1,6 @@
 import { NettleError } from '../model/errors';
 import { localDay } from '../model/time';
-import type { ReminderSpec, ReminderTap } from '../ports/notifier';
+import type { ReminderSpec, ReminderStatus, ReminderTap } from '../ports/notifier';
 import type { Deps } from './deps';
 import { getCheckIn } from './checkin';
 import { listActiveAreas } from './skin';
@@ -127,6 +127,18 @@ export async function saveReminderSettings(deps: Deps, next: ReminderSettings, t
   }
   await deps.settings.set(KEY, JSON.stringify(next));
   await applyReminders(deps, texts);
+}
+
+/** SK-9: the permission and the number of scheduled reminders, so a silent failure can be seen. */
+export const reminderStatus = (deps: Deps): Promise<ReminderStatus> => deps.notifier.status();
+
+/**
+ * SK-9: one notification a few seconds from now, with fixed text and no diary data. Asks for permission first;
+ * `notifications_denied` when it is refused.
+ */
+export async function sendTestReminder(deps: Deps, title: string, body: string): Promise<void> {
+  if (!(await deps.notifier.requestPermission())) throw new NettleError('notifications_denied');
+  await deps.notifier.sendTest(title, body);
 }
 
 /** SK-9: where a tap leads. `viaToday` opens the Today tab first, so closing the form lands there. */

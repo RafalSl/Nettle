@@ -4,6 +4,8 @@ import {
   DEFAULT_REMINDERS,
   loadReminderSettings,
   plannedReminders,
+  reminderStatus,
+  sendTestReminder,
   CHECKIN_REMINDER_DAYS,
   resolveReminderTap,
   restoreReminders,
@@ -284,3 +286,26 @@ describe('regular items (IN-17, SK-9)', () => {
 });
 
 const tr0 = (items: { id: string }[]) => items[0]!.id;
+
+describe('reminder self-check (SK-9)', () => {
+  it('SK-9 the status reports the permission and how many reminders are scheduled', async () => {
+    const deps = makeDeps(new MemoryRepo());
+    await saveReminderSettings(deps, { ...DEFAULT_REMINDERS, checkIn: { ...DEFAULT_REMINDERS.checkIn, enabled: true } }, texts);
+    const status = await reminderStatus(deps);
+    expect(status.permission).toBe('granted');
+    expect(status.scheduled).toBeGreaterThan(0);
+    (deps.notifier as unknown as FakeNotifier).granted = false;
+    expect((await reminderStatus(deps)).permission).toBe('denied');
+  });
+
+  it('SK-9 a test reminder asks for permission, carries only the fixed text, and a refusal sends nothing', async () => {
+    const deps = makeDeps(new MemoryRepo());
+    const n = deps.notifier as unknown as FakeNotifier;
+    await sendTestReminder(deps, 'Test', 'It works');
+    expect(n.tests).toEqual([{ title: 'Test', body: 'It works' }]);
+    expect(n.permissionRequests).toBe(1);
+    n.granted = false;
+    await expect(sendTestReminder(deps, 'Test', 'It works')).rejects.toMatchObject({ code: 'notifications_denied' });
+    expect(n.tests).toHaveLength(1);
+  });
+});

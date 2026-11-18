@@ -1,5 +1,5 @@
 import * as Notifications from 'expo-notifications';
-import type { Notifier, ReminderSpec, ReminderTap } from '@/core/ports/notifier';
+import type { Notifier, ReminderSpec, ReminderStatus, ReminderTap } from '@/core/ports/notifier';
 
 const LOG_ACTION = 'log';
 
@@ -28,6 +28,20 @@ export const expoNotifier: Notifier = {
     if (current.granted) return true;
     if (!current.canAskAgain) return false;
     return (await Notifications.requestPermissionsAsync()).granted;
+  },
+
+  async status(): Promise<ReminderStatus> {
+    const p = await Notifications.getPermissionsAsync();
+    const scheduled = (await Notifications.getAllScheduledNotificationsAsync()).length;
+    return { permission: p.granted ? 'granted' : p.canAskAgain ? 'undetermined' : 'denied', scheduled };
+  },
+
+  async sendTest(title, body) {
+    await Notifications.scheduleNotificationAsync({
+      identifier: 'test-reminder',
+      content: { title, body },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 5 },
+    });
   },
 
   onTap(handler) {

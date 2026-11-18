@@ -308,4 +308,12 @@ describe('reminder self-check (SK-9)', () => {
     await expect(sendTestReminder(deps, 'Test', 'It works')).rejects.toMatchObject({ code: 'notifications_denied' });
     expect(n.tests).toHaveLength(1);
   });
+
+  it('SK-9 a notifier whose status throws gives a rejection, not an exception', async () => {
+    const deps = makeDeps(new MemoryRepo());
+    (deps.notifier as unknown as { status: () => never }).status = () => {
+      throw new TypeError('undefined is not a function');
+    };
+    await expect(reminderStatus(deps)).rejects.toThrow('undefined is not a function');
+  });
 });

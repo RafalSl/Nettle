@@ -512,3 +512,8 @@ Newest entry last. One short entry per working session or meaningful step: what 
 - **Done:** Settings, Reminders now shows the permission (allowed, not asked yet, blocked) and the number of reminders the system holds, and a "Send a test reminder" button that asks for permission and fires one notification after about 5 seconds (`Notifier.status`, `Notifier.sendTest`, use cases `reminderStatus` and `sendTestReminder`). The start-up scheduling no longer hides a failure: it logs a warning with the error message (no diary data).
 - **Tests:** two core tests, one UI test; the UI test file now pins the date (midday, only `Date` is faked), because nine tests that log entries "3 hours ago" failed when the suite ran between 00:00 and 03:00 local time. This also fixes the three failures noted on 2026-11-17.
 - **Next:** phone check G0. If the test banner arrives but daily reminders do not, the scheduled count and the times tell where it breaks; if the test does not arrive either, check iOS Settings for Expo Go (allowed, Focus). Send me what the status line says.
+
+## 2026-11-19: reminder status no longer crashes the screen (branch feature/reminder-status-safe)
+- **Problem:** after Fast Refresh the Reminders screen crashed with "undefined is not a function" in `reminderStatus`: the running app still held the notifier object from before the update, which has no `status`. A full reload clears it.
+- **Done:** `reminderStatus` is async, so a failing notifier is a rejection the screen already ignores (the status line is just hidden). One test added.
+- **Next:** reload the app fully, then phone check G0.

@@ -517,3 +517,6 @@ Newest entry last. One short entry per working session or meaningful step: what 
 - **Problem:** after Fast Refresh the Reminders screen crashed with "undefined is not a function" in `reminderStatus`: the running app still held the notifier object from before the update, which has no `status`. A full reload clears it.
 - **Done:** `reminderStatus` is async, so a failing notifier is a rejection the screen already ignores (the status line is just hidden). One test added.
 - **Next:** reload the app fully, then phone check G0.
+
+## 2026-11-19: reminders confirmed on the phone
+- **Result:** after a full reload of Expo Go the user reported that reminders work (status line, test reminder, reminder a minute ahead). No scheduling defect was found in the code, so the earlier failure was most likely a stale session (hot reload) rather than the app logic; this is not proven. Phone check G0 passes on the iPhone; the action buttons, tap handling and other states (G-section) still need their own runs.

@@ -5,7 +5,7 @@ Status: accepted 2026-11-14 and built, then revised 2026-11-15 (requirements v0.
 ## Flow rules
 
 - Every flow starts on Today and ends on Today with the new row visible in the log.
-- A form saves only through Save. Quick sheets (stool, treatment shortcuts, regular medication and treatment, "save on tap" suggestions) save on pick.
+- A form saves only through Save. Quick sheets (stool, regular medication, treatment with its regular and often used items, "save on tap" suggestions) save on pick. A long press on a quick action skips its quick sheet and opens the full form (v0.9).
 - Settings is the one exception to "ends on Today": it is a pushed screen above the tabs (UX-1). Back returns to the tab it was opened from, and there is no Done.
 - Nothing from an LLM or a database is saved without a review step. A failed save keeps the form open with its data.
 
@@ -25,8 +25,8 @@ Status: accepted 2026-11-14 and built, then revised 2026-11-15 (requirements v0.
 
 **Stool and treatment (1 to 2 taps).**
 - Stool tile opens a quick sheet while Stool is pinned. Tapping a Bristol type saves it now. "Earlier…" opens the full form. From More, Stool opens the full form.
-- A treatment shortcut chip saves at once and is disabled for 3 seconds so a double tap cannot log twice. A combination becomes a shortcut after it has been used twice, at most 3 on Today. Archived treatments and areas never appear.
-- (v0.7) Reaction after applying (IN-11): the shortcut and the quick sheet never ask. Later, tap the application's row in the log, Edit, and pick None, Mild or Strong; leaving it empty means "not recorded", which is not the same as None.
+- (v0.9) The Treatment tile opens its quick sheet: Regular items first, then Often used (a combination of treatment and areas used at least twice, at most 3, the former Today shortcuts), then "Other or earlier…". A row saves at once, turns into "Applied 14:20" and is locked for 3 seconds so a double tap cannot log twice. Archived treatments and areas never appear. With nothing to list the tile opens the full form.
+- (v0.7) Reaction after applying (IN-11): the quick sheet never asks. Later, tap the application's row in the log, Edit, and pick None, Mild or Strong; leaving it empty means "not recorded", which is not the same as None.
 
 **Skin update.** Active areas are listed with their last values and a "No change" button each. "No change for all" saves every area that has a previous entry; areas without one are listed as needing a first entry. Scores use the slider row (UX-3). (v0.6) Photos are added in the form itself, per area entry, with the sensitive flag shown and changeable, and are attached on Save; a photo can be the only change ("No change" plus a photo, SK-4). Photos can still be added later from the entry's edit screen. (v0.6) Flares are not logged: when a saved severity reaches the threshold (SK-6), Today shows the flare card, "Flare in N areas, worst: X", which opens Review, Areas with the flaring areas first. (v0.7) Each area entry also has a "Cracks or open wounds" switch and, behind a Details row, an optional size in mm with a Clear button; both are prefilled and carried by "No change" (SK-3). The former intimate area is three areas (penis, perineum and groin, between the buttocks), listed and scored separately and sensitive by default (SK-1). A fixed patch such as one on a knee is a user area with a size.
 
@@ -45,6 +45,12 @@ Status: accepted 2026-11-14 and built, then revised 2026-11-15 (requirements v0.
 **Reaction.** Started from a meal row ("Reaction after this meal") or from More, which offers the last 24 hours of meals. No meals: "Log a meal first". The onset cannot be before the meal. The urgent-care advice is always visible on this form (the one exception to the no-hints rule).
 
 **Edit and delete (EN-1).** Tap a row in the log, then Edit or Delete. Delete opens an action sheet naming what else goes: "also deletes 3 photos", "also deletes 1 reaction". (v0.8) The same sheet opens from a skin or nail entry on its area's timeline (Review, Areas, the area); after Save or Delete the timeline reloads.
+
+**Today gestures (v0.9, UX-2, UX-12).**
+- Swipe the ring left for the previous day and right for the next; the next day stops at today. The arrows beside the ring do the same. On a past day a "Back to today" chip returns.
+- Tap the date in the ring for the date picker. Tap a dot for that entry's Edit and Delete sheet (EN-1); for a merged dot, the sheet lists its entries first.
+- Swipe a log row left to reveal Delete; it asks in the same action sheet as the tap path, naming what goes with the entry (UX-9).
+- The Daily health pill appears from that day's Daily health reminder time (default 21:00), whether or not the reminder is on.
 
 ## Review, backup and import
 
@@ -65,7 +71,7 @@ Designed, not planned. A manual handoff so a stronger model on the user's own Cl
 2. *Prepare (LL-15):* Review, AI analysis, "Use my Claude plan", "Prepare a pack". Choose the date range and photos (sensitive photos off by default; no meal photos exist). The screen lists what is inside (counts and marked entries) and says that the file leaves the phone only by your act, that a Claude plan chat is under the consumer terms, and that the app bills nothing. Prepare opens the share sheet; the ZIP never goes anywhere by itself.
 3. *Hand over:* outside the app, give the ZIP to a model in a Claude chat. `INSTRUCTIONS.md` in the pack says what to do and which file to return.
 4. *Import:* "Import a result", pick `result.json`. The preview shows the analysis (range, model), whether a report summary is included, how many suggestions come with it and how many are skipped. Import stores the analysis like any other one, labelled manual, and queues the suggestions.
-5. *Review suggestions (IN-20):* a Today card, "3 AI suggestions to review", opens the list. A row opens that entry's edit screen with the suggestion in the same panel as a photo estimate. Add all or pick, edit, Save: the mark clears and the source reads name estimate (manual). Dismiss removes the suggestion and keeps the mark.
+5. *Review suggestions (IN-20):* a Today pill, "3 AI suggestions to review", opens the list. A row opens that entry's edit screen with the suggestion in the same panel as a photo estimate. Add all or pick, edit, Save: the mark clears and the source reads name estimate (manual). Dismiss removes the suggestion and keeps the mark.
 
 The model never edits `data.json`, and an import never changes an entry by itself.
 
@@ -97,7 +103,7 @@ Each reminder carries a target in its data (`checkin`, `nails`, `backup`, and in
 | Regular medication or treatment (v0.6) | Today with the quick sheet of regular items. The Taken or Applied button logs at the tap time and opens the app if iOS requires it. The notification shows the item name unless hidden for that item. |
 
 - A late tap opens Daily health for the day the reminder was delivered (the notification's delivery time, to be verified), with the date in the title.
-- A tap does nothing while a form has unsaved changes. The Today cards cover it.
+- A tap does nothing while a form has unsaved changes. The Today pills cover it.
 - A handled notification is remembered, because Expo returns the last response again at launch and the form would reopen on every start.
 - On a cold start, navigate only when the database and the root navigator are ready.
 - Texts stay generic, with no entries. With the app lock (SE-8), the target waits until unlock.
@@ -161,7 +167,7 @@ Each reminder carries a target in its data (`checkin`, `nails`, `backup`, and in
 
 ## Risks and open checks
 
-- Free-account standalone builds expire after 7 days. Whether reinstalling over the top keeps the data is unverified, so the backup card on Today appears after 7 days (UX-2).
+- Free-account standalone builds expire after 7 days. Whether reinstalling over the top keeps the data is unverified, so the backup pill on Today appears after 7 days (UX-2).
 - Unverified in Expo Go: `expo-keep-awake`, the notification delivery time field, `expo/fetch` streaming.
 - Face ID lock flow (SE-8) is not designed because it is not built. Default: lock on cold start and after a minute in the background.
 - (v0.6) Notification action buttons (Taken, Applied) may not work from the lock screen or in the background on the current SDK; forum reports for SDK 39 and 42 say they were unreliable. Test on the phone: lock screen, Notification Center, app open, background and killed. The design opens the app and logs, so it holds either way.

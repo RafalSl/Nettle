@@ -532,3 +532,7 @@ Newest entry last. One short entry per working session or meaningful step: what 
 ## 2026-11-21: Save at the bottom of forms (branch feature/save-at-bottom)
 - **Done:** requirements v0.9.1, UX-3: Save becomes a floating button at the bottom of every entry form, above the keyboard; the header keeps Cancel and the title. ux-design follows. Docs only.
 - **Next:** the allergen display rule on the meal review (pending approval), Skin and Daily health boards.
+
+## 2026-11-21: allergen guesses and Nails icon (branch feature/allergen-guesses-doc)
+- **Done:** requirements v0.9.2. IN-10: the review phase shows ticked tags, unselected guesses that follow the ingredient list, and "+ N more"; the "Suggest from ingredients" button goes, since it replaced the selection. UX-12: the Nails icon is the Skin hand with tinted nails. user-flows and ux-design follow. Docs only.
+- **Next:** Skin and Daily health boards.

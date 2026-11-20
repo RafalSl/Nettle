@@ -171,7 +171,7 @@ Approved 2026-11-21 on the design canvas (https://claude.ai/artifact/BVCSSjDYjDD
 | Alert | #FF8A6B (coral); text on it #2A0D04 | flare, urgent advice, delete |
 | Type | Gabarito 400 to 800; date 38 to 40 pt bold, weekday small capitals in the accent | |
 | Shape | pills and circles (radius 999), panels 26 to 40; nothing touches the screen edges | |
-| Icons | 24 grid outlines, 1.6 stroke, with an accent wash that fades in over the lower half of the shape | |
+| Icons | 24 grid outlines, 1.6 stroke, with an accent wash that fades in over the lower half of the shape; Nails is the Skin hand with only the four nails tinted (stronger accent, top to bottom) | |
 | Motion | on first load sections rise in with a stagger, the ring arc draws, dots pop in; the aurora drifts; nothing else animates | |
 
 Gestures are accelerators, each with a tap alternative: swipe the ring for the day (arrow buttons), tap a dot (the log row), swipe a log row left to delete (tap the row, Delete), long-press a quick action to open the full form ("Other or earlier..." in the quick sheet). Later: press and drag around the ring to choose a time, release, pick the entry type (UX-13).

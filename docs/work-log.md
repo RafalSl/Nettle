@@ -524,3 +524,7 @@ Newest entry last. One short entry per working session or meaningful step: what 
 ## 2026-11-21: Today redesign and visual design (branch feature/design-aurora-ring)
 - **Done:** design work on a canvas (https://claude.ai/artifact/BVCSSjDYjDDMVcKrshmazt): several Today proposals, then the approved mix "Aurora ring" (dark aurora background, floating glass controls, a 24-hour day ring with intake and body-and-care dots) and the next screens in that style (Treatment quick sheet, Meal choose and review, More). Requirements v0.9 record it: UX-2 rewritten, new UX-12 (visual design and gestures) and UX-13 (Later, log by dragging around the ring), and changes to UX-3, UX-5, UX-11, IN-11, IN-17, IN-20 and NF-2. The one-tap treatment shortcuts move into the Treatment quick sheet; Today keeps at most 5 pins and two context pills. ux-design, user-flows and open-questions follow. Docs only, no code.
 - **Next:** design boards for Skin, Daily health, Review and Settings; then build the Today redesign.
+
+## 2026-11-21: known bugs recorded (branch feature/record-known-bugs)
+- **Done:** two problems found while running the checks for the v0.9 docs are listed under "Known bugs" in `docs/open-questions.md`: the Daily health reminder mixes the process and the clock time zone (SK-9; its test fails under `TZ=UTC`), and Jest does not exit after the run. Docs only.
+- **Next:** fix both before building the Today redesign.

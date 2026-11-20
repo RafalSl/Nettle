@@ -38,7 +38,8 @@ Quick sheets (tile tap; a floating glass panel over Today)
   Stool (only while pinned): types, + "Earlier..."
 
 Forms (full-height modal, one at a time)
-  Cancel | title | Save          time chip "Now"
+  Cancel | title                 time chip "Now"
+  (v0.9) Save: a floating pill at the bottom, above the keyboard; disabled with a "missing" line above it
   Skin and Nails forms carry a photos control (SK-4)
   (v0.7) Skin form: "Cracks or open wounds" switch; size in mm behind a Details row (SK-3)
   (v0.7) Treatment application, edit screen only: Reaction  None | Mild | Strong (IN-11)
@@ -180,7 +181,7 @@ Expo specifics (not verified in Expo Go yet): the font through `expo-font` (bund
 ## Not verified
 
 - HIG pages not read: buttons, pickers, toggles, segmented controls, materials and Liquid Glass, VoiceOver.
-- "Save" is used on forms; the HIG names "Done" and "saving changes". The trailing placement and the Cancel pairing are verified. Settings has neither, because it is a pushed screen.
+- "Save" is used on forms; the HIG names "Done" and "saving changes". The trailing placement and the Cancel pairing are verified. (v0.9) Save moves to a floating button at the bottom of the form instead, for thumb reach; this departs from the HIG on purpose (UX-3), and swiping down stays Cancel (no save gesture). Settings has neither, because it is a pushed screen.
 - Notification action buttons (Taken, Applied): Expo forum reports for SDK 39 and 42 say they were unreliable when the app was in the background. Untested on the current SDK; the design opens the app and logs, so it does not depend on background logging (IN-17).
 - Expo Go: large titles, `expo-symbols`, the sheet grabber, how the JS tab bar looks next to the iOS floating tab bar, and shake to undo are untested. The design does not depend on any of them.
 - Language: Expo documents per-app language through the `expo-localization` config plugin (`supportedLocales`), which needs a native build, so it cannot work in Expo Go. The decision is therefore no in-app setting; Expo Go follows the device language.

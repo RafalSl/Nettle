@@ -528,3 +528,7 @@ Newest entry last. One short entry per working session or meaningful step: what 
 ## 2026-11-21: known bugs recorded (branch feature/record-known-bugs)
 - **Done:** two problems found while running the checks for the v0.9 docs are listed under "Known bugs" in `docs/open-questions.md`: the Daily health reminder mixes the process and the clock time zone (SK-9; its test fails under `TZ=UTC`), and Jest does not exit after the run. Docs only.
 - **Next:** fix both before building the Today redesign.
+
+## 2026-11-21: Save at the bottom of forms (branch feature/save-at-bottom)
+- **Done:** requirements v0.9.1, UX-3: Save becomes a floating button at the bottom of every entry form, above the keyboard; the header keeps Cancel and the title. ux-design follows. Docs only.
+- **Next:** the allergen display rule on the meal review (pending approval), Skin and Daily health boards.

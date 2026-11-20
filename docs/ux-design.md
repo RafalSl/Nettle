@@ -1,6 +1,6 @@
 # UX design: information architecture
 
-Status: accepted 2026-11-14 and built, then revised 2026-11-15 after the first phone tests (requirements v0.6). The revised parts are decided but not built; `docs/open-questions.md` ("Status of the decided work", "Decided in v0.6, not built") lists what is built and what is not. Revised again 2026-11-16 (requirements v0.7): everything marked "(v0.7)" is decided but not built. Revised again 2026-11-16 (requirements v0.8): everything marked "(v0.8)" is decided but not built, and what is marked "(Later)" is designed but not planned. Requirements are in `docs/requirements.md` (v0.8). Flows and edge cases: `docs/user-flows.md`. This file holds the screen map, the rules behind it and the HIG audit.
+Status: accepted 2026-11-14 and built, then revised 2026-11-15 after the first phone tests (requirements v0.6). The revised parts are decided but not built; `docs/open-questions.md` ("Status of the decided work", "Decided in v0.6, not built") lists what is built and what is not. Revised again 2026-11-16 (requirements v0.7): everything marked "(v0.7)" is decided but not built. Revised again 2026-11-16 (requirements v0.8): everything marked "(v0.8)" is decided but not built, and what is marked "(Later)" is designed but not planned. Revised again 2026-11-21 (requirements v0.9): the Today redesign and the visual design, everything marked "(v0.9)" is decided but not built. Requirements are in `docs/requirements.md` (v0.9). Flows and edge cases: `docs/user-flows.md`. This file holds the screen map, the rules behind it and the HIG audit.
 
 ## Why
 
@@ -11,24 +11,30 @@ The first screens carried too much on one page: More held eight forms, Today abo
 ```
 Tabs:  Today | Review                      gear on both tabs -> Settings (pushed above the tabs)
 
-Today (start)
-  day switcher  < date >
-  quick actions  the pinned entry types (default: Meal  Skin  Treatment  Daily health  Stool)  +  More tile   [Edit]
-  treatment shortcuts  (one tap: treatment + areas)
-  context cards  flare (derived), time since last export
-  (Later) context card: N AI suggestions to review (IN-20)
-  the day's log  (latest 8, "Show all (n)" opens the day in Review; tap a row: edit / delete)
+Today (start)  (v0.9, UX-2, UX-12)                                   gear (top right)
+  day ring        24 h dial from the day start; date in the centre (tap: date picker)
+                  outer track: intake dots (filled)   inner track: body and care dots (hollow)
+                  arc up to now; close dots merge with a count; tap a dot: Edit / Delete
+                  swipe left / right: previous / next day (faint arrows too); past day: "Back to today"
+  context pills   at most two: flare > Daily health (from its reminder time) > backup > AI suggestions
+                  first-run card on an empty diary replaces them
+  quick actions   at most 5 pinned circles (3 x 2 grid) + More   (default: Meal Skin Treatment Daily health Stool)
+                  tap: quick sheet or form; long press: full form
+  the day's log   newest first, latest 8, "Show all (n)"; tap a row: Edit / Delete; swipe left: Delete
+  (no search field, no treatment shortcut row)
 
-Edit (on Today)    On Today: ordered list, up / down, Move to More
-                   In More:  Pin to Today
+Edit Today (row in More, v0.9)   On Today: ordered list, up / down, Move to More
+                                 In More:  Pin to Today (disabled while 5 are pinned)
 
-More (pushed list)  every entry type that is not pinned, each row with a one-line subtitle
+More (pushed list)  (v0.9) search field on top: filters entry types and "Where do I log...?" situations
+                    every entry type that is not pinned, each row with a one-line subtitle
                     (catalog: Meal, Drink, Medication or supplement, Skin, Nails, Treatment,
                     Daily health, Stool, Reaction, Routine change, Medical event (v0.7))
-                    + "Where do I log...?" (guide, UX-11)
+                    + "Where do I log...?" (guide, UX-11)  + "Edit Today" (v0.9)
 
-Quick sheets (tile tap)
-  Medication / Treatment: regular items, one tap each, + "Other or earlier..."
+Quick sheets (tile tap; a floating glass panel over Today)
+  Medication: regular items, one tap each, + "Other or earlier..."
+  Treatment: Regular, then (v0.9) Often used (the former shortcuts), + "Other or earlier..."
   Stool (only while pinned): types, + "Earlier..."
 
 Forms (full-height modal, one at a time)
@@ -75,7 +81,8 @@ Route sketch (expo-router): `(tabs)/today`, `(tabs)/review`, `today/more` as sta
 - (v0.7) The Skin form already shows five scores, so it gets one more visible control at most: the "Cracks or open wounds" switch. Size in mm sits behind a Details row, which opens by itself only for an area that already has a size (SK-3).
 - (v0.7) A reaction to a treatment is never asked at logging time, so one-tap logging keeps its budget; it is a field on the application's edit screen (IN-11).
 - (v0.8) The name estimate is one button in the review phase, beside the photo and label buttons, so the three ways to get an ingredient list sit together. It appears only once a description is typed and has no hint text (IN-19).
-- Tap budgets (NF-2): repeated meal 3 taps, favorite treatment 1, stool 2, regular medication 2 (tile, item), skin "no change for all" 2.
+- Tap budgets (NF-2): repeated meal 3 taps, often used or regular treatment 2 (tile, item; v0.9, was 1 for a shortcut), stool 2, regular medication 2 (tile, item), skin "no change for all" 2.
+- (v0.9) Today keeps at most 5 pinned quick actions and at most two context pills, so its height stays fixed whatever the user logs; only the log grows, and the ring already shows the whole day.
 
 ## Suggestions (IN-14)
 
@@ -90,7 +97,7 @@ A pure core function `rankSuggestions(history, favorites, now, options)` over ex
 | --- | --- |
 | Meal | choose phase (suggestions or typing), then review phase with editable ingredient chips and autocomplete |
 | Drink, medication, supplement | recent (item, amount) pairs from the same function |
-| Treatment | one-tap shortcuts for treatment plus areas |
+| Treatment | (v0.9) the Treatment quick sheet: regular items, then often used combinations of treatment plus areas |
 | Routine change | "Stopped" offers items in use now; "Started" offers "already using, date unknown"; categories Product and Diet plus user categories, each with a description |
 | Skin and nails | prefilled with the last values, "No change" per area and for all areas |
 | Daily health | explicit "same as yesterday" for all items, never a silent prefill; scores use a slider with − and + |
@@ -149,6 +156,27 @@ Read: tab bars, toolbars, sheets, modality, action sheets, settings, entering da
 | Destructive actions | action sheet, destructive choice on top | UX-9 |
 | Accessibility | 44 pt targets, Dynamic Type to 200 percent, contrast 4.5 to 1, not color alone, gesture alternatives | UX-8, deferred (Later); only if the app is ever distributed |
 
+## Visual design and gestures (v0.9, UX-12)
+
+Approved 2026-11-21 on the design canvas (https://claude.ai/artifact/BVCSSjDYjDDMVcKrshmazt), board "Aurora ring". The canvas also holds the earlier proposals (light floating in teal, blue and violet, dots, Aurora, Day ring, Signal) for comparison, and the next screens in the same style: Treatment quick sheet, Meal choose, Meal review, More.
+
+| Token | Value | Use |
+| --- | --- | --- |
+| Ground | #070B12 | every screen |
+| Aurora | accent, #6D4AE0 and #2563EB as large blurred glows, slow drift; faint dot grid (white 6 percent, 24 pt) | behind content only |
+| Glass | white 7 to 9 percent, 1 pt inner line white 12 to 16 percent, background blur 18 to 30 | pills, circles, cards, sheets, tab bar |
+| Text | #F2F5F9; secondary #9AA4B2 and #C9D0DA | |
+| Accent | #5EEAD4 (mint); text on it #062A26 | actions, selection, current time, newest entry |
+| Alert | #FF8A6B (coral); text on it #2A0D04 | flare, urgent advice, delete |
+| Type | Gabarito 400 to 800; date 38 to 40 pt bold, weekday small capitals in the accent | |
+| Shape | pills and circles (radius 999), panels 26 to 40; nothing touches the screen edges | |
+| Icons | 24 grid outlines, 1.6 stroke, with an accent wash that fades in over the lower half of the shape | |
+| Motion | on first load sections rise in with a stagger, the ring arc draws, dots pop in; the aurora drifts; nothing else animates | |
+
+Gestures are accelerators, each with a tap alternative: swipe the ring for the day (arrow buttons), tap a dot (the log row), swipe a log row left to delete (tap the row, Delete), long-press a quick action to open the full form ("Other or earlier..." in the quick sheet). Later: press and drag around the ring to choose a time, release, pick the entry type (UX-13).
+
+Expo specifics (not verified in Expo Go yet): the font through `expo-font` (bundled font files, or an `@expo-google-fonts` package if one exists for Gabarito; not checked), glass through `expo-blur`, the ring through `react-native-svg`, gestures and the draw-in through `react-native-gesture-handler` and `react-native-reanimated` (already in the template), and `userInterfaceStyle` in `app.json` moves from light to dark. Blur is the most expensive part; if it stutters, glass falls back to a flat translucent fill.
+
 ## Not verified
 
 - HIG pages not read: buttons, pickers, toggles, segmented controls, materials and Liquid Glass, VoiceOver.
@@ -186,3 +214,7 @@ Read: tab bars, toolbars, sheets, modality, action sheets, settings, entering da
 25. (v0.8) Meal name estimate: a text-only button in the review phase, its own source, never pre-selected, discounted by the analysis (IN-19).
 26. (v0.8) The area timeline gets a date jump (navigation, not a filter) and the day log's Edit and Delete sheet on each entry (SK-8, EN-1).
 27. (Later) Claude plan handoff: a pack out and a `result.json` back, never an edit of `data.json`; fills wait in a review queue; meal photos are ignored for now (LL-15, IN-20).
+28. (v0.9) Today is the day ring in the Aurora look: intake and body-and-care tracks, swipe for the day, at most 5 pinned quick actions plus More, at most two context pills, Edit Today in More, no search field and no treatment shortcut row (UX-2, UX-12).
+29. (v0.9) The one-tap treatment shortcuts move into the Treatment quick sheet as "Often used" (IN-11, IN-17, NF-2).
+30. (v0.9) More gets a search field over entry types and guide situations (UX-11).
+31. (v0.9) Gestures always have a tap alternative; logging by dragging around the ring is Later (UX-12, UX-13).

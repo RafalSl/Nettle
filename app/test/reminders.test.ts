@@ -1,3 +1,4 @@
+import { localDateTime, localDay } from '@/core/model/time';
 import { NettleError } from '@/core/model/errors';
 import {
   applyReminders,
@@ -60,7 +61,7 @@ describe('reminders (SK-9)', () => {
     await saveReminderSettings(deps, { ...all, nails: { ...all.nails, enabled: false } }, texts);
     const checkins = notifier(deps).scheduled.filter((s) => s.id.startsWith('checkin-'));
     expect(checkins.length).toBeGreaterThanOrEqual(CHECKIN_REMINDER_DAYS - 1); // one per day ahead; today's is skipped when its time has passed
-    expect(checkins.every((s) => s.target === 'checkin' && s.when.type === 'at' && s.when.at.getHours() === 20 && s.when.at.getMinutes() === 30)).toBe(true);
+    expect(checkins.every((s) => s.target === 'checkin' && s.when.type === 'at' && localDateTime(s.when.at.toISOString(), deps.clock.timeZone()).endsWith(' 20:30'))).toBe(true);
     expect(notifier(deps).scheduled.filter((s) => !s.id.startsWith('checkin-'))).toEqual([
       { id: 'backup', title: 'Backup', body: 'Export your diary', when: { type: 'monthly', day: 15, hour: 10, minute: 0 } },
     ]);
@@ -131,8 +132,8 @@ describe('reminders (SK-9)', () => {
   it('SK-9 the Daily health reminder skips today once today has its record, and comes back when the record is deleted', async () => {
     const deps = makeDeps(new MemoryRepo()); // clock 2026-01-15T10:00Z
     await saveReminderSettings(deps, { ...DEFAULT_REMINDERS, checkIn: { enabled: true, hour: 23, minute: 59 } }, texts); // 23:59 is still ahead today in any time zone near UTC
-    const day = (s: { when: { type: string; at?: Date } }) => s.when.at!.toDateString();
-    const todayCount = () => notifier(deps).scheduled.filter((s) => day(s) === deps.clock.now().toDateString()).length;
+    const day = (s: { when: { type: string; at?: Date } }) => localDay(s.when.at!.toISOString(), deps.clock.timeZone());
+    const todayCount = () => notifier(deps).scheduled.filter((s) => day(s) === localDay(deps.clock.now().toISOString(), deps.clock.timeZone())).length;
     expect(todayCount()).toBe(1);
     await saveCheckIn(deps, { confirmEmptyDay: true });
     await applyReminders(deps, texts);

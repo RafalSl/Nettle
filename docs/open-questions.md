@@ -30,8 +30,7 @@ The file has five parts: undecided questions, accepted limits, known bugs, decid
 
 Built requirements that do not behave as written. Remove an entry when it is fixed and note the fix in `docs/work-log.md`.
 
-- **Daily health reminder mixes two time zones (SK-9), found 2026-11-21.** `applyReminders` in `app/src/core/usecases/reminders.ts` builds the reminder time with `Date.setHours`, which uses the time zone of the process, and then looks up the check-in with `localDay(..., deps.clock.timeZone(), ...)`, which uses the app clock's time zone. When the two differ, a reminder near midnight lands on the wrong diary day, so "skip today once today has its record" can miss. On the phone both are the device time zone, so it should not show in normal use; it does show in `test/reminders.test.ts` ("the Daily health reminder skips today ..."), which fails when the tests run with `TZ=UTC` and passes with `TZ=Europe/Warsaw`. Fix: build the reminder time in the clock's time zone, and pin `TZ` for the test run.
-- **Jest does not exit after the run.** `npm test` passes, then prints "Jest did not exit one second after the test run has completed" and keeps running, so `npm run check` never returns on its own. Something stays open after the tests (probably a timer or a handle in `test/ui/screens.test.tsx`, which also logs "require a file after the Jest environment has been torn down"). Find it with `--detectOpenHandles`. Under load the same file's tests can also exceed the 5 s Jest timeout.
+None open.
 
 ## Status of the decided work
 

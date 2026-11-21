@@ -26,10 +26,28 @@ import { saveApiKey } from '@/core/usecases/llm';
 import { prepareAnalysis } from '@/core/usecases/analysis';
 import { localDay } from '@/core/model/time';
 import en from '@/i18n/en.json';
-import { act, create, type ReactTestRenderer } from 'react-test-renderer';
+import { act, create as createRenderer, type ReactTestRenderer } from 'react-test-renderer';
 import { MemoryPhotoStore } from '../fakes/memoryPhotoStore';
 import { MemoryRepo } from '../fakes/memoryRepo';
 import { makeDeps } from '../helpers/fixtures';
+
+// Every tree a test creates is unmounted after it, so no screen timer (Today refreshes every minute) keeps Jest alive.
+const created: ReactTestRenderer[] = [];
+const create: typeof createRenderer = (...args) => {
+  const tree = createRenderer(...args);
+  created.push(tree);
+  return tree;
+};
+afterEach(() => {
+  for (const tree of created.splice(0)) {
+    try {
+      act(() => tree.unmount());
+    } catch {
+      /* already unmounted */
+    }
+  }
+});
+
 
 const mockRouter = { push: jest.fn(), back: jest.fn(), navigate: jest.fn(), replace: jest.fn(), canGoBack: jest.fn(() => true) };
 const mockCamera: { props?: { onBarcodeScanned?: (e: { data: string }) => void } } = {};

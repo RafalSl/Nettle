@@ -181,8 +181,12 @@ async function mount(load: () => { default: React.ComponentType }, deps: Deps, f
   await act(async () => {
     tree = create(React.createElement(load().default));
   });
+  lastMounted.current = tree;
   return { tree, fileShare };
 }
+/** The tree of the latest `mount`: a form's floating Save is part of it (UX-3). */
+const lastMounted: { current: ReactTestRenderer | undefined } = { current: undefined };
+const lastTree = (): ReactTestRenderer => lastMounted.current!;
 const press = async (tree: ReactTestRenderer, label: string) => {
   const node = tree.root.findAll((n) => n.props.accessibilityLabel === label && typeof n.props.onPress === 'function')[0];
   if (!node) throw new Error(`no button "${label}"`);
@@ -246,7 +250,7 @@ describe('screen flows (NF-2, NF-3)', () => {
     const save = async () => {
       let rendered!: ReactTestRenderer;
       await act(async () => {
-        rendered = create(mockScreen.options!.headerRight!());
+        rendered = lastTree();
       });
       const node = rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!;
       await act(async () => {
@@ -288,7 +292,7 @@ describe('screen flows (NF-2, NF-3)', () => {
     await press(tree, '5');
     let rendered!: ReactTestRenderer;
     await act(async () => {
-      rendered = create(mockScreen.options!.headerRight!());
+      rendered = lastTree();
     });
     await act(async () => {
       await rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!.props.onPress();
@@ -873,7 +877,7 @@ describe('Edit entry (EN-1, UX-3)', () => {
   const header = async (side: 'headerLeft' | 'headerRight', label: string) => {
     let rendered!: ReactTestRenderer;
     await act(async () => {
-      rendered = create(mockScreen.options![side]!());
+      rendered = side === 'headerRight' ? lastTree() : create(mockScreen.options![side]!());
     });
     const node = rendered.root.findAll((n) => n.props.accessibilityLabel === label && typeof n.props.onPress === 'function')[0]!;
     await act(async () => {
@@ -1361,7 +1365,7 @@ describe('Meal form (IN-1, IN-7, IN-10, IN-14, UX-3)', () => {
   const header = async (side: 'headerLeft' | 'headerRight', label: string) => {
     let rendered!: ReactTestRenderer;
     await act(async () => {
-      rendered = create(mockScreen.options![side]!());
+      rendered = side === 'headerRight' ? lastTree() : create(mockScreen.options![side]!());
     });
     const node = rendered.root.findAll((n) => n.props.accessibilityLabel === label && typeof n.props.onPress === 'function')[0]!;
     await act(async () => {
@@ -1374,7 +1378,7 @@ describe('Meal form (IN-1, IN-7, IN-10, IN-14, UX-3)', () => {
     const deps = nowDeps();
     const { tree } = await mount(meal, deps);
     await flush();
-    expect((await header('headerRight', en.common.save))?.disabled).toBe(true); // nothing to save in the choose phase
+    expect(tree.root.findAll((n) => n.props.accessibilityLabel === en.common.save)).toHaveLength(0); // the choose phase has no Save (IN-7)
     await type(tree, en.meal.description, 'Synthetic breakfast');
     await press(tree, en.meal.continue);
     await type(tree, en.meal.ingredientPlaceholder, 'Synthetic oats');
@@ -1536,7 +1540,7 @@ describe('Photos in the Skin and Nails forms (SK-4)', () => {
   const save = async () => {
     let rendered!: ReactTestRenderer;
     await act(async () => {
-      rendered = create(mockScreen.options!.headerRight!());
+      rendered = lastTree();
     });
     await act(async () => {
       await rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!.props.onPress();
@@ -1701,7 +1705,7 @@ describe('Regular medication and treatment (IN-17)', () => {
   const saveForm = async () => {
     let rendered!: ReactTestRenderer;
     await act(async () => {
-      rendered = create(mockScreen.options!.headerRight!());
+      rendered = lastTree();
     });
     await act(async () => {
       await rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!.props.onPress();
@@ -1807,7 +1811,7 @@ describe('Routine change form (IN-12, UX-11)', () => {
     const save = async () => {
       let rendered!: ReactTestRenderer;
       await act(async () => {
-        rendered = create(mockScreen.options!.headerRight!());
+        rendered = lastTree();
       });
       await act(async () => {
         await rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!.props.onPress();
@@ -2235,7 +2239,7 @@ describe('Inline photo estimate (IN-3, LL-12, IN-10)', () => {
   const saveMeal = async () => {
     let rendered!: ReactTestRenderer;
     await act(async () => {
-      rendered = create(mockScreen.options!.headerRight!());
+      rendered = lastTree();
     });
     await act(async () => {
       await rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!.props.onPress();
@@ -2412,7 +2416,7 @@ describe('Inline photo estimate (IN-3, LL-12, IN-10)', () => {
     expect(await deps.repo.listMeals()).toEqual([]); // nothing saved by the scan
     let rendered!: ReactTestRenderer;
     await act(async () => {
-      rendered = create(mockScreen.options!.headerRight!());
+      rendered = lastTree();
     });
     await act(async () => {
       await rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!.props.onPress();
@@ -2469,7 +2473,7 @@ describe('Inline photo estimate (IN-3, LL-12, IN-10)', () => {
     await press(tree, en.meal.scanSelectTags);
     let rendered!: ReactTestRenderer;
     await act(async () => {
-      rendered = create(mockScreen.options!.headerRight!());
+      rendered = lastTree();
     });
     await act(async () => {
       await rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!.props.onPress();
@@ -2502,7 +2506,7 @@ describe('Inline photo estimate (IN-3, LL-12, IN-10)', () => {
     await press(tree, en.meal.estimateAddAll);
     let rendered!: ReactTestRenderer;
     await act(async () => {
-      rendered = create(mockScreen.options!.headerRight!());
+      rendered = lastTree();
     });
     await act(async () => {
       await rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!.props.onPress();
@@ -2522,7 +2526,7 @@ describe('Inline photo estimate (IN-3, LL-12, IN-10)', () => {
     });
     let rendered!: ReactTestRenderer;
     await act(async () => {
-      rendered = create(mockScreen.options!.headerRight!());
+      rendered = lastTree();
     });
     const save = rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!;
     await act(async () => {
@@ -2549,7 +2553,7 @@ describe('Barcode in the meal form (IN-2, IN-8, IN-9, IN-10)', () => {
   const header = async () => {
     let rendered!: ReactTestRenderer;
     await act(async () => {
-      rendered = create(mockScreen.options!.headerRight!());
+      rendered = lastTree();
     });
     const node = rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!;
     await act(async () => {
@@ -3051,7 +3055,7 @@ describe('Create forms on the unified modal (UX-3)', () => {
   const headerSave = async (press = true) => {
     let rendered!: ReactTestRenderer;
     await act(async () => {
-      rendered = create(mockScreen.options!.headerRight!());
+      rendered = lastTree();
     });
     const node = rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!;
     if (press) {
@@ -3197,7 +3201,7 @@ describe('Cracks and size on a skin entry (SK-3, SK-8, EN-1)', () => {
   const headerSave = async () => {
     let rendered!: ReactTestRenderer;
     await act(async () => {
-      rendered = create(mockScreen.options!.headerRight!());
+      rendered = lastTree();
     });
     const node = rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!;
     await act(async () => {
@@ -3309,7 +3313,7 @@ describe('Reaction after applying a treatment, and the new tags (IN-11, IN-6)', 
   const headerSave = async () => {
     let rendered!: ReactTestRenderer;
     await act(async () => {
-      rendered = create(mockScreen.options!.headerRight!());
+      rendered = lastTree();
     });
     await act(async () => {
       await rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!.props.onPress();
@@ -3390,7 +3394,7 @@ describe('Medical events (IN-18, UX-2, UX-11, SK-8)', () => {
   const headerSave = async () => {
     let rendered!: ReactTestRenderer;
     await act(async () => {
-      rendered = create(mockScreen.options!.headerRight!());
+      rendered = lastTree();
     });
     const node = rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!;
     await act(async () => {
@@ -3500,7 +3504,7 @@ describe('Fill later with AI and My Claude plan (IN-20, LL-15)', () => {
   const headerSave = async () => {
     let rendered!: ReactTestRenderer;
     await act(async () => {
-      rendered = create(mockScreen.options!.headerRight!());
+      rendered = lastTree();
     });
     await act(async () => {
       await rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!.props.onPress();
@@ -3751,8 +3755,6 @@ describe('Today: ring, quick actions and rows (UX-2, UX-12)', () => {
   });
 
   it('UX-2 Pin to Today is disabled at five pins', async () => {
-    const { tree } = await mount(today, nowDeps());
-    await flush();
     const edit = await mount(() => require('@/app/(tabs)/today/edit'), nowDeps());
     await flush();
     const pins = edit.tree.root.findAll((n) => n.props.accessibilityLabel === `${en.home.pin} ${en.entry.drink.title}` && n.props.accessibilityState !== undefined);
@@ -3791,5 +3793,33 @@ describe('More: search and Edit Today (UX-2, UX-11)', () => {
     await flush();
     await press(more.tree, en.home.editToday);
     expect(mockRouter.push).toHaveBeenLastCalledWith('/today/edit');
+  });
+});
+
+describe('Forms: floating Save (UX-3, UX-12)', () => {
+  beforeEach(() => {
+    mockScreen.options = undefined;
+    mockRouter.back.mockClear();
+  });
+  it('UX-3 Save floats in the form, is disabled with a line saying what is missing, and the header has no Save', async () => {
+    const { tree } = await mount(() => require('@/app/form/drink'), nowDeps());
+    await flush();
+    const saves = tree.root.findAll((n) => n.props.accessibilityLabel === en.common.save && n.props.accessibilityState !== undefined);
+    expect(saves.length).toBeGreaterThan(0);
+    expect(saves.every((n) => n.props.accessibilityState.disabled === true)).toBe(true);
+    expect(hasText(tree, en.edit.missing.replace('{{what}}', ''))).toBe(true);
+    expect(mockScreen.options!.headerRight).toBeUndefined();
+    expect(mockScreen.options!.headerLeft).toBeDefined(); // Cancel stays in the header
+  });
+
+  it('UX-3 Save saves and closes the form once the form is complete', async () => {
+    const deps = nowDeps();
+    const { tree } = await mount(() => require('@/app/form/stool'), deps);
+    await flush();
+    await press(tree, '4');
+    await press(tree, en.common.save);
+    await flush();
+    expect(await deps.repo.listRecords('stoolEntries')).toHaveLength(1);
+    expect(mockRouter.back).toHaveBeenCalled();
   });
 });

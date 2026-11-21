@@ -109,7 +109,16 @@
     "scanFromDb": "Filled from Open Food Facts. Check it before saving.",
     "scanFromHistory": "Filled from your diary: this code was last logged on {{date}}. The ingredients and tags are the ones you confirmed then.",
     "scanTagsHint": "The database lists these allergens: {{list}}. They are not selected until you select them.",
-    "scanSelectTags": "Select the listed allergens"
+    "scanSelectTags": "Select the listed allergens",
+    "confirmModel": "Model: {{model}}.",
+    "waitingFor": "{{what}} {{time}}",
+    "estimateUntouched": "The form is as you left it.",
+    "estimateDismissed": "Dismiss",
+    "scanNotFoundTitle": "Not in the database",
+    "scanReadLabel": "Read the ingredient label",
+    "scanByHand": "Enter by hand",
+    "scanBarcode": "Barcode {{code}}",
+    "scanCameraOff": "Camera is off"
   },
   "skin": {
     "title": "Log skin status",

@@ -178,14 +178,7 @@ Built (build plan task 11): the Reaction form with its urgent-care note pinned u
 
 ### Meal extras
 
-1. Scan has one screen for the camera and a typed code beside it; Open Food Facts gets the code only. Affects IN-2.
-2. A history hit shows its date and Scan label again; an in-store code asks first in a sheet with Use it. Affects IN-2.
-3. Not found offers Read the ingredient label (primary) and Enter by hand. Affects IN-8, IN-15.
-4. Camera denied: explains it, Open settings, and the typed code still works. Affects IN-2.
-5. Every confirmation lists exactly what is sent and carries the billing notice; the model is named. Affects LL-5.
-6. Waiting shows elapsed time; Cancel is there from the start; the wait arc is the one proposed motion (rotates only while a call runs). Affects LL-12, UX-12.
-7. Estimate results: nothing is pre-selected, Add selected stays disabled until you tap an item; allergen tags stay unselected. Affects IN-3, IN-10, IN-19.
-8. A failed or too vague estimate leaves the form untouched and says so. Affects IN-19, LL-8.
+Built (build plan task 12): the scan screen with the typed code beside the camera, the history hit with its date, the in-store code as a sheet (Use it), the not-found card (Read the ingredient label, Enter by hand), the camera-off card (Allow the camera or Open settings, the code can still be typed), the model named in every confirmation, the waiting card (wait arc that turns only while the call runs, elapsed time, Cancel from the start), results with nothing selected and Add selected disabled until a tap (Add all, Dismiss), and a failure that says nothing was added and the form is as it was. Not built: the confirmations are still the native iOS alert (with the billing notice, what is sent and the model) instead of a floating sheet, because the many tests that drive them would all change; the label-scan camera screen (G3-Label) stays the system picker.
 
 ### Review
 

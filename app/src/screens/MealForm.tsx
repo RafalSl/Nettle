@@ -22,6 +22,10 @@ import { AllergenAiControls, useAllergenAi } from '@/ui/useAllergenAi';
 import { FillLaterSwitch } from '@/ui/FillLaterSwitch';
 import { IngredientRunPanel, SOURCE_OF, useIngredientRun, type Run } from '@/ui/useIngredientRun';
 import { Button, Chips, Hint, Label, TimeField, styles } from '@/ui/components';
+import { GlassSurface } from '@/ui/GlassSurface';
+import { Icon } from '@/ui/Icon';
+import { Sheet, SheetRow } from '@/ui/Sheet';
+import { color } from '@/ui/theme';
 
 /** What a pick fills into the review form: the latest use of the meal, or a favorite's snapshot. */
 interface MealDraft {
@@ -60,6 +64,10 @@ export default function MealScreen() {
   const [phase, setPhase] = useState<'choose' | 'scan' | 'review'>('choose');
   const [code, setCode] = useState('');
   const [looking, setLooking] = useState(false);
+  /** IN-8: a code the database does not know: the scan screen offers the label or manual entry. */
+  const [notFound, setNotFound] = useState<string | null>(null);
+  /** IN-2: an in-store code asks for a confirmation of the match first. */
+  const [inStore, setInStore] = useState<{ name: string; fill: () => void } | null>(null);
   // IN-2, IN-10: what a barcode lookup said, and the allergen tags it only suggests.
   const [fromCode, setFromCode] = useState<{ note: string; tags: Allergen[]; hintKey?: string; ai?: boolean } | null>(null);
   const [meals, setMeals] = useState<ReturnType<typeof mealHistory>>([]);
@@ -142,6 +150,7 @@ export default function MealScreen() {
           return;
         }
         const p = found.product;
+        if (!p) return setNotFound(found.barcode); // IN-8: neither the diary nor the database knows it
         // IN-16: what the database lists is the source; its tags are suggestions and the baseline for later edits.
         review({
           description: p?.name ?? '',
@@ -154,11 +163,8 @@ export default function MealScreen() {
         setFromCode({ note: !p ? t('meal.scanNotFound') : found.incomplete ? t('meal.scanIncomplete') : p.translated ? t('meal.scanFromDbTranslated') : t('meal.scanFromDb'), tags: p?.allergens ?? [] });
       };
       if ((found.product || found.history) && found.inStore) {
-        // IN-2: an in-store code is ambiguous; the user confirms the match or enters the product by hand.
-        Alert.alert(t('meal.scanInStoreTitle'), t('meal.scanInStoreBody'), [
-          { text: t('common.cancel'), style: 'cancel', onPress: () => setPhase('choose') },
-          { text: t('meal.scanUse'), onPress: fill },
-        ]);
+        // IN-2: an in-store code is ambiguous; the user confirms the match or goes back.
+        setInStore({ name: found.history?.name ?? found.product?.name ?? '', fill });
       } else fill();
     } catch (e) {
       Alert.alert(errorMessage(e));
@@ -260,7 +266,31 @@ export default function MealScreen() {
           <TextInput style={styles.input} accessibilityLabel={t('meal.scanCode')} placeholder={t('meal.scanCode')} keyboardType="number-pad" value={code} onChangeText={setCode} />
           <Button title={t('meal.scanLookup')} disabled={!code.trim() || looking} onPress={() => void handleCode(code)} />
           {looking && <Hint>{t('meal.scanLooking')}</Hint>}
-          <Button kind="secondary" title={t('meal.scanCancel')} onPress={() => setPhase('choose')} />
+          {notFound && (
+            <GlassSurface style={{ borderRadius: 26, padding: 16, gap: 10, alignItems: 'center' }}>
+              <Icon name="scan" size={40} tint={color.accent} />
+              <Text style={{ fontSize: 20, fontWeight: '800', letterSpacing: -0.4 }}>{t('meal.scanNotFoundTitle')}</Text>
+              <Text style={{ fontSize: 15, color: color.soft, textAlign: 'center' }}>{t('meal.scanNotFound')}</Text>
+              <Text style={{ fontSize: 13, color: color.muted }}>{t('meal.scanBarcode', { code: notFound })}</Text>
+              <Button
+                title={t('meal.scanReadLabel')}
+                onPress={() => {
+                  review({ description: '', ingredients: [], allergens: [], barcode: notFound });
+                  setNotFound(null);
+                  ingredientRun.start('label');
+                }}
+              />
+              <Button
+                kind="secondary"
+                title={t('meal.scanByHand')}
+                onPress={() => {
+                  review({ description: '', ingredients: [], allergens: [], barcode: notFound });
+                  setNotFound(null);
+                }}
+              />
+            </GlassSurface>
+          )}
+          <Button kind="secondary" title={t('meal.scanCancel')} onPress={() => { setNotFound(null); setPhase('choose'); }} />
         </>
       ) : (
         <>
@@ -335,6 +365,13 @@ export default function MealScreen() {
           <Label>{t('common.note')}</Label>
           <TextInput style={styles.input} accessibilityLabel={t('common.note')} value={note} onChangeText={touch(setNote)} />
         </>
+      )}
+      {inStore && (
+        <Sheet title={t('meal.scanInStoreTitle')} onClose={() => { setInStore(null); setPhase('choose'); }}>
+          <Hint>{t('meal.scanInStoreBody')}</Hint>
+          <SheetRow icon="meal" title={inStore.name || t('meal.scanInStoreTitle')} onPress={() => undefined} />
+          <SheetRow outline title={t('meal.scanUse')} onPress={() => { const go = inStore.fill; setInStore(null); go(); }} />
+        </Sheet>
       )}
     </FormModal>
   );

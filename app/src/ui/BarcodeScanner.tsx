@@ -2,7 +2,11 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRef } from 'react';
 import { Linking, View } from 'react-native';
 import { t } from '@/i18n';
-import { Button, Hint, Label } from '@/ui/components';
+import { Button, Label } from '@/ui/components';
+import { GlassSurface } from '@/ui/GlassSurface';
+import { Icon } from '@/ui/Icon';
+import { Text } from '@/ui/themed';
+import { color } from '@/ui/theme';
 
 /**
  * IN-2: a camera view that reports the first EAN or UPC code it sees. Without camera permission it explains why
@@ -14,21 +18,23 @@ export function BarcodeScanner({ onCode }: { onCode: (code: string) => void }) {
   if (!permission) return null;
   if (!permission.granted) {
     return (
-      <View style={{ gap: 8 }}>
-        <Hint>{t('meal.scanPermission')}</Hint>
+      <GlassSurface style={{ borderRadius: 26, padding: 16, gap: 10, alignItems: 'center' }}>
+        <Icon name="camera" size={40} tint={color.alert} />
+        <Text style={{ fontSize: 20, fontWeight: '800', letterSpacing: -0.4 }}>{t('meal.scanCameraOff')}</Text>
+        <Text style={{ fontSize: 15, color: color.soft, textAlign: 'center' }}>{t('meal.scanPermission')}</Text>
         {permission.canAskAgain ? (
-          <Button kind="secondary" title={t('meal.scanAllow')} onPress={() => void requestPermission()} />
+          <Button title={t('meal.scanAllow')} onPress={() => void requestPermission()} />
         ) : (
-          <Button kind="secondary" title={t('meal.scanSettings')} onPress={() => void Linking.openSettings()} />
+          <Button title={t('meal.scanSettings')} onPress={() => void Linking.openSettings()} />
         )}
-      </View>
+      </GlassSurface>
     );
   }
   return (
     <View style={{ gap: 8 }}>
       <Label>{t('meal.scanTitle')}</Label>
       <CameraView
-        style={{ height: 240, borderRadius: 12, overflow: 'hidden' }}
+        style={{ height: 240, borderRadius: 28, overflow: 'hidden' }}
         barcodeScannerSettings={{ barcodeTypes: ['ean13', 'ean8', 'upc_a', 'upc_e'] }}
         onBarcodeScanned={({ data }) => {
           if (done.current) return; // the camera reports the same code many times a second

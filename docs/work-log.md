@@ -652,3 +652,6 @@ Design spike passed on the iPhone (blur, aurora, fonts, arc, swipe). Real-screen
 
 ## 2026-11-21: Add ingredient stays above the keyboard; spike route removed
 Adding an ingredient grows the meal form, so the Add ingredient button slid under the keyboard. The form now scrolls (via a `scrollRef` that `FormModal` passes to `Screen`) to keep the button above the keyboard and the floating Save. Also removed the leftover `spike` route from `_layout.tsx` (it caused a "No route named spike" warning) and its test exemption. Next: re-check on the phone.
+
+## 2026-11-21: Add ingredient focuses the new field
+Phone test: when the keyboard was hidden, Add ingredient scrolled before the keyboard slid out, so the new field ended up behind it. Now the new row takes focus (one tap fewer) and the form scrolls once the keyboard's height is known (immediately when it is already open). Next: re-check on the phone.

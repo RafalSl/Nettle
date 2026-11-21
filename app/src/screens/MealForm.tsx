@@ -79,13 +79,29 @@ export default function MealScreen() {
   const addBottom = useRef(0);
   const prevCount = useRef(1);
   const windowHeight = useWindowDimensions().height;
+  // The new row takes focus (autoFocus), so the keyboard slides out when it was hidden: scroll once its height is known.
+  const [focusNew, setFocusNew] = useState<number | null>(null);
   useEffect(() => {
-    if (ingredients.length > prevCount.current) {
-      const kb = Keyboard.metrics()?.height ?? 0;
+    const grew = ingredients.length > prevCount.current;
+    prevCount.current = ingredients.length;
+    if (!grew) return;
+    const scrollTo = (kb: number) => {
       const visible = windowHeight - kb - 190; // header and the floating Save
       setTimeout(() => scrollRef.current?.scrollTo({ y: Math.max(0, addBottom.current + 52 - visible), animated: true }), 50);
+    };
+    if (Keyboard.isVisible()) {
+      scrollTo(Keyboard.metrics()?.height ?? 0);
+      return;
     }
-    prevCount.current = ingredients.length;
+    const sub = Keyboard.addListener('keyboardDidShow', (e) => {
+      sub.remove();
+      scrollTo(e.endCoordinates.height);
+    });
+    const give = setTimeout(() => sub.remove(), 2000);
+    return () => {
+      clearTimeout(give);
+      sub.remove();
+    };
   }, [ingredients.length, windowHeight]);
   const [allergens, setAllergens] = useState<Set<string>>(new Set());
   const [note, setNote] = useState('');
@@ -327,6 +343,7 @@ export default function MealScreen() {
                   style={styles.input}
                   placeholder={t('meal.ingredientPlaceholder')}
                   value={value}
+                  autoFocus={focusNew === i}
                   onChangeText={(v) => setIngredient(i, v)}
                   onFocus={() => setFocused(i)}
                   onBlur={() => setFocused((f) => (f === i ? null : f))}
@@ -349,7 +366,10 @@ export default function MealScreen() {
             </View>
           ))}
           <View onLayout={(e) => (addBottom.current = e.nativeEvent.layout.y)}>
-            <Button kind="secondary" title={t('meal.addIngredient')} onPress={() => setIngredients((l) => [...l, ''])} />
+            <Button kind="secondary" title={t('meal.addIngredient')} onPress={() => {
+                setFocusNew(ingredients.length);
+                setIngredients((l) => [...l, '']);
+              }} />
           </View>
 
           <Label>{t('meal.allergens')}</Label>

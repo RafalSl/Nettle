@@ -1,7 +1,7 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Switch, View } from 'react-native';
-import { Text, TextInput } from '@/ui/themed';
+import { Alert, View } from 'react-native';
+import { TextInput } from '@/ui/themed';
 import type { ListItem, SkinArea } from '@/core/model/types';
 import { applyTreatment } from '@/core/usecases/events';
 import { addListItem, listActiveItems } from '@/core/usecases/lists';
@@ -12,6 +12,7 @@ import { useServices } from '@/services';
 import { FormModal, useField, useForm } from '@/ui/FormModal';
 import { useFormTime } from '@/ui/useFormTime';
 import { Button, Chips, Hint, Label, TimeField, styles } from '@/ui/components';
+import { SwitchRow } from '@/ui/SwitchRow';
 
 /** IN-11: a saved list of treatments; applying one to one or more areas is timestamped (now, or the chosen day). */
 export function TreatmentSection() {
@@ -73,11 +74,7 @@ export function TreatmentSection() {
               setAreaIds(next);
             }}
           />
-          <View style={styles.timeRow}>
-            <Text style={styles.rowText}>{t('regular.switch')}</Text>
-            <Switch value={regular} onValueChange={setRegular} accessibilityLabel={t('regular.switch')} />
-          </View>
-          {regular && <Hint>{t('regular.switchHint')}</Hint>}
+          <SwitchRow title={t('regular.switch')} hint={regular ? t('regular.switchHint') : undefined} value={regular} onChange={setRegular} />
           <TimeField value={time.value} onChange={time.set} />
         </>
       )}

@@ -1,6 +1,6 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, Switch, View } from 'react-native';
+import { Alert, Pressable } from 'react-native';
 import { Text, TextInput } from '@/ui/themed';
 import { defaultPreferences, type Preferences } from '@/core/model/preferences';
 import { drinkHistory, drinkKey, medicationHistory, normalizeText, rankSuggestions, type Suggestion } from '@/core/model/suggestions';
@@ -22,6 +22,7 @@ import { BarcodeScanner } from '@/ui/BarcodeScanner';
 import { AllergenAiControls, useAllergenAi } from '@/ui/useAllergenAi';
 import { IngredientRunPanel, SOURCE_OF, useIngredientRun, type Run } from '@/ui/useIngredientRun';
 import { Button, Chips, Hint, Label, TimeField, styles } from '@/ui/components';
+import { SwitchRow } from '@/ui/SwitchRow';
 
 const rowText = (s: Suggestion<unknown>) => `${s.favorite ? '★ ' : ''}${s.label}${s.count >= 2 ? ` ×${s.count}` : ''}`;
 
@@ -258,11 +259,7 @@ export function MedicationSection() {
         disabled={!name.trim()}
         onPress={() => toggleFavoriteMedication(deps, { category, name: name.trim(), dose: dose.trim() || null }).then(refresh, (e) => Alert.alert(errorMessage(e)))}
       />
-      <View style={styles.timeRow}>
-        <Text style={styles.rowText}>{t('regular.switch')}</Text>
-        <Switch value={regular} onValueChange={setRegular} accessibilityLabel={t('regular.switch')} />
-      </View>
-      {regular && <Hint>{t('regular.switchHint')}</Hint>}
+      <SwitchRow title={t('regular.switch')} hint={regular ? t('regular.switchHint') : undefined} value={regular} onChange={setRegular} />
       <TimeField value={time.value} onChange={time.set} />
     </FormModal>
   );

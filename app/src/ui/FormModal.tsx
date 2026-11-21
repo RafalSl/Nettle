@@ -33,6 +33,7 @@ export function FormModal({
   missing,
   onSave,
   hideSave = false,
+  banner,
   children,
 }: {
   dirty: boolean;
@@ -42,6 +43,8 @@ export function FormModal({
   onSave: () => Promise<void | false>;
   /** True while the form is in a phase that cannot be saved yet. */
   hideSave?: boolean;
+  /** A note that stays pinned under the header while the form scrolls (the urgent-care advice of a reaction). */
+  banner?: ReactNode;
   children: ReactNode;
 }) {
   const router = useRouter();
@@ -75,6 +78,7 @@ export function FormModal({
           ),
         }}
       />
+      {banner}
       <BottomInset.Provider value={hideSave ? 24 : SAVE_INSET}>
         <Screen>{children}</Screen>
       </BottomInset.Provider>

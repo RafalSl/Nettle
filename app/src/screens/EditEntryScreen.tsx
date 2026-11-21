@@ -1,7 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { View } from 'react-native';
-import { Switch, Text, TextInput } from '@/ui/themed';
+import { TextInput } from '@/ui/themed';
 import { addIngredients, joinIngredients, splitIngredients } from '@/core/model/allergens';
 import { completeSuggestion } from '@/core/usecases/aiPack';
 import { ALLERGENS, CHANGE_ACTIONS, MEDICATION_CATEGORIES, NAIL_EXTENTS, NAIL_STAGES, SCORE_KEYS, SYMPTOMS, TREATMENT_REACTIONS } from '@/core/model/types';
@@ -31,7 +30,8 @@ import { SuggestionPanel } from '@/ui/SuggestionPanel';
 import { MedicalFields } from '@/ui/MedicalFields';
 import { parseSizeText, sizeToSave, SkinExtraFields } from '@/ui/SkinExtraFields';
 import { DailyHealthFields, type DailyValues } from '@/ui/DailyHealthFields';
-import { Chips, Hint, Label, ScoreInput, TimeField, styles } from '@/ui/components';
+import { Chips, Hint, Label, ScoreInput, Segmented, TimeField, styles } from '@/ui/components';
+import { SwitchRow } from '@/ui/SwitchRow';
 
 type Rec<K extends LogKind> = Extract<LogRow, { kind: K }>['record'];
 type LogKind = (typeof LOG_KINDS)[number];
@@ -224,7 +224,7 @@ function TreatmentFields({ r, areas, treatments }: { r: Rec<'treatmentApplicatio
       <Chips items={areas.map((a) => ({ id: a.id, label: areaLabel(a) }))} selected={areaIds} onToggle={(id) => setAreaIds(toggled(areaIds, id))} />
       {/* IN-11: what the skin did after applying; a tap on the chosen one clears it, because empty means not recorded. */}
       <Label>{t('treatmentReaction.title')}</Label>
-      <Chips items={TREATMENT_REACTIONS.map((x) => ({ id: x, label: t(`treatmentReaction.${x}`) }))} selected={new Set(reaction ? [reaction] : [])} onToggle={(id) => setReaction(id === reaction ? null : (id as TreatmentReaction))} />
+      <Segmented items={TREATMENT_REACTIONS.map((x) => ({ id: x, label: t(`treatmentReaction.${x}`) }))} value={reaction ?? ''} onChange={(id) => setReaction(id === reaction ? null : (id as TreatmentReaction))} />
       <Hint>{t('treatmentReaction.hint')}</Hint>
       <CommonFields c={c} original={r.at.utc} />
     </FormModal>
@@ -275,10 +275,7 @@ function ChangeFields({ r, categories }: { r: Rec<'changeEvents'>; categories: L
       <Chips items={categories.map((a) => ({ id: a.id, label: itemLabel(a) }))} selected={one(category)} onToggle={setCategory} />
       <TextInput style={styles.input} placeholder={t('more.changeName')} value={name} onChangeText={setName} />
       {action === 'started' && (
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Text style={styles.rowText}>{t('change.dateUnknown')}</Text>
-          <Switch value={unknown} onValueChange={setUnknown} accessibilityLabel={t('change.dateUnknown')} />
-        </View>
+        <SwitchRow title={t('change.dateUnknown')} value={unknown} onChange={setUnknown} />
       )}
       <CommonFields c={c} original={r.at.utc} />
     </FormModal>

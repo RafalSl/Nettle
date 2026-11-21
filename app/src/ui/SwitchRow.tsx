@@ -12,7 +12,7 @@ export function SwitchRow({ title, hint, value, onChange }: { title: string; hin
           <Text style={{ fontSize: 16, fontWeight: '600' }}>{title}</Text>
           {hint ? <Text style={{ fontSize: 13, color: color.muted }}>{hint}</Text> : null}
         </View>
-        <Switch value={value} onValueChange={onChange} accessibilityElementsHidden />
+        <Switch value={value} onValueChange={onChange} accessibilityLabel={title} accessibilityElementsHidden />
       </GlassSurface>
     </Pressable>
   );

@@ -1,9 +1,9 @@
-import { Switch, View } from 'react-native';
-import { Text, TextInput } from '@/ui/themed';
+import { TextInput } from '@/ui/themed';
 import { NettleError } from '@/core/model/errors';
 import { MAX_SIZE_MM } from '@/core/model/types';
 import { t } from '@/i18n';
 import { Button, Hint, styles } from '@/ui/components';
+import { SwitchRow } from '@/ui/SwitchRow';
 
 /** SK-3: the size text is empty (unset) or a whole number of millimetres from 1 to 500. */
 export const parseSizeText = (text: string): { ok: true; value: number | null } | { ok: false } => {
@@ -42,10 +42,7 @@ export function SkinExtraFields({
 }) {
   return (
     <>
-      <View style={styles.timeRow}>
-        <Text style={styles.rowText}>{t('skin.cracks')}</Text>
-        <Switch value={cracks} onValueChange={onCracks} accessibilityLabel={t('skin.cracks')} />
-      </View>
+      <SwitchRow title={t('skin.cracks')} value={cracks} onChange={onCracks} />
       <Button kind="secondary" title={`${t('skin.details')} ${open ? '▾' : '▸'}`} accessibilityLabel={t('skin.details')} onPress={onToggleOpen} />
       {open && (
         <>

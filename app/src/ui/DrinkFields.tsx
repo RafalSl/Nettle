@@ -1,5 +1,4 @@
-import { Switch, View } from 'react-native';
-import { Text, TextInput } from '@/ui/themed';
+import { TextInput } from '@/ui/themed';
 import { joinIngredients, matchIngredientNames, splitIngredients } from '@/core/model/allergens';
 import { afterEdit, sameIngredients, typedSource, type IngredientSource } from '@/core/model/source';
 import { ALLERGENS, type Allergen } from '@/core/model/types';
@@ -7,6 +6,7 @@ import type { DrinkSnapshot } from '@/core/usecases/preferences';
 import { t } from '@/i18n';
 import { Chips, Label, styles } from '@/ui/components';
 import { FillLaterSwitch } from '@/ui/FillLaterSwitch';
+import { SwitchRow } from '@/ui/SwitchRow';
 
 /** The editable part of a drink (IN-4, IN-10) as form state: amount as text, ingredients as a comma list. */
 export interface DrinkDraft {
@@ -73,10 +73,7 @@ export function DrinkFields({ draft, onChange, names = [] }: { draft: DrinkDraft
     <>
       <TextInput style={styles.input} accessibilityLabel={t('more.drinkName')} placeholder={t('more.drinkName')} value={draft.name} onChangeText={(v) => set('name', v)} />
       <TextInput style={styles.input} accessibilityLabel={t('more.drinkAmount')} placeholder={t('more.drinkAmount')} keyboardType="number-pad" value={draft.amount} onChangeText={(v) => set('amount', v)} />
-      <View style={styles.timeRow}>
-        <Text style={styles.rowText}>{t('more.drinkAlcohol')}</Text>
-        <Switch value={draft.alcohol} onValueChange={(v) => set('alcohol', v)} accessibilityLabel={t('more.drinkAlcohol')} />
-      </View>
+      <SwitchRow title={t('more.drinkAlcohol')} value={draft.alcohol} onChange={(v) => set('alcohol', v)} />
       <TextInput style={styles.input} accessibilityLabel={t('more.drinkIngredients')} placeholder={t('more.drinkIngredients')} value={draft.ingredients} onChangeText={(v) => set('ingredients', v)} />
       {/* IN-1: the word being typed after the last comma matches names from the diary; a tap completes it. */}
       <Chips

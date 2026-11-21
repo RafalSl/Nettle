@@ -3881,3 +3881,40 @@ describe('Today states (UX-2, UX-3)', () => {
     expect(hasText(tree, en.sheet.taken.replace('{{time}}', ''))).toBe(true);
   });
 });
+
+describe('Entry forms (IN-12, IN-13, IN-17, UX-3)', () => {
+  beforeEach(() => {
+    mockScreen.options = undefined;
+    mockRouter.push.mockClear();
+  });
+  it('IN-13 the urgent-care advice is always shown; without a meal the form says to log one first and Save stays disabled', async () => {
+    const { tree } = await mount(() => require('@/app/form/reaction'), nowDeps());
+    await flush();
+    expect(hasText(tree, en.more.reactionUrgent)).toBe(true);
+    expect(hasText(tree, en.more.reactionLogMealFirst)).toBe(true);
+    const saves = tree.root.findAll((n) => n.props.accessibilityLabel === en.common.save && n.props.accessibilityState !== undefined);
+    expect(saves.every((n) => n.props.accessibilityState.disabled === true)).toBe(true);
+    await press(tree, en.cards.firstMeal);
+    expect(mockRouter.push).toHaveBeenLastCalledWith('/form/meal');
+  });
+
+  it('IN-12 Stopped lists what is in use now as a single choice and fills the name', async () => {
+    const deps = nowDeps();
+    await logChangeEvent(deps, { action: 'started', category: 'cat-product', name: 'Synthetic soap', at: new Date(Date.now() - 86_400_000) });
+    const { tree } = await mount(() => require('@/app/form/change'), deps);
+    await flush();
+    await press(tree, en.change.actions.stopped);
+    await press(tree, 'Synthetic soap');
+    const radios = tree.root.findAll((n) => n.props.accessibilityRole === 'radio' && n.props.accessibilityLabel === 'Synthetic soap');
+    expect(radios.some((n) => n.props.accessibilityState.checked === true)).toBe(true);
+  });
+
+  it('IN-17 the Regular switch is one glass row that explains itself once it is on', async () => {
+    const { tree } = await mount(() => require('@/app/form/medication'), nowDeps());
+    await flush();
+    expect(hasText(tree, en.regular.switchHint)).toBe(false);
+    await toggle(tree, en.regular.switch);
+    expect(hasText(tree, en.regular.switchHint)).toBe(true);
+    expect(tree.root.findAll((n) => n.props.accessibilityRole === 'switch' && n.props.accessibilityLabel === en.regular.switch).length).toBeGreaterThan(0);
+  });
+});

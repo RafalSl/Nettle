@@ -1,0 +1,29 @@
+# Dev environment for the Nettle app. Run from the repo root:
+#   docker compose run --rm app                    # expo dev server (open in Expo Go)
+#   docker compose run --rm app npm run check      # typecheck + lint + tests
+#   docker compose run --rm app npx expo install <pkg>
+# If Expo advertises the wrong address (docker0, a VM bridge), set your Wi-Fi IP:
+#   NETTLE_LAN_IP=192.168.x.y docker compose run --rm app
+services:
+  app:
+    build: ./app
+    # Host networking lets Expo Go on the phone reach Metro on the LAN without
+    # port mapping (Linux only).
+    network_mode: host
+    stdin_open: true
+    tty: true
+    working_dir: /app
+    environment:
+      REACT_NATIVE_PACKAGER_HOSTNAME: ${NETTLE_LAN_IP:-}
+    volumes:
+      - ./app:/app
+      - node_modules:/app/node_modules
+      - npm_cache:/home/node/.npm
+      # Jest and Metro keep their transform caches in /tmp; without this every
+      # `run --rm` starts cold and the first UI test times out.
+      - tmp_cache:/tmp
+
+volumes:
+  node_modules:
+  npm_cache:
+  tmp_cache:

@@ -581,3 +581,8 @@ Newest entry last. One short entry per working session or meaningful step: what 
 - **Not done:** the confirmation and action sheets stay the native iOS action sheet (`chooseAction`): replacing them with a floating `ConfirmSheet` means changing the many tests that drive `ActionSheetIOS`, so it waits for the review and settings task.
 - **Tests:** the Today and layout tests follow the new screens; two new ones for the search and the Edit Today row.
 - **Next:** forms (floating Save, modal chrome).
+
+## 2026-11-21: forms (branch feature/forms-reskin)
+- **Done:** UX-3, UX-12. Save is a floating 56 pt accent pill (`FloatingSave`) 26 pt above the bottom, or 12 pt above the keyboard; when something is missing it is the disabled look with a line above it saying what is. The form header keeps a glass Cancel and the title; the header no longer has Save. The choose phase of the meal form has no Save at all (`hideSave`, IN-7). Forms leave room under the pill (`SAVE_INSET`). Fields, chips, score rows, switches and the photo areas follow the shared components, so every form already has the glass look; the boards of the individual forms (G2, G3) come in phase 2.
+- **Tests:** the 16 places that pressed Save through the header now find it in the form's tree (`lastTree`); two new tests (disabled with a missing line and no header Save; a complete form saves and closes).
+- **Next:** Review, Settings and the other pushed screens.

@@ -228,6 +228,7 @@ export default function MealScreen() {
     <FormModal
       dirty={phase === 'review' ? edited : description.trim().length > 0}
       missing={missing}
+      hideSave={phase !== 'review'}
       onSave={async () => {
         ingredientRun.cancel(); // Save uses the fields as they are and drops a running call
         await logMeal(deps, { description, ...saveFields(), fillLater, note, at: at ?? (day ? defaultAt : undefined) });

@@ -9,10 +9,11 @@ import { applyReminders, resolveReminderTap } from '@/core/usecases/reminders';
 import { reminderTexts, t } from '@/i18n';
 import { ServicesProvider, useServices } from '@/services';
 import { unsavedForm } from '@/ui/formState';
+import { GlassSurface } from '@/ui/GlassSurface';
 import { LockOverlay } from '@/ui/LockOverlay';
 import { useAnalysisRun } from '@/ui/useAnalysisRun';
 import { NAV_THEME, SCREEN_OPTIONS } from '@/ui/navTheme';
-import { color, FONT_FILES } from '@/ui/theme';
+import { FONT_FILES } from '@/ui/theme';
 
 void SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
@@ -68,12 +69,14 @@ function ReminderTaps() {
   return null;
 }
 
-/** UX-3: Cancel on the leading edge of every form. Save stays in the form until the forms are unified. */
+/** UX-3: Cancel on the leading edge of every form (Save floats in the form itself). */
 function CancelButton() {
   const router = useRouter();
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={t('common.cancel')} onPress={() => router.back()} hitSlop={8}>
-      <Text style={{ color: color.accent, fontSize: 17 }}>{t('common.cancel')}</Text>
+    <Pressable accessibilityRole="button" accessibilityLabel={t('common.cancel')} onPress={() => router.back()} hitSlop={4}>
+      <GlassSurface style={{ height: 44, paddingHorizontal: 18, borderRadius: 999, justifyContent: 'center' }}>
+        <Text style={{ fontSize: 15.5, fontWeight: '600' }}>{t('common.cancel')}</Text>
+      </GlassSurface>
     </Pressable>
   );
 }

@@ -7,6 +7,10 @@ RUN apt-get update \
  && apt-get install -y --no-install-recommends git ca-certificates \
  && rm -rf /var/lib/apt/lists/*
 
+# There is no browser in the container: make `xdg-open` (used by `expo login`)
+# a no-op, so the CLI prints the link and waits instead of crashing.
+RUN printf '#!/bin/sh\nexit 0\n' > /usr/local/bin/xdg-open && chmod +x /usr/local/bin/xdg-open
+
 # Pre-create the mount points owned by the non-root `node` user (uid 1000), so
 # the named volumes mounted there start out writable.
 RUN mkdir -p /app/node_modules /home/node/.npm /home/node/.expo \

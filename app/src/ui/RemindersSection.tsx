@@ -1,7 +1,7 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Linking, Switch, View } from 'react-native';
+import { Alert, Linking, View } from 'react-native';
 import { Text } from '@/ui/themed';
 import { listRegular } from '@/core/usecases/regular';
 import { NavRow } from '@/ui/NavRow';
@@ -17,6 +17,8 @@ import { errorMessage, reminderTexts, t } from '@/i18n';
 import { useServices } from '@/services';
 import type { ReminderStatus } from '@/core/ports/notifier';
 import { Button, Chips, Heading, Hint, Label, styles } from '@/ui/components';
+import { SwitchRow } from '@/ui/SwitchRow';
+import { color } from '@/ui/theme';
 
 const at = (hour: number, minute: number) => {
   const d = new Date();
@@ -65,12 +67,9 @@ export function RemindersSection() {
     reminderStatus(deps).then(setStatus, () => undefined);
   }
 
-  const row = (label: string, value: boolean, onChange: (v: boolean) => void) => (
-    <View style={styles.timeRow}>
-      <Text style={styles.rowText}>{label}</Text>
-      <Switch value={value} onValueChange={onChange} accessibilityLabel={label} />
-    </View>
-  );
+  // NO-3: with notifications blocked in iOS Settings the switches are off and disabled, and a coral banner says why.
+  const blocked = status?.permission === 'denied';
+  const row = (label: string, value: boolean, onChange: (v: boolean) => void) => <SwitchRow title={label} value={value && !blocked} onChange={onChange} disabled={blocked} />;
   const time = (hour: number, minute: number, onChange: (h: number, m: number) => void) => (
     <View style={styles.timeRow}>
       <Label>{t('reminders.time')}</Label>
@@ -82,11 +81,11 @@ export function RemindersSection() {
     <>
       <Heading>{t('reminders.title')}</Heading>
       <Hint>{t('reminders.hint')}</Hint>
-      {denied && (
-        <>
-          <Hint>{t('regular.denied')}</Hint>
+      {(denied || blocked) && (
+        <View style={{ padding: 14, borderRadius: 22, gap: 10, backgroundColor: color.alertSoft, borderWidth: 1, borderColor: color.alertLine }}>
+          <Text style={{ color: color.alert, fontWeight: '600', fontSize: 14.5 }}>{t('regular.denied')}</Text>
           <Button kind="secondary" title={t('regular.openSystem')} onPress={() => void Linking.openSettings()} />
-        </>
+        </View>
       )}
       {status && <Hint>{t(`reminders.status.${status.permission}`, { n: status.scheduled })}</Hint>}
       <Button kind="secondary" title={t('reminders.test.button')} onPress={() => void sendTest()} />

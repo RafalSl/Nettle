@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Alert, View } from 'react-native';
-import { Switch, Text, TextInput } from '@/ui/themed';
+import { Alert } from 'react-native';
+import { TextInput } from '@/ui/themed';
 import { NettleError } from '@/core/model/errors';
 import type { Parts } from '@/core/model/types';
 import type { ImportMode } from '@/core/ports/storage';
@@ -16,6 +16,7 @@ import { DayRangePickers, pickedDay } from '@/ui/DayRangePickers';
 import { PhotoSelectionField } from '@/ui/PhotoSelectionField';
 import { DeleteSection } from '@/ui/DeleteSection';
 import { Button, Chips, Heading, Hint, Label, Screen, styles } from '@/ui/components';
+import { SwitchRow } from '@/ui/SwitchRow';
 
 function PartSwitch({
   label,
@@ -27,10 +28,7 @@ function PartSwitch({
   onChange: (v: boolean) => void;
 }) {
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-      <Text style={styles.rowText}>{label}</Text>
-      <Switch value={value} onValueChange={onChange} accessibilityLabel={label} />
-    </View>
+    <SwitchRow title={label} value={value} onChange={onChange} />
   );
 }
 

@@ -474,7 +474,8 @@
       "analyses": "analizy AI: {{n}}",
       "reportSummaries": "podsumowania raportu: {{n}}",
       "medicalEvents": "{{n}} zdarzeń medycznych"
-    }
+    },
+    "chooseFirst": "Najpierw wybierz, co usunąć."
   },
   "exportPhotos": {
     "title": "Zdjęcia w eksporcie",
@@ -508,7 +509,21 @@
       "allergen_suggest": "Podpowiedzi alergenów",
       "meal_name": "Nazwa posiłku"
     },
-    "saved": "Zapisano"
+    "saved": "Zapisano",
+    "keyTail": "Klucz jest zapisany, kończy się na {{tail}}.",
+    "keyPasteFirst": "klucz",
+    "keyTest": "Sprawdź klucz (wysyła jedno zapytanie)",
+    "keyTestHint": "Sprawdzenie wysyła jedno malutkie zapytanie do Anthropic i może kosztować drobną kwotę.",
+    "keyWorks": "Klucz działa.",
+    "group": {
+      "estimates": "Szacunki ze zdjęć i nazw",
+      "analysis": "Analiza i podsumowanie raportu"
+    },
+    "groupHint": {
+      "estimates": "Odczyt etykiety, zdjęcie posiłku, nazwa posiłku i podpowiedzi alergenów.",
+      "analysis": "Analiza AI i podsumowanie raportu."
+    },
+    "modelsMixed": "Te akcje używają różnych modeli (ustawionych wcześniej osobno). Wybierz jeden, aby użyć go dla wszystkich."
   },
   "analysis": {
     "open": "Analiza AI mojego dziennika",
@@ -731,7 +746,12 @@
     "loggingHint": "Początek dnia, zaostrzenia, pozycje Zdrowia dnia, miejsca, zabiegi, ulubione",
     "remindersPrivacyHint": "Przypomnienia, blokada aplikacji i zdjęcia",
     "aiHint": "Klucz API i model dla każdej akcji",
-    "dataHint": "Eksport, import i usuwanie"
+    "dataHint": "Eksport, import i usuwanie",
+    "flareScopeAll": "Jednakowy dla wszystkich",
+    "flareScopeArea": "Dla każdego obszaru",
+    "flareScopeAreaHint": "Obszar bez własnej wartości używa wartości wspólnej powyżej.",
+    "flareSameAsCommon": "jak wartość wspólna",
+    "flareUseCommon": "Użyj wartości wspólnej dla"
   },
   "about": {
     "title": "O aplikacji",

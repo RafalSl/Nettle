@@ -474,7 +474,8 @@
       "analyses": "{{n}} AI analyses",
       "reportSummaries": "{{n}} report summaries",
       "medicalEvents": "{{n}} medical events"
-    }
+    },
+    "chooseFirst": "Choose what to delete first."
   },
   "exportPhotos": {
     "title": "Photos in the export",
@@ -508,7 +509,21 @@
       "allergen_suggest": "Allergen suggestions",
       "meal_name": "Meal name"
     },
-    "saved": "Saved"
+    "saved": "Saved",
+    "keyTail": "A key is saved, ending in {{tail}}.",
+    "keyPasteFirst": "the key",
+    "keyTest": "Test the key (sends one request)",
+    "keyTestHint": "The test sends one tiny request to Anthropic and may cost a tiny amount.",
+    "keyWorks": "The key works.",
+    "group": {
+      "estimates": "Photo and name estimates",
+      "analysis": "Analysis and report summary"
+    },
+    "groupHint": {
+      "estimates": "Label scan, meal photo, meal name and allergen suggestions.",
+      "analysis": "The AI analysis and the report summary."
+    },
+    "modelsMixed": "These actions use different models (set one by one earlier). Pick one to use it for all of them."
   },
   "analysis": {
     "open": "AI analysis of my diary",
@@ -731,7 +746,12 @@
     "loggingHint": "Day start, flares, Daily health items, areas, treatments, favorites",
     "remindersPrivacyHint": "Reminders, app lock and photos",
     "aiHint": "Your API key and the model for each action",
-    "dataHint": "Export, import and delete"
+    "dataHint": "Export, import and delete",
+    "flareScopeAll": "Same for all",
+    "flareScopeArea": "Per area",
+    "flareScopeAreaHint": "An area without its own value follows the common one above.",
+    "flareSameAsCommon": "same as the common value",
+    "flareUseCommon": "Use the common value for"
   },
   "about": {
     "title": "About",

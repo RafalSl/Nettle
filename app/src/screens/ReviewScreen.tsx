@@ -2,7 +2,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Pressable, View } from 'react-native';
-import { Switch, Text } from '@/ui/themed';
+import { Text } from '@/ui/themed';
 import { addMonths, monthOf, monthOverview, monthShape, type MonthDay } from '@/core/usecases/dayLog';
 import { localDay } from '@/core/model/time';
 import { areaOverview, type AreaOverviewRow } from '@/core/usecases/timeline';
@@ -19,6 +19,7 @@ import { color } from '@/ui/theme';
 import { useAnalysisRun } from '@/ui/useAnalysisRun';
 import { Button, Heading, Hint, Label, Screen, Segmented, styles } from '@/ui/components';
 import { formatElapsed, runCardStatus } from '@/core/usecases/analysisRunner';
+import { SwitchRow } from '@/ui/SwitchRow';
 
 const WEEKDAY_KEYS = [2, 3, 4, 5, 6, 7, 1]; // Monday first; the names are in reminders.weekdays (1 = Sunday)
 
@@ -185,10 +186,7 @@ export default function ReviewScreen() {
             />
           )}
           <Calendar month={month} days={days} onOpen={open} />
-          <View style={styles.timeRow}>
-            <Label>{t('review.incomplete')}</Label>
-            <Switch value={incompleteOnly} onValueChange={setIncompleteOnly} accessibilityLabel={t('review.incomplete')} />
-          </View>
+          <SwitchRow title={t('review.incomplete')} value={incompleteOnly} onChange={setIncompleteOnly} />
           {incompleteOnly && <Hint>{t('review.incompleteHint')}</Hint>}
           {listed.length === 0 && <Hint>{incompleteOnly ? t('review.noIncomplete') : `${t('review.noDays')} ${t('review.empty')}`}</Hint>}
           {listed.length === 0 && !incompleteOnly && days.every((d) => d.entries === 0) && <Button kind="secondary" title={t('review.goToday')} onPress={() => router.navigate('/today')} />}

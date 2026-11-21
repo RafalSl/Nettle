@@ -1,12 +1,13 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Switch, View } from 'react-native';
-import { Text, TextInput } from '@/ui/themed';
+import { Alert, View } from 'react-native';
+import { TextInput } from '@/ui/themed';
 import type { AreaKind, SkinArea } from '@/core/model/types';
 import { addArea, archiveSkinArea, renameSkinArea, resetSkinAreaName, setAreaSensitiveDefault } from '@/core/usecases/skin';
 import { areaLabel, errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
 import { Button, Chips, Heading, Hint, Label, styles } from '@/ui/components';
+import { SwitchRow } from '@/ui/SwitchRow';
 
 /**
  * SK-2, SK-10, UX-6: add, rename and archive the skin or nail areas. Active names are unique. A predefined area
@@ -61,14 +62,7 @@ export function AreasSection({ kind }: { kind: AreaKind }) {
       </View>
       {current && (
         // SK-5: new photos of this area start as sensitive; a photo can still be changed one by one.
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Text style={styles.rowText}>{t('settings.sensitiveDefault')}</Text>
-          <Switch
-            value={current.sensitiveDefault}
-            onValueChange={(v) => run(() => setAreaSensitiveDefault(deps, current.id, v))}
-            accessibilityLabel={t('settings.sensitiveDefault')}
-          />
-        </View>
+        <SwitchRow title={t('settings.sensitiveDefault')} value={current.sensitiveDefault} onChange={(v) => run(() => setAreaSensitiveDefault(deps, current.id, v))} />
       )}
       {archived.length > 0 && (
         <>

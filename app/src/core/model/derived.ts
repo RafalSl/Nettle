@@ -1,4 +1,4 @@
-import { deriveFlares } from './flares';
+import { deriveFlares, type FlareRule } from './flares';
 import type { SkinEntry, Stamp, TreatmentApplication } from './types';
 
 /** SK-4: how far back a photo looks for the last treatment on its area. */
@@ -83,7 +83,7 @@ export interface RelapseRow {
 export function timeToRelapse(
   skinEntries: readonly Pick<SkinEntry, 'id' | 'at' | 'areaId' | 'scores'>[],
   applications: readonly Pick<TreatmentApplication, 'id' | 'at' | 'areaIds' | 'treatmentId'>[],
-  threshold: number,
+  threshold: FlareRule,
   asOfUtc: string,
 ): RelapseRow[] {
   const rows: RelapseRow[] = [];

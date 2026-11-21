@@ -55,7 +55,7 @@ export function AnalysisView({ analysis }: { analysis: Analysis }) {
       <Label>{t('analysis.order')}</Label>
       <Text style={styles.rowText}>{r.orderAndLag}</Text>
       <List title={t('analysis.limits')} items={r.dataLimits} />
-      <List title={t('analysis.suggestions')} items={r.suggestions} />
+      <List title={t('analysis.questions')} items={r.doctorQuestions} />
     </View>
   );
 }

@@ -23,7 +23,7 @@ const code = async (p: Promise<unknown>) =>
 const at = (iso: string) => new Date(iso);
 const scores = { severity: 4, itch: 3, pain: 2, dryness: 1, scaling: 0 };
 const sel = { dayFrom: '2026-01-10', dayTo: '2026-01-14', language: 'en' as const };
-const analysis = { summary: 'Synthetic summary', hypotheses: [], order_and_lag: 'none', data_limits: ['few days'], suggestions: [] };
+const analysis = { summary: 'Synthetic summary', hypotheses: [], order_and_lag: 'none', data_limits: ['few days'], questions_for_doctor: [] };
 const resultBytes = (o: object) => strToU8(JSON.stringify(o));
 
 async function diary() {

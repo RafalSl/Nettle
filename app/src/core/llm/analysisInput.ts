@@ -1,5 +1,5 @@
 import { timeToRelapse } from '../model/derived';
-import { DEFAULT_FLARE_THRESHOLD, deriveFlares } from '../model/flares';
+import { baseThreshold, DEFAULT_FLARE_THRESHOLD, deriveFlares, type FlareRule } from '../model/flares';
 import type { IngredientSource } from '../model/source';
 import { localDateTime, localDay, addDays } from '../model/time';
 import type { Allergen, ListItem, Records, SkinArea } from '../model/types';
@@ -51,7 +51,7 @@ const time = (utc: string, tz: string) => localDateTime(utc, tz).slice(11);
  * was eaten, so "eaten on most days" cannot be missed (LL-4). Records of the lookback window before the
  * period are limited to the kinds the lookbacks need.
  */
-export function buildAnalysisInput(src: AnalysisSource, dayFrom: string, dayTo: string, startHour = 0, flareThreshold = DEFAULT_FLARE_THRESHOLD, asOfUtc = `${dayTo}T23:59:59.999Z`): BuiltInput {
+export function buildAnalysisInput(src: AnalysisSource, dayFrom: string, dayTo: string, startHour = 0, flareThreshold: FlareRule = DEFAULT_FLARE_THRESHOLD, asOfUtc = `${dayTo}T23:59:59.999Z`): BuiltInput {
   /** NF-7: the diary day of an entry, with the user's day start. */
   const dayOf = (at: { utc: string; tz: string }) => localDay(at.utc, at.tz, startHour);
   const areaName = new Map(src.skinAreas.map((a) => [a.id, label(a)]));
@@ -203,7 +203,8 @@ export function buildAnalysisInput(src: AnalysisSource, dayFrom: string, dayTo: 
   counts.lookbackDays = ordered.filter((d) => d.context).length;
   const json = JSON.stringify({
     period: { from: dayFrom, to: dayTo, days: periodDays.length, days_logged: completeDays, days_with_meals: mealDays.size, lookback_days_before: LOOKBACK_DAYS },
-    severity_threshold_for_flares: flareThreshold,
+    severity_threshold_for_flares: baseThreshold(flareThreshold),
+    ...(typeof flareThreshold === 'number' ? {} : { severity_thresholds_by_area: Object.fromEntries(Object.entries(flareThreshold.perArea).map(([id, n]) => [areaName.get(id) ?? id, n])) }),
     flares,
     ...(relapse.length ? { time_to_relapse: relapse } : {}),
     ingredient_frequency: frequency(ingredientDays, 'ingredient', 60),

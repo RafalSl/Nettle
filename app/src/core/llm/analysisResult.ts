@@ -13,8 +13,8 @@ export function analysisResultFromJson(raw: unknown): AnalysisResult | null {
   if (!isObj(raw)) return null;
   const { summary, hypotheses, order_and_lag: orderAndLag } = raw;
   const dataLimits = strList(raw.data_limits);
-  const suggestions = strList(raw.suggestions);
-  if (!isStr(summary) || !isStr(orderAndLag) || !dataLimits || !suggestions || !Array.isArray(hypotheses)) return null;
+  const doctorQuestions = strList(raw.questions_for_doctor);
+  if (!isStr(summary) || !isStr(orderAndLag) || !dataLimits || !doctorQuestions || !Array.isArray(hypotheses)) return null;
   const parsed: Hypothesis[] = [];
   for (const h of hypotheses) {
     if (!isObj(h)) return null;
@@ -42,7 +42,7 @@ export function analysisResultFromJson(raw: unknown): AnalysisResult | null {
       strength: h.strength as Hypothesis['strength'],
     });
   }
-  return { summary, hypotheses: parsed, orderAndLag, dataLimits, suggestions };
+  return { summary, hypotheses: parsed, orderAndLag, dataLimits, doctorQuestions };
 }
 
 export function analysisResultToJson(r: AnalysisResult): Obj {
@@ -59,6 +59,6 @@ export function analysisResultToJson(r: AnalysisResult): Obj {
     })),
     order_and_lag: r.orderAndLag,
     data_limits: r.dataLimits,
-    suggestions: r.suggestions,
+    questions_for_doctor: r.doctorQuestions,
   };
 }

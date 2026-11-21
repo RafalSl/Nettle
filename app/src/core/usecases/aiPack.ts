@@ -13,6 +13,7 @@ import type { Allergen, Analysis, Drink, LocalDay, Meal, ReportSummary } from '.
 import type { Language } from '../ports/llm';
 import { MAX_ANALYSIS_PHOTOS, validDay } from './analysis';
 import type { Deps } from './deps';
+import { flareRule } from '../model/preferences';
 import { getPreferences } from './preferences';
 
 /**
@@ -115,7 +116,7 @@ async function gather(deps: Deps, sel: PackSelection) {
   const photoIds = [...new Set(sel.photoIds ?? [])];
   if (photoIds.length > MAX_ANALYSIS_PHOTOS) throw new NettleError('too_many_photos');
   const snap = await deps.repo.snapshot();
-  const built = buildAnalysisInput(snap, sel.dayFrom, sel.dayTo, deps.dayStart.get(), (await getPreferences(deps)).flareThreshold, deps.clock.now().toISOString());
+  const built = buildAnalysisInput(snap, sel.dayFrom, sel.dayTo, deps.dayStart.get(), flareRule(await getPreferences(deps)), deps.clock.now().toISOString());
   const marked = await markedEntries(deps);
   if (built.periodRecords === 0 && marked.length === 0) throw new NettleError('analysis_no_data');
   const areaName = new Map(snap.skinAreas.map((a) => [a.id, a.nameOverride ?? a.name]));

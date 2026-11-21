@@ -1,10 +1,11 @@
 import { deriveFlares, type FlarePeriod } from '../model/flares';
 import type { Deps } from './deps';
+import { flareRule } from '../model/preferences';
 import { getPreferences } from './preferences';
 
 /** SK-6: the flare periods derived from the skin entries and the threshold in the preferences, oldest first. */
 export async function flarePeriods(deps: Deps): Promise<FlarePeriod[]> {
-  const threshold = (await getPreferences(deps)).flareThreshold;
+  const threshold = flareRule(await getPreferences(deps));
   return deriveFlares(await deps.repo.listSkinEntries(), threshold);
 }
 

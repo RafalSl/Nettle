@@ -23,6 +23,7 @@ import {
 } from '../model/types';
 import type { CollectionKey, ImportMode, ImportTombstones } from '../ports/storage';
 import type { Deps } from './deps';
+import { flareRule } from '../model/preferences';
 import { getPreferences, reloadDayStart } from './preferences';
 
 export interface ExportOptions {
@@ -110,7 +111,7 @@ export async function exportBundle(deps: Deps, options: ExportOptions = {}): Pro
     const html = buildReportHtml({
       ...options.report,
       ...(summary ? { summary } : {}),
-      flareThreshold: (await getPreferences(deps)).flareThreshold,
+      flareThreshold: flareRule(await getPreferences(deps)),
       records: parts.records ? snapshot : emptyRecords(),
       skinAreas: snapshot.skinAreas,
       dailyItems: snapshot.dailyItems,

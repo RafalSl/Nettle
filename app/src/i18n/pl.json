@@ -537,12 +537,12 @@
     },
     "order": "Kolejność i czas",
     "limits": "Czego dane nie pokazują",
-    "suggestions": "Pomysły",
     "meta": "{{date}} · {{from}} do {{to}} · {{model}} · prompt {{prompt}}",
     "noHypotheses": "Nic nie wyróżnia się jako wzorzec.",
     "interrupted": "Analiza została przerwana po opuszczeniu aplikacji. Nic nie zapisano.",
     "retry": "Spróbuj ponownie",
-    "failedNote": "Nic nie zapisano."
+    "failedNote": "Nic nie zapisano.",
+    "questions": "Pytania do lekarza"
   },
   "report": {
     "title": "Dziennik skóry i zdrowia: raport",
@@ -633,7 +633,9 @@
     "medicalKind": "Rodzaj",
     "medicalTitle": "Tytuł",
     "medicalUntil": "Do",
-    "manual": "wykonane ręcznie w czacie na własnym planie Claude użytkownika"
+    "manual": "wykonane ręcznie w czacie na własnym planie Claude użytkownika",
+    "aiQuestions": "Pytania do lekarza",
+    "flaresBasisByArea": "Własne progi: {{list}}."
   },
   "export": {
     "extras": "Dodatkowe pliki",

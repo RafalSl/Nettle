@@ -1,8 +1,9 @@
-import { localDay } from '../model/time';
+import { addDays, localDay } from '../model/time';
 import { sinceLastTreatment, type SinceTreatment } from '../model/derived';
 import { deriveFlares } from '../model/flares';
 import { NAIL_EXTENTS, type ListItem, type MedicalEvent, type LocalDay, type NailEntry, type Stamp, type Photo, type SkinArea, type SkinEntry } from '../model/types';
 import type { Deps } from './deps';
+import { flareRule } from '../model/preferences';
 import { getPreferences } from './preferences';
 import { openFlare } from './flares';
 
@@ -43,7 +44,7 @@ export async function areaTimeline(deps: Deps, areaId: string): Promise<Timeline
   for (const entry of await deps.repo.listRecords('nailEntries')) {
     if (entry.areaId === areaId) dayOf(localDay(entry.at.utc, entry.at.tz, deps.dayStart.get())).entries.push({ kind: 'nail', entry, photos: photosOf('nailEntry', entry.id), sinceTreatment: since(areaId, photosOf('nailEntry', entry.id)) });
   }
-  const threshold = (await getPreferences(deps)).flareThreshold;
+  const threshold = flareRule(await getPreferences(deps));
   const skin = (await deps.repo.listSkinEntries()).filter((e) => e.areaId === areaId);
   for (const f of deriveFlares(skin, threshold)) {
     dayOf(localDay(f.start.utc, f.start.tz, deps.dayStart.get())).flares.push({ id: `start-${f.start.utc}`, kind: 'start', at: f.start });
@@ -194,4 +195,24 @@ export async function healthTrendPoints(deps: Deps, itemId: string): Promise<Tre
   return (await deps.repo.listRecords('checkIns'))
     .flatMap((c) => (typeof c.values[itemId] === 'number' ? [{ day: c.day, value: c.values[itemId] as number, flare: null }] : []))
     .sort((a, b) => a.day.localeCompare(b.day));
+}
+
+/** SK-7, SK-8: how far back a trend chart looks. */
+export const TREND_RANGES = ['30d', '90d', '1y', 'all'] as const;
+export type TrendRange = (typeof TREND_RANGES)[number];
+/** SK-7, SK-8: the default range of a trend chart. */
+export const DEFAULT_TREND_RANGE: TrendRange = '90d';
+
+const RANGE_DAYS: Record<Exclude<TrendRange, 'all'>, number> = { '30d': 30, '90d': 90, '1y': 365 };
+
+/** SK-7, SK-8: the first day a range shows when it ends on `today` (a range of N days is today and the N-1 days before); null for All. */
+export function trendRangeStart(range: TrendRange, today: LocalDay): LocalDay | null {
+  if (range === 'all') return null;
+  return addDays(today, -(RANGE_DAYS[range] - 1));
+}
+
+/** SK-7, SK-8: the points inside a range that ends on `today`; All keeps every point. Order is kept. */
+export function limitTrend(points: readonly TrendPoint[], range: TrendRange, today: LocalDay): TrendPoint[] {
+  const from = trendRangeStart(range, today);
+  return from === null ? [...points] : points.filter((p) => p.day >= from && p.day <= today);
 }

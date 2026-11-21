@@ -1,6 +1,6 @@
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Switch, View } from 'react-native';
+import { Alert, View } from 'react-native';
 import { Text, TextInput } from '@/ui/themed';
 import { CHANGE_ACTIONS, SYMPTOMS, type ChangeAction, type ListItem, type Meal, type Symptom } from '@/core/model/types';
 import { itemsInUse, logChangeEvent, logReaction, type InUseItem } from '@/core/usecases/events';
@@ -9,8 +9,10 @@ import { errorMessage, itemDescription, itemLabel, t } from '@/i18n';
 import { useServices } from '@/services';
 import { FormModal, useField, useForm } from '@/ui/FormModal';
 import { useFormTime } from '@/ui/useFormTime';
-import { Chips, Hint, Label, TimeField, styles } from '@/ui/components';
+import { Button, Chips, Hint, Label, TimeField, styles } from '@/ui/components';
 import { color } from '@/ui/theme';
+import { SwitchRow } from '@/ui/SwitchRow';
+import { RadioRow } from '@/ui/RadioRow';
 
 const toggled = (set: Set<string>, id: string) => {
   const next = new Set(set);
@@ -59,25 +61,27 @@ export function ChangeEventSection() {
           {inUse.length === 0 ? (
             <Hint>{t('change.inUseNone')}</Hint>
           ) : (
-            <Chips
-              items={inUse.map((i) => ({ id: `${i.category}|${i.name}`, label: i.name }))}
-              selected={new Set(inUse.filter((i) => i.name === name && i.category === category).map((i) => `${i.category}|${i.name}`))}
-              onToggle={(id) => {
-                const item = inUse.find((i) => `${i.category}|${i.name}` === id);
-                if (!item) return;
-                setName(item.name);
-                setCategory(item.category);
-              }}
-            />
+            <View style={{ gap: 8 }}>
+              {inUse.map((i) => (
+                <RadioRow
+                  key={`${i.category}|${i.name}`}
+                  icon="change"
+                  title={i.name}
+                  detail={categories.find((c) => c.id === i.category) ? itemLabel(categories.find((c) => c.id === i.category)!) : undefined}
+                  selected={i.name === name && i.category === category}
+                  onPress={() => {
+                    setName(i.name);
+                    setCategory(i.category);
+                  }}
+                />
+              ))}
+            </View>
           )}
         </>
       )}
       <TextInput style={styles.input} accessibilityLabel={t('more.changeName')} placeholder={t('more.changeName')} value={name} onChangeText={setName} />
       {action === 'started' && (
-        <View style={styles.timeRow}>
-          <Text style={styles.rowText}>{t('change.dateUnknown')}</Text>
-          <Switch value={unknown} onValueChange={setUnknown} accessibilityLabel={t('change.dateUnknown')} />
-        </View>
+        <SwitchRow title={t('change.dateUnknown')} value={unknown} onChange={setUnknown} />
       )}
       {!known && <TimeField value={time.value} onChange={time.set} />}
       {known && <Hint>{t('change.dateUnknownHint')}</Hint>}
@@ -88,6 +92,7 @@ export function ChangeEventSection() {
 /** IN-13: symptoms within about two hours of a meal, linked to that meal. Always shows the urgent-care advice. */
 export function ReactionSection() {
   const { deps } = useServices();
+  const router = useRouter();
   const f = useForm();
   const [meals, setMeals] = useState<Meal[]>([]);
   const [mealId, setMealId] = useField<string | null>(null, f.touch);
@@ -108,12 +113,21 @@ export function ReactionSection() {
     <FormModal
       dirty={f.dirty}
       missing={missing}
+      banner={
+        // IN-13: the urgent-care advice is always visible and stays under the header while the form scrolls.
+        <View style={{ marginHorizontal: 20, marginTop: 4, padding: 14, borderRadius: 22, backgroundColor: color.alertSoft, borderWidth: 1, borderColor: color.alertLine }}>
+          <Text style={{ color: color.alert, fontWeight: '600', fontSize: 14.5 }}>{t('more.reactionUrgent')}</Text>
+        </View>
+      }
       onSave={async () => {
         await logReaction(deps, { mealId: selected!, symptoms: [...symptoms] as Symptom[], at: time.atForSave });
       }}>
-      <Text style={{ color: color.alert, fontWeight: '600' }}>{t('more.reactionUrgent')}</Text>
       {meals.length === 0 ? (
-        <Hint>{t('more.reactionNoMeals')}</Hint>
+        <>
+          <Text style={{ fontSize: 20, fontWeight: '800', letterSpacing: -0.4 }}>{t('more.reactionLogMealFirst')}</Text>
+          <Hint>{t('more.reactionNoMeals')}</Hint>
+          <Button kind="secondary" title={t('cards.firstMeal')} onPress={() => router.push('/form/meal')} />
+        </>
       ) : (
         <>
           <Label>{t('more.reactionMeal')}</Label>

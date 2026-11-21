@@ -354,7 +354,8 @@
     "listNew": "New name",
     "archivedList": "Archived",
     "search": "Search entry types and situations",
-    "noMatch": "Nothing matches. Try another word."
+    "noMatch": "Nothing matches. Try another word.",
+    "reactionLogMealFirst": "Log a meal first"
   },
   "nail": {
     "stages": {

@@ -354,7 +354,8 @@
     "listNew": "Nowa nazwa",
     "archivedList": "Zarchiwizowane",
     "search": "Szukaj rodzajów wpisów i sytuacji",
-    "noMatch": "Nic nie pasuje. Spróbuj innego słowa."
+    "noMatch": "Nic nie pasuje. Spróbuj innego słowa.",
+    "reactionLogMealFirst": "Najpierw zapisz posiłek"
   },
   "nail": {
     "stages": {

@@ -174,13 +174,7 @@ Built (build plan task 10): Edit Today as a pushed screen, the merged-dot sheet,
 
 ### Entry forms
 
-1. Reaction: the urgent-care advice is a coral note under the header and stays pinned while the form scrolls. Affects IN-13.
-2. Reaction with no meal: the same form with "Log a meal first" and a glass Log a meal button; Save stays disabled with a missing line. Affects IN-13, UX-3.
-3. Medication and Treatment: Regular switch with its hint; reminders are not set in the form. Affects IN-17, UX-4.
-4. Treatment application edit: Reaction None | Mild | Strong as a segmented control with nothing selected; the hint says empty is not none. Affects IN-11.
-5. Medical event: an Illness shows "Ended on" with a Set end date button. Affects IN-18.
-6. Routine change: Stopped lists the items in use now as a single choice. Affects IN-12.
-7. Chips are 38 pt high as approved; the tap area should be 44 pt. Affects UX-8 (deferred).
+Built (build plan task 11): the Reaction form with its urgent-care note pinned under the header and the "Log a meal first" state, Medication and Treatment with the Regular switch as a glass `SwitchRow` and its hint, the treatment application edit with Reaction None, Mild, Strong as a segmented control (nothing selected; a tap on the chosen one clears it), Routine change with Stopped as a single choice (`RadioRow`), and the end date of an illness. The tap areas of chips are 44 pt with their hit slop.
 
 ### Meal extras
 

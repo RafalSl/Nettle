@@ -678,3 +678,8 @@ On iOS 26 the system draws its own glass capsule behind a custom header view, so
 - **Not verified on the phone:** whether remounting the navigator keeps you on the Language page or returns you to Today; the check is S5 in the phone test plan.
 - **Tests:** `test/language.test.ts` (resolution, storage, export round trip, `t()` switch) and a Language page test; the Settings list test includes the row.
 - **Next:** task 18, the nettle icon.
+
+## 2026-11-21: nettle icon (task 18, branch feature/app-icon-nettle)
+- **Done:** UX-12. `design/generator/appicon.py` now draws option A, a serrated nettle leaf inside the filling ring (the leaf shape is the one of `leaf_path` in `group7.py`), and rewrote `icon.png`, `favicon.png`, `splash-icon.png` (leaf, ring and the word Nettle) and the three Android layers (the monochrome layer is the arc and the leaf outline in one colour). Checked by opening the PNGs and a preview at 180, 120, 60 and 29 px: the leaf and the ring stay readable down to 29 px. `NETTLE_FONT` points the script at a copy of the Gabarito file, because `node_modules` lives in a Docker volume.
+- **Not seen on the phone:** Expo Go always shows its own icon, so the icon appears only in a standalone build; the splash is checked in S6.
+- **Next:** the in-depth review on the phone; phone checks S5 and S6.

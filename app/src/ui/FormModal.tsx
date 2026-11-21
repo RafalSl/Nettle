@@ -1,6 +1,6 @@
 import { Stack, useRouter } from 'expo-router';
-import { useEffect, useState, type ReactNode } from 'react';
-import { Pressable, View } from 'react-native';
+import { useEffect, useState, type ReactNode, type Ref } from 'react';
+import { Pressable, type ScrollViewInstance, View } from 'react-native';
 import { errorMessage, t } from '@/i18n';
 import { confirmDestructive } from '@/ui/actionSheet';
 import { unsavedForm } from '@/ui/formState';
@@ -35,6 +35,7 @@ export function FormModal({
   onSave,
   hideSave = false,
   banner,
+  scrollRef,
   children,
 }: {
   dirty: boolean;
@@ -46,6 +47,8 @@ export function FormModal({
   hideSave?: boolean;
   /** A note that stays pinned under the header while the form scrolls (the urgent-care advice of a reaction). */
   banner?: ReactNode;
+  /** Lets a form scroll itself (the meal form keeps Add ingredient above the keyboard). */
+  scrollRef?: Ref<ScrollViewInstance>;
   children: ReactNode;
 }) {
   const router = useRouter();
@@ -90,7 +93,7 @@ export function FormModal({
         </View>
       )}
       <BottomInset.Provider value={hideSave ? 24 : SAVE_INSET}>
-        <Screen>{children}</Screen>
+        <Screen scrollRef={scrollRef}>{children}</Screen>
       </BottomInset.Provider>
       {hideSave ? null : <FloatingSave disabled={missing !== null} missing={missing} onPress={() => void save()} />}
     </>

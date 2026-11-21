@@ -1,7 +1,8 @@
 import { getRandomBytes, randomUUID } from 'expo-crypto';
 import { getCalendars } from 'expo-localization';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
+import { Text } from '@/ui/themed';
 import { openExpoSqlite } from '@/adapters/storage/expoSqliteDb';
 import { DayStart } from '@/core/model/dayStart';
 import { ANTHROPIC_MODELS, createAnthropicProvider } from '@/adapters/llm/anthropicProvider';

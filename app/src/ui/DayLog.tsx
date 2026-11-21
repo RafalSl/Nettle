@@ -1,4 +1,5 @@
-import { Pressable, Text } from 'react-native';
+import { Pressable } from 'react-native';
+import { Text } from '@/ui/themed';
 import { localDateTime } from '@/core/model/time';
 import type { ListItem, SkinArea } from '@/core/model/types';
 import type { LogRow } from '@/core/usecases/dayLog';
@@ -7,6 +8,7 @@ import { Heading, Hint, styles } from '@/ui/components';
 import { describeRow } from '@/ui/logRow';
 import { NavRow } from '@/ui/NavRow';
 import { useEntryActions } from '@/ui/useEntryActions';
+import { color } from '@/ui/theme';
 
 /** UX-2: Today shows this many of the day's newest entries and a "Show all (n)" row for the rest. */
 export const TODAY_LOG_LIMIT = 8;
@@ -52,7 +54,7 @@ export function DayLog({
             accessibilityLabel={`${time} ${title}`}
             accessibilityHint={highlight?.has(row.id) ? t('day.newEntry') : undefined}
             onPress={() => void onRow(row)}
-            style={({ pressed }) => [{ paddingVertical: 8 }, highlight?.has(row.id) && { backgroundColor: '#3b82f622', borderRadius: 8, paddingHorizontal: 6 }, pressed && { opacity: 0.6 }]}>
+            style={({ pressed }) => [{ paddingVertical: 8 }, highlight?.has(row.id) && { backgroundColor: color.accentSoft, borderRadius: 8, paddingHorizontal: 6 }, pressed && { opacity: 0.6 }]}>
             <Text style={styles.rowText}>{`${time}  ${title}`}</Text>
             {detail ? <Hint>{detail}</Hint> : null}
           </Pressable>

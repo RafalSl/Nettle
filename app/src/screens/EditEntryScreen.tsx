@@ -1,6 +1,7 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Switch, Text, TextInput, View } from 'react-native';
+import { View } from 'react-native';
+import { Switch, Text, TextInput } from '@/ui/themed';
 import { addIngredients, joinIngredients, splitIngredients } from '@/core/model/allergens';
 import { completeSuggestion } from '@/core/usecases/aiPack';
 import { ALLERGENS, CHANGE_ACTIONS, MEDICATION_CATEGORIES, NAIL_EXTENTS, NAIL_STAGES, SCORE_KEYS, SYMPTOMS, TREATMENT_REACTIONS } from '@/core/model/types';

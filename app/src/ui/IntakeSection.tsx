@@ -1,6 +1,7 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, Switch, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, Switch, View } from 'react-native';
+import { Text, TextInput } from '@/ui/themed';
 import { defaultPreferences, type Preferences } from '@/core/model/preferences';
 import { drinkHistory, drinkKey, medicationHistory, normalizeText, rankSuggestions, type Suggestion } from '@/core/model/suggestions';
 import { MEDICATION_CATEGORIES, type Allergen, type MedicationCategory } from '@/core/model/types';

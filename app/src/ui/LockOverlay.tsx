@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { AppState, StyleSheet, Text, View } from 'react-native';
+import { AppState, StyleSheet, View } from 'react-native';
+import { Text } from '@/ui/themed';
 import { t } from '@/i18n';
 import { useServices } from '@/services';
 import { Button } from '@/ui/components';
+import { color } from '@/ui/theme';
 
 /** Only the states that hide the app count as "away"; an unknown state at launch is treated as active. */
 const isActive = (state: string | null | undefined) => state !== 'inactive' && state !== 'background';
@@ -43,7 +45,7 @@ export function LockOverlay() {
 
   if (!locked && active) return null;
   return (
-    <View style={[StyleSheet.absoluteFill, { backgroundColor: '#101820', alignItems: 'center', justifyContent: 'center', gap: 16, padding: 24 }]} accessibilityViewIsModal>
+    <View style={[StyleSheet.absoluteFill, { backgroundColor: color.ground, alignItems: 'center', justifyContent: 'center', gap: 16, padding: 24 }]} accessibilityViewIsModal>
       {locked && (
         <>
           <Text style={{ color: '#fff', fontSize: 20 }}>{t('lock.locked')}</Text>

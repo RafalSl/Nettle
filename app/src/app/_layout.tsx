@@ -1,13 +1,21 @@
-import { Stack, useRootNavigationState, useRouter } from 'expo-router';
+import { useFonts } from 'expo-font';
+import { Stack, ThemeProvider, useRootNavigationState, useRouter } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { useEffect } from 'react';
-import { AppState, Pressable, Text } from 'react-native';
+import { AppState, Pressable } from 'react-native';
+import { Text } from '@/ui/themed';
 import { applyReminders, resolveReminderTap } from '@/core/usecases/reminders';
 import { reminderTexts, t } from '@/i18n';
 import { ServicesProvider, useServices } from '@/services';
 import { unsavedForm } from '@/ui/formState';
 import { LockOverlay } from '@/ui/LockOverlay';
 import { useAnalysisRun } from '@/ui/useAnalysisRun';
+import { NAV_THEME, SCREEN_OPTIONS } from '@/ui/navTheme';
+import { color, FONT_FILES } from '@/ui/theme';
+
+void SplashScreen.preventAutoHideAsync().catch(() => undefined);
+
 
 /** SK-9: after start-up, make the scheduled reminders match the settings, the nail areas and the app language. */
 function ReminderSync() {
@@ -65,7 +73,7 @@ function CancelButton() {
   const router = useRouter();
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={t('common.cancel')} onPress={() => router.back()} hitSlop={8}>
-      <Text style={{ color: '#208AEF', fontSize: 17 }}>{t('common.cancel')}</Text>
+      <Text style={{ color: color.accent, fontSize: 17 }}>{t('common.cancel')}</Text>
     </Pressable>
   );
 }
@@ -74,12 +82,18 @@ const form = (title: string) => ({ title, presentation: 'modal' as const, header
 
 /** UX-1, UX-3: the tabs sit in the root stack, and every entry form is a modal above them, one at a time. */
 export default function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts(FONT_FILES);
+  useEffect(() => {
+    if (fontsLoaded || fontError) void SplashScreen.hideAsync().catch(() => undefined);
+  }, [fontsLoaded, fontError]);
+  if (!fontsLoaded && !fontError) return null;
   return (
+    <ThemeProvider value={NAV_THEME}>
     <ServicesProvider>
       <ReminderSync />
       <ReminderTaps />
       <AnalysisWatcher />
-      <Stack>
+      <Stack screenOptions={SCREEN_OPTIONS}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="settings" options={{ headerShown: false }} />
         <Stack.Screen name="spike" options={{ headerShown: false }} />
@@ -99,5 +113,6 @@ export default function RootLayout() {
       </Stack>
       <LockOverlay />
     </ServicesProvider>
+    </ThemeProvider>
   );
 }

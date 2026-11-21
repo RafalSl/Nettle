@@ -1,7 +1,8 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Linking, Switch, Text, View } from 'react-native';
+import { Alert, Linking, Switch, View } from 'react-native';
+import { Text } from '@/ui/themed';
 import type { RegularItem, ReminderTime } from '@/core/model/preferences';
 import type { ListItem, SkinArea } from '@/core/model/types';
 import { listRegular } from '@/core/usecases/regular';

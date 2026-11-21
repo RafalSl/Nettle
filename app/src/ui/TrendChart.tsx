@@ -1,7 +1,9 @@
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@/ui/themed';
 import type { TrendPoint } from '@/core/usecases/timeline';
 import { t } from '@/i18n';
 import { Hint, styles } from '@/ui/components';
+import { color } from '@/ui/theme';
 
 const MAX_POINTS = 30;
 
@@ -22,7 +24,7 @@ export function TrendChart({ points, max, label }: { points: readonly TrendPoint
     <View accessible accessibilityLabel={summary} style={{ gap: 4 }}>
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', height: HEIGHT, gap: 2 }}>
         {shown.map((p) => (
-          <View key={p.day} style={{ flex: 1, height: Math.max(2, (p.value / max) * HEIGHT), backgroundColor: p.flare === 'start' ? '#c2410c' : '#3b82f6', borderRadius: 2 }} />
+          <View key={p.day} style={{ flex: 1, height: Math.max(2, (p.value / max) * HEIGHT), backgroundColor: p.flare === 'start' ? color.alert : color.accent, borderRadius: 2 }} />
         ))}
       </View>
       <View style={{ flexDirection: 'row', gap: 2 }}>

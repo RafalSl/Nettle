@@ -1,4 +1,5 @@
-import { Switch, Text, TextInput, View } from 'react-native';
+import { Switch, View } from 'react-native';
+import { Text, TextInput } from '@/ui/themed';
 import { NettleError } from '@/core/model/errors';
 import { MAX_SIZE_MM } from '@/core/model/types';
 import { t } from '@/i18n';

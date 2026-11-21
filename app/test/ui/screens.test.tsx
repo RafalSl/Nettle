@@ -66,6 +66,8 @@ jest.mock('expo-router', () => {
     useRouter: () => mockRouter,
     useLocalSearchParams: () => mockParams.current,
     useRootNavigationState: () => ({ key: 'root' }),
+    DarkTheme: { colors: {} },
+    ThemeProvider: ({ children }: { children: unknown }) => children,
     Tabs: Object.assign(({ children }: { children: unknown }) => children, { Screen: () => null }),
     // The header buttons a form puts into its Stack.Screen options are kept, so a test can press them.
     Stack: Object.assign(({ children }: { children: unknown }) => children, {
@@ -82,6 +84,8 @@ jest.mock('@react-native-community/datetimepicker', () => (props: MockPickerProp
   mockPicker.all.push(props);
   return null;
 });
+jest.mock('expo-font', () => ({ useFonts: () => [true, null] }));
+jest.mock('expo-splash-screen', () => ({ preventAutoHideAsync: jest.fn(async () => undefined), hideAsync: jest.fn(async () => undefined) }));
 jest.mock('expo-camera', () => ({
   CameraView: (props: typeof mockCamera.props) => {
     mockCamera.props = props;

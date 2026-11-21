@@ -1,10 +1,12 @@
 import { Stack, useRouter } from 'expo-router';
 import { useEffect, useState, type ReactNode } from 'react';
-import { Alert, Pressable, Text } from 'react-native';
+import { Alert, Pressable } from 'react-native';
+import { Text } from '@/ui/themed';
 import { errorMessage, t } from '@/i18n';
 import { confirmDestructive } from '@/ui/actionSheet';
 import { unsavedForm } from '@/ui/formState';
 import { Hint, Screen } from '@/ui/components';
+import { color } from '@/ui/theme';
 
 /** Tracks whether the user changed anything, for the discard guard (UX-3). */
 export function useForm() {
@@ -60,7 +62,7 @@ export function FormModal({
           gestureEnabled: !dirty,
           headerLeft: () => (
             <Pressable accessibilityRole="button" accessibilityLabel={t('common.cancel')} onPress={() => void cancel()} hitSlop={8}>
-              <Text style={{ color: '#208AEF', fontSize: 17 }}>{t('common.cancel')}</Text>
+              <Text style={{ color: color.accent, fontSize: 17 }}>{t('common.cancel')}</Text>
             </Pressable>
           ),
           headerRight: () => (
@@ -71,7 +73,7 @@ export function FormModal({
               disabled={missing !== null}
               onPress={() => void save()}
               hitSlop={8}>
-              <Text style={{ color: '#208AEF', fontSize: 17, fontWeight: '600', opacity: missing !== null ? 0.4 : 1 }}>{t('common.save')}</Text>
+              <Text style={{ color: color.accent, fontSize: 17, fontWeight: '600', opacity: missing !== null ? 0.4 : 1 }}>{t('common.save')}</Text>
             </Pressable>
           ),
         }}

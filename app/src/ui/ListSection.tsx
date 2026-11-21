@@ -1,6 +1,7 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, TextInput, View } from 'react-native';
+import { Alert, View } from 'react-native';
+import { TextInput } from '@/ui/themed';
 import type { ListItem, ListKind } from '@/core/model/types';
 import { addListItem, archiveListItem, renameListItem } from '@/core/usecases/lists';
 import { errorMessage, itemDescription, itemLabel, t } from '@/i18n';

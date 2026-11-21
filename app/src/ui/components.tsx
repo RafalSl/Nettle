@@ -1,14 +1,20 @@
 import Slider from '@react-native-community/slider';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import type { ReactNode, Ref } from 'react';
-import { Pressable, ScrollView, type ScrollViewInstance, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, type ScrollViewInstance, StyleSheet, View } from 'react-native';
 import { t } from '@/i18n';
+import { Aurora } from '@/ui/Aurora';
+import { Text } from '@/ui/themed';
+import { color } from '@/ui/theme';
 
 /** `scrollRef` lets a screen scroll itself (the area timeline's date jump). */
 export const Screen = ({ children, scrollRef }: { children: ReactNode; scrollRef?: Ref<ScrollViewInstance> }) => (
-  <ScrollView ref={scrollRef} contentContainerStyle={styles.screen} contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled">
-    {children}
-  </ScrollView>
+  <View style={{ flex: 1, backgroundColor: color.ground }}>
+    <Aurora />
+    <ScrollView ref={scrollRef} style={{ flex: 1 }} contentContainerStyle={styles.screen} contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled">
+      {children}
+    </ScrollView>
+  </View>
 );
 
 export const Heading = ({ children }: { children: ReactNode }) => (
@@ -23,6 +29,8 @@ export const Hint = ({ children }: { children: ReactNode }) => (
   <Text style={styles.hint}>{children}</Text>
 );
 
+const BUTTON_TEXT = { primary: color.onAccent, secondary: color.text, outline: color.accent, danger: color.alert, dangerSolid: color.onAlert } as const;
+
 export function Button({
   title,
   onPress,
@@ -32,7 +40,7 @@ export function Button({
 }: {
   title: string;
   onPress: () => void;
-  kind?: 'primary' | 'secondary' | 'danger';
+  kind?: 'primary' | 'secondary' | 'outline' | 'danger' | 'dangerSolid';
   accessibilityLabel?: string;
   disabled?: boolean;
 }) {
@@ -42,8 +50,8 @@ export function Button({
       accessibilityLabel={accessibilityLabel ?? title}
       accessibilityState={{ disabled }}
       onPress={disabled ? undefined : onPress}
-      style={({ pressed }) => [styles.button, styles[kind], (pressed || disabled) && { opacity: disabled ? 0.4 : 0.6 }]}>
-      <Text style={[styles.buttonText, kind === 'secondary' && { color: '#208AEF' }]}>{title}</Text>
+      style={({ pressed }) => [styles.button, disabled ? styles.disabled : styles[kind], pressed && !disabled && { opacity: 0.7 }]}>
+      <Text style={[styles.buttonText, { color: disabled ? color.disabledText : BUTTON_TEXT[kind] }]}>{title}</Text>
     </Pressable>
   );
 }
@@ -100,7 +108,9 @@ export function ScoreInput({
           maximumValue={10}
           step={1}
           value={value ?? 0}
-          minimumTrackTintColor={value === null ? '#c7c7cc' : '#208AEF'}
+          minimumTrackTintColor={value === null ? color.control : color.accent}
+          maximumTrackTintColor={color.glassLineRaised}
+          thumbTintColor={color.text}
           onValueChange={set}
         />
         <Pressable
@@ -118,7 +128,7 @@ export function ScoreInput({
 /** UX-10: a two-or-more way segmented control; exactly one segment is selected. */
 export function Segmented({ items, value, onChange }: { items: { id: string; label: string }[]; value: string; onChange: (id: string) => void }) {
   return (
-    <View style={{ flexDirection: 'row', borderWidth: 1, borderColor: '#208AEF', borderRadius: 8, overflow: 'hidden' }}>
+    <View style={{ flexDirection: 'row', padding: 3, borderRadius: 999, backgroundColor: color.glassFill, borderWidth: 1, borderColor: color.glassLine }}>
       {items.map((i) => (
         <Pressable
           key={i.id}
@@ -126,8 +136,8 @@ export function Segmented({ items, value, onChange }: { items: { id: string; lab
           accessibilityLabel={i.label}
           accessibilityState={{ selected: i.id === value }}
           onPress={() => onChange(i.id)}
-          style={{ flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center', backgroundColor: i.id === value ? '#208AEF' : 'transparent' }}>
-          <Text style={{ fontSize: 16, color: i.id === value ? '#fff' : '#208AEF' }}>{i.label}</Text>
+          style={{ flex: 1, minHeight: 40, borderRadius: 999, alignItems: 'center', justifyContent: 'center', backgroundColor: i.id === value ? color.accentSoft : 'transparent' }}>
+          <Text style={{ fontSize: 15, fontWeight: '600', color: i.id === value ? color.accent : color.soft }}>{i.label}</Text>
         </Pressable>
       ))}
     </View>
@@ -153,8 +163,9 @@ export function Chips({
           accessibilityLabel={item.label}
           accessibilityState={{ selected: selected.has(item.id) }}
           onPress={() => onToggle(item.id)}
+          hitSlop={3}
           style={[styles.chip, selected.has(item.id) && styles.chipOn]}>
-          <Text style={{ color: selected.has(item.id) ? '#fff' : '#111' }}>{item.label}</Text>
+          <Text style={{ fontSize: 15, fontWeight: '600', color: selected.has(item.id) ? color.onAccent : color.soft }}>{selected.has(item.id) ? '✓ ' : ''}{item.label}</Text>
         </Pressable>
       ))}
     </View>
@@ -176,51 +187,57 @@ export function TimeField({ value, onChange }: { value: Date; onChange: (d: Date
 }
 
 export const styles = StyleSheet.create({
-  screen: { padding: 16, paddingTop: 24, gap: 12 },
-  heading: { fontSize: 22, fontWeight: '600', color: '#111' },
-  label: { fontSize: 15, fontWeight: '500', color: '#222' },
-  hint: { fontSize: 13, color: '#555' },
+  screen: { padding: 20, paddingTop: 16, gap: 14 },
+  heading: { fontSize: 24, fontWeight: '800', letterSpacing: -0.6, color: color.text },
+  label: { fontSize: 13, fontWeight: '600', letterSpacing: 1.2, color: color.muted, textTransform: 'uppercase' },
+  hint: { fontSize: 13.5, color: color.muted },
   input: {
     borderWidth: 1,
-    borderColor: '#bbb',
-    borderRadius: 8,
-    padding: 10,
+    borderColor: color.glassLineRaised,
+    borderRadius: 26,
+    paddingVertical: 14,
+    paddingHorizontal: 18,
     fontSize: 16,
-    color: '#111',
-    backgroundColor: '#fff',
+    color: color.text,
+    backgroundColor: color.glassFillRaised,
   },
-  button: { borderRadius: 8, paddingVertical: 12, paddingHorizontal: 16, alignItems: 'center' },
-  primary: { backgroundColor: '#208AEF' },
-  secondary: { backgroundColor: '#e8f2fe' },
-  danger: { backgroundColor: '#c0392b' },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  button: { borderRadius: 999, minHeight: 48, paddingHorizontal: 20, alignItems: 'center', justifyContent: 'center' },
+  primary: { backgroundColor: color.accent },
+  secondary: { backgroundColor: color.glassFillRaised, borderWidth: 1, borderColor: color.glassLineRaised },
+  outline: { borderWidth: 1.5, borderColor: color.accentLine },
+  danger: { backgroundColor: color.alertSoft, borderWidth: 1, borderColor: color.alertLine },
+  dangerSolid: { backgroundColor: color.alert },
+  disabled: { backgroundColor: color.disabledFill },
+  buttonText: { fontSize: 16, fontWeight: '700' },
   scoreBox: { gap: 2 },
   scoreHead: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   clearBtn: { minHeight: 44, paddingHorizontal: 8, justifyContent: 'center' },
-  clearText: { fontSize: 16, color: '#208AEF' },
+  clearText: { fontSize: 15, fontWeight: '600', color: color.accent },
   stepperRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  stepperLabel: { flex: 1, fontSize: 16, color: '#111' },
+  stepperLabel: { flex: 1, fontSize: 16, color: color.text },
   stepBtn: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#e8f2fe',
+    backgroundColor: color.glassFillRaised,
+    borderWidth: 1,
+    borderColor: color.glassLineRaised,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  stepText: { fontSize: 24, color: '#208AEF' },
-  stepValue: { minWidth: 28, textAlign: 'center', fontSize: 18, color: '#111' },
+  stepText: { fontSize: 24, color: color.text },
+  stepValue: { minWidth: 28, textAlign: 'center', fontSize: 18, color: color.text },
   timeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   chip: {
-    borderWidth: 1,
-    borderColor: '#bbb',
-    borderRadius: 16,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    backgroundColor: '#fff',
+    borderWidth: 1.5,
+    borderColor: color.control,
+    borderRadius: 999,
+    minHeight: 38,
+    justifyContent: 'center',
+    paddingHorizontal: 16,
   },
-  chipOn: { backgroundColor: '#208AEF', borderColor: '#208AEF' },
+  chipOn: { backgroundColor: color.accent, borderColor: color.accent },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  row: { paddingVertical: 6, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: '#ccc' },
-  rowText: { color: '#111' },
+  row: { paddingVertical: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: color.glassLine },
+  rowText: { fontSize: 16, fontWeight: '600', color: color.text },
 });

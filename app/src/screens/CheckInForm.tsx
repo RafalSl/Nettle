@@ -1,6 +1,7 @@
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, TextInput } from 'react-native';
+import { Alert } from 'react-native';
+import { TextInput } from '@/ui/themed';
 import { NettleError } from '@/core/model/errors';
 import { addDays, atOnDay, localDay } from '@/core/model/time';
 import type { ListItem } from '@/core/model/types';

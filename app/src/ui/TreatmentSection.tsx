@@ -1,6 +1,7 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Switch, Text, TextInput, View } from 'react-native';
+import { Alert, Switch, View } from 'react-native';
+import { Text, TextInput } from '@/ui/themed';
 import type { ListItem, SkinArea } from '@/core/model/types';
 import { applyTreatment } from '@/core/usecases/events';
 import { addListItem, listActiveItems } from '@/core/usecases/lists';

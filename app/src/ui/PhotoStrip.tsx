@@ -7,6 +7,7 @@ import { errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
 import { confirmDestructive } from '@/ui/actionSheet';
 import { Button, Hint } from '@/ui/components';
+import { color } from '@/ui/theme';
 
 /**
  * SK-4, SK-5: the photos of one entry. Sensitive photos are blurred until tapped, the sensitive flag can be
@@ -56,7 +57,7 @@ export function PhotoStrip({ entryKind, entryId }: { entryKind: PhotoEntryKind; 
                   setSelected(p.id);
                   if (p.sensitive) setShown((s) => new Set(s).add(p.id));
                 }}
-                style={{ borderWidth: p.id === selected ? 2 : 0, borderColor: '#208AEF' }}>
+                style={{ borderWidth: p.id === selected ? 2 : 0, borderColor: color.accent }}>
                 <Image source={{ uri: deps.photos.uri(p.file) }} blurRadius={hidden ? 30 : 0} style={{ width: 88, height: 88 }} />
               </Pressable>
             );

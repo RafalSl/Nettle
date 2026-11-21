@@ -1,6 +1,7 @@
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, TextInput } from 'react-native';
+import { Alert } from 'react-native';
+import { TextInput } from '@/ui/themed';
 import { NettleError } from '@/core/model/errors';
 import type { ReportSummary } from '@/core/model/types';
 import { listSummaries, prepareSummary, runSummary, saveSummary, summaryDays, type SummaryDraft } from '@/core/usecases/summary';

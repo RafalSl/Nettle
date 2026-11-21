@@ -3,7 +3,8 @@
 import { BlurView } from 'expo-blur';
 import { useFonts, Gabarito_400Regular, Gabarito_600SemiBold, Gabarito_800ExtraBold } from '@expo-google-fonts/gabarito';
 import { useEffect, useMemo, useState } from 'react';
-import { PanResponder, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { PanResponder, Pressable, StyleSheet, View } from 'react-native';
+import { Text, TextInput } from '@/ui/themed';
 import Animated, {
   Easing,
   useAnimatedKeyboard,

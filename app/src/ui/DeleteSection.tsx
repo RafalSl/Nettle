@@ -1,6 +1,7 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useState } from 'react';
-import { Alert, Switch, Text, View } from 'react-native';
+import { Alert, Switch, View } from 'react-native';
+import { Text } from '@/ui/themed';
 import { DELETE_GROUPS, DELETE_GROUP_IDS, type DeleteGroup } from '@/core/model/deleteGroups';
 import { localDay, localDaysToRange } from '@/core/model/time';
 import type { RecordKind } from '@/core/model/types';

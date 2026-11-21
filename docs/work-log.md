@@ -549,3 +549,14 @@ Newest entry last. One short entry per working session or meaningful step: what 
 ## 2026-11-21: known bugs fixed (branch feature/fix-known-bugs)
 - **Done:** SK-9: the Daily health reminder time is now built on the clock's own time zone (`wallTimeOnDay` in `core/model/time.ts`), so the reminder and the diary-day lookup use one zone; the test passes under UTC, Europe/Warsaw, America/Los_Angeles and Asia/Tokyo. Jest now exits: the UI tests unmount every tree they create, which stops Today's one-minute timer. Both are removed from "Known bugs".
 - **Next:** the Expo Go design spike (build plan task 2).
+
+## 2026-11-21: design spike (branch feature/design-spike)
+- **Done:** `app/src/app/spike.tsx` (route `/spike`) shows blur over a drifting aurora, an SVG ring with a drawing arc and a washed icon, Gabarito in three weights, a PanResponder swipe and a Save pill that rides above the keyboard. `docs/spikes/design-stack.md` lists what to check. It typechecks and bundles for iOS; it has not run on a device.
+- **Decision:** gestures use `PanResponder` (gesture-handler 3 changed its API); the app uses React Native's `Animated` for motion.
+- **Needs you:** the phone run, 10 minutes, list in the spike note. If blur stutters, `USE_BLUR` in `GlassSurface.tsx` falls back to a flat fill.
+- **Next:** theme foundation.
+
+## 2026-11-21: theme foundation (branch feature/theme-foundation)
+- **Done:** UX-12 foundation. Installed `expo-blur`, `react-native-svg`, `@expo-google-fonts/gabarito`; `app.json` is dark. `ui/theme.ts` holds every token (control outlines at white 34 %); `ui/themed.tsx` has the app's `Text`, `TextInput` and `Switch` (Gabarito by weight, tabular figures, theme colours), and every screen now imports them. New: `Aurora`, `GlassSurface`, `Icon` (the 40 icons of the design board plus minus), `IconCircle`, `NavRow` and `NavGroup`, `SwitchRow`, `EmptyState`. Shared components (`Screen`, `Button` with the new kinds outline and dangerSolid, `Chips`, `Segmented`, `ScoreInput`, inputs) use the tokens, so all screens already show the dark glass look. The root layout loads the font behind the splash and sets a dark navigation theme. A test fails if a colour literal appears outside `theme.ts`.
+- **Not done here:** `Sheet`, `ConfirmSheet`, `FloatingSave` and `FloatingTabBar` come with the tasks that use them (quick sheets, forms, Today). Native headers stay for now.
+- **Next:** Today core logic.

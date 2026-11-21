@@ -1,6 +1,7 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Switch, Text, TextInput, View } from 'react-native';
+import { Alert, Switch, View } from 'react-native';
+import { Text, TextInput } from '@/ui/themed';
 import { CHANGE_ACTIONS, SYMPTOMS, type ChangeAction, type ListItem, type Meal, type Symptom } from '@/core/model/types';
 import { itemsInUse, logChangeEvent, logReaction, type InUseItem } from '@/core/usecases/events';
 import { listActiveItems } from '@/core/usecases/lists';
@@ -9,6 +10,7 @@ import { useServices } from '@/services';
 import { FormModal, useField, useForm } from '@/ui/FormModal';
 import { useFormTime } from '@/ui/useFormTime';
 import { Chips, Hint, Label, TimeField, styles } from '@/ui/components';
+import { color } from '@/ui/theme';
 
 const toggled = (set: Set<string>, id: string) => {
   const next = new Set(set);
@@ -109,7 +111,7 @@ export function ReactionSection() {
       onSave={async () => {
         await logReaction(deps, { mealId: selected!, symptoms: [...symptoms] as Symptom[], at: time.atForSave });
       }}>
-      <Text style={{ color: '#c0392b', fontWeight: '600' }}>{t('more.reactionUrgent')}</Text>
+      <Text style={{ color: color.alert, fontWeight: '600' }}>{t('more.reactionUrgent')}</Text>
       {meals.length === 0 ? (
         <Hint>{t('more.reactionNoMeals')}</Hint>
       ) : (

@@ -1,5 +1,6 @@
 import { Stack } from 'expo-router';
 import { t } from '@/i18n';
+import { SCREEN_OPTIONS } from '@/ui/navTheme';
 import { BackButton } from '@/ui/BackButton';
 
 /**
@@ -8,7 +9,7 @@ import { BackButton } from '@/ui/BackButton';
  */
 export default function SettingsStack() {
   return (
-    <Stack screenOptions={{ headerBackTitle: t('common.back') }}>
+    <Stack screenOptions={{ ...SCREEN_OPTIONS, headerBackTitle: t('common.back') }}>
       <Stack.Screen name="index" options={{ title: t('nav.settings'), headerLeft: () => <BackButton /> }} />
       <Stack.Screen name="logging" options={{ title: t('nav.logging') }} />
       <Stack.Screen name="areas" options={{ title: t('nav.areas') }} />

@@ -1,6 +1,7 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Switch, Text, TextInput, View } from 'react-native';
+import { Alert, Switch, View } from 'react-native';
+import { Text, TextInput } from '@/ui/themed';
 import type { AreaKind, SkinArea } from '@/core/model/types';
 import { addArea, archiveSkinArea, renameSkinArea, resetSkinAreaName, setAreaSensitiveDefault } from '@/core/usecases/skin';
 import { areaLabel, errorMessage, t } from '@/i18n';

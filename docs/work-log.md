@@ -638,3 +638,8 @@ Newest entry last. One short entry per working session or meaningful step: what 
 ## 2026-11-21: Docker docs and run.sh (branch feature/docker-docs)
 - **Done:** `./run.sh` starts the dev server in Docker on :8081 (it detects the Wi-Fi address, refuses to start if the port is taken) or runs any command in the container. README describes the dev environment and commands; CLAUDE.md, `app/AGENTS.md` and the phone test plan use `./run.sh`. No app code changed.
 - **Next:** remove the host toolchain (Nettle `node_modules`, Expo and Metro caches, the fnm shell hook).
+
+## 2026-11-21: Expo CLI login kept in a volume (branch feature/docker-expo-login)
+- **Why:** Expo Go signed in to an Expo account refuses a project served by a CLI that is not signed in, and the container's `~/.expo` was thrown away on every run.
+- **Done:** a named volume for `/home/node/.expo`; README and CLAUDE.md explain `./run.sh npx expo login`. Compose config only, no app code.
+- **Next:** the user signs in once.

@@ -19,6 +19,8 @@ services:
       - ./app:/app
       - node_modules:/app/node_modules
       - npm_cache:/home/node/.npm
+      # Expo CLI state, including `expo login`; keeps the CLI signed in like Expo Go.
+      - expo_state:/home/node/.expo
       # Jest and Metro keep their transform caches in /tmp; without this every
       # `run --rm` starts cold and the first UI test times out.
       - tmp_cache:/tmp
@@ -27,3 +29,4 @@ volumes:
   node_modules:
   npm_cache:
   tmp_cache:
+  expo_state:

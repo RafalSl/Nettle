@@ -17,10 +17,10 @@ How to read it: each check has an ID, what to do, and what you should see. Mark 
 | ID | Do | Expect | Pass | Notes |
 | --- | --- | --- | --- | --- |
 | S1 | Launch the app after a fresh install. | It starts without a red screen. A floating tab bar with Today (active, an accent pill with icon and label) and Review; a glass gear circle at the top right of both. | y |  |
-| S2 | Look at Today with no data. | The day ring, quick actions and a first-run card with "Log a meal" and "Where to log" (UX-1). The floating tab bar sits above the bottom edge and does not cover the card. | y | |
-| S3 | Open Review. | An empty state (dashed ring, title, one sentence, one button) with a button back to Today; the two output cards (Doctor report, AI analysis) above it. |  |  |
-| S4 | Kill the app and reopen it. | No crash; database migrates (the schema changed several times). |  |  |
-| S5 | Switch the phone language to Polish, reopen. | Polish strings appear (drafts; the Polish review is out of scope for now). Switch back to English. |  |  |
+| S2 | Look at Today with no data. | The day ring, quick actions and a first-run card with "Log a meal" and "Where to log" (UX-1). Scroll to the bottom of Today. The last item (the first-run card’s buttons, or the last log row) can be scrolled fully clear of the floating tab bar. | y | todo check: Scroll to the bottom of Today. The last item (the first-run card’s buttons, or the last log row) can be scrolled fully clear of the floating tab bar |
+| S3 | Open Review. | An empty state (dashed ring, title, one sentence, one button) with a button back to Today; the two output cards (Doctor report, AI analysis) above it. | y |  |
+| S4 | Kill the app and reopen it. | No crash; database migrates (the schema changed several times). | y | checked only in expo |
+| S5 | Switch the phone language to Polish, reopen. | Polish strings appear (drafts; the Polish review is out of scope for now). Switch back to English. |  | want to switch it in the app |
 | S6 | Look at the app icon on the home screen, then open the app. | The new icon (accent ring on a dark ground); a dark splash with the word Nettle, then Today with no white flash. |  |  |
 
 ## 2. Navigation shell (P0)

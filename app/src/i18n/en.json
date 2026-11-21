@@ -1129,7 +1129,8 @@
     "stopBody": "Its reminders end and it leaves the quick sheet. Entries already logged stay.",
     "denied": "Notifications are turned off for this app, so reminders cannot be shown.",
     "openSystem": "Open system settings",
-    "areas": "Areas: {{list}}"
+    "areas": "Areas: {{list}}",
+    "noneTitle": "Nothing regular yet"
   },
   "guide": {
     "hint": "Which entry type fits an everyday situation",

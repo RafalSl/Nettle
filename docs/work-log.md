@@ -629,3 +629,8 @@ Newest entry last. One short entry per working session or meaningful step: what 
 - **Not done:** the offline barcode lookup is still an alert before the empty review form.
 - **Tests:** the lock tests follow the failed state; new ones for the failed cover, the storage banner and `showError`.
 - **Next:** the states the consistency report lists without a board.
+
+## 2026-11-21: missing states and the end of the build plan (branch feature/missing-states)
+- **Done:** the states the consistency report lists without a board, built from the design-system patterns and **not reviewed against a board**: the Review days list and the Regular items list use the empty state (title, one sentence, at most one button). The other states on that list already exist in a native form or came with earlier tasks: the Discard Changes sheet (native action sheet), label read, name estimate and export or delete results (inline panels and alerts), the meal-photo camera (the system picker), import of an unreadable or newer file (alerts), the key-test result (an alert), the Medication sheet without regular items (the tile opens the full form, IN-17).
+- **Not done:** the Today card for a regular item's next time (no logic for it yet), the offline barcode lookup as a banner, floating-sheet versions of the confirmations (see the work log entries of tasks 6, 12 and 14).
+- **State of the plan:** phase 1 (tasks 1 to 8) and phase 2 (tasks 9 to 16) of `docs/build-plan.md` are built and merged into `develop`. UX-13 (Later) and UX-8 are untouched. Needs the phone: the design spike checks (`docs/spikes/design-stack.md`), then a run of Today, a form, Review and Settings.

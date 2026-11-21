@@ -61,14 +61,17 @@ review.
   or create release tags yourself.
 
 ## Commands
-Run from `app/` (Node >= 22.13, installed via fnm):
-- install: `npm install`
-- add an Expo library: `npx expo install <pkg>` (never plain `npm i` for Expo modules)
-- start dev server: `npx expo start` (add `--tunnel` if Wi-Fi blocks it), open in Expo Go
-- typecheck: `npm run typecheck`
-- lint: `npm run lint` (also enforces that `src/core` imports no Expo/RN/adapters)
-- test: `npm test`
-- all three: `npm run check`
+The dev environment is Docker (`compose.yaml`, `app/Dockerfile`); no Node, fnm
+or `node_modules` is needed on the host. Run from the repo root. The container
+installs dependencies into a named volume when `app/package-lock.json` changes.
+- install / update dependencies: automatic on the next `run` after the lockfile changes
+- add an Expo library: `docker compose run --rm app npx expo install <pkg>` (never plain `npm i` for Expo modules); it edits `app/package.json` and the lockfile through the mount
+- start dev server: `docker compose run --rm app`, scan the QR code in Expo Go. Add `npx expo start --tunnel` after `app` if Wi-Fi blocks it. If the QR code shows a wrong address (docker0, VM bridge), set `NETTLE_LAN_IP=<Wi-Fi IP>` before the command. It uses host networking, so port 8081 must be free
+- typecheck: `docker compose run --rm app npm run typecheck`
+- lint: `docker compose run --rm app npm run lint` (also enforces that `src/core` imports no Expo/RN/adapters)
+- test: `docker compose run --rm app npm test` (the first run on a fresh cache volume can time out the Today screen test; run it again)
+- all three: `docker compose run --rm app npm run check`
+- reset the container's dependencies: `docker compose down -v` (removes the `node_modules`, npm and tmp cache volumes)
 
 ## Layout
 - `app/src/core`: pure TS (model, ports, usecases, export). No platform imports.

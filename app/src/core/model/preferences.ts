@@ -1,4 +1,5 @@
 import { DEFAULT_FLARE_THRESHOLD, type FlareRule } from './flares';
+import type { LanguagePreference } from './language';
 import type { IngredientSource } from './source';
 import type { Allergen, MedicationCategory } from './types';
 
@@ -94,6 +95,8 @@ export interface Preferences {
   flareThresholdByArea: Record<string, number>;
   /** IN-17: regular medication and treatment (travels in the settings part of an export). */
   regular: RegularItem[];
+  /** UX-7: the app language; "system" follows the device. */
+  language: LanguagePreference;
 }
 
 export const MAX_SUGGESTION_ROWS = 20;
@@ -107,6 +110,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
   flareScope: 'all',
   flareThresholdByArea: {},
   regular: [],
+  language: 'system',
 };
 
 /** A fresh copy of the defaults, so callers can change it freely. */

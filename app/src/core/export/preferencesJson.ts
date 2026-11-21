@@ -1,4 +1,5 @@
 import { isDayStartHour } from '../model/dayStart';
+import { LANGUAGE_PREFERENCES, type LanguagePreference } from '../model/language';
 import { ENTRY_TYPES, FLARE_SCOPES, MAX_SUGGESTION_ROWS, WINDOW_DAYS, type EntryType, type FlareScope, type Preferences, type RegularItem } from '../model/preferences';
 import { ALLERGENS, MEDICATION_CATEGORIES } from '../model/types';
 import { parseBarcode, parseSource, sourceToJson } from './sourceJson';
@@ -29,6 +30,7 @@ export function preferencesToJson(p: Preferences): Obj {
     flare_threshold: p.flareThreshold,
     flare_scope: p.flareScope,
     flare_thresholds: { ...p.flareThresholdByArea },
+    language: p.language,
     regular: p.regular.map((r) => ({ id: r.id, kind: r.kind, category: r.category, name: r.name, dose: r.dose, treatment_id: r.treatmentId, area_ids: [...r.areaIds], times: r.times.map((t) => ({ hour: t.hour, minute: t.minute })), hide_name: r.hideName })),
   };
 }
@@ -114,5 +116,6 @@ export function parsePreferences(o: Obj, where = 'settings.preferences'): Prefer
     flareThreshold: typeof o.flare_threshold === 'number' && Number.isInteger(o.flare_threshold) && o.flare_threshold >= 1 && o.flare_threshold <= 10 ? o.flare_threshold : bad(`${where}.flare_threshold`),
     flareScope: FLARE_SCOPES.includes(o.flare_scope as never) ? (o.flare_scope as FlareScope) : bad(`${where}.flare_scope`),
     flareThresholdByArea: parseAreaThresholds(o.flare_thresholds, `${where}.flare_thresholds`),
+    language: LANGUAGE_PREFERENCES.includes(o.language as never) ? (o.language as LanguagePreference) : bad(`${where}.language`),
   };
 }

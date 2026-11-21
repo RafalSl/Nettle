@@ -19,7 +19,7 @@ import { expoPdfRenderer } from '@/adapters/share/expoPdfRenderer';
 import type { FileShare } from '@/core/ports/platform';
 import type { Deps } from '@/core/usecases/deps';
 import { AnalysisRunner } from '@/core/usecases/analysisRunner';
-import { t } from '@/i18n';
+import { setLanguage, t } from '@/i18n';
 
 export interface Services {
   deps: Deps;
@@ -49,6 +49,8 @@ export function ServicesProvider({ children }: { children: ReactNode }) {
       try {
         const db = await openExpoSqlite();
         const repo = await SqliteRepo.open(db);
+        const prefs = await repo.getPreferences();
+        setLanguage(prefs?.language ?? 'system'); // UX-7: before anything is drawn in the app language
         const deps: Deps = {
           repo,
           ids: randomUUID,
@@ -60,7 +62,7 @@ export function ServicesProvider({ children }: { children: ReactNode }) {
           auth: expoAuthenticator,
           keys: secureStoreKeyStore,
           settings: new SqliteSettings(db),
-          dayStart: new DayStart((await repo.getPreferences())?.dayStartHour ?? 0),
+          dayStart: new DayStart(prefs?.dayStartHour ?? 0),
           llmFor: createAnthropicProvider,
           llmModels: ANTHROPIC_MODELS,
           clock: { now: () => new Date(), timeZone: () => getCalendars()[0]?.timeZone ?? 'UTC' },

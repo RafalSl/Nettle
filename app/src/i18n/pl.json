@@ -753,7 +753,19 @@
     "flareScopeArea": "Dla każdego obszaru",
     "flareScopeAreaHint": "Obszar bez własnej wartości używa wartości wspólnej powyżej.",
     "flareSameAsCommon": "jak wartość wspólna",
-    "flareUseCommon": "Użyj wartości wspólnej dla"
+    "flareUseCommon": "Użyj wartości wspólnej dla",
+    "languageDevice": "Język urządzenia",
+    "languageDeviceDetail": "Zgodny z iPhone’em. Teraz: {{language}}",
+    "languageEnglishDetail": "angielski",
+    "languagePolishDetail": "polski",
+    "languageNameEn": "English",
+    "languageNamePl": "Polski",
+    "languageValueDevice": "Urządzenie ({{language}})",
+    "languageChanges": "Co się zmienia",
+    "languageChangesApp": "Tekst aplikacji, od razu, bez ponownego uruchamiania.",
+    "languageChangesAi": "Język odpowiedzi AI (analiza, szacunki, podsumowanie).",
+    "languageChangesReport": "Domyślny język nowego raportu dla lekarza. Dla każdego raportu nadal wybierasz go osobno.",
+    "languageNote": "To, co zapisałeś, zostaje bez zmian. Nazw własnych obszarów i pozycji nie tłumaczymy."
   },
   "about": {
     "title": "O aplikacji",
@@ -803,7 +815,8 @@
     "health": "Trendy zdrowia",
     "medical": "Zdarz. med.",
     "aiSuggestions": "Sugestie AI",
-    "pack": "Plan Claude"
+    "pack": "Plan Claude",
+    "language": "Język"
   },
   "home": {
     "quickActions": "Szybkie akcje",

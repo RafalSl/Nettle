@@ -153,6 +153,17 @@ There is no save gesture.
 - **Appearance:** `userInterfaceStyle` in `app.json` moves from `light` to `dark`.
 - **Components to write once:** `GlassSurface`, `PillButton` (kinds above), `IconCircle`, `Chip`, `Field`, `SwitchRow`, `ScoreRow`, `Segmented`, `NavGroup` and `NavRow`, `ContextPill`, `QuickAction`, `LogRow`, `DayRing`, `Sheet` and `QuickSheet`, `ConfirmSheet`, `FloatingSave`, `FloatingTabBar`, `EmptyState`, `Icon` (the SVG set).
 
+## Remaining screens to design
+
+The reference boards cover every pattern; each screen below copies the board named after it. Approve a group before the next one starts.
+
+- **Today states** (Today, Treatment quick sheet): a past day with "Back to today"; the first-run card; the Medication and Stool quick sheets; the sheet for a merged dot; the date picker; Edit Today (in More).
+- **Entry forms** (Meal review, Skin form, Daily health): Drink (alcohol switch), Medication (Regular switch), Treatment (areas, Regular switch), Nails (stage, extent, photos), Stool (Bristol 1 to 7), Reaction (the urgent-care advice always visible), Routine change, Medical event, and the edit screen of a treatment application (reaction None, Mild, Strong).
+- **Meal extras** (Meal choose, Meal review): barcode scan with its states (found, not found, in-store code), label scan, photo estimate waiting inline and its result banner, name estimate, the billing confirmation (LL-5).
+- **Review** (Review: Days, Area timeline): Areas, a day's full log ("Show all"), Doctor report (range, counts, photo selection, share), AI analysis (what will be sent and the billing notice, progress with elapsed time and Cancel, result as hypotheses, interrupted and failed states), Daily health trends, Suggestions to review (IN-20), the Claude plan pack (LL-15).
+- **Settings** (Settings, Regular item): Suggestions, Day start, Flare threshold, Daily health items, Skin and nail areas, Treatments, Regular items list, Routine categories, Favorites, Reminders (with the permission-denied state), Privacy and photos (app lock), AI key and models, Data and backup (Full backup, custom export, import preview with the tombstone switch, Delete data with two confirmations), About, "Where do I log…?".
+- **System** (Empty state, Delete sheet): the lock cover (SE-8), permission-denied states for the camera and photos, error and offline states, the app icon and the splash screen (still the Expo defaults).
+
 ## Adding a board
 
 `design/generator/` draws the generated boards (`screens.py`: Treatment sheet, Meal choose and review, More; `reference.py`: the eight reference screens; `components.py`: the Design system board; `icons_nails.py`: the icon options). The Today boards were written by hand and are only in `design/canvas/`. To add a screen, use the helpers in `reference.py` (`btn`, `chip`, `score_row`, `toggle_row`, `nav_row`, `group`, `pushed_header`, `modal_top`, `save_bar`, `tabbar`, `photo`) rather than new markup, and run the script; it writes `.dc.html` files into `design/canvas/` (or `$DESIGN_OUT`). A new board then goes onto the canvas with its entry in `canvas.json`.

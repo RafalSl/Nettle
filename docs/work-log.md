@@ -541,3 +541,7 @@ Newest entry last. One short entry per working session or meaningful step: what 
 - **Done:** eight reference screens on the design canvas, one per pattern (Skin form, Daily health, Review Days, Area timeline, Settings, a settings detail, swipe and confirm delete, an empty state), and a Design system board with tokens and components. `docs/design-system.md` is the written spec (tokens, components, patterns, gestures, a "do not" list, how to build it in Expo). `design/canvas/` keeps a copy of the canvas files and `design/generator/` the Python script that draws the generated boards, so a later session can add matching boards. CLAUDE.md's layout lists `design/`. Docs and design files only, no app code.
 - **Next:** the remaining screens follow the reference boards; then build the theme and the shared components, starting with Today.
 
+## 2026-11-21: design checklist (branch feature/design-checklist)
+- **Done:** requirements v0.9.3 (UX-4 exception for Daily health's yes/no items; "Same as yesterday" gets a copy icon on the canvas). `docs/design-system.md` lists the screens still to design, grouped, each with the reference board to copy. Docs and design files only.
+- **Next:** the remaining screens (next model), then the Expo spike for the design (blur, font, ring, gestures, floating Save over the keyboard).
+

@@ -94,7 +94,7 @@ today_bits = card('Today parts', f'''
 
 names = ['meal', 'drink', 'medication', 'skin', 'nails', 'treatment', 'health', 'stool', 'reaction', 'change', 'medical',
          'report', 'sparkle', 'calendar', 'chart', 'bell', 'lock', 'key', 'box', 'trash', 'info', 'guide', 'edit', 'scan',
-         'label', 'camera', 'search', 'star', 'clock', 'tag', 'list', 'sliders', 'flame', 'sun']
+         'label', 'camera', 'search', 'star', 'clock', 'tag', 'list', 'sliders', 'flame', 'sun', 'copy']
 icon_cells = ''.join(f'<span style="display: flex; flex-direction: column; align-items: center; gap: 4px; width: 64px">{icon_circle(n, 44, 24)}<span style="font-size: 11px; color: {MUTED}">{n}</span></span>' for n in names)
 icons = card('Icons', f'<div style="display: flex; flex-wrap: wrap; gap: 10px 6px">{icon_cells}</div>',
              '24 grid, 1.6 stroke outlines in the text colour, with an accent wash that fades in over the lower half of a closed shape. Nails is the Skin hand with only the nails tinted.')

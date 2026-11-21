@@ -27,6 +27,7 @@ IC.update({
     'tag': '<path d="M3.5 12.5V4.5h8l9 9-8 8Z" fill="url(#axWash)"/><circle cx="8" cy="9" r="1.4"/>',
     'sun': '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/>',
     'flame': '<path d="M12 3c1 3 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3 0-6 1-9z"/>',
+    'copy': '<rect x="8.5" y="8.5" width="12" height="12" rx="3" fill="url(#axWash)"/><path d="M15.5 8.5V6a2.5 2.5 0 0 0-2.5-2.5H6A2.5 2.5 0 0 0 3.5 6v7A2.5 2.5 0 0 0 6 15.5h2.5"/>',
 })
 
 def write(name, title, body, h=844, w=390, extra_defs=''):
@@ -187,7 +188,7 @@ tags = [('Bloating', False), ('Illness or infection', False), ('Antibiotics', Fa
 daily = modal_top('Daily health') + f'''
 <div class="ax-r ax-d1" style="display: flex; align-items: center; gap: 10px">
 <div style="flex: 1"><div style="font-size: 12.5px; font-weight: 600; letter-spacing: 1.8px; text-transform: uppercase; color: @A@">Saturday</div><div style="font-size: 26px; font-weight: 800; letter-spacing: -0.6px">14 Nov</div></div>
-{btn("Same as yesterday", "outline", "back")}
+{btn("Same as yesterday", "outline", "copy")}
 </div>
 <div class="ax-r ax-d2" style="display: flex; flex-direction: column; gap: 8px">
 {section_label("Scores", f'<span style="font-size: 13px; color: {MUTED}">0 to 10</span>')}

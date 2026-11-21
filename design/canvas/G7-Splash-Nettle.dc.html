@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Splash screen with the proposed icon mark</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Gabarito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font:inherit;color:inherit;border:0;background:none;padding:0;margin:0;cursor:pointer;text-align:inherit}
+input{font:inherit;color:inherit;border:0;background:none;outline:none;margin:0;padding:0}
+input::placeholder{color:#9AA4B2}
+@keyframes ax-rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes ax-sheet{from{transform:translateY(60px);opacity:0}to{transform:none;opacity:1}}
+@keyframes ax-drift1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(40px,30px) scale(1.12)}}
+@keyframes ax-drift2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-50px,-20px) scale(1.08)}}
+.ax-r{animation:ax-rise .6s cubic-bezier(.2,.7,.2,1) both}
+.ax-s{animation:ax-sheet .5s cubic-bezier(.2,.8,.2,1) both}
+.ax-d1{animation-delay:.05s}.ax-d2{animation-delay:.15s}.ax-d3{animation-delay:.25s}.ax-d4{animation-delay:.35s}.ax-d5{animation-delay:.45s}
+.ax-b1{animation:ax-drift1 18s ease-in-out infinite}.ax-b2{animation:ax-drift2 22s ease-in-out infinite}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; overflow: hidden; background: #070B12; font-family: Gabarito, -apple-system, system-ui, sans-serif; font-variant-numeric: tabular-nums; color: #F2F5F9; -webkit-font-smoothing: antialiased">
+<div aria-hidden="true" style="position: absolute; inset: 0; overflow: hidden; pointer-events: none">
+<div class="ax-b1" style="position: absolute; left: -120px; top: -120px; width: 420px; height: 380px; border-radius: 999px; background: {{glowA}}; filter: blur(70px); opacity: 0.5"></div>
+<div class="ax-b2" style="position: absolute; right: -160px; top: 300px; width: 380px; height: 360px; border-radius: 999px; background: {{glowB}}; filter: blur(80px); opacity: 0.34"></div>
+<div style="position: absolute; inset: 0; background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.06) 1px, transparent 1.5px); background-size: 24px 24px"></div>
+</div>
+<svg aria-hidden="true" width="0" height="0" style="position: absolute">
+<defs>
+<linearGradient id="axWash" gradientUnits="userSpaceOnUse" x1="0" y1="9" x2="0" y2="22"><stop offset="0" stop-color="{{accent}}" stop-opacity="0"/><stop offset="1" stop-color="{{accent}}" stop-opacity="0.7"/></linearGradient>
+<linearGradient id="axNail" gradientUnits="userSpaceOnUse" x1="0" y1="2.5" x2="0" y2="9.5"><stop offset="0" stop-color="{{accent}}" stop-opacity="0.95"/><stop offset="1" stop-color="{{accent}}" stop-opacity="0.45"/></linearGradient>
+<linearGradient id="axWashMeal" gradientUnits="userSpaceOnUse" x1="0" y1="9" x2="0" y2="17"><stop offset="0" stop-color="{{accent}}" stop-opacity="0"/><stop offset="1" stop-color="{{accent}}" stop-opacity="0.75"/></linearGradient>
+</defs>
+</svg>
+<div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px"><svg width="130" height="130" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="38" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="5"/><circle cx="50" cy="50" r="38" fill="none" stroke="{{accent}}" stroke-width="5" stroke-linecap="round" stroke-dasharray="238.8" stroke-dashoffset="66.9" transform="rotate(-90 50 50)"/><path d="M39.4 73.8 L49.1 72.4 L56.4 70.3 L55.3 67.5 L60.7 64.6 L58.6 61.4 L62.5 57.8 L60.1 54.5 L62.7 50.3 L60.6 47.1 L62.0 42.5 L60.5 39.5 L61.1 34.5 L60.6 26.2 L54.1 31.3 L50.7 35.2 L47.6 36.0 L45.1 40.2 L41.3 40.8 L39.9 45.5 L35.8 46.0 L35.8 51.2 L31.9 51.8 L33.4 57.8 L30.6 58.8 L34.0 65.6 Z" fill="{{accentSoft}}" stroke="{{accent}}" stroke-width="2.6" stroke-linejoin="round"/><path d="M40.2 71.9 L58.0 31.9" fill="none" stroke="{{accent}}" stroke-width="2.1" stroke-linecap="round"/></svg><span style="font-size: 34px; font-weight: 800; letter-spacing: -1px">Nettle</span></div></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#5EEAD4","options":["#5EEAD4","#A3E635","#C4B5FD"],"section":"Look"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const accent = this.props.accent ?? '#5EEAD4';
+return {
+accent,
+accentSoft: 'color-mix(in srgb, ' + accent + ' 16%, transparent)',
+accentLine: 'color-mix(in srgb, ' + accent + ' 45%, transparent)',
+glowA: 'radial-gradient(circle, ' + accent + ' 0%, transparent 70%)',
+glowB: 'radial-gradient(circle, #6D4AE0 0%, transparent 70%)'
+};
+}
+}
+</script>
+</body>
+</html>

@@ -206,6 +206,13 @@ Not built: the offline barcode lookup stays an alert before the empty review for
 4. Segmented control with 3 or 4 options (range switch, treatment reaction). The spec says two options; alternative is chips. Affects UX-12, SK-7, SK-8.
 5. Icon stroke: many icons are drawn at stroke 1.8 to 2.8 at 15 to 18 px to stay legible; proposal is to scale the stroke so the rendered line is 1.6 px or to document a small-size rule. New glyphs used: minus, dots (more), up, down. Affects UX-12.
 
+## Changes asked for after the review (2026-11-21)
+
+Boards `G7-*` on the canvas, built by `design/generator/group7.py`.
+
+- **Language** (UX-6, UX-7): a settings page of three single-choice rows, Device language (default, with the current language named), English, Polski, and a "What changes" list: the app text at once, the language of AI answers, the default language of a new doctor report. A note says that entries and the names of the user's own areas and items are not translated. The row sits first in the About group of Settings (`Ref-Settings` shows it). The row uses the existing `label` icon; a globe would be a new glyph and needs approval.
+- **App icon** (UX-12): the nettle combined with the ring, three options: A a leaf in the ring (proposed, simplest at small sizes), B the leaf as the ring's dot, C a sprig with a pair of opposite leaves. The leaf is a serrated pointed oval with its vein, accent outline and accent wash (closed shape), on the Aurora ground. `G7-Splash-Nettle` shows the splash with option A. The first version (`G6-AppIcon`, `G6-Splash`) is superseded once one option is picked.
+
 ## Adding a board
 
 `design/generator/` draws the generated boards (`screens.py`: Treatment sheet, Meal choose and review, More; `reference.py`: the eight reference screens; `components.py`: the Design system board; `icons_nails.py`: the icon options). The Today boards were written by hand and are only in `design/canvas/`. To add a screen, use the helpers in `reference.py` (`btn`, `chip`, `score_row`, `toggle_row`, `nav_row`, `group`, `pushed_header`, `modal_top`, `save_bar`, `tabbar`, `photo`) rather than new markup, and run the script; it writes `.dc.html` files into `design/canvas/` (or `$DESIGN_OUT`). A new board then goes onto the canvas with its entry in `canvas.json`.

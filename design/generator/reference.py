@@ -327,10 +327,10 @@ settings = content(gap=18) + f'''
 <div class="ax-r ax-d3">{group("Reminders and privacy", [nav_row("bell", "Reminders", "3 on"), nav_row("lock", "Privacy and photos", "App lock on", last=True)])}</div>
 <div class="ax-r ax-d3">{group("AI analysis", [nav_row("key", "API key", "saved"), nav_row("sparkle", "Models", "Haiku 5.5", last=True)])}</div>
 <div class="ax-r ax-d4">{group("Data and backup", [nav_row("box", "Export and import", "9 days ago"), nav_row("trash", "Delete data", danger=True, last=True)])}</div>
-<div class="ax-r ax-d5">{group("About", [nav_row("guide", "Where do I log…?"), nav_row("info", "About Nettle", "0.1.0", last=True)])}</div>
+<div class="ax-r ax-d5">{group("About", [nav_row("label", "Language", "Device (English)"), nav_row("guide", "Where do I log…?"), nav_row("info", "About Nettle", "0.1.0", last=True)])}</div>
 </div>
 '''
-write('Ref-Settings.dc.html', 'Settings', settings, h=1330)
+write('Ref-Settings.dc.html', 'Settings', settings, h=1400)
 
 # ------------------------------------------------------------------ 6. Regular item
 def time_chip(t):

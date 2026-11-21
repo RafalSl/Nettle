@@ -668,3 +668,7 @@ The scroll for a new ingredient started after the keyboard had finished sliding 
 
 ## 2026-11-21: Cancel and Back buttons no longer double-framed
 On iOS 26 the system draws its own glass capsule behind a custom header view, so our glass Cancel and Back sat inside a second background and looked blurred and misaligned. The form Cancel and the Settings Back are now `unstable_headerLeftItems` with `hidesSharedBackground`, so only our glass shows. The test mock exposes such an item as `headerLeft`. Not verified on the phone; the other Settings screens use the native back button and were not touched. Next: check on the phone.
+
+## 2026-11-21: icon A chosen, test plan updated (branch feature/language-setting-docs)
+- **Done:** the user chose icon option A (a nettle leaf in the ring). Requirements: UX-12 names the icon and the splash, and the v0.9.5 Changelog entry says so; build-plan task 18 no longer waits for a pick; design-system and the canvas board mark A as chosen. `docs/phone-test-plan.md`: S5 now tests the Language setting in the app (Polski, English, Device language), S6 describes the new icon and splash and says Expo Go shows its own icon, new S7 (the choice survives a restart) and S8 (the Doctor report language default), A11 (AI answers follow the setting), N3 lists the Language row. Docs only.
+- **Next:** task 17 (language-setting) and task 18 (app-icon-nettle) from the build plan.

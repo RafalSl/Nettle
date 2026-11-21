@@ -211,7 +211,7 @@ Not built: the offline barcode lookup stays an alert before the empty review for
 Boards `G7-*` on the canvas, built by `design/generator/group7.py`.
 
 - **Language** (UX-6, UX-7): a settings page of three single-choice rows, Device language (default, with the current language named), English, Polski, and a "What changes" list: the app text at once, the language of AI answers, the default language of a new doctor report. A note says that entries and the names of the user's own areas and items are not translated. The row sits first in the About group of Settings (`Ref-Settings` shows it). The row uses the existing `label` icon; a globe would be a new glyph and needs approval.
-- **App icon** (UX-12): the nettle combined with the ring, three options: A a leaf in the ring (proposed, simplest at small sizes), B the leaf as the ring's dot, C a sprig with a pair of opposite leaves. The leaf is a serrated pointed oval with its vein, accent outline and accent wash (closed shape), on the Aurora ground. `G7-Splash-Nettle` shows the splash with option A. The first version (`G6-AppIcon`, `G6-Splash`) is superseded once one option is picked.
+- **App icon** (UX-12): the nettle combined with the ring. Three options were drawn; the user chose A, a leaf in the ring (simplest at small sizes). B (the leaf as the ring's dot) and C (a sprig with a pair of opposite leaves) stay on the board for the record. The leaf is a serrated pointed oval with its vein, accent outline and accent wash (closed shape), on the Aurora ground. `G7-Splash-Nettle` shows the splash with option A. The first version (`G6-AppIcon`, `G6-Splash`) is superseded and can be deleted.
 
 ## Adding a board
 

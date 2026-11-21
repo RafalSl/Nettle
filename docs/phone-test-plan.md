@@ -1,6 +1,6 @@
 # Phone test plan (Expo Go, Aurora ring build)
 
-Updated 2026-11-21 for the Aurora ring design (floating tab bar, day ring, quick sheets, glass forms with a floating Save, the Group 1–6 screens). The design spike (blur, aurora, fonts, ring swipe) has run on the phone and passed; the rest of the app has had only a first look at Today and the meal form. This plan orders the checks so that a failure early on does not hide later ones. Use only synthetic data in the diary while testing (no real symptoms, names or photos you would not want in an export).
+Updated 2026-11-21 (language setting, nettle icon) for the Aurora ring design (floating tab bar, day ring, quick sheets, glass forms with a floating Save, the Group 1–6 screens). The design spike (blur, aurora, fonts, ring swipe) has run on the phone and passed; the rest of the app has had only a first look at Today and the meal form. This plan orders the checks so that a failure early on does not hide later ones. Use only synthetic data in the diary while testing (no real symptoms, names or photos you would not want in an export).
 
 How to read it: each check has an ID, what to do, and what you should see. Mark **Pass** as `✓`, or **Fail** or **Skip** as `✗` or `–`. A Fail needs one line in **Notes**: what happened, and the screen. Requirement IDs link to `docs/requirements.md`.
 
@@ -20,8 +20,10 @@ How to read it: each check has an ID, what to do, and what you should see. Mark 
 | S2 | Look at Today with no data. | The day ring, quick actions and a first-run card with "Log a meal" and "Where to log" (UX-1). Scroll to the bottom of Today. The last item (the first-run card’s buttons, or the last log row) can be scrolled fully clear of the floating tab bar. | y | todo check: Scroll to the bottom of Today. The last item (the first-run card’s buttons, or the last log row) can be scrolled fully clear of the floating tab bar |
 | S3 | Open Review. | An empty state (dashed ring, title, one sentence, one button) with a button back to Today; the two output cards (Doctor report, AI analysis) above it. | y |  |
 | S4 | Kill the app and reopen it. | No crash; database migrates (the schema changed several times). | y | checked only in expo |
-| S5 | Switch the phone language to Polish, reopen. | Polish strings appear (drafts; the Polish review is out of scope for now). Switch back to English. |  | want to switch it in the app |
-| S6 | Look at the app icon on the home screen, then open the app. | The new icon (accent ring on a dark ground); a dark splash with the word Nettle, then Today with no white flash. |  |  |
+| S5 | Settings, About, Language: choose Polski, then English, then Device language, with the phone language set to the other one. | Each choice changes the text of the visible screens and the tab labels at once, without a restart; Polish strings are drafts (the Polish review is out of scope for now). The Language row shows "Polski", "English" or "Device (…)" with the phone's language (UX-7). Entries you logged stay as written. |  | want to switch it in the app |
+| S6 | Look at the app icon on the home screen, then open the app. Expo Go always shows its own icon: check this in a standalone build, or open `app/assets/images/icon.png` and `splash-icon.png` on the computer. | The icon is one serrated nettle leaf inside an accent ring on a dark ground (UX-12), readable at the smallest size; a dark splash with the same mark and the word Nettle, then Today with no white flash. |  |  |
+| S7 | With Polski chosen, kill the app and reopen it. Then choose Device language. | Still Polish after the restart; Device language follows the phone again (UX-7). |  |  |
+| S8 | With Polski chosen, open Review, Doctor report. Then choose English and open it again. | The report language starts as Polish, then English; you can still change it for each report (EX-3). |  |  |
 
 ## 2. Navigation shell (P0)
 
@@ -29,7 +31,7 @@ How to read it: each check has an ID, what to do, and what you should see. Mark 
 | --- | --- | --- | --- | --- |
 | N1 | Tap the gear on Today. | Settings opens above the tabs: tab bar hidden, a glass back circle, a large title, no Done (UX-1). |  |  |
 | N2 | Back. Repeat from the Review tab. | Back returns to the tab you came from each time. |  |  |
-| N3 | Settings list. | Grouped glass rows with icons: Logging; Reminders and privacy; AI analysis; Data and backup; About. |  |  |
+| N3 | Settings list. | Grouped glass rows with icons: Logging; Reminders and privacy; AI analysis; Data and backup; About (Language, Where do I log…?, About Nettle). |  |  |
 | N4 | Open each group and each sub-row (Suggestions, Skin and nail areas, Regular items, Favorites, Privacy). | Every screen opens and goes back; titles fit. |  |  |
 | N5 | Open any entry form, make a change, swipe down to dismiss. | Discard Changes sheet appears (UX-3). Cancel keeps the form. The form has a glass Cancel in the header and no Save there; Save floats at the bottom. |  |  |
 | N6 | Large titles, form grabber, floating tab bar. | Nothing overlaps the notch, the home bar or the tab bar. Note anything ugly. |  |  |
@@ -162,6 +164,7 @@ Notifications from Expo Go can behave differently from a standalone build; recor
 | A8 | Meal form: switch "Fill later with AI" on, save with only a description. Open it from the log. | The log row says it is waiting for AI. The edit screen has the switch and can clear it. |  |  |
 | A9 | Review, AI analysis, Use my Claude plan: pick a range, include photos, create the pack, share it to Files. Open the ZIP in Files. | A confirmation lists what is in the pack and the three privacy points. The ZIP has `pack.json`, `INSTRUCTIONS.md` and the photos; sensitive photos are left out by default. |  |  |
 | A10 | Give the ZIP to a chat on your Claude plan, save its `result.json`, then Import a result. Try the wrong pack's result and a cancelled picker. | Counts shown before applying; a wrong pack is refused. A fill shows as the Today card and under Suggestions to review; adding it and saving clears the mark and the row reads name estimate (manual). An imported analysis is labelled manual; an imported summary is offered in the Doctor report. Note what the chat accepted (ZIP, photo count, size). |  |  |
+| A11 | With Polski chosen, run one short analysis. Then choose English and run it again. | The answer, its headings and the estimates are in Polish, then in English (LL-11). The prompts do not change. |  |  |
 
 ## 11. Guide and routine changes (P2)
 

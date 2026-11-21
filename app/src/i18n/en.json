@@ -22,7 +22,8 @@
     "name": "Name",
     "back": "Back",
     "remove": "Remove",
-    "close": "Close"
+    "close": "Close",
+    "notNow": "Not now"
   },
   "meal": {
     "title": "Log a meal",
@@ -118,7 +119,8 @@
     "scanReadLabel": "Read the ingredient label",
     "scanByHand": "Enter by hand",
     "scanBarcode": "Barcode {{code}}",
-    "scanCameraOff": "Camera is off"
+    "scanCameraOff": "Camera is off",
+    "openIphoneSettings": "Open iPhone settings"
   },
   "skin": {
     "title": "Log skin status",
@@ -978,7 +980,8 @@
     "area": "an area",
     "photos": "Photos",
     "type": "a stool type",
-    "titleMissing": "a title"
+    "titleMissing": "a title",
+    "keptOpen": "Nothing was saved. Your input is still here."
   },
   "doctor": {
     "range": "Period",
@@ -1031,7 +1034,12 @@
     "switch": "Lock with Face ID or passcode",
     "hint": "Locks the app when it starts and after a minute in the background. Your diary stays on this phone either way. In Expo Go the system asks for the passcode, because Face ID needs a standalone build.",
     "turnOn": "Turn on the lock",
-    "turnOff": "Turn off the lock"
+    "turnOff": "Turn off the lock",
+    "body": "Unlock with Face ID or your passcode to continue. Nothing is shown until then.",
+    "failedTitle": "Face ID did not work",
+    "failedBody": "Try again, or use your iPhone passcode.",
+    "tryAgain": "Try again",
+    "usePasscode": "Use passcode"
   },
   "itemDescriptions": {
     "item-wellbeing": "How well you felt overall today. 0 is very poor, 10 is very good.",

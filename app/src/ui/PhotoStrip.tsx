@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Image, Pressable, ScrollView, View } from 'react-native';
+import { Image, Pressable, ScrollView, View } from 'react-native';
 import { pickPhotoUris } from '@/adapters/photos/pickPhotos';
 import type { Photo, PhotoEntryKind } from '@/core/model/types';
 import { addPhoto, listPhotos, removePhoto, setPhotoSensitive } from '@/core/usecases/photos';
-import { errorMessage, t } from '@/i18n';
+import { t } from '@/i18n';
 import { useServices } from '@/services';
 import { confirmDestructive } from '@/ui/actionSheet';
 import { Button, Hint } from '@/ui/components';
 import { color } from '@/ui/theme';
+import { showError } from '@/ui/showError';
 
 /**
  * SK-4, SK-5: the photos of one entry. Sensitive photos are blurred until tapped, the sensitive flag can be
@@ -29,7 +30,7 @@ export function PhotoStrip({ entryKind, entryId }: { entryKind: PhotoEntryKind; 
       await fn();
       reload();
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
   };
 

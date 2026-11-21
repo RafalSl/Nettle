@@ -22,7 +22,8 @@
     "name": "Nazwa",
     "back": "Wstecz",
     "remove": "Usuń",
-    "close": "Zamknij"
+    "close": "Zamknij",
+    "notNow": "Nie teraz"
   },
   "meal": {
     "title": "Dodaj posiłek",
@@ -118,7 +119,8 @@
     "scanReadLabel": "Odczytaj etykietę ze składem",
     "scanByHand": "Wpisz ręcznie",
     "scanBarcode": "Kod kreskowy {{code}}",
-    "scanCameraOff": "Aparat jest wyłączony"
+    "scanCameraOff": "Aparat jest wyłączony",
+    "openIphoneSettings": "Otwórz ustawienia iPhone’a"
   },
   "skin": {
     "title": "Dodaj stan skóry",
@@ -978,7 +980,8 @@
     "area": "miejsca",
     "photos": "Zdjęcia",
     "type": "typu stolca",
-    "titleMissing": "tytuł"
+    "titleMissing": "tytuł",
+    "keptOpen": "Nic nie zostało zapisane. To, co wpisano, nadal tu jest."
   },
   "doctor": {
     "range": "Okres",
@@ -1031,7 +1034,12 @@
     "switch": "Blokada Face ID lub kodem",
     "hint": "Blokuje aplikację przy uruchomieniu i po minucie w tle. Dziennik i tak zostaje na tym telefonie. W Expo Go system pyta o kod, bo Face ID wymaga osobnej aplikacji.",
     "turnOn": "Włącz blokadę",
-    "turnOff": "Wyłącz blokadę"
+    "turnOff": "Wyłącz blokadę",
+    "body": "Odblokuj za pomocą Face ID lub kodu, aby kontynuować. Do tego czasu nic nie jest pokazywane.",
+    "failedTitle": "Face ID nie zadziałało",
+    "failedBody": "Spróbuj ponownie lub użyj kodu iPhone’a.",
+    "tryAgain": "Spróbuj ponownie",
+    "usePasscode": "Użyj kodu"
   },
   "itemDescriptions": {
     "item-wellbeing": "Jak dobrze się dziś czułeś(aś) ogólnie. 0 to bardzo źle, 10 to bardzo dobrze.",

@@ -16,6 +16,7 @@ export class AppLock {
   private backgroundedAt: number | null = null;
   private listeners = new Set<() => void>();
   private waiting: (() => void)[] = [];
+  private didFail = false;
 
   constructor(private readonly deps: Deps) {}
 
@@ -28,6 +29,10 @@ export class AppLock {
 
   get locked(): boolean {
     return this.isLocked;
+  }
+  /** SE-8: the last unlock attempt failed or was cancelled; the cover then says so. Cleared by the next success. */
+  get failed(): boolean {
+    return this.didFail;
   }
   get isEnabled(): boolean {
     return this.enabled;
@@ -66,7 +71,12 @@ export class AppLock {
   /** Shows the prompt; unlocks on success and returns whether it did. */
   async unlock(reason: string): Promise<boolean> {
     if (!this.isLocked) return true;
-    if (!(await this.deps.auth.authenticate(reason))) return false;
+    if (!(await this.deps.auth.authenticate(reason))) {
+      this.didFail = true;
+      this.emit();
+      return false;
+    }
+    this.didFail = false;
     this.isLocked = false;
     this.emit();
     return true;

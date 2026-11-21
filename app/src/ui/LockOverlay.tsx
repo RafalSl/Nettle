@@ -3,7 +3,10 @@ import { AppState, StyleSheet, View } from 'react-native';
 import { Text } from '@/ui/themed';
 import { t } from '@/i18n';
 import { useServices } from '@/services';
+import { Aurora } from '@/ui/Aurora';
 import { Button } from '@/ui/components';
+import { GlassSurface } from '@/ui/GlassSurface';
+import { Icon } from '@/ui/Icon';
 import { color } from '@/ui/theme';
 
 /** Only the states that hide the app count as "away"; an unknown state at launch is treated as active. */
@@ -17,6 +20,7 @@ const isActive = (state: string | null | undefined) => state !== 'inactive' && s
 export function LockOverlay() {
   const { appLock } = useServices();
   const locked = useSyncExternalStore(appLock.subscribe, () => appLock.locked);
+  const failed = useSyncExternalStore(appLock.subscribe, () => appLock.failed);
   const [active, setActive] = useState(isActive(AppState.currentState));
   const prompted = useRef(false);
 
@@ -44,14 +48,28 @@ export function LockOverlay() {
   }, [locked, active]);
 
   if (!locked && active) return null;
+  // SE-8: the cover shows no entry, ever. Away from the foreground (the app switcher) it is only a lock mark.
+  if (!active) {
+    return (
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: color.ground, alignItems: 'center', justifyContent: 'center' }]} accessibilityViewIsModal>
+        <GlassSurface style={{ width: 96, height: 96, borderRadius: 48, alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name="lock" size={36} />
+        </GlassSurface>
+      </View>
+    );
+  }
   return (
-    <View style={[StyleSheet.absoluteFill, { backgroundColor: color.ground, alignItems: 'center', justifyContent: 'center', gap: 16, padding: 24 }]} accessibilityViewIsModal>
-      {locked && (
-        <>
-          <Text style={{ color: '#fff', fontSize: 20 }}>{t('lock.locked')}</Text>
-          <Button title={t('lock.unlock')} onPress={prompt} />
-        </>
-      )}
+    <View style={[StyleSheet.absoluteFill, { backgroundColor: color.ground, alignItems: 'center', justifyContent: 'center', gap: 18, padding: 24 }]} accessibilityViewIsModal>
+      <Aurora />
+      <GlassSurface style={{ width: 150, height: 150, borderRadius: 75, alignItems: 'center', justifyContent: 'center' }}>
+        <Icon name="lock" size={44} tint={failed ? color.alert : color.accent} />
+      </GlassSurface>
+      <Text style={{ fontSize: 26, fontWeight: '800', letterSpacing: -0.6, textAlign: 'center' }}>{failed ? t('lock.failedTitle') : t('lock.locked')}</Text>
+      <Text style={{ fontSize: 15, color: color.soft, textAlign: 'center', maxWidth: 300 }}>{failed ? t('lock.failedBody') : t('lock.body')}</Text>
+      <View style={{ alignSelf: 'stretch', gap: 8 }}>
+        <Button title={failed ? t('lock.tryAgain') : t('lock.unlock')} onPress={prompt} />
+        <Button kind="secondary" title={t('lock.usePasscode')} onPress={prompt} />
+      </View>
     </View>
   );
 }

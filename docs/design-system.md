@@ -1,6 +1,6 @@
 # Design system: Aurora ring
 
-Status: approved 2026-11-21 on the design canvas, not built (requirements v0.9.2, UX-12). This file is the written spec. The canvas shows every part in use; `design/canvas/` in this repo holds a copy of its files and `design/generator/` the script that draws the generated boards.
+Status: approved 2026-11-21 on the design canvas and built in the app (requirements v0.9.4, UX-12), pending the phone run; the sections "Remaining screens to design" and "Proposed additions" below record what was drawn later and what is still open. This file is the written spec. The canvas shows every part in use; `design/canvas/` in this repo holds a copy of its files and `design/generator/` the script that draws the generated boards.
 
 - Canvas: https://claude.ai/artifact/BVCSSjDYjDDMVcKrshmazt (private to the owner)
 - Requirements: `docs/requirements.md` (UX-2, UX-3, UX-12, UX-13, IN-10). Screen map and rules: `docs/ux-design.md`.
@@ -194,12 +194,9 @@ Not built: the Delete data confirmations, like the other confirmations, stay nat
 
 ### System
 
-1. App lock cover shows only the lock, never any entry, and the app switcher cover shows only a lock mark. Affects SE-8.
-2. A failed Face ID attempt reuses the lock cover with a coral icon and "Use passcode". Affects SE-8.
-3. Camera and photo library denied: a full-screen explanation with "Open iPhone settings" and "Not now"; typing and the library stay available. Affects IN-8, IN-9.
-4. Storage error and offline barcode lookup keep the form open with a coral banner and the input in place. Affects IN-6, NF-3.
-5. App icon: an accent ring on the Aurora ground, no text; splash is the same ring and the word Nettle. Affects UX-1.
-6. Rate limit gets its own message and a Try again button. Affects LL-8.
+Built (build plan task 15): the lock cover (glass ring with a lock, "Nettle is locked", Unlock and Use passcode, no entry shown), its failed state (coral lock, "Face ID did not work", Try again, Use passcode; `AppLock.failed`), the app switcher cover that is only a lock mark, a refused camera or photo permission explained with "Open iPhone settings" and "Not now" (`showError`; the camera-off card on the scan screen), the storage error that keeps the form open under a coral banner (`FormModal`), the analysis failure as a coral banner with "Review and try again", the app icon (an accent ring on the Aurora ground, `design/generator/appicon.py`) and the splash (the same ring and the word Nettle). The rate limit has its own message (`llm_rate_limited`) and the same retry.
+
+Not built: the offline barcode lookup stays an alert before the empty review form.
 
 ### Review-driven (see the consistency report)
 

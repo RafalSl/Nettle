@@ -21,7 +21,8 @@
     "add": "Dodaj",
     "name": "Nazwa",
     "back": "Wstecz",
-    "remove": "Usuń"
+    "remove": "Usuń",
+    "close": "Zamknij"
   },
   "meal": {
     "title": "Dodaj posiłek",
@@ -351,7 +352,9 @@
     "archive": "Archiwizuj",
     "restore": "Przywróć",
     "listNew": "Nowa nazwa",
-    "archivedList": "Zarchiwizowane"
+    "archivedList": "Zarchiwizowane",
+    "search": "Szukaj rodzajów wpisów i sytuacji",
+    "noMatch": "Nic nie pasuje. Spróbuj innego słowa."
   },
   "nail": {
     "stages": {
@@ -776,7 +779,9 @@
     "pin": "Przypnij do Dziś",
     "unpin": "Przenieś do Więcej",
     "moreFixed": "Więcej zawsze jest na ekranie Dziś.",
-    "moreEmpty": "Wszystko jest przypięte do ekranu Dziś."
+    "moreEmpty": "Wszystko jest przypięte do ekranu Dziś.",
+    "editToday": "Edytuj Dziś",
+    "editTodayHint": "Wybierz, co jest na ekranie Dziś i w jakiej kolejności."
   },
   "review": {
     "empty": "Na razie nie ma czego przeglądać. Wpisy dodane w Dziś pojawią się tutaj.",
@@ -1166,5 +1171,9 @@
     "importedBody": "Nic w Twoim dzienniku nie zostało zmienione. Sugestie czekają na ekranie Dziś.",
     "manualLabel": "Wykonane ręcznie w czacie na Twoim planie Claude przez {{model}}, potem zaimportowane.",
     "useImported": "Użyj podsumowania od {{model}} (mój plan Claude)"
+  },
+  "sheet": {
+    "often": "Często używane",
+    "regular": "Stałe"
   }
 }

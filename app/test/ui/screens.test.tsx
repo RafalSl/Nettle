@@ -3040,12 +3040,14 @@ describe('App lock (SE-8)', () => {
     auth.passes = false;
     const tree = await mountLayout(deps, lock);
     await flush();
-    expect(hasText(tree, en.lock.locked)).toBe(true);
+    expect(hasText(tree, en.lock.failedTitle)).toBe(true); // the cancelled prompt turns the cover into the failed state: coral lock, Try again
+    expect(hasText(tree, en.lock.failedBody)).toBe(true);
     expect(auth.prompts).toEqual([en.lock.reason]); // one prompt, not one per render
     auth.passes = true;
-    await press(tree, en.lock.unlock);
+    await press(tree, en.lock.tryAgain);
     await flush();
     expect(lock.locked).toBe(false);
+    expect(hasText(tree, en.lock.failedTitle)).toBe(false);
     expect(hasText(tree, en.lock.locked)).toBe(false);
   });
 
@@ -3069,7 +3071,7 @@ describe('App lock (SE-8)', () => {
     await act(async () => appState!('active'));
     await flush();
     expect(lock.locked).toBe(true);
-    expect(hasText(tree, en.lock.locked)).toBe(true);
+    expect(hasText(tree, en.lock.failedTitle)).toBe(true);
   });
 
   it('SE-8 a reminder tap waits for the unlock before it opens anything', async () => {
@@ -3086,7 +3088,7 @@ describe('App lock (SE-8)', () => {
     });
     expect(mockRouter.navigate).not.toHaveBeenCalled();
     (deps.auth as unknown as FakeAuth).passes = true;
-    await press(tree, en.lock.unlock);
+    await press(tree, en.lock.tryAgain);
     await act(async () => {
       await tapped;
     });
@@ -4096,5 +4098,69 @@ describe('Settings additions (SK-8, NO-3, SE-9)', () => {
     expect(btn.every((n) => n.props.accessibilityState.disabled === true)).toBe(true);
     await press(tree, en.delete.groups.health);
     expect(hasText(tree, en.delete.chooseFirst)).toBe(false);
+  });
+});
+
+describe('Lock cover states (SE-8)', () => {
+  it('SE-8 the cover is gone after the automatic prompt passes, and no entry is shown', async () => {
+    const deps = nowDeps();
+    await logMeal(deps, { description: 'Synthetic secret meal', ingredients: [], at: new Date(Date.now() - 3600_000) });
+    await deps.settings.set('appLockEnabled', '1');
+    const lock = new AppLock(deps);
+    await lock.init();
+    (deps.auth as unknown as FakeAuth).passes = true;
+    services.__state.current = { deps, fileShare: { saveAndShare: jest.fn(), pickFile: jest.fn() }, analysisRunner: new AnalysisRunner(deps), appLock: lock };
+    let tree!: ReactTestRenderer;
+    await act(async () => {
+      tree = create(React.createElement(require('@/ui/LockOverlay').LockOverlay));
+    });
+    await flush();
+    expect(lock.locked).toBe(false); // the automatic prompt passed
+    expect(hasText(tree, 'Synthetic secret meal')).toBe(false);
+  });
+
+  it('SE-8 a failed attempt reuses the cover with Try again and Use passcode', async () => {
+    const deps = nowDeps();
+    await deps.settings.set('appLockEnabled', '1');
+    const lock = new AppLock(deps);
+    await lock.init();
+    (deps.auth as unknown as FakeAuth).passes = false;
+    services.__state.current = { deps, fileShare: { saveAndShare: jest.fn(), pickFile: jest.fn() }, analysisRunner: new AnalysisRunner(deps), appLock: lock };
+    let tree!: ReactTestRenderer;
+    await act(async () => {
+      tree = create(React.createElement(require('@/ui/LockOverlay').LockOverlay));
+    });
+    await flush();
+    expect(lock.failed).toBe(true);
+    expect(hasText(tree, en.lock.failedTitle)).toBe(true);
+    expect(hasText(tree, en.lock.usePasscode)).toBe(true);
+    (deps.auth as unknown as FakeAuth).passes = true;
+    await press(tree, en.lock.usePasscode);
+    await flush();
+    expect(lock.locked).toBe(false);
+    expect(lock.failed).toBe(false);
+  });
+});
+
+describe('Storage error keeps the form open (NF-3)', () => {
+  it('NF-3 a failed save shows a coral banner, keeps the form and the input, and a retry works', async () => {
+    mockRouter.back.mockClear();
+    const deps = nowDeps();
+    const add = jest.spyOn(deps.repo, 'addRecord').mockRejectedValueOnce(new Error('disk full'));
+    const { tree } = await mount(() => require('@/app/form/stool'), deps);
+    await flush();
+    await press(tree, '4');
+    await press(tree, en.common.save);
+    await flush();
+    expect(hasText(tree, en.errors.generic)).toBe(true);
+    expect(hasText(tree, en.edit.keptOpen)).toBe(true);
+    expect(mockRouter.back).not.toHaveBeenCalled();
+    expect(await deps.repo.listRecords('stoolEntries')).toEqual([]);
+    await press(tree, en.common.save); // the input is still there: one tap saves
+    await flush();
+    expect(hasText(tree, en.edit.keptOpen)).toBe(false);
+    expect(await deps.repo.listRecords('stoolEntries')).toHaveLength(1);
+    expect(mockRouter.back).toHaveBeenCalled();
+    add.mockRestore();
   });
 });

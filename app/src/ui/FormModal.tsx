@@ -1,6 +1,6 @@
 import { Stack, useRouter } from 'expo-router';
 import { useEffect, useState, type ReactNode } from 'react';
-import { Alert, Pressable } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { errorMessage, t } from '@/i18n';
 import { confirmDestructive } from '@/ui/actionSheet';
 import { unsavedForm } from '@/ui/formState';
@@ -9,6 +9,7 @@ import { BottomInset } from '@/ui/FloatingTabBar';
 import { FloatingSave, SAVE_INSET } from '@/ui/FloatingSave';
 import { GlassSurface } from '@/ui/GlassSurface';
 import { Text } from '@/ui/themed';
+import { color } from '@/ui/theme';
 
 /** Tracks whether the user changed anything, for the discard guard (UX-3). */
 export function useForm() {
@@ -54,11 +55,14 @@ export function FormModal({
       unsavedForm.current = false;
     };
   }, [dirty]);
+  /** NF-3: a failed save keeps the form open with a coral banner; the input stays. */
+  const [error, setError] = useState<string | null>(null);
   async function save() {
+    setError(null);
     try {
       if ((await onSave()) !== false) router.back();
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      setError(errorMessage(e));
     }
   }
   async function cancel() {
@@ -79,6 +83,12 @@ export function FormModal({
         }}
       />
       {banner}
+      {error !== null && (
+        <View accessibilityRole="alert" style={{ marginHorizontal: 20, marginTop: 4, padding: 14, borderRadius: 22, gap: 2, backgroundColor: color.alertSoft, borderWidth: 1, borderColor: color.alertLine }}>
+          <Text style={{ color: color.alert, fontWeight: '700', fontSize: 14.5 }}>{error}</Text>
+          <Text style={{ color: color.soft, fontSize: 13.5 }}>{t('edit.keptOpen')}</Text>
+        </View>
+      )}
       <BottomInset.Provider value={hideSave ? 24 : SAVE_INSET}>
         <Screen>{children}</Screen>
       </BottomInset.Provider>

@@ -1,7 +1,8 @@
-import { Alert, Image, Pressable, ScrollView, View } from 'react-native';
+import { Image, Pressable, ScrollView, View } from 'react-native';
 import { pickPhotoUris } from '@/adapters/photos/pickPhotos';
-import { errorMessage, t } from '@/i18n';
+import { t } from '@/i18n';
 import { Button, Hint, Label } from '@/ui/components';
+import { showError } from '@/ui/showError';
 
 /**
  * SK-4: photos picked in a Skin or Nails form. They are only chosen here; they are saved with the entry when the
@@ -12,7 +13,7 @@ export function PendingPhotos({ uris, onChange }: { uris: string[]; onChange: (n
     try {
       onChange([...uris, ...(await pickPhotoUris(source))]);
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
   };
   return (

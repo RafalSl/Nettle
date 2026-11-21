@@ -169,7 +169,12 @@ export default function AnalysisScreen() {
       ) : (
         <>
           {run.status === 'interrupted' && <Hint>{t('analysis.interrupted')}</Hint>}
-          {run.status === 'failed' && <Hint>{`${errorMessage(run.error)} ${t('analysis.failedNote')}`}</Hint>}
+          {run.status === 'failed' && (
+            <View style={{ padding: 14, borderRadius: 22, gap: 2, backgroundColor: color.alertSoft, borderWidth: 1, borderColor: color.alertLine }}>
+              <Text style={{ color: color.alert, fontWeight: '700', fontSize: 14.5 }}>{errorMessage(run.error)}</Text>
+              <Text style={{ color: color.soft, fontSize: 13.5 }}>{t('analysis.failedNote')}</Text>
+            </View>
+          )}
           {run.status === 'cancelled' && <Hint>{errorMessage(new NettleError('llm_cancelled'))}</Hint>}
           {(run.status === 'interrupted' || run.status === 'failed') && <Hint>{t('analysis.retryHint')}</Hint>}
         </>

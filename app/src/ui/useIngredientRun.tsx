@@ -13,6 +13,7 @@ import { GlassSurface } from '@/ui/GlassSurface';
 import { Text } from '@/ui/themed';
 import { color } from '@/ui/theme';
 import { WaitArc } from '@/ui/WaitArc';
+import { showError } from '@/ui/showError';
 
 /** LL-12: after this long the form says the call is still working. */
 export const SLOW_ESTIMATE_MS = 30_000;
@@ -135,7 +136,7 @@ export function useIngredientRun() {
           { text: t('meal.photoSend'), onPress: () => void execute({ kind, uri, knownNames: known }) },
         ]);
       } catch (e) {
-        Alert.alert(errorMessage(e));
+        showError(e);
       }
     };
     Alert.alert(t(kind === 'label' ? 'meal.fromLabel' : 'meal.fromPhoto'), undefined, [

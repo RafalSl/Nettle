@@ -190,6 +190,7 @@
     "import_invalid_data": "data.json ma nieprawidłową lub niespójną zawartość.",
     "import_unknown_area": "Niektóre wpisy dotyczą obszaru skóry, którego nie ma w aplikacji. Zaimportuj też ustawienia albo najpierw dodaj obszar.",
     "nothing_selected": "Wybierz wpisy, ustawienia lub oba.",
+    "too_many_pinned": "Na ekranie Dziś możesz przypiąć najwyżej 5. Najpierw przenieś jeden do Więcej.",
     "password_mismatch": "Hasła nie są takie same.",
     "password_too_short": "Użyj co najmniej 12 znaków w haśle.",
     "import_password_required": "Ten plik jest chroniony hasłem. Podaj hasło.",

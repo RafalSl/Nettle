@@ -190,6 +190,7 @@
     "import_invalid_data": "data.json has invalid or inconsistent content.",
     "import_unknown_area": "Some entries use a skin area that is not in the app. Import the settings too, or add the area first.",
     "nothing_selected": "Select records, settings or both.",
+    "too_many_pinned": "You can pin at most 5 to Today. Move one to More first.",
     "password_mismatch": "The two passwords do not match.",
     "password_too_short": "Use at least 12 characters for the password.",
     "import_password_required": "This file is password protected. Enter its password.",

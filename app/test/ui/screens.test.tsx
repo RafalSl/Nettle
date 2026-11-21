@@ -1730,6 +1730,7 @@ describe('Regular medication and treatment (IN-17)', () => {
 
   it('IN-17, UX-3 the Medication tile opens a quick sheet of regular items: one tap logs one and locks the row; "Other or earlier…" opens the form', async () => {
     const deps = nowDeps();
+    await unpinEntryType(deps, 'stool'); // five pins at most (UX-2)
     await pinEntryType(deps, 'medication');
     const { tree } = await mount(today, deps);
     await flush();

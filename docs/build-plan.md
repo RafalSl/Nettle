@@ -1,6 +1,6 @@
 # Build plan: Aurora ring design
 
-Status: drafted 2026-11-21, nothing started. Design: `docs/design-system.md` (approved parts and the "Proposed additions" list), boards in `design/canvas/`, review in `design/consistency-report.md`. Rules in CLAUDE.md apply to every task: one `feature/<name>` branch per task cut from `develop`, `npm run check` passing, a work-log entry, requirement IDs in commits, merge into `develop` when the checks pass, never into `main`. The prototyping decision holds: no migrations or old-data handling; a plain new SQL step is fine.
+Status: built 2026-11-21 (all 16 tasks merged into `develop`); the phone run is still to do. Deviations are in the work log: gestures use `PanResponder` and motion uses React Native's `Animated` instead of gesture-handler and reanimated; the confirmations and action sheets stay native iOS sheets; the missing states were built only where a pattern fit. Design: `docs/design-system.md` (approved parts and the "Proposed additions" list), boards in `design/canvas/`, review in `design/consistency-report.md`. Rules in CLAUDE.md apply to every task: one `feature/<name>` branch per task cut from `develop`, `npm run check` passing, a work-log entry, requirement IDs in commits, merge into `develop` when the checks pass, never into `main`. The prototyping decision holds: no migrations or old-data handling; a plain new SQL step is fine.
 
 Phase 1 builds the approved design. Phase 2 builds the "Proposed additions" (boards `G1-` to `G6-`) and starts when phase 1 is done.
 

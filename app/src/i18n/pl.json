@@ -1129,7 +1129,8 @@
     "stopBody": "Jej przypomnienia się kończą, a pozycja znika z szybkiej listy. Zapisane wpisy zostają.",
     "denied": "Powiadomienia są wyłączone dla tej aplikacji, więc przypomnienia nie mogą się pokazać.",
     "openSystem": "Otwórz ustawienia systemu",
-    "areas": "Miejsca: {{list}}"
+    "areas": "Miejsca: {{list}}",
+    "noneTitle": "Nic stałego jeszcze nie ma"
   },
   "guide": {
     "hint": "Który wpis pasuje do codziennej sytuacji",

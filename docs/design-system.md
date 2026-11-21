@@ -164,7 +164,7 @@ The reference boards cover every pattern; each screen below copies the board nam
 - [x] **Settings** (Settings, Regular item): Suggestions, Day start, Flare threshold, Daily health items, Skin and nail areas, Treatments, Regular items list, Routine categories, Favorites, Reminders (with the permission-denied state), Privacy and photos (app lock), AI key and models, Data and backup (Full backup, custom export, import preview with the tombstone switch, Delete data with two confirmations), About, "Where do I log…?". Done: boards `G5-*`.
 - [x] **System** (Empty state, Delete sheet): the lock cover (SE-8), permission-denied states for the camera and photos, error and offline states, the app icon and the splash screen (still the Expo defaults). Done: boards `G6-*`.
 
-## Proposed additions (needs approval)
+## Proposed additions (built; kept for the record)
 
 Drawn overnight on the design canvas as boards `G1-` to `G6-` (design/canvas/, generator in design/generator/). Nothing below is in the approved sections above; each item names its requirement IDs. The consistency review is in design/consistency-report.md.
 

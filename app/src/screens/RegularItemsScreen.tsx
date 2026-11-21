@@ -13,6 +13,7 @@ import { confirmDestructive } from '@/ui/actionSheet';
 import { NavRow } from '@/ui/NavRow';
 import { Button, Heading, Hint, Label, Screen, styles } from '@/ui/components';
 import { SwitchRow } from '@/ui/SwitchRow';
+import { EmptyState } from '@/ui/EmptyState';
 
 /** The name of a regular item for lists: a medication's name and dose, or a treatment with its areas. */
 export function regularName(r: RegularItem, treatments: ListItem[], areas: SkinArea[]): string {
@@ -42,7 +43,7 @@ export default function RegularItemsScreen() {
   return (
     <Screen>
       <Heading>{t('regular.title')}</Heading>
-      {items.length === 0 && <Hint>{t('regular.none')}</Hint>}
+      {items.length === 0 && <EmptyState title={t('regular.noneTitle')} body={t('regular.none')} />}
       {items.map((r) => (
         <NavRow
           key={r.id}

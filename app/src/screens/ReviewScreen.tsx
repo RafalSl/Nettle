@@ -17,9 +17,10 @@ import { NavRow } from '@/ui/NavRow';
 import { Rise } from '@/ui/Rise';
 import { color } from '@/ui/theme';
 import { useAnalysisRun } from '@/ui/useAnalysisRun';
-import { Button, Heading, Hint, Label, Screen, Segmented, styles } from '@/ui/components';
+import { Heading, Hint, Label, Screen, Segmented, styles } from '@/ui/components';
 import { formatElapsed, runCardStatus } from '@/core/usecases/analysisRunner';
 import { SwitchRow } from '@/ui/SwitchRow';
+import { EmptyState } from '@/ui/EmptyState';
 
 const WEEKDAY_KEYS = [2, 3, 4, 5, 6, 7, 1]; // Monday first; the names are in reminders.weekdays (1 = Sunday)
 
@@ -188,8 +189,11 @@ export default function ReviewScreen() {
           <Calendar month={month} days={days} onOpen={open} />
           <SwitchRow title={t('review.incomplete')} value={incompleteOnly} onChange={setIncompleteOnly} />
           {incompleteOnly && <Hint>{t('review.incompleteHint')}</Hint>}
-          {listed.length === 0 && <Hint>{incompleteOnly ? t('review.noIncomplete') : `${t('review.noDays')} ${t('review.empty')}`}</Hint>}
-          {listed.length === 0 && !incompleteOnly && days.every((d) => d.entries === 0) && <Button kind="secondary" title={t('review.goToday')} onPress={() => router.navigate('/today')} />}
+          {listed.length === 0 && incompleteOnly && <Hint>{t('review.noIncomplete')}</Hint>}
+          {listed.length === 0 && !incompleteOnly && (
+            // UX-1: an empty state is a short title, one sentence and at most one primary button.
+            <EmptyState title={t('review.noDays')} body={t('review.empty')} action={days.every((d) => d.entries === 0) ? t('review.goToday') : undefined} onAction={() => router.navigate('/today')} />
+          )}
           {listed.length > 0 && (
             <NavGroup>
               {listed.map((d) => (

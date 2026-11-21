@@ -821,6 +821,8 @@ describe('Today (UX-2, UX-5, EN-1, UX-9)', () => {
     const { tree } = await mount(today, deps);
     await flush();
     const label = 'Synthetic cream: ' + en.areas['area-chin'];
+    await press(tree, en.entry.treatment.title); // the Treatment sheet lists the often-used combinations
+    expect(hasText(tree, en.sheet.often)).toBe(true);
     await press(tree, label);
     await flush();
     expect(await deps.repo.listRecords('treatmentApplications')).toHaveLength(3);
@@ -1486,14 +1488,16 @@ describe('Suggestion settings and quick-action layout (IN-14, UX-2, UX-6)', () =
     const e = en.entry;
     const grid = () => tree.root.findAll((n) => n.props.accessibilityRole === 'button' && [e.meal.title, e.skin.title, e.treatment.title, e.checkin.title, e.stool.title, e.drink.title, en.home.more].includes(n.props.accessibilityLabel)).map((n) => n.props.accessibilityLabel as string);
     expect([...new Set(grid())]).toEqual([e.meal.title, e.skin.title, e.treatment.title, e.checkin.title, e.stool.title, en.home.more]);
-    await press(tree, en.home.edit);
-    await press(tree, `${en.home.moveUp} ${e.checkin.title}`);
-    await press(tree, `${en.home.unpin} ${e.stool.title}`);
-    await press(tree, `${en.home.pin} ${e.drink.title}`);
-    expect(tree.root.findAll((n) => n.props.accessibilityLabel === `${en.home.unpin} ${en.home.more}`)).toHaveLength(0); // More cannot be unpinned
-    await press(tree, en.home.done);
+    const edit = await mount(() => require('@/app/(tabs)/today/edit'), deps); // More > Edit Today
     await flush();
-    expect([...new Set(grid())]).toEqual([e.meal.title, e.skin.title, e.checkin.title, e.treatment.title, e.drink.title, en.home.more]);
+    await press(edit.tree, `${en.home.moveUp} ${e.checkin.title}`);
+    await press(edit.tree, `${en.home.unpin} ${e.stool.title}`);
+    await press(edit.tree, `${en.home.pin} ${e.drink.title}`);
+    expect(edit.tree.root.findAll((n) => n.props.accessibilityLabel === `${en.home.unpin} ${en.home.more}`)).toHaveLength(0); // More cannot be unpinned
+    const again = await mount(() => require('@/app/(tabs)/today/index'), deps);
+    await flush();
+    const grid2 = () => again.tree.root.findAll((n) => n.props.accessibilityRole === 'button' && [e.meal.title, e.skin.title, e.treatment.title, e.checkin.title, e.stool.title, e.drink.title, en.home.more].includes(n.props.accessibilityLabel)).map((n) => n.props.accessibilityLabel as string);
+    expect([...new Set(grid2())]).toEqual([e.meal.title, e.skin.title, e.checkin.title, e.treatment.title, e.drink.title, en.home.more]);
     expect((await deps.repo.getPreferences())!.quickActions.pinned).toEqual(['meal', 'skin', 'checkin', 'treatment', 'drink']);
     const more = await mount(() => require('@/app/(tabs)/today/more'), deps);
     await flush();
@@ -3749,8 +3753,9 @@ describe('Today: ring, quick actions and rows (UX-2, UX-12)', () => {
   it('UX-2 Pin to Today is disabled at five pins', async () => {
     const { tree } = await mount(today, nowDeps());
     await flush();
-    await press(tree, en.home.edit);
-    const pins = tree.root.findAll((n) => n.props.accessibilityLabel === `${en.home.pin} ${en.entry.drink.title}` && n.props.accessibilityState !== undefined);
+    const edit = await mount(() => require('@/app/(tabs)/today/edit'), nowDeps());
+    await flush();
+    const pins = edit.tree.root.findAll((n) => n.props.accessibilityLabel === `${en.home.pin} ${en.entry.drink.title}` && n.props.accessibilityState !== undefined);
     expect(pins.length).toBeGreaterThan(0);
     expect(pins.every((n) => n.props.accessibilityState.disabled === true)).toBe(true);
   });
@@ -3763,5 +3768,28 @@ describe('Today: ring, quick actions and rows (UX-2, UX-12)', () => {
     await press(tree, en.day.previous);
     expect(hasText(tree, en.day.backToToday)).toBe(true);
     expect(hasText(tree, en.cards.noExport)).toBe(false);
+  });
+});
+
+describe('More: search and Edit Today (UX-2, UX-11)', () => {
+  beforeEach(() => mockRouter.push.mockClear());
+  it('UX-11 typing filters the entry types and the situations; a hit opens the right form', async () => {
+    const more = await mount(() => require('@/app/(tabs)/today/more'), nowDeps());
+    await flush();
+    expect(hasText(more.tree, en.home.editToday)).toBe(true); // Edit Today lives in More
+    await type(more.tree, en.more.search, 'soap');
+    expect(hasText(more.tree, en.guide.items.newProduct)).toBe(true);
+    expect(hasText(more.tree, en.entry.meal.hint)).toBe(false);
+    await press(more.tree, en.guide.items.newProduct);
+    expect(mockRouter.push).toHaveBeenLastCalledWith('/form/change');
+    await type(more.tree, en.more.search, 'qqqq');
+    expect(hasText(more.tree, en.more.noMatch)).toBe(true);
+  });
+
+  it('UX-2 the Edit Today row opens the editor', async () => {
+    const more = await mount(() => require('@/app/(tabs)/today/more'), nowDeps());
+    await flush();
+    await press(more.tree, en.home.editToday);
+    expect(mockRouter.push).toHaveBeenLastCalledWith('/today/edit');
   });
 });

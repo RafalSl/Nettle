@@ -21,7 +21,8 @@
     "add": "Add",
     "name": "Name",
     "back": "Back",
-    "remove": "Remove"
+    "remove": "Remove",
+    "close": "Close"
   },
   "meal": {
     "title": "Log a meal",
@@ -351,7 +352,9 @@
     "archive": "Archive",
     "restore": "Restore",
     "listNew": "New name",
-    "archivedList": "Archived"
+    "archivedList": "Archived",
+    "search": "Search entry types and situations",
+    "noMatch": "Nothing matches. Try another word."
   },
   "nail": {
     "stages": {
@@ -776,7 +779,9 @@
     "pin": "Pin to Today",
     "unpin": "Move to More",
     "moreFixed": "More is always on Today.",
-    "moreEmpty": "Everything is pinned to Today."
+    "moreEmpty": "Everything is pinned to Today.",
+    "editToday": "Edit Today",
+    "editTodayHint": "Choose what sits on Today and in which order."
   },
   "review": {
     "empty": "Nothing to review yet. Entries you log on Today show up here.",
@@ -1166,5 +1171,9 @@
     "importedBody": "Nothing in your diary was changed. Suggestions wait on Today.",
     "manualLabel": "Made by hand in a chat on your own Claude plan with {{model}}, then imported.",
     "useImported": "Use the summary from {{model}} (my Claude plan)"
+  },
+  "sheet": {
+    "often": "Often used",
+    "regular": "Regular"
   }
 }

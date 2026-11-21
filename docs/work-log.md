@@ -575,3 +575,9 @@ Newest entry last. One short entry per working session or meaningful step: what 
 - **Tests:** UI tests updated for the new texts (the pills are buttons named by their text, dates read "10 Jan"); four new ones (dots and merging, long press, pin limit, past day). The swipe gesture itself (a `PanResponder`) is not driven in a test.
 - **Not verified:** how it looks and feels on the phone (blur with the aurora, the swipe against scrolling); see `docs/spikes/design-stack.md`.
 - **Next:** quick sheets and More.
+
+## 2026-11-21: quick sheets and More (branch feature/quick-sheets-more)
+- **Done:** UX-3, UX-2, UX-11, UX-12. `Sheet` (floating quick sheet over a dimmed screen: 10 pt side margin, 26 pt above the bottom, slides up and fades in, closes on a tap outside or the close circle) with `SheetRow` and `SheetLabel`. The Stool, Medication and Treatment quick sheets are now sheets; the Treatment sheet lists Regular and Often used (the one-tap combinations left Today's body) and "Other or earlier…". More has a search field over entry types and the "Where do I log…?" situations (core `searchItems`), glass `NavGroup` rows with icons, the guide and an "Edit Today" row. Edit Today is its own pushed screen (`/today/edit`, Up, Down, Move to More, Pin disabled at 5 with the limit message) instead of an inline mode.
+- **Not done:** the confirmation and action sheets stay the native iOS action sheet (`chooseAction`): replacing them with a floating `ConfirmSheet` means changing the many tests that drive `ActionSheetIOS`, so it waits for the review and settings task.
+- **Tests:** the Today and layout tests follow the new screens; two new ones for the search and the Edit Today row.
+- **Next:** forms (floating Save, modal chrome).

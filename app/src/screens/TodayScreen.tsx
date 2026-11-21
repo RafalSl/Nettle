@@ -1,23 +1,26 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, AppState, View } from 'react-native';
+import { Alert, AppState, Pressable, View } from 'react-native';
 import { Text } from '@/ui/themed';
 import { addDays, atOnDay, localDay } from '@/core/model/time';
 import type { ListItem, SkinArea } from '@/core/model/types';
 import { logStool } from '@/core/usecases/checkin';
 import { dayLog, treatmentShortcuts, type LogRow, type TreatmentShortcut } from '@/core/usecases/dayLog';
 import { applyTreatment } from '@/core/usecases/events';
-import { defaultPreferences, MAX_PINNED, type EntryType, type RegularItem } from '@/core/model/preferences';
+import { defaultPreferences, type EntryType, type RegularItem } from '@/core/model/preferences';
 import { logRegular } from '@/core/usecases/regular';
-import { getPreferences, movePinnedEntryType, pinEntryType, unpinEntryType, unpinnedEntryTypes } from '@/core/usecases/preferences';
+import { getPreferences } from '@/core/usecases/preferences';
 import { arcPosition, ringDots, type RingDot } from '@/core/model/ring';
 import { todayContext, type TodayContext } from '@/core/usecases/today';
 import { areaLabel, dayParts, errorMessage, itemLabel, t } from '@/i18n';
 import { useServices } from '@/services';
 import { DayLog, TODAY_LOG_LIMIT } from '@/ui/DayLog';
-import { ENTRY_ROUTE, entrySubtitle, entryTitle } from '@/ui/entryTypes';
-import { Button, Hint, Label, Screen, styles } from '@/ui/components';
+import { ENTRY_ROUTE } from '@/ui/entryTypes';
+import { Button, Screen, styles } from '@/ui/components';
+import { ENTRY_ICON } from '@/ui/entryIcons';
+import { Sheet, SheetLabel, SheetRow } from '@/ui/Sheet';
+import { color } from '@/ui/theme';
 import { chooseAction } from '@/ui/actionSheet';
 import { ContextPills } from '@/ui/ContextPills';
 import { DayRing } from '@/ui/DayRing';
@@ -69,7 +72,6 @@ export default function TodayScreen() {
   const highlightTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const [picking, setPicking] = useState(false);
   const [layout, setLayout] = useState(defaultPreferences().quickActions);
-  const [editing, setEditing] = useState(false);
   const [locked, setLocked] = useState<Set<string>>(new Set());
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
@@ -144,12 +146,11 @@ export default function TodayScreen() {
     );
   }
 
-  const setLayoutPinned = (pinned: EntryType[]) => setLayout((l) => ({ ...l, pinned }));
   /** UX-2: a pinned tile opens its form; Stool opens its quick sheet while it is pinned (from More it opens the full form). */
   const open = (id: EntryType) => () => {
     if (id === 'stool') return setStoolOpen((o) => !o);
     // IN-17: Medication and Treatment open the quick sheet of regular items; without any they open the full form.
-    if ((id === 'medication' || id === 'treatment') && regular.some((r) => r.kind === id)) return setSheet(sheet === id ? null : id);
+    if ((id === 'medication' || id === 'treatment') && (regular.some((r) => r.kind === id) || (id === 'treatment' && shortcuts.length > 0))) return setSheet(sheet === id ? null : id);
     router.push(isToday ? ENTRY_ROUTE[id] : { pathname: ENTRY_ROUTE[id], params: { day } });
   };
 
@@ -234,109 +235,73 @@ export default function TodayScreen() {
       </Rise>
 
       <Rise order={2} style={{ gap: 8 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Label>{t('home.quickActions')}</Label>
-          <Button kind="secondary" title={editing ? t('home.done') : t('home.edit')} onPress={() => setEditing((e) => !e)} />
-        </View>
-        {editing ? (
-          // UX-2: two lists, On Today and In More, with buttons to reorder and to move between them, never by dragging.
-          <View style={{ gap: 4 }}>
-            <Label>{t('home.pinned')}</Label>
-            {layout.pinned.map((id) => (
-              <View key={id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.rowText}>{entryTitle(id)}</Text>
-                  <Text style={styles.hint}>{entrySubtitle(id)}</Text>
-                </View>
-                <Button kind="secondary" title="▲" accessibilityLabel={`${t('home.moveUp')} ${entryTitle(id)}`} onPress={() => void run(async () => setLayoutPinned(await movePinnedEntryType(deps, id, -1)))} />
-                <Button kind="secondary" title="▼" accessibilityLabel={`${t('home.moveDown')} ${entryTitle(id)}`} onPress={() => void run(async () => setLayoutPinned(await movePinnedEntryType(deps, id, 1)))} />
-                <Button kind="secondary" title={t('home.unpin')} accessibilityLabel={`${t('home.unpin')} ${entryTitle(id)}`} onPress={() => void run(async () => setLayoutPinned(await unpinEntryType(deps, id)))} />
-              </View>
-            ))}
-            <Hint>{t('home.moreFixed')}</Hint>
-            <Label>{t('home.inMore')}</Label>
-            {unpinnedEntryTypes({ ...defaultPreferences(), quickActions: layout }).map((id) => (
-              <View key={id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.rowText}>{entryTitle(id)}</Text>
-                  <Text style={styles.hint}>{entrySubtitle(id)}</Text>
-                </View>
-                <Button kind="secondary" title={t('home.pin')} accessibilityLabel={`${t('home.pin')} ${entryTitle(id)}`} disabled={layout.pinned.length >= MAX_PINNED} onPress={() => void run(async () => setLayoutPinned(await pinEntryType(deps, id)))} />
-              </View>
-            ))}
-          </View>
-        ) : (
-          <QuickActions
-            pinned={layout.pinned}
-            onOpen={(id) => open(id)()}
-            onFull={(id) => router.push(isToday ? ENTRY_ROUTE[id] : { pathname: ENTRY_ROUTE[id], params: { day } })}
-            onMore={() => router.push('/today/more')}
-          />
-        )}
+        <QuickActions
+          pinned={layout.pinned}
+          onOpen={(id) => open(id)()}
+          onFull={(id) => router.push(isToday ? ENTRY_ROUTE[id] : { pathname: ENTRY_ROUTE[id], params: { day } })}
+          onMore={() => router.push('/today/more')}
+        />
       </Rise>
 
       {stoolOpen && (
-        <Card>
-          <Label>{t('day.stoolTitle')}</Label>
+        <Sheet title={t('day.stoolTitle')} onClose={() => setStoolOpen(false)}>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {[1, 2, 3, 4, 5, 6, 7].map((n) => (
-              <Button
+              <Pressable
                 key={n}
-                kind="secondary"
-                title={String(n)}
+                accessibilityRole="button"
                 accessibilityLabel={t('day.stoolType', { n })}
                 onPress={() => {
                   setStoolOpen(false);
                   void run(() => logStool(deps, { bristol: n, at: atNow() }));
                 }}
-              />
+                style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: color.glassFillRaised, borderWidth: 1, borderColor: color.glassLineRaised, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontSize: 18, fontWeight: '700' }}>{n}</Text>
+              </Pressable>
             ))}
           </View>
-          <Button kind="secondary" title={t('day.stoolEarlier')} onPress={() => router.push(isToday ? '/form/stool' : { pathname: '/form/stool', params: { day } })} />
-        </Card>
+          <SheetRow outline title={t('day.stoolEarlier')} onPress={() => { setStoolOpen(false); router.push(isToday ? '/form/stool' : { pathname: '/form/stool', params: { day } }); }} />
+        </Sheet>
       )}
 
       {sheet && (
-        // IN-17, UX-3: one tap logs one regular item at the current time; the row is locked for 3 seconds against a double tap.
-        <Card>
-          <Label>{t(sheet === 'medication' ? 'regular.sheetMedication' : 'regular.sheetTreatment')}</Label>
+        // IN-17, UX-3: one tap logs one regular item or one often-used treatment at the current time; the row is locked for 3 seconds against a double tap.
+        <Sheet title={t(sheet === 'medication' ? 'regular.sheetMedication' : 'regular.sheetTreatment')} onClose={() => setSheet(null)}>
+          {regular.some((r) => r.kind === sheet) && sheet === 'treatment' ? <SheetLabel>{t('sheet.regular')}</SheetLabel> : null}
           {regular
             .filter((r) => r.kind === sheet)
             .map((r) => (
-              <Button
+              <SheetRow
                 key={r.id}
-                kind="secondary"
+                icon={ENTRY_ICON[sheet]}
                 title={regularLabel(r)}
-                disabled={locked.has(r.id)}
+                locked={locked.has(r.id)}
                 onPress={() => {
                   lockShortcut(r.id);
                   void run(() => logRegular(deps, r.id, atNow()));
                 }}
               />
             ))}
-          <Button kind="secondary" title={t('regular.other')} onPress={() => router.push(isToday ? ENTRY_ROUTE[sheet] : { pathname: ENTRY_ROUTE[sheet], params: { day } })} />
-        </Card>
-      )}
-
-      {shortcuts.length > 0 && (
-        <View style={{ gap: 8 }}>
-          <Label>{t('day.shortcuts')}</Label>
-          {shortcuts.map((s) => {
-            const key = `${s.treatmentId}|${s.areaIds.join(',')}`;
-            const treatment = ctx.treatments.find((x) => x.id === s.treatmentId);
-            return (
-              <Button
-                key={key}
-                title={`${treatment ? itemLabel(treatment) : s.treatmentId}: ${s.areaIds.map(areaName).join(', ')}`}
-                disabled={locked.has(key)}
-                onPress={() => {
-                  lockShortcut(key);
-                  void run(() => applyTreatment(deps, { treatmentId: s.treatmentId, areaIds: s.areaIds, at: atNow() }));
-                }}
-              />
-            );
-          })}
-        </View>
+          {sheet === 'treatment' && shortcuts.length > 0 ? <SheetLabel>{t('sheet.often')}</SheetLabel> : null}
+          {sheet === 'treatment' &&
+            shortcuts.map((sc) => {
+              const key = `${sc.treatmentId}|${sc.areaIds.join(',')}`;
+              const treatment = ctx.treatments.find((x) => x.id === sc.treatmentId);
+              return (
+                <SheetRow
+                  key={key}
+                  icon="treatment"
+                  title={`${treatment ? itemLabel(treatment) : sc.treatmentId}: ${sc.areaIds.map(areaName).join(', ')}`}
+                  locked={locked.has(key)}
+                  onPress={() => {
+                    lockShortcut(key);
+                    void run(() => applyTreatment(deps, { treatmentId: sc.treatmentId, areaIds: sc.areaIds, at: atNow() }));
+                  }}
+                />
+              );
+            })}
+          <SheetRow outline title={t('regular.other')} onPress={() => { setSheet(null); router.push(isToday ? ENTRY_ROUTE[sheet] : { pathname: ENTRY_ROUTE[sheet], params: { day } }); }} />
+        </Sheet>
       )}
 
       <Rise order={3} style={{ gap: 8 }}>

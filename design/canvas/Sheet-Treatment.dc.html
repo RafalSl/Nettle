@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Treatment quick sheet</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Gabarito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font:inherit;color:inherit;border:0;background:none;padding:0;margin:0;cursor:pointer;text-align:inherit}
+input{font:inherit;color:inherit;border:0;background:none;outline:none;margin:0;padding:0}
+input::placeholder{color:#9AA4B2}
+@keyframes ax-rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes ax-sheet{from{transform:translateY(60px);opacity:0}to{transform:none;opacity:1}}
+@keyframes ax-drift1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(40px,30px) scale(1.12)}}
+@keyframes ax-drift2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-50px,-20px) scale(1.08)}}
+.ax-r{animation:ax-rise .6s cubic-bezier(.2,.7,.2,1) both}
+.ax-s{animation:ax-sheet .5s cubic-bezier(.2,.8,.2,1) both}
+.ax-d1{animation-delay:.05s}.ax-d2{animation-delay:.15s}.ax-d3{animation-delay:.25s}.ax-d4{animation-delay:.35s}.ax-d5{animation-delay:.45s}
+.ax-b1{animation:ax-drift1 18s ease-in-out infinite}.ax-b2{animation:ax-drift2 22s ease-in-out infinite}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; overflow: hidden; background: #070B12; font-family: Gabarito, -apple-system, system-ui, sans-serif; color: #F2F5F9; -webkit-font-smoothing: antialiased">
+<div aria-hidden="true" style="position: absolute; inset: 0; overflow: hidden; pointer-events: none">
+<div class="ax-b1" style="position: absolute; left: -120px; top: -120px; width: 420px; height: 380px; border-radius: 999px; background: {{glowA}}; filter: blur(70px); opacity: 0.5"></div>
+<div class="ax-b2" style="position: absolute; right: -160px; top: 300px; width: 380px; height: 360px; border-radius: 999px; background: {{glowB}}; filter: blur(80px); opacity: 0.34"></div>
+<div style="position: absolute; inset: 0; background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.06) 1px, transparent 1.5px); background-size: 24px 24px"></div>
+</div>
+<svg aria-hidden="true" width="0" height="0" style="position: absolute">
+<defs>
+<linearGradient id="axWash" gradientUnits="userSpaceOnUse" x1="0" y1="9" x2="0" y2="22"><stop offset="0" stop-color="{{accent}}" stop-opacity="0"/><stop offset="1" stop-color="{{accent}}" stop-opacity="0.7"/></linearGradient>
+<linearGradient id="axNail" gradientUnits="userSpaceOnUse" x1="0" y1="2.5" x2="0" y2="9.5"><stop offset="0" stop-color="{{accent}}" stop-opacity="0.95"/><stop offset="1" stop-color="{{accent}}" stop-opacity="0.45"/></linearGradient>
+<linearGradient id="axWashMeal" gradientUnits="userSpaceOnUse" x1="0" y1="9" x2="0" y2="17"><stop offset="0" stop-color="{{accent}}" stop-opacity="0"/><stop offset="1" stop-color="{{accent}}" stop-opacity="0.75"/></linearGradient>
+</defs>
+</svg>
+<!-- Today behind, dimmed -->
+<div aria-hidden="true" style="position: absolute; inset: 0; padding: 50px 20px 0 20px; box-sizing: border-box; opacity: 0.45; filter: blur(1.5px)">
+<div style="margin: 0 auto; width: 256px; height: 256px; border-radius: 999px; background: rgba(255,255,255,0.07); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12); position: relative">
+<div style="position: absolute; inset: 14px; border-radius: 999px; border: 10px solid rgba(255,255,255,0.08)"></div>
+<div style="position: absolute; left: 0; right: 0; top: 96px; text-align: center; font-size: 12.5px; font-weight: 600; letter-spacing: 1.8px; color: {{accent}}">SATURDAY</div>
+<div style="position: absolute; left: 0; right: 0; top: 112px; text-align: center; font-size: 38px; font-weight: 800">14 Nov</div>
+</div>
+</div>
+<div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(3,6,10,0.55)"></div>
+
+<!-- Quick sheet: one tap logs at the current time -->
+<div class="ax-s" role="dialog" aria-label="Treatments" style="position: absolute; left: 10px; right: 10px; bottom: 12px; border-radius: 40px; padding: 10px 14px 16px 14px; background: rgba(16,22,33,0.86); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12), 0 30px 60px rgba(0,0,0,0.55); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); display: flex; flex-direction: column; gap: 12px">
+<div aria-hidden="true" style="width: 40px; height: 5px; border-radius: 999px; background: rgba(255,255,255,0.22); margin: 0 auto"></div>
+<div style="display: flex; align-items: center; justify-content: space-between; padding: 2px 6px 0 8px">
+<div><h1 style="margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.4px">Treatment</h1><div style="font-size: 13.5px; color: #9AA4B2; margin-top: 2px">Tap to log it now</div></div>
+<button aria-label="Close" style="width: 40px; height: 40px; border-radius: 999px; background: rgba(255,255,255,0.07); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F2F5F9" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7l10 10M17 7 7 17"/></svg></button>
+</div>
+<div style="display: flex; align-items: baseline; justify-content: space-between; padding: 0 4px"><h2 style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 1.4px; text-transform: uppercase; color: #9AA4B2">Regular</h2></div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<button disabled aria-disabled="true" aria-label="Apply Emollient to Chin, Neck" style="display: flex; align-items: center; gap: 12px; padding: 8px 8px 8px 8px; border-radius: 999px; box-shadow: inset 0 0 0 1.5px {{accent}}, 0 0 28px {{accentSoft}}; background: rgba(255,255,255,0.08)"><span style="width: 44px; height: 44px; border-radius: 999px; background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; flex: none"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F2F5F9" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z" fill="url(#axWash)"/><path d="m8.5 8.5 7 7"/></svg></span><span style="flex: 1; min-width: 0"><span style="display: block; font-size: 16px; font-weight: 600">Emollient</span><span style="display: block; font-size: 13px; color: #9AA4B2; margin-top: 1px">Chin, Neck · reminder 08:00</span></span><span style="display: flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border-radius: 999px; background: {{accent}}; color: #062A26; font-size: 13.5px; font-weight: 700"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#062A26" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Applied 14:20</span></button>
+<button aria-label="Apply Scalp lotion to Ears" style="display: flex; align-items: center; gap: 12px; padding: 8px 8px 8px 8px; border-radius: 999px; background: rgba(255,255,255,0.07); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12)"><span style="width: 44px; height: 44px; border-radius: 999px; background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; flex: none"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F2F5F9" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z" fill="url(#axWash)"/><path d="m8.5 8.5 7 7"/></svg></span><span style="flex: 1; min-width: 0"><span style="display: block; font-size: 16px; font-weight: 600">Scalp lotion</span><span style="display: block; font-size: 13px; color: #9AA4B2; margin-top: 1px">Ears · reminder 21:00</span></span><span style="width: 34px; height: 34px; border-radius: 999px; background: {{accent}}; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#062A26" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span></button>
+</div>
+<div style="display: flex; align-items: baseline; justify-content: space-between; padding: 0 4px"><h2 style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 1.4px; text-transform: uppercase; color: #9AA4B2">Often used</h2></div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<button aria-label="Apply Barrier cream to Sternum" style="display: flex; align-items: center; gap: 12px; padding: 8px 8px 8px 8px; border-radius: 999px; background: rgba(255,255,255,0.07); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12)"><span style="width: 44px; height: 44px; border-radius: 999px; background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; flex: none"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F2F5F9" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z" fill="url(#axWash)"/><path d="m8.5 8.5 7 7"/></svg></span><span style="flex: 1; min-width: 0"><span style="display: block; font-size: 16px; font-weight: 600">Barrier cream</span><span style="display: block; font-size: 13px; color: #9AA4B2; margin-top: 1px">Sternum · 4× in 30 days</span></span><span style="width: 34px; height: 34px; border-radius: 999px; background: {{accent}}; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#062A26" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span></button>
+</div>
+<button style="height: 52px; border-radius: 999px; background: rgba(255,255,255,0.07); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 15.5px; font-weight: 600; margin-top: 2px"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F2F5F9" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>Other or earlier…</button>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#5EEAD4","options":["#5EEAD4","#A3E635","#C4B5FD"],"section":"Look"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const accent = this.props.accent ?? '#5EEAD4';
+return {
+accent,
+accentSoft: 'color-mix(in srgb, ' + accent + ' 16%, transparent)',
+accentLine: 'color-mix(in srgb, ' + accent + ' 45%, transparent)',
+glowA: 'radial-gradient(circle, ' + accent + ' 0%, transparent 70%)',
+glowB: 'radial-gradient(circle, #6D4AE0 0%, transparent 70%)'
+};
+}
+}
+</script>
+</body>
+</html>

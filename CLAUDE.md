@@ -75,3 +75,4 @@ Run from `app/` (Node >= 22.13, installed via fnm):
 - `app/src/adapters`: one folder per external concern (storage, keystore, share).
 - `app/src/app`: expo-router screens; `app/src/services.tsx` is the composition root.
 - `app/test`: tests, fakes (`test/fakes`) and the storage contract (`test/contract`).
+- `design/`: the design canvas files (`design/canvas/`) and the script that draws the generated boards (`design/generator/`). The UI follows `docs/design-system.md`.

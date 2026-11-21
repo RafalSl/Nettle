@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Today, Aurora (dark glass)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Gabarito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font:inherit;color:inherit;border:0;background:none;padding:0;margin:0;cursor:pointer;text-align:inherit}
+@keyframes au-rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes au-drift1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(40px,30px) scale(1.12)}}
+@keyframes au-drift2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-50px,-20px) scale(1.08)}}
+@keyframes au-drift3{0%,100%{transform:translate(0,0)}50%{transform:translate(30px,-40px)}}
+.au-r{animation:au-rise .7s cubic-bezier(.2,.7,.2,1) both}
+.au-d1{animation-delay:.05s}.au-d2{animation-delay:.15s}.au-d3{animation-delay:.25s}.au-d4{animation-delay:.35s}.au-d5{animation-delay:.45s}.au-d6{animation-delay:.55s}
+.au-b1{animation:au-drift1 18s ease-in-out infinite}.au-b2{animation:au-drift2 22s ease-in-out infinite}.au-b3{animation:au-drift3 26s ease-in-out infinite}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; overflow: hidden; background: #070B12; font-family: Gabarito, -apple-system, system-ui, sans-serif; color: #F2F5F9; -webkit-font-smoothing: antialiased">
+
+<!-- Aurora: three slow, blurred light sources -->
+<div aria-hidden="true" style="position: absolute; inset: 0; overflow: hidden; pointer-events: none">
+<div class="au-b1" style="position: absolute; left: -120px; top: -140px; width: 420px; height: 380px; border-radius: 999px; background: {{glowA}}; filter: blur(70px); opacity: 0.55"></div>
+<div class="au-b2" style="position: absolute; right: -160px; top: 220px; width: 380px; height: 360px; border-radius: 999px; background: {{glowB}}; filter: blur(80px); opacity: 0.38"></div>
+<div class="au-b3" style="position: absolute; left: -60px; bottom: -120px; width: 460px; height: 320px; border-radius: 999px; background: {{glowC}}; filter: blur(90px); opacity: 0.34"></div>
+<div style="position: absolute; inset: 0; background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.06) 1px, transparent 1.5px); background-size: 24px 24px"></div>
+</div>
+
+<svg aria-hidden="true" width="0" height="0" style="position: absolute">
+<defs>
+<linearGradient id="auWash" gradientUnits="userSpaceOnUse" x1="0" y1="9" x2="0" y2="22"><stop offset="0" stop-color="{{accent}}" stop-opacity="0"/><stop offset="1" stop-color="{{accent}}" stop-opacity="0.7"/></linearGradient>
+<linearGradient id="auWashMeal" gradientUnits="userSpaceOnUse" x1="0" y1="9" x2="0" y2="17"><stop offset="0" stop-color="{{accent}}" stop-opacity="0"/><stop offset="1" stop-color="{{accent}}" stop-opacity="0.75"/></linearGradient>
+<linearGradient id="auWashAlert" gradientUnits="userSpaceOnUse" x1="0" y1="8" x2="0" y2="19"><stop offset="0" stop-color="#FF8A6B" stop-opacity="0"/><stop offset="1" stop-color="#FF8A6B" stop-opacity="0.7"/></linearGradient>
+</defs>
+</svg>
+
+<div style="position: absolute; inset: 0; padding: 58px 20px 0 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px">
+
+<!-- Header -->
+<div class="au-r au-d1" style="display: flex; align-items: flex-end; gap: 8px; padding-left: 4px">
+<div style="flex: 1; min-width: 0">
+<div style="font-size: 14px; font-weight: 500; letter-spacing: 1.6px; text-transform: uppercase; color: {{accent}}">Saturday</div>
+<button aria-label="Jump to a date" style="font-size: 40px; line-height: 44px; font-weight: 800; letter-spacing: -1.2px">14 Nov</button>
+</div>
+<div style="display: flex; align-items: center; height: 44px; border-radius: 999px; background: rgba(255,255,255,0.07); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px)">
+<button aria-label="Previous day" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F2F5F9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+<button aria-label="Next day, not available" disabled style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; opacity: 0.3; cursor: default"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F2F5F9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+</div>
+<button aria-label="Settings" style="width: 44px; height: 44px; border-radius: 999px; background: rgba(255,255,255,0.07); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); display: flex; align-items: center; justify-content: center">
+<svg aria-hidden="true" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#F2F5F9" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>
+</button>
+</div>
+
+<!-- Hero field -->
+<div class="au-r au-d2" style="display: flex; align-items: center; height: 60px; padding: 0 8px 0 20px; gap: 12px; border-radius: 999px; background: rgba(255,255,255,0.09); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.16), 0 20px 40px rgba(0,0,0,0.35); backdrop-filter: blur(22px); -webkit-backdrop-filter: blur(22px)">
+<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9AA4B2" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+<button aria-label="Log anything" style="flex: 1; min-width: 0; height: 44px; font-size: 16.5px; color: #9AA4B2">What do you want to log?</button>
+<button aria-label="Scan a barcode or label" style="width: 44px; height: 44px; border-radius: 999px; background: {{accent}}; display: flex; align-items: center; justify-content: center; flex: none; box-shadow: 0 0 24px {{accentGlow}}">
+<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#062A26" stroke-width="2.1" stroke-linecap="round"><path d="M4 6v12M8 6v12M11 6v12M15 6v12M18 6v12M20.5 6v12"/></svg>
+</button>
+</div>
+
+<!-- Quick actions: glass circles, three across -->
+<div class="au-r au-d3" style="display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: center; justify-content: space-between; padding-left: 4px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 1.4px; text-transform: uppercase; color: #9AA4B2">Quick actions</h2>
+<button style="height: 32px; padding: 0 14px; border-radius: 999px; background: rgba(255,255,255,0.07); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12); font-size: 13.5px; font-weight: 600; color: {{accent}}">Edit</button>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 14px; column-gap: 10px">
+
+<button style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+<span style="width: 64px; height: 64px; border-radius: 999px; background: rgba(255,255,255,0.08); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); display: flex; align-items: center; justify-content: center">
+<svg aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F2F5F9" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17a8 8 0 0 1 16 0Z" fill="url(#auWashMeal)"/><path d="M2.5 20.5h19"/><path d="M12 9V7"/><circle cx="12" cy="5.8" r="1.2"/></svg>
+</span>
+<span style="font-size: 14px; font-weight: 500">Meal</span>
+</button>
+
+<button style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+<span style="width: 64px; height: 64px; border-radius: 999px; background: rgba(255,255,255,0.08); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); display: flex; align-items: center; justify-content: center">
+<svg aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F2F5F9" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12H22V14a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15L6 14Z" fill="url(#auWash)" stroke="none"/><path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2"/><path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>
+</span>
+<span style="font-size: 14px; font-weight: 500">Skin</span>
+</button>
+
+<button style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+<span style="width: 64px; height: 64px; border-radius: 999px; background: rgba(255,255,255,0.08); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); display: flex; align-items: center; justify-content: center">
+<svg aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F2F5F9" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z" fill="url(#auWash)"/><path d="m8.5 8.5 7 7"/></svg>
+</span>
+<span style="font-size: 14px; font-weight: 500">Treatment</span>
+</button>
+
+<button style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+<span style="width: 64px; height: 64px; border-radius: 999px; background: rgba(255,255,255,0.08); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); display: flex; align-items: center; justify-content: center">
+<svg aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F2F5F9" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" fill="url(#auWash)"/><path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/></svg>
+</span>
+<span style="font-size: 14px; font-weight: 500">Daily health</span>
+</button>
+
+<button style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+<span style="width: 64px; height: 64px; border-radius: 999px; background: rgba(255,255,255,0.08); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); display: flex; align-items: center; justify-content: center">
+<svg aria-hidden="true" width="29" height="29" viewBox="0 0 24 24" fill="none" stroke="#F2F5F9" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="15.5" width="17" height="5" rx="2.5" transform="rotate(-3 12 18)" fill="url(#auWash)"/><rect x="6" y="10.5" width="12" height="5" rx="2.5" transform="rotate(3 12 13)" fill="url(#auWash)"/><rect x="8.5" y="6" width="7" height="4.5" rx="2.25" transform="rotate(-4 12 8)" fill="url(#auWash)"/><path d="M12 6c0-1.6.8-2.6 2.2-3.2"/></svg>
+</span>
+<span style="font-size: 14px; font-weight: 500">Stool</span>
+</button>
+
+<button style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+<span style="width: 64px; height: 64px; border-radius: 999px; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.18); display: flex; align-items: center; justify-content: center">
+<svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="#F2F5F9"><circle cx="6" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="18" cy="12" r="1.7"/></svg>
+</span>
+<span style="font-size: 14px; font-weight: 500; color: #9AA4B2">More</span>
+</button>
+
+</div>
+</div>
+
+<!-- One-tap treatments -->
+<div class="au-r au-d4" style="display: flex; gap: 10px; flex-wrap: wrap">
+<button aria-label="Apply Emollient to Chin and Neck" style="height: 44px; padding: 0 16px 0 6px; border-radius: 999px; background: rgba(255,255,255,0.07); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12); display: flex; align-items: center; gap: 10px">
+<span style="width: 32px; height: 32px; border-radius: 999px; background: {{accent}}; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#062A26" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+<span style="font-size: 15px; font-weight: 600">Emollient</span><span style="font-size: 14px; color: #9AA4B2">Chin, Neck</span>
+</button>
+<button aria-label="Apply Lotion to Ears" style="height: 44px; padding: 0 16px 0 6px; border-radius: 999px; background: rgba(255,255,255,0.07); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12); display: flex; align-items: center; gap: 10px">
+<span style="width: 32px; height: 32px; border-radius: 999px; background: {{accent}}; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#062A26" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+<span style="font-size: 15px; font-weight: 600">Lotion</span><span style="font-size: 14px; color: #9AA4B2">Ears</span>
+</button>
+</div>
+
+<!-- Cards: two half-width glass tiles -->
+<div class="au-r au-d5" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+<button style="display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 26px; background: rgba(255,138,107,0.12); box-shadow: inset 0 0 0 1px rgba(255,138,107,0.32)">
+<svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF8A6B" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1 3 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3 0-6 1-9z" fill="url(#auWashAlert)"/></svg>
+<span><span style="display: block; font-size: 16px; font-weight: 700">Flare: Chin</span><span style="display: block; font-size: 13px; color: #C9D0DA; margin-top: 2px">Severity 8 since 12 Nov</span></span>
+<span style="font-size: 13.5px; font-weight: 600; color: #FF8A6B">Open Areas →</span>
+</button>
+<button style="display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 26px; background: rgba(255,255,255,0.07); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12)">
+<svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F2F5F9" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" fill="url(#auWash)"/><path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/></svg>
+<span><span style="display: block; font-size: 16px; font-weight: 700">Daily health</span><span style="display: block; font-size: 13px; color: #C9D0DA; margin-top: 2px">Not recorded yet</span></span>
+<span style="font-size: 13.5px; font-weight: 600; color: {{accent}}">Open →</span>
+</button>
+</div>
+
+<!-- Log -->
+<div class="au-r au-d6" style="display: flex; flex-direction: column; gap: 8px; -webkit-mask-image: linear-gradient(to bottom, #000 40%, transparent 100%); mask-image: linear-gradient(to bottom, #000 40%, transparent 100%)">
+<div style="display: flex; align-items: baseline; justify-content: space-between; padding: 0 4px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 1.4px; text-transform: uppercase; color: #9AA4B2">Log</h2>
+<span style="font-size: 13px; color: #9AA4B2">3 entries</span>
+</div>
+<button style="display: flex; align-items: center; gap: 12px; padding: 8px 16px 8px 8px; border-radius: 999px; background: rgba(255,255,255,0.08); box-shadow: inset 0 0 0 1.5px {{accent}}, 0 0 28px {{accentGlowSoft}}">
+<span style="width: 40px; height: 40px; border-radius: 999px; background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; flex: none"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F2F5F9" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="15.5" width="17" height="5" rx="2.5" transform="rotate(-3 12 18)" fill="url(#auWash)"/><rect x="6" y="10.5" width="12" height="5" rx="2.5" transform="rotate(3 12 13)" fill="url(#auWash)"/><rect x="8.5" y="6" width="7" height="4.5" rx="2.25" transform="rotate(-4 12 8)" fill="url(#auWash)"/><path d="M12 6c0-1.6.8-2.6 2.2-3.2"/></svg></span>
+<span style="flex: 1; font-size: 15.5px; font-weight: 600">Stool, type 4</span><span style="font-size: 13.5px; color: #9AA4B2; font-variant-numeric: tabular-nums">13:05</span>
+</button>
+<button style="display: flex; align-items: center; gap: 12px; padding: 8px 16px 8px 8px; border-radius: 999px; background: rgba(255,255,255,0.06); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.10)">
+<span style="width: 40px; height: 40px; border-radius: 999px; background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; flex: none"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F2F5F9" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17a8 8 0 0 1 16 0Z" fill="url(#auWashMeal)"/><path d="M2.5 20.5h19"/><path d="M12 9V7"/><circle cx="12" cy="5.8" r="1.2"/></svg></span>
+<span style="flex: 1"><span style="display: block; font-size: 15.5px; font-weight: 600">Chicken salad</span><span style="display: block; font-size: 13px; color: #9AA4B2">egg, mustard</span></span><span style="font-size: 13.5px; color: #9AA4B2; font-variant-numeric: tabular-nums">12:40</span>
+</button>
+</div>
+
+</div>
+
+<!-- Floating tab bar -->
+<nav aria-label="Main" style="position: absolute; left: 0; right: 0; bottom: 26px; display: flex; justify-content: center">
+<div style="display: flex; align-items: center; gap: 4px; padding: 6px; border-radius: 999px; background: rgba(20,26,38,0.72); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14), 0 18px 40px rgba(0,0,0,0.5); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px)">
+<a href="Today-Aurora.dc.html" aria-current="page" style="display: flex; align-items: center; gap: 8px; height: 52px; padding: 0 22px; border-radius: 999px; background: {{accent}}; color: #062A26; text-decoration: none; font-size: 15.5px; font-weight: 700">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#062A26" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="3.5"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>Today</a>
+<a href="Today-Aurora.dc.html" style="display: flex; align-items: center; gap: 8px; height: 52px; padding: 0 22px; border-radius: 999px; color: #C9D0DA; text-decoration: none; font-size: 15.5px; font-weight: 600">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C9D0DA" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 20v-9M12 20V5M18 20v-6"/></svg>Review</a>
+</div>
+</nav>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#5EEAD4","options":["#5EEAD4","#A3E635","#C4B5FD"],"section":"Look"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const accent = this.props.accent ?? '#5EEAD4';
+return {
+accent,
+accentGlow: 'color-mix(in srgb, ' + accent + ' 55%, transparent)',
+accentGlowSoft: 'color-mix(in srgb, ' + accent + ' 22%, transparent)',
+glowA: 'radial-gradient(circle, ' + accent + ' 0%, transparent 70%)',
+glowB: 'radial-gradient(circle, #6D4AE0 0%, transparent 70%)',
+glowC: 'radial-gradient(circle, #2563EB 0%, transparent 70%)'
+};
+}
+}
+</script>
+</body>
+</html>

@@ -536,3 +536,8 @@ Newest entry last. One short entry per working session or meaningful step: what 
 ## 2026-11-21: allergen guesses and Nails icon (branch feature/allergen-guesses-doc)
 - **Done:** requirements v0.9.2. IN-10: the review phase shows ticked tags, unselected guesses that follow the ingredient list, and "+ N more"; the "Suggest from ingredients" button goes, since it replaced the selection. UX-12: the Nails icon is the Skin hand with tinted nails. user-flows and ux-design follow. Docs only.
 - **Next:** Skin and Daily health boards.
+
+## 2026-11-21: design system and reference screens (branch feature/design-system)
+- **Done:** eight reference screens on the design canvas, one per pattern (Skin form, Daily health, Review Days, Area timeline, Settings, a settings detail, swipe and confirm delete, an empty state), and a Design system board with tokens and components. `docs/design-system.md` is the written spec (tokens, components, patterns, gestures, a "do not" list, how to build it in Expo). `design/canvas/` keeps a copy of the canvas files and `design/generator/` the Python script that draws the generated boards, so a later session can add matching boards. CLAUDE.md's layout lists `design/`. Docs and design files only, no app code.
+- **Next:** the remaining screens follow the reference boards; then build the theme and the shared components, starting with Today.
+

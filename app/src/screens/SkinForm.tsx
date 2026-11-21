@@ -1,6 +1,7 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, TextInput } from 'react-native';
+import { Alert } from 'react-native';
+import { TextInput } from '@/ui/themed';
 import { SCORE_KEYS, type SkinArea, type SkinScores } from '@/core/model/types';
 import { attachPhotos } from '@/core/usecases/photos';
 import { lastSkinValues, listActiveAreas, logSkinEntry, repeatAllAreas, repeatSkinEntry } from '@/core/usecases/skin';

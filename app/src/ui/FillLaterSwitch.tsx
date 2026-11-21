@@ -1,4 +1,5 @@
-import { Switch, Text, View } from 'react-native';
+import { Switch, View } from 'react-native';
+import { Text } from '@/ui/themed';
 import { t } from '@/i18n';
 import { Hint, styles } from '@/ui/components';
 

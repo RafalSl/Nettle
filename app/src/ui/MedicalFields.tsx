@@ -1,6 +1,7 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useState } from 'react';
-import { Text, TextInput, View } from 'react-native';
+import { View } from 'react-native';
+import { Text, TextInput } from '@/ui/themed';
 import { localDay } from '@/core/model/time';
 import { MAX_MEDICAL_TITLE, MEDICAL_KINDS, type LocalDay, type MedicalKind } from '@/core/model/types';
 import { logMedicalEvent } from '@/core/usecases/events';

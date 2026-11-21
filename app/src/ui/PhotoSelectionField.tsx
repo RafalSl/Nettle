@@ -1,6 +1,7 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useEffect, useState } from 'react';
-import { Switch, Text, View } from 'react-native';
+import { Switch, View } from 'react-native';
+import { Text } from '@/ui/themed';
 import { DEFAULT_PHOTO_SELECTION, type PhotoSelection } from '@/core/export/photoSelection';
 import { localDateTime, localDay, localDaysToRange } from '@/core/model/time';
 import type { Photo, SkinArea } from '@/core/model/types';

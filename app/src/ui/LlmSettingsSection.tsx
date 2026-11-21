@@ -1,6 +1,7 @@
 import { useFocusEffect } from 'expo-router';
 import { Fragment, useCallback, useState } from 'react';
-import { Alert, TextInput } from 'react-native';
+import { Alert } from 'react-native';
+import { TextInput } from '@/ui/themed';
 import { LLM_ACTIONS, type LlmAction } from '@/core/llm/actions';
 import { DEFAULT_MODEL, deleteApiKey, getModel, hasApiKey, modelChoices, saveApiKey, setModel } from '@/core/usecases/llm';
 import { errorMessage, t } from '@/i18n';

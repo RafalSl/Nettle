@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
-import { Alert, Switch, Text, View } from 'react-native';
+import { Alert, Switch, View } from 'react-native';
+import { Text } from '@/ui/themed';
 import { errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
 import { Heading, Hint, Screen, styles } from '@/ui/components';

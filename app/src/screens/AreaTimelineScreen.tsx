@@ -1,7 +1,8 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
-import { Alert, Pressable, type ScrollViewInstance, Text, View } from 'react-native';
+import { Alert, Pressable, type ScrollViewInstance, View } from 'react-native';
+import { Text } from '@/ui/themed';
 import { sinceCaption } from '@/core/model/derived';
 import { areaTimeline, resolveJumpDay, trendPoints, type JumpTarget, type TimelineDay, type TimelineEntry, type TrendKey } from '@/core/usecases/timeline';
 import { SCORE_KEYS, type Photo, type SkinArea } from '@/core/model/types';
@@ -14,6 +15,7 @@ import { TrendChart } from '@/ui/TrendChart';
 import { Button, Chips, Heading, Hint, Screen, styles } from '@/ui/components';
 import { describeRow, skinExtras } from '@/ui/logRow';
 import { useEntryActions } from '@/ui/useEntryActions';
+import { color } from '@/ui/theme';
 
 /**
  * SK-8, EN-1: one area across dates: the scores or nail stage of each entry with its photos beside them, newest day
@@ -121,7 +123,7 @@ export default function AreaTimelineScreen() {
       )}
       {days?.map((d) => (
         <View key={d.day} style={{ gap: 6 }} onLayout={(e) => void (dayY.current[d.day] = e.nativeEvent.layout.y)}>
-          <Text style={[styles.label, jump?.target.day === d.day && { backgroundColor: '#3b82f622', borderRadius: 6 }]}>{d.day}</Text>
+          <Text style={[styles.label, jump?.target.day === d.day && { backgroundColor: color.accentSoft, borderRadius: 6 }]}>{d.day}</Text>
           {d.medical.map((m) => (
             <Hint key={`${m.event.id}-${m.edge}`}>{`${t(m.edge === 'start' ? 'review.medicalStart' : 'review.medicalEnd', { kind: t(`medical.kinds.${m.event.kind}`), title: m.event.title })}`}</Hint>
           ))}

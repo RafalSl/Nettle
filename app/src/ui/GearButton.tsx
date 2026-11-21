@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
-import { Pressable, Text } from 'react-native';
+import { Pressable } from 'react-native';
+import { Text } from '@/ui/themed';
 import { t } from '@/i18n';
 
 /** UX-1: the gear in the header of both tabs; it pushes Settings above the tabs. */

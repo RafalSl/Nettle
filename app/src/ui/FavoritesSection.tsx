@@ -1,6 +1,7 @@
 import { useFocusEffect } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { Alert, Pressable, Text } from 'react-native';
+import { Alert, Pressable } from 'react-native';
+import { Text } from '@/ui/themed';
 import { defaultPreferences, type Preferences } from '@/core/model/preferences';
 import { getPreferences, removeFavorite } from '@/core/usecases/preferences';
 import { errorMessage, t } from '@/i18n';

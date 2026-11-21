@@ -149,7 +149,7 @@ There is no save gesture.
 - **Font:** Gabarito through `expo-font`, from bundled files or an `@expo-google-fonts` package if one exists (not checked).
 - **Glass:** `expo-blur` `BlurView` with the fill and line on top. Fallback: a flat translucent fill if blur stutters with several layers and the aurora.
 - **Ring, icons, chart:** `react-native-svg`.
-- **Gestures and motion:** `react-native-gesture-handler` and `react-native-reanimated`, both already in the template.
+- **Gestures and motion:** React Native's own `Animated` (native driver) for the aurora, load motion and sheets, and `PanResponder` for the swipes. `react-native-gesture-handler` 3 renamed its classic API and reanimated is not needed for this, so the app does not depend on them (only the design spike uses reanimated).
 - **Appearance:** `userInterfaceStyle` in `app.json` moves from `light` to `dark`.
 - **Components to write once:** `GlassSurface`, `PillButton` (kinds above), `IconCircle`, `Chip`, `Field`, `SwitchRow`, `ScoreRow`, `Segmented`, `NavGroup` and `NavRow`, `ContextPill`, `QuickAction`, `LogRow`, `DayRing`, `Sheet` and `QuickSheet`, `ConfirmSheet`, `FloatingSave`, `FloatingTabBar`, `EmptyState`, `Icon` (the SVG set).
 

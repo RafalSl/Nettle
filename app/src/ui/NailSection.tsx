@@ -1,6 +1,7 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, TextInput, View } from 'react-native';
+import { Alert, View } from 'react-native';
+import { TextInput } from '@/ui/themed';
 import { NAIL_EXTENTS, NAIL_STAGES, type NailExtent, type NailStage, type SkinArea } from '@/core/model/types';
 import { addArea, listActiveAreas, logNailEntry, repeatNailEntry } from '@/core/usecases/skin';
 import { attachPhotos } from '@/core/usecases/photos';

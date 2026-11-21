@@ -1,6 +1,7 @@
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, View } from 'react-native';
+import { Text, TextInput } from '@/ui/themed';
 import { addIngredients, matchIngredientNames, suggestAllergens } from '@/core/model/allergens';
 import { NettleError } from '@/core/model/errors';
 import { defaultPreferences, type Preferences } from '@/core/model/preferences';

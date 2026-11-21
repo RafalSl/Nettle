@@ -1,7 +1,8 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, Switch, Text, View } from 'react-native';
+import { Alert, Pressable, Switch, View } from 'react-native';
+import { Text } from '@/ui/themed';
 import { addMonths, monthOf, monthOverview, monthShape, type MonthDay } from '@/core/usecases/dayLog';
 import { localDay } from '@/core/model/time';
 import { areaOverview, type AreaOverviewRow } from '@/core/usecases/timeline';

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Alert, Switch, Text, TextInput, View } from 'react-native';
+import { Alert, View } from 'react-native';
+import { Switch, Text, TextInput } from '@/ui/themed';
 import { NettleError } from '@/core/model/errors';
 import type { Parts } from '@/core/model/types';
 import type { ImportMode } from '@/core/ports/storage';

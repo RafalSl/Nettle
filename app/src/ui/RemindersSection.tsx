@@ -1,7 +1,8 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Linking, Switch, Text, View } from 'react-native';
+import { Alert, Linking, Switch, View } from 'react-native';
+import { Text } from '@/ui/themed';
 import { listRegular } from '@/core/usecases/regular';
 import { NavRow } from '@/ui/NavRow';
 import {

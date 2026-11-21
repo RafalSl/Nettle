@@ -1,6 +1,7 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Switch, Text, View } from 'react-native';
+import { Alert, View } from 'react-native';
+import { Switch, Text } from '@/ui/themed';
 import { MAX_SUGGESTION_ROWS, WINDOW_DAYS, defaultPreferences, type SuggestionSettings } from '@/core/model/preferences';
 import { getPreferences, updateSuggestionSettings } from '@/core/usecases/preferences';
 import { errorMessage, t } from '@/i18n';

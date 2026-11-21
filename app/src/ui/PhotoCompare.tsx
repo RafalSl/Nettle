@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Image, Pressable, Text, View } from 'react-native';
+import { Image, Pressable, View } from 'react-native';
+import { Text } from '@/ui/themed';
 import type { Photo } from '@/core/model/types';
 import { localDateTime } from '@/core/model/time';
 import { t } from '@/i18n';

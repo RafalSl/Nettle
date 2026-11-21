@@ -1,4 +1,4 @@
-import { TextInput } from 'react-native';
+import { TextInput } from '@/ui/themed';
 import { logStool } from '@/core/usecases/checkin';
 import { t } from '@/i18n';
 import { useServices } from '@/services';

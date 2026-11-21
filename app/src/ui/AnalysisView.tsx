@@ -1,8 +1,10 @@
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@/ui/themed';
 import { localDateTime } from '@/core/model/time';
 import type { Analysis } from '@/core/model/types';
 import { t } from '@/i18n';
 import { Heading, Hint, Label, styles } from '@/ui/components';
+import { color } from '@/ui/theme';
 
 const List = ({ title, items }: { title: string; items: string[] }) =>
   items.length === 0 ? null : (
@@ -21,7 +23,7 @@ export function AnalysisView({ analysis }: { analysis: Analysis }) {
   const r = analysis.result;
   return (
     <View style={{ gap: 8 }}>
-      <Text style={{ color: '#c0392b', fontWeight: '600' }}>{t('analysis.disclaimer')}</Text>
+      <Text style={{ color: color.alert, fontWeight: '600' }}>{t('analysis.disclaimer')}</Text>
       <Hint>
         {t('analysis.meta', {
           date: localDateTime(analysis.at.utc, analysis.at.tz),

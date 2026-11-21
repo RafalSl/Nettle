@@ -1,4 +1,5 @@
-import { Switch, Text, TextInput, View } from 'react-native';
+import { Switch, View } from 'react-native';
+import { Text, TextInput } from '@/ui/themed';
 import { joinIngredients, matchIngredientNames, splitIngredients } from '@/core/model/allergens';
 import { afterEdit, sameIngredients, typedSource, type IngredientSource } from '@/core/model/source';
 import { ALLERGENS, type Allergen } from '@/core/model/types';

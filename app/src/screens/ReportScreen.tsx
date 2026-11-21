@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Alert, Switch, Text, View } from 'react-native';
+import { Alert, View } from 'react-native';
+import { Switch, Text } from '@/ui/themed';
 import { addDays, localDay } from '@/core/model/time';
 import type { ReportSummary } from '@/core/model/types';
 import { markExported, presetOptions, reportPreview, sinceLastExport, type ReportPreview } from '@/core/usecases/backup';

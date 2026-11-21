@@ -246,3 +246,23 @@ export async function suggestAllergensWithAi(
   await deps.settings.set(ALLERGEN_CACHE, JSON.stringify(cache));
   return { allergens: [...all], note: parsed.note, asked: plan.toSend.length };
 }
+
+/** SE-2: the last four characters of the saved key, for "ending in …"; null when there is no key. The key itself is never returned. */
+export async function apiKeyTail(deps: Deps): Promise<string | null> {
+  const key = await deps.keys.get(API_KEY_NAME);
+  return key ? key.slice(-4) : null;
+}
+
+/**
+ * LL-1, SE-5: send one tiny request to check that the saved key is accepted. It costs a tiny amount on the user's
+ * Anthropic account, so the screen says so before it is pressed. Errors are the usual `llm_*` ones.
+ */
+export async function testApiKey(deps: Deps): Promise<void> {
+  const { provider } = await currentProvider(deps, 'meal_name');
+  await provider.completeJson({
+    system: 'Reply with the JSON {"ok": true} and nothing else.',
+    user: 'ping',
+    schema: { type: 'object', properties: { ok: { type: 'boolean' } }, required: ['ok'], additionalProperties: false },
+    maxTokens: 16,
+  });
+}

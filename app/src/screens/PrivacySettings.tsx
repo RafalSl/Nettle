@@ -1,9 +1,9 @@
 import { useSyncExternalStore } from 'react';
-import { Alert, Switch, View } from 'react-native';
-import { Text } from '@/ui/themed';
+import { Alert } from 'react-native';
 import { errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
-import { Heading, Hint, Screen, styles } from '@/ui/components';
+import { Heading, Hint, Screen } from '@/ui/components';
+import { SwitchRow } from '@/ui/SwitchRow';
 
 /** SE-8, UX-6: the app lock switch. Changing it asks for Face ID or the passcode first, either way. */
 export default function PrivacySettings() {
@@ -18,11 +18,7 @@ export default function PrivacySettings() {
   }
   return (
     <Screen>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Text style={styles.rowText}>{t('lock.switch')}</Text>
-        <Switch value={enabled} onValueChange={(v) => void change(v)} accessibilityLabel={t('lock.switch')} />
-      </View>
-      <Hint>{t('lock.hint')}</Hint>
+      <SwitchRow title={t('lock.switch')} hint={t('lock.hint')} value={enabled} onChange={(v) => void change(v)} />
       <Heading>{t('settings.photosTitle')}</Heading>
       <Hint>{t('settings.photosInfo')}</Hint>
       <Hint>{t('settings.photosSensitive')}</Hint>

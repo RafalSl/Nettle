@@ -1,12 +1,13 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, View } from 'react-native';
-import { Switch, Text } from '@/ui/themed';
+import { Text } from '@/ui/themed';
 import { MAX_SUGGESTION_ROWS, WINDOW_DAYS, defaultPreferences, type SuggestionSettings } from '@/core/model/preferences';
 import { getPreferences, updateSuggestionSettings } from '@/core/usecases/preferences';
 import { errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
 import { Button, Chips, Hint, Label, Screen, styles } from '@/ui/components';
+import { SwitchRow } from '@/ui/SwitchRow';
 
 /** IN-14, UX-6: how many suggestions show, how far back "frequent" looks, and "save on tap". Defaults need no visit here. */
 export default function SuggestionSettingsScreen() {
@@ -40,16 +41,8 @@ export default function SuggestionSettingsScreen() {
         selected={new Set([String(s.windowDays)])}
         onToggle={(id) => void change({ windowDays: Number(id) as SuggestionSettings['windowDays'] })}
       />
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Text style={styles.rowText}>{t('sugg.saveOnTap')}</Text>
-        <Switch value={s.saveOnTap} onValueChange={(saveOnTap) => void change({ saveOnTap })} accessibilityLabel={t('sugg.saveOnTap')} />
-      </View>
-      <Hint>{t('sugg.saveOnTapHint')}</Hint>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Text style={styles.rowText}>{t('sugg.knownNames')}</Text>
-        <Switch value={s.knownNames} onValueChange={(knownNames) => void change({ knownNames })} accessibilityLabel={t('sugg.knownNames')} />
-      </View>
-      <Hint>{t('sugg.knownNamesHint')}</Hint>
+      <SwitchRow title={t('sugg.saveOnTap')} hint={t('sugg.saveOnTapHint')} value={s.saveOnTap} onChange={(saveOnTap) => void change({ saveOnTap })} />
+      <SwitchRow title={t('sugg.knownNames')} hint={t('sugg.knownNamesHint')} value={s.knownNames} onChange={(knownNames) => void change({ knownNames })} />
     </Screen>
   );
 }

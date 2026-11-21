@@ -1,7 +1,7 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Linking, Switch, View } from 'react-native';
+import { Alert, Linking, View } from 'react-native';
 import { Text } from '@/ui/themed';
 import type { RegularItem, ReminderTime } from '@/core/model/preferences';
 import type { ListItem, SkinArea } from '@/core/model/types';
@@ -12,6 +12,7 @@ import { useServices } from '@/services';
 import { confirmDestructive } from '@/ui/actionSheet';
 import { NavRow } from '@/ui/NavRow';
 import { Button, Heading, Hint, Label, Screen, styles } from '@/ui/components';
+import { SwitchRow } from '@/ui/SwitchRow';
 
 /** The name of a regular item for lists: a medication's name and dose, or a treatment with its areas. */
 export function regularName(r: RegularItem, treatments: ListItem[], areas: SkinArea[]): string {
@@ -109,11 +110,7 @@ export function RegularItemScreen() {
         </>
       )}
 
-      <View style={styles.timeRow}>
-        <Text style={styles.rowText}>{t('regular.hideName')}</Text>
-        <Switch value={item.hideName} onValueChange={(v) => void run(() => saveRegularHideName(deps, item.id, v, reminderTexts()))} accessibilityLabel={t('regular.hideName')} />
-      </View>
-      <Hint>{t('regular.hideNameHint')}</Hint>
+      <SwitchRow title={t('regular.hideName')} hint={t('regular.hideNameHint')} value={item.hideName} onChange={(v) => void run(() => saveRegularHideName(deps, item.id, v, reminderTexts()))} />
 
       <Button
         kind="secondary"

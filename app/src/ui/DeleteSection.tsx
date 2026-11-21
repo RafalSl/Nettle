@@ -1,7 +1,6 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useState } from 'react';
-import { Alert, Switch, View } from 'react-native';
-import { Text } from '@/ui/themed';
+import { Alert, View } from 'react-native';
 import { DELETE_GROUPS, DELETE_GROUP_IDS, type DeleteGroup } from '@/core/model/deleteGroups';
 import { localDay, localDaysToRange } from '@/core/model/time';
 import type { RecordKind } from '@/core/model/types';
@@ -11,6 +10,7 @@ import { useServices } from '@/services';
 import { confirmDestructive } from '@/ui/actionSheet';
 import { confirmWithExport, exportEverything } from '@/ui/exportFirst';
 import { Button, Chips, Heading, Hint, Label, styles } from '@/ui/components';
+import { SwitchRow } from '@/ui/SwitchRow';
 
 /** SE-9: delete by entry type and date range, with a confirmation that lists the counts and offers an export first. */
 export function DeleteSection() {
@@ -68,10 +68,7 @@ export function DeleteSection() {
       <Heading>{t('delete.title')}</Heading>
       <Hint>{t('delete.hint')}</Hint>
       <Chips items={DELETE_GROUP_IDS.map((g) => ({ id: g, label: t(`delete.groups.${g}`) }))} selected={groups} onToggle={toggle} />
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Text style={styles.rowText}>{t('delete.limit')}</Text>
-        <Switch value={limit} onValueChange={setLimit} accessibilityLabel={t('delete.limit')} />
-      </View>
+      <SwitchRow title={t('delete.limit')} value={limit} onChange={setLimit} />
       {limit && (
         <>
           <View style={styles.timeRow}>
@@ -84,7 +81,8 @@ export function DeleteSection() {
           </View>
         </>
       )}
-      <Button kind="danger" title={t('delete.button')} onPress={review} />
+      {groups.size === 0 && <Hint>{t('delete.chooseFirst')}</Hint>}
+      <Button kind="danger" title={t('delete.button')} disabled={groups.size === 0} onPress={review} />
     </>
   );
 }

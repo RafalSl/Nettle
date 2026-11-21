@@ -340,7 +340,7 @@ describe('screen flows (NF-2, NF-3)', () => {
     await flush();
     expect(await deps.keys.get('anthropic_api_key')).toBe('sk-synthetic-secret');
     expect(hasText(tree, 'sk-synthetic-secret')).toBe(false);
-    expect(hasText(tree, en.llm.keySaved)).toBe(true);
+    expect(hasText(tree, en.llm.keyTail.replace('{{tail}}', 'cret'))).toBe(true); // only the last four characters are shown
   });
 
   it('SK-2, SK-10 Settings adds, renames, resets and archives areas, and restores an archived one', async () => {
@@ -426,17 +426,37 @@ describe('screen flows (NF-2, NF-3)', () => {
     expect(saved.values).toEqual({ 'item-wellbeing': 5, 'item-stress': 7 });
   });
 
-  it('LL-9 the AI settings list a model choice per action, defaulting to the first offered model', async () => {
+  it('LL-2, LL-9 the AI settings offer two model choices, one for the estimates and one for the analysis, defaulting to the first offered model', async () => {
     const deps = nowDeps();
     const { tree } = await mount(() => require('@/app/settings/ai'), deps);
-    for (const label of Object.values(en.llm.action)) expect(hasText(tree, label)).toBe(true);
+    await flush();
+    expect(hasText(tree, en.llm.group.estimates)).toBe(true);
+    expect(hasText(tree, en.llm.group.analysis)).toBe(true);
     const selected = () => tree.root.findAll((n) => n.props.accessibilityLabel === 'Haiku' && n.props.accessibilityState?.selected === true && typeof n.props.onPress === 'function');
-    expect(selected()).toHaveLength(Object.keys(en.llm.action).length);
-    await press(tree, 'Sonnet'); // the first "Sonnet" chip belongs to the first action, the label scan
+    expect(selected()).toHaveLength(2);
+    await press(tree, 'Sonnet'); // the first "Sonnet" chip belongs to the estimates group
     await flush();
     expect(await deps.settings.get('llm_model.label_scan')).toBe('claude-sonnet-5-5');
+    expect(await deps.settings.get('llm_model.meal_photo')).toBe('claude-sonnet-5-5');
     expect(await deps.settings.get('llm_model.analysis')).toBeNull();
-    expect(selected()).toHaveLength(Object.keys(en.llm.action).length - 1);
+    expect(selected()).toHaveLength(1);
+  });
+
+  it('SE-2, LL-1 Save key stays disabled with a line saying what is missing, and a saved key can be tested', async () => {
+    const deps = nowDeps(new FakeLlm(['{"ok":true}']));
+    const { tree } = await mount(() => require('@/app/settings/ai'), deps);
+    await flush();
+    expect(hasText(tree, en.edit.missing.replace('{{what}}', en.llm.keyPasteFirst))).toBe(true);
+    const save = () => tree.root.findAll((n) => n.props.accessibilityLabel === en.llm.keySave && n.props.accessibilityState !== undefined);
+    expect(save().every((n) => n.props.accessibilityState.disabled === true)).toBe(true);
+    expect(hasText(tree, en.llm.keyTest)).toBe(false); // nothing to test without a key
+    await type(tree, en.llm.keyField, 'sk-synthetic-secret');
+    await press(tree, en.llm.keySave);
+    await flush();
+    expect(hasText(tree, en.llm.keyTestHint)).toBe(true);
+    await press(tree, en.llm.keyTest);
+    await flush();
+    expect(Alert.alert).toHaveBeenCalledWith(en.llm.keyWorks);
   });
 
   it('SE-9, UX-6 Delete data names the counts in an action sheet, offers Export first, then asks a second time', async () => {
@@ -4030,5 +4050,51 @@ describe('Trend range switch (SK-7, SK-8)', () => {
     expect(hasText(tree, summary('2026-03-10', 5))).toBe(true); // only the March point
     await press(tree, en.review.range.all);
     expect(hasText(tree, summary('2026-01-10', 7))).toBe(true);
+  });
+});
+
+describe('Settings additions (SK-8, NO-3, SE-9)', () => {
+  beforeEach(() => {
+    jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+  });
+  afterEach(() => jest.restoreAllMocks());
+
+  it('SK-8 the flare threshold has a scope: Same for all, or a value per skin area that the others follow', async () => {
+    const deps = nowDeps();
+    const { tree } = await mount(() => require('@/app/settings/logging'), deps);
+    await flush();
+    expect(hasText(tree, en.settings.flareScopeAreaHint)).toBe(false); // the per-area list is only there in the per-area scope
+    await press(tree, en.settings.flareScopeArea);
+    await flush();
+    expect((await deps.repo.getPreferences())?.flareScope).toBe('perArea');
+    expect(hasText(tree, en.settings.flareScopeAreaHint)).toBe(true);
+    await press(tree, `${en.common.decrease} ${en.areas['area-chin']}`);
+    await flush();
+    expect((await deps.repo.getPreferences())?.flareThresholdByArea).toEqual({ 'area-chin': 7 }); // the common value 8, one lower
+    await press(tree, `${en.settings.flareUseCommon} ${en.areas['area-chin']}`);
+    await flush();
+    expect((await deps.repo.getPreferences())?.flareThresholdByArea).toEqual({});
+  });
+
+  it('NO-3 with notifications blocked a coral banner offers the iPhone settings, and the reminder switches are disabled', async () => {
+    const deps = nowDeps();
+    (deps.notifier as unknown as { granted: boolean }).granted = false;
+    const { tree } = await mount(() => require('@/app/settings/reminders'), deps);
+    await flush();
+    expect(hasText(tree, en.regular.denied)).toBe(true);
+    expect(hasText(tree, en.regular.openSystem)).toBe(true);
+    const sw = tree.root.findAll((n) => n.props.accessibilityRole === 'switch' && n.props.accessibilityLabel === en.reminders.checkIn && n.props.accessibilityState !== undefined);
+    expect(sw.length).toBeGreaterThan(0);
+    expect(sw.every((n) => n.props.accessibilityState.disabled === true)).toBe(true);
+  });
+
+  it('SE-9 Delete data stays disabled until something is chosen, and says so', async () => {
+    const { tree } = await mount(() => require('@/app/settings/data'), nowDeps());
+    await flush();
+    expect(hasText(tree, en.delete.chooseFirst)).toBe(true);
+    const btn = tree.root.findAll((n) => n.props.accessibilityLabel === en.delete.button && n.props.accessibilityState !== undefined);
+    expect(btn.every((n) => n.props.accessibilityState.disabled === true)).toBe(true);
+    await press(tree, en.delete.groups.health);
+    expect(hasText(tree, en.delete.chooseFirst)).toBe(false);
   });
 });

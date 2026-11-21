@@ -188,14 +188,9 @@ Not built: the report summary confirmation and waiting boards were already built
 
 ### Settings
 
-1. Delete data: pick what to delete, then an export-first sheet, then a final confirmation (two asks, SE-9). Affects SE-9.
-2. Import preview carries a "Restore entries I deleted" switch, off by default, and a count of skipped entries. Affects EX-9, EX-10.
-3. Flare threshold: one stepper, scope "Per area" or "Same for all", default Same for all. Affects SK-8.
-4. Custom export reuses the report's "Pick photos one by one" row and the sensitive photos switch, off by default. Affects EX-4, EX-7.
-5. AI key: Save key stays disabled with a "Paste the key first" line; key shown only as the last 4 characters; "Test the key" mentions a possible tiny cost. Affects LL-1, LL-3.
-6. AI models: one choice for photo and name estimates and one for analysis, each a single choice. Affects LL-2.
-7. Reminders denied: a coral banner with "Open iPhone settings" and a disabled switch. Affects NO-3.
-8. Where do I log…? is a settings list of what goes where, not a search. Affects UX-4.
+Built (build plan task 14): the flare threshold scope (Same for all, Per area with steppers), the AI key (Save key disabled with a line saying what is missing, only the last four characters shown, "Test the key (sends one request)"), the two model choices, the Reminders blocked state (coral banner with "Open system settings" and disabled switches), Delete data disabled until something is chosen ("Choose what to delete first"; the export-first sheet and the second confirmation were already there, SE-9), the import preview with the "Restore entries I deleted" switch and the skipped count (already built, EX-9, EX-10), the custom export reusing the photo rows, and glass switch rows across Settings.
+
+Not built: the Delete data confirmations, like the other confirmations, stay native iOS action sheets.
 
 ### System
 

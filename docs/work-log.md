@@ -655,3 +655,6 @@ Adding an ingredient grows the meal form, so the Add ingredient button slid unde
 
 ## 2026-11-21: Add ingredient focuses the new field
 Phone test: when the keyboard was hidden, Add ingredient scrolled before the keyboard slid out, so the new field ended up behind it. Now the new row takes focus (one tap fewer) and the form scrolls once the keyboard's height is known (immediately when it is already open). Next: re-check on the phone.
+
+## 2026-11-21: one smooth scroll for Add ingredient
+The scroll for a new ingredient started after the keyboard had finished sliding (keyboardDidShow), so it came as two steps after the system's own adjustment. It now starts with the slide (keyboardWillShow). Next: re-check on the phone.

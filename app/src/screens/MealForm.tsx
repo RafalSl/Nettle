@@ -79,7 +79,7 @@ export default function MealScreen() {
   const addBottom = useRef(0);
   const prevCount = useRef(1);
   const windowHeight = useWindowDimensions().height;
-  // The new row takes focus (autoFocus), so the keyboard slides out when it was hidden: scroll once its height is known.
+  // The new row takes focus (autoFocus), so the keyboard slides out when it was hidden: scroll as it starts to slide (keyboardWillShow), so the scroll and the slide are one motion.
   const [focusNew, setFocusNew] = useState<number | null>(null);
   useEffect(() => {
     const grew = ingredients.length > prevCount.current;
@@ -87,15 +87,15 @@ export default function MealScreen() {
     if (!grew) return;
     const scrollTo = (kb: number) => {
       const visible = windowHeight - kb - 190; // header and the floating Save
-      setTimeout(() => scrollRef.current?.scrollTo({ y: Math.max(0, addBottom.current + 52 - visible), animated: true }), 50);
+      scrollRef.current?.scrollTo({ y: Math.max(0, addBottom.current + 52 - visible), animated: true });
     };
     if (Keyboard.isVisible()) {
-      scrollTo(Keyboard.metrics()?.height ?? 0);
+      setTimeout(() => scrollTo(Keyboard.metrics()?.height ?? 0), 50); // after the new row is laid out
       return;
     }
-    const sub = Keyboard.addListener('keyboardDidShow', (e) => {
+    const sub = Keyboard.addListener('keyboardWillShow', (e) => {
       sub.remove();
-      scrollTo(e.endCoordinates.height);
+      setTimeout(() => scrollTo(e.endCoordinates.height), 0); // the layout of the new row lands first
     });
     const give = setTimeout(() => sub.remove(), 2000);
     return () => {

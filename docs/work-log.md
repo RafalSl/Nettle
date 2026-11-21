@@ -545,3 +545,8 @@ Newest entry last. One short entry per working session or meaningful step: what 
 - **Done:** requirements v0.9.3 (UX-4 exception for Daily health's yes/no items; "Same as yesterday" gets a copy icon on the canvas). `docs/design-system.md` lists the screens still to design, grouped, each with the reference board to copy. Docs and design files only.
 - **Next:** the remaining screens (next model), then the Expo spike for the design (blur, font, ring, gestures, floating Save over the keyboard).
 
+
+## 2026-11-21: remaining screens designed (branch feature/design-remaining-screens)
+- **Done:** all six groups of "Remaining screens to design" drawn on the design canvas as 102 boards (G1 Today states, G2 entry forms, G3 meal extras, G4 Review, G5 Settings, G6 System), in one overnight run instead of group by group. An independent review of all 125 boards found 4 blocking and 13 should-fix issues; the blocking ones and most others are fixed in the generator and republished (`design/consistency-report.md`). The checklist in `docs/design-system.md` is ticked; new patterns and open decisions are under "Proposed additions (needs approval)". `design/generator/` has the new scripts (`group1.py` to `group6.py`, `lib.py`, `build.py`, `lint.py`, `contrast.py`), `design/canvas/` the boards and `canvas.json`.
+- **Needs you:** the "Proposed additions" list (chart range switch for SK-7 and SK-8 first); no requirement was changed.
+- **Next:** approve or change the proposals; then the missing states listed in the report; then the Expo spike for the design.

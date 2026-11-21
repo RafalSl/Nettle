@@ -149,7 +149,7 @@ Read: tab bars, toolbars, sheets, modality, action sheets, settings, entering da
 | Area | Finding | Resolution |
 | --- | --- | --- |
 | Tab bar | navigation only; no hidden or disabled tabs; explain empty sections | two tabs; no center "+" tab; empty states explain (UX-1) |
-| Settings | infrequent options only; task options belong in the task; do not duplicate system settings; keep the number small | gear icon on both tabs, not a tab; Home layout edited on Today; no language setting; each setting has a default; reminder times live on the item, with a summary in Settings (UX-6, IN-17) |
+| Settings | infrequent options only; task options belong in the task; do not duplicate system settings; keep the number small | gear icon on both tabs, not a tab; Home layout edited on Today; one Language setting in About (v0.9.5); each setting has a default; reminder times live on the item, with a summary in Settings (UX-6, IN-17) |
 | Sheets and modality | Cancel leading, Done or Save trailing; Done must be paired with Cancel or Back; confirm before data loss; one sheet at a time; keep modal tasks short; complex flows do not belong in a sheet (verified 2026-11-15) | UX-3; More is a pushed list so forms are the only modals; Settings is a pushed screen with Back and no Done, not a sheet (UX-1) |
 | Sliders and steppers | a slider can have side buttons for fine steps, and a stepper can sit alongside it (verified 2026-11-15) | one row: −, slider in steps of 1, +, value (UX-3); feel to be tested on the phone |
 | Entering data | prefer choices, prefill defaults, enable the primary action only when data is complete | suggestions, chips, Save disabled until required data is present |
@@ -186,7 +186,7 @@ Expo specifics (not verified in Expo Go yet): the font through `expo-font` (bund
 - "Save" is used on forms; the HIG names "Done" and "saving changes". The trailing placement and the Cancel pairing are verified. (v0.9) Save moves to a floating button at the bottom of the form instead, for thumb reach; this departs from the HIG on purpose (UX-3), and swiping down stays Cancel (no save gesture). Settings has neither, because it is a pushed screen.
 - Notification action buttons (Taken, Applied): Expo forum reports for SDK 39 and 42 say they were unreliable when the app was in the background. Untested on the current SDK; the design opens the app and logs, so it does not depend on background logging (IN-17).
 - Expo Go: large titles, `expo-symbols`, the sheet grabber, how the JS tab bar looks next to the iOS floating tab bar, and shake to undo are untested. The design does not depend on any of them.
-- Language: Expo documents per-app language through the `expo-localization` config plugin (`supportedLocales`), which needs a native build, so it cannot work in Expo Go. The decision is therefore no in-app setting; Expo Go follows the device language.
+- Language (revised v0.9.5): Expo documents per-app language through the `expo-localization` config plugin (`supportedLocales`), which needs a native build, so it cannot work in Expo Go. That was the reason for having no setting. It is not needed: the app switches its own text (`i18n.locale`), so a Language setting in Settings, About works in Expo Go and in a build. The iOS per-app language stays undeclared so the two cannot disagree. Board `G7-Language`.
 
 ## Decisions recorded
 
@@ -194,7 +194,7 @@ Expo specifics (not verified in Expo Go yet): the font through `expo-font` (bund
 2. Deletion markers are designed in now (EX-13); bulk delete leaves none; newest-wins merge stays Later.
 3. Preferences (favorites, quick-action layout, suggestion settings) are exported with the settings part; the API key never is.
 4. A locally suggested allergen tag counts as confirmed when visible and pre-selected on the form.
-5. No in-app language setting; the UI follows the device language.
+5. Language is a setting in About: Device language (default), English or Polski, applied at once (revised 2026-11-21; it was "no in-app setting").
 6. A suggested meal fills an editable form with the latest ingredients; it never saves by itself.
 7. The PDF report language defaults to the app language.
 8. The accessibility pass is deferred and not planned unless the app is ever distributed.

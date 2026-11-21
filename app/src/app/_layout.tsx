@@ -81,7 +81,7 @@ function CancelButton() {
   );
 }
 
-const form = (title: string) => ({ title, presentation: 'modal' as const, headerLeft: () => <CancelButton /> });
+const form = (title: string) => ({ title, presentation: 'modal' as const, unstable_headerLeftItems: () => [{ type: 'custom' as const, hidesSharedBackground: true, element: <CancelButton /> }] });
 
 /** UX-1, UX-3: the tabs sit in the root stack, and every entry form is a modal above them, one at a time. */
 export default function RootLayout() {

@@ -72,8 +72,11 @@ jest.mock('expo-router', () => {
     // The header buttons a form puts into its Stack.Screen options are kept, so a test can press them.
     Stack: Object.assign(({ children }: { children: unknown }) => children, {
       Screen: ({ name, options }: { name?: string; options?: unknown }) => {
-        mockScreen.options = options as typeof mockScreen.options;
-        if (name) mockScreen.byName[name] = options as MockScreenOptions;
+        // A left header item (hidesSharedBackground, iOS 26) is exposed as headerLeft so tests press it the same way.
+        const o = options as { unstable_headerLeftItems?: () => { element: React.ReactElement }[] } | undefined;
+        const seen = (o?.unstable_headerLeftItems ? { ...o, headerLeft: () => o.unstable_headerLeftItems!()[0]!.element } : options) as MockScreenOptions;
+        mockScreen.options = seen;
+        if (name) mockScreen.byName[name] = seen;
         return null;
       },
     }),

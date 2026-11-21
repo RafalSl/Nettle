@@ -76,13 +76,20 @@ export function FormModal({
       <Stack.Screen
         options={{
           gestureEnabled: !dirty,
-          headerLeft: () => (
-            <Pressable accessibilityRole="button" accessibilityLabel={t('common.cancel')} onPress={() => void cancel()} hitSlop={4}>
-              <GlassSurface style={{ height: 44, paddingHorizontal: 18, borderRadius: 999, justifyContent: 'center' }}>
-                <Text style={{ fontSize: 15.5, fontWeight: '600' }}>{t('common.cancel')}</Text>
-              </GlassSurface>
-            </Pressable>
-          ),
+          // iOS 26 wraps a plain header view in its own glass capsule, which doubles our glass border and blurs it.
+          unstable_headerLeftItems: () => [
+            {
+              type: 'custom' as const,
+              hidesSharedBackground: true,
+              element: (
+                <Pressable accessibilityRole="button" accessibilityLabel={t('common.cancel')} onPress={() => void cancel()} hitSlop={4}>
+                  <GlassSurface style={{ height: 44, paddingHorizontal: 18, borderRadius: 999, justifyContent: 'center' }}>
+                    <Text style={{ fontSize: 15.5, fontWeight: '600' }}>{t('common.cancel')}</Text>
+                  </GlassSurface>
+                </Pressable>
+              ),
+            },
+          ],
         }}
       />
       {banner}

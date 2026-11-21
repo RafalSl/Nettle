@@ -62,15 +62,18 @@ review.
 
 ## Commands
 The dev environment is Docker (`compose.yaml`, `app/Dockerfile`); no Node, fnm
-or `node_modules` is needed on the host. Run from the repo root. The container
-installs dependencies into a named volume when `app/package-lock.json` changes.
+or `node_modules` is needed on the host. Run from the repo root; `./run.sh` is a
+thin wrapper around `docker compose run --rm app` (no arguments: start the dev
+server on :8081; with arguments: run that command in the container). The
+container installs dependencies into a named volume when `app/package-lock.json`
+changes.
 - install / update dependencies: automatic on the next `run` after the lockfile changes
-- add an Expo library: `docker compose run --rm app npx expo install <pkg>` (never plain `npm i` for Expo modules); it edits `app/package.json` and the lockfile through the mount
-- start dev server: `docker compose run --rm app`, scan the QR code in Expo Go. Add `npx expo start --tunnel` after `app` if Wi-Fi blocks it. If the QR code shows a wrong address (docker0, VM bridge), set `NETTLE_LAN_IP=<Wi-Fi IP>` before the command. It uses host networking, so port 8081 must be free
-- typecheck: `docker compose run --rm app npm run typecheck`
-- lint: `docker compose run --rm app npm run lint` (also enforces that `src/core` imports no Expo/RN/adapters)
-- test: `docker compose run --rm app npm test` (the first run on a fresh cache volume can time out the Today screen test; run it again)
-- all three: `docker compose run --rm app npm run check`
+- add an Expo library: `./run.sh npx expo install <pkg>` (never plain `npm i` for Expo modules); it edits `app/package.json` and the lockfile through the mount
+- start dev server: `./run.sh`, scan the QR code in Expo Go. If Wi-Fi blocks it, `./run.sh npx expo start --tunnel --port 8081`. `run.sh` detects the Wi-Fi address; if the QR code still shows a wrong one, set `NETTLE_LAN_IP=<Wi-Fi IP>`. It uses host networking, so port 8081 must be free
+- typecheck: `./run.sh npm run typecheck`
+- lint: `./run.sh npm run lint` (also enforces that `src/core` imports no Expo/RN/adapters)
+- test: `./run.sh npm test` (the first run on a fresh cache volume can time out the Today screen test; run it again)
+- all three: `./run.sh npm run check`
 - reset the container's dependencies: `docker compose down -v` (removes the `node_modules`, npm and tmp cache volumes)
 
 ## Layout
@@ -78,4 +81,5 @@ installs dependencies into a named volume when `app/package-lock.json` changes.
 - `app/src/adapters`: one folder per external concern (storage, keystore, share).
 - `app/src/app`: expo-router screens; `app/src/services.tsx` is the composition root.
 - `app/test`: tests, fakes (`test/fakes`) and the storage contract (`test/contract`).
+- `compose.yaml`, `app/Dockerfile`, `app/docker-entrypoint.sh`, `run.sh`: the Docker dev environment (see README.md).
 - `design/`: the design canvas files (`design/canvas/`) and the script that draws the generated boards (`design/generator/`). The UI follows `docs/design-system.md`.

@@ -6,7 +6,7 @@ How to read it: each check has an ID, what to do, and what you should see. Mark 
 
 ## 0. Setup
 
-- Phone on the same Wi-Fi as the computer, or add `npx expo start --tunnel` to the container command (see CLAUDE.md, Commands). Open in Expo Go.
+- Start the server with `./run.sh`. Phone on the same Wi-Fi as the computer, or use `./run.sh npx expo start --tunnel --port 8081` (see README.md). Open in Expo Go.
 - Start from a clean state: Settings, Data and backup, Delete data (everything), or reinstall Expo Go. This also tests the first run.
 - Notifications: allow when asked. Camera and photos: allow when asked.
 - Keep a second device or the computer ready to open an exported file.

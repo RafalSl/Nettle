@@ -1176,6 +1176,22 @@
   },
   "sheet": {
     "often": "Often used",
-    "regular": "Regular"
+    "regular": "Regular",
+    "stoolHint": "Tap a type to save it now, 1 hard lumps to 7 watery",
+    "saved": "Saved {{time}}",
+    "taken": "Taken {{time}}",
+    "appliedAt": "Applied {{time}}",
+    "reminderAt": "reminder {{times}}",
+    "logTapHint": "Tap to log it now",
+    "entriesTitle": "Entries around {{time}}"
+  },
+  "stoolTypes": {
+    "1": "Hard lumps",
+    "2": "Lumpy sausage",
+    "3": "Cracked sausage",
+    "4": "Smooth sausage",
+    "5": "Soft blobs",
+    "6": "Mushy",
+    "7": "Watery"
   }
 }

@@ -1,7 +1,7 @@
 import { atOnDay, localDay } from '@/core/model/time';
 import { archiveListItem, addListItem } from '@/core/usecases/lists';
 import { dayLog, dayStatus, daysWithEntries, treatmentShortcuts, addMonths, monthOf, monthOverview, monthShape } from '@/core/usecases/dayLog';
-import { reportPreview } from '@/core/usecases/backup';
+import { reportPhotos, reportPreview } from '@/core/usecases/backup';
 import { addPhoto } from '@/core/usecases/photos';
 import { saveCheckIn, logStool } from '@/core/usecases/checkin';
 import { applyTreatment, logReaction } from '@/core/usecases/events';
@@ -118,6 +118,19 @@ describe('days list and report preview (UX-1, EX-14)', () => {
     expect(await reportPreview(deps, { from: '2026-01-01', to: '2026-01-31' })).toEqual({ entries: 1, photos: 2, sensitivePhotos: 1 });
     expect(await reportPreview(deps, {})).toMatchObject({ entries: 2, photos: 3 });
     await expect(reportPreview(deps, { from: 'nope' })).rejects.toThrow();
+  });
+
+  it('EX-4, EX-7 the report lists the photos of the period to pick from, with the area of their entry, oldest first', async () => {
+    const deps = makeDeps(new MemoryRepo());
+    const inside = await logSkinEntry(deps, { areaId: 'area-chin', scores, at: d('2026-01-12T08:00:00.000Z') });
+    const outside = await logSkinEntry(deps, { areaId: 'area-chin', scores, at: d('2026-02-12T08:00:00.000Z') });
+    const b = await addPhoto(deps, { entryKind: 'skinEntry', entryId: inside.id, sourceUri: 'b', at: d('2026-01-12T09:00:00.000Z') });
+    const a = await addPhoto(deps, { entryKind: 'skinEntry', entryId: inside.id, sourceUri: 'a', at: d('2026-01-12T08:30:00.000Z') });
+    await addPhoto(deps, { entryKind: 'skinEntry', entryId: outside.id, sourceUri: 'c' });
+    const list = await reportPhotos(deps, { from: '2026-01-01', to: '2026-01-31' });
+    expect(list.map((p) => p.photo.id)).toEqual([a.id, b.id]);
+    expect(list.every((p) => p.areaId === 'area-chin')).toBe(true);
+    expect(await reportPhotos(deps, {})).toHaveLength(3);
   });
 });
 

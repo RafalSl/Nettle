@@ -4,7 +4,7 @@ import { useCallback, useRef, useState } from 'react';
 import { Alert, Pressable, type ScrollViewInstance, View } from 'react-native';
 import { Text } from '@/ui/themed';
 import { sinceCaption } from '@/core/model/derived';
-import { areaTimeline, resolveJumpDay, trendPoints, type JumpTarget, type TimelineDay, type TimelineEntry, type TrendKey } from '@/core/usecases/timeline';
+import { areaTimeline, DEFAULT_TREND_RANGE, limitTrend, resolveJumpDay, trendPoints, type JumpTarget, type TimelineDay, type TimelineEntry, type TrendKey, type TrendRange } from '@/core/usecases/timeline';
 import { SCORE_KEYS, type Photo, type SkinArea } from '@/core/model/types';
 import { localDateTime, localDay } from '@/core/model/time';
 import { areaLabel, errorMessage, itemLabel, t } from '@/i18n';
@@ -25,6 +25,7 @@ export default function AreaTimelineScreen() {
   const { deps } = useServices();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [days, setDays] = useState<TimelineDay[] | null>(null);
+  const [range, setRange] = useState<TrendRange>(DEFAULT_TREND_RANGE);
   const [name, setName] = useState('');
   const [areas, setAreas] = useState<SkinArea[]>([]);
   const [treatmentNames, setTreatmentNames] = useState<Record<string, string>>({});
@@ -111,7 +112,7 @@ export default function AreaTimelineScreen() {
         <>
           <Heading>{t('review.trend')}</Heading>
           {!isNail && <Chips items={keys.map((k) => ({ id: k, label: k === 'size' ? t('review.sizeChip') : t(`skin.scores.${k}`) }))} selected={new Set([key])} onToggle={(id) => setTrend(id as TrendKey)} />}
-          <TrendChart points={trendPoints(days, key)} max={key === 'extent' ? 3 : key === 'size' ? Math.max(1, ...trendPoints(days, 'size').map((p) => p.value)) : 10} label={key === 'extent' ? t('review.extent') : key === 'size' ? t('review.sizeChip') : t(`skin.scores.${key}`)} />
+          <TrendChart points={limitTrend(trendPoints(days, key), range, localDay(deps.clock.now().toISOString(), deps.clock.timeZone(), deps.dayStart.get()))} max={key === 'extent' ? 3 : key === 'size' ? Math.max(1, ...trendPoints(days, 'size').map((p) => p.value)) : 10} range={range} onRange={setRange} label={key === 'extent' ? t('review.extent') : key === 'size' ? t('review.sizeChip') : t(`skin.scores.${key}`)} />
         </>
       )}
       {allPhotos.length >= 2 && (

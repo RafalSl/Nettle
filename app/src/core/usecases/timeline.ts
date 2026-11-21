@@ -216,3 +216,20 @@ export function limitTrend(points: readonly TrendPoint[], range: TrendRange, tod
   const from = trendRangeStart(range, today);
   return from === null ? [...points] : points.filter((p) => p.day >= from && p.day <= today);
 }
+
+/**
+ * SK-8: at most `max` points for a chart: when there are more, consecutive points are grouped and each group is
+ * drawn as its average; a group that holds a flare start or end keeps that mark (a start wins over an end).
+ */
+export function downsample(points: readonly TrendPoint[], max: number): TrendPoint[] {
+  if (points.length <= max) return [...points];
+  const size = Math.ceil(points.length / max);
+  const out: TrendPoint[] = [];
+  for (let i = 0; i < points.length; i += size) {
+    const group = points.slice(i, i + size);
+    const mean = group.reduce((s, p) => s + p.value, 0) / group.length;
+    const flare = group.some((p) => p.flare === 'start') ? 'start' : group.some((p) => p.flare === 'end') ? 'end' : null;
+    out.push({ day: group[0]!.day, value: Math.round(mean * 10) / 10, flare });
+  }
+  return out;
+}

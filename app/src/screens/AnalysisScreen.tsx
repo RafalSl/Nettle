@@ -1,18 +1,26 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, View } from 'react-native';
+import { Alert, View } from 'react-native';
 import { NettleError } from '@/core/model/errors';
 import { localDateTime, localDay } from '@/core/model/time';
 import { RECORD_KINDS, type Analysis, type Photo } from '@/core/model/types';
 import type { Deps } from '@/core/usecases/deps';
+import type { PreparedAnalysis } from '@/core/usecases/analysis';
 import { listAnalyses, prepareAnalysis } from '@/core/usecases/analysis';
 import { areaLabel, currentLanguage, errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
 import { AnalysisView } from '@/ui/AnalysisView';
 import { NavRow } from '@/ui/NavRow';
 import { useAnalysisRun } from '@/ui/useAnalysisRun';
-import { Button, Chips, Heading, Hint, Label, Screen, styles } from '@/ui/components';
+import { Button, Heading, Hint, Label, Screen, styles } from '@/ui/components';
+import { FloatingAction } from '@/ui/FloatingSave';
+import { GlassSurface } from '@/ui/GlassSurface';
+import { PhotoGrid } from '@/ui/PhotoGrid';
+import { WaitArc } from '@/ui/WaitArc';
+import { Text } from '@/ui/themed';
+import { color } from '@/ui/theme';
+import { formatElapsed } from '@/core/usecases/analysisRunner';
 
 /** Earlier analyses, and the photos taken in the chosen days with a label for each. */
 async function loadScreenData(deps: Deps, dayFrom: string, dayTo: string) {
@@ -33,7 +41,7 @@ const daysAgo = (n: number) => new Date(Date.now() - n * 24 * 3600 * 1000);
 
 /** LL-2 to LL-8: choose a date range and photos, review exactly what will be sent, then run and read the result. */
 /** m:ss */
-const clock = (seconds: number) => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+const clock = formatElapsed;
 
 export default function AnalysisScreen() {
   const { deps } = useServices();
@@ -86,6 +94,24 @@ export default function AnalysisScreen() {
   useFocusEffect(useCallback(() => () => runner.dismiss(), [runner]));
   const shownNow = finished ?? shown;
 
+  /** LL-5: exactly what will be sent, then a confirmation; used for a new run and for "Review and try again". */
+  function confirm(prepared: PreparedAnalysis, onSend: () => void) {
+    const lines = [
+      t('analysis.confirmIntro'),
+      '',
+      t('analysis.range', { from: prepared.dayFrom, to: prepared.dayTo, days: prepared.counts.days ?? 0, complete: prepared.counts.completeDays ?? 0 }),
+      ...RECORD_KINDS.filter((k) => (prepared.counts[k] ?? 0) > 0).map((k) => `• ${t(`delete.line.${k}`, { n: prepared.counts[k] ?? 0 })}`),
+      ...(prepared.counts.lookbackDays ? [t('analysis.lookback', { n: prepared.counts.lookbackDays })] : []),
+      ...prepared.photos.map((p) => `• ${t(p.sensitive ? 'analysis.photoLineSensitive' : 'analysis.photoLine', { label: p.label })}`),
+      t('analysis.model', { model: prepared.model }),
+      t('analysis.size', { n: prepared.sentCharacters }),
+    ];
+    Alert.alert(t('analysis.confirmTitle'), lines.join('\n'), [
+      { text: t('analysis.cancel'), style: 'cancel' },
+      { text: t('analysis.send'), onPress: onSend },
+    ]);
+  }
+
   async function review() {
     try {
       const inRange = new Set(photos.map((p) => p.photo.id));
@@ -95,28 +121,14 @@ export default function AnalysisScreen() {
         language: currentLanguage(),
         photoIds: [...chosen].filter((id) => inRange.has(id)),
       });
-      // LL-5: exactly what will be sent.
-      const lines = [
-        t('analysis.confirmIntro'),
-        '',
-        t('analysis.range', { from: prepared.dayFrom, to: prepared.dayTo, days: prepared.counts.days ?? 0, complete: prepared.counts.completeDays ?? 0 }),
-        ...RECORD_KINDS.filter((k) => (prepared.counts[k] ?? 0) > 0).map((k) => `• ${t(`delete.line.${k}`, { n: prepared.counts[k] ?? 0 })}`),
-        ...(prepared.counts.lookbackDays ? [t('analysis.lookback', { n: prepared.counts.lookbackDays })] : []),
-        ...prepared.photos.map((p) => `• ${t(p.sensitive ? 'analysis.photoLineSensitive' : 'analysis.photoLine', { label: p.label })}`),
-        t('analysis.model', { model: prepared.model }),
-        t('analysis.size', { n: prepared.sentCharacters }),
-      ];
-      Alert.alert(t('analysis.confirmTitle'), lines.join('\n'), [
-        { text: t('analysis.cancel'), style: 'cancel' },
-        { text: t('analysis.send'), onPress: () => runner.start(prepared) },
-      ]);
+      confirm(prepared, () => runner.start(prepared));
     } catch (e) {
       Alert.alert(errorMessage(e));
     }
   }
 
   return (
-    <Screen>
+    <Screen floating={run.status === 'running' ? undefined : run.status === 'interrupted' || run.status === 'failed' ? <FloatingAction title={t('analysis.retry')} icon="sparkle" onPress={() => confirm(run.prepared, () => void runner.retry())} /> : <FloatingAction title={t('analysis.review')} icon="sparkle" onPress={review} />}>
       <Heading>{t('analysis.title')}</Heading>
       <Hint>{t('analysis.disclaimer')}</Hint>
       <NavRow title={t('plan.link')} subtitle={t('plan.linkHint')} onPress={() => router.push('/review/pack')} />
@@ -134,27 +146,32 @@ export default function AnalysisScreen() {
       {photos.length === 0 ? (
         <Hint>{t('analysis.photosNone')}</Hint>
       ) : (
-        <Chips
-          items={photos.map(({ photo, label }) => ({ id: photo.id, label: photo.sensitive ? `${label} (${t('analysis.sensitiveMark')})` : label }))}
+        <PhotoGrid
+          items={photos.map(({ photo, label }) => ({ id: photo.id, file: photo.file, sensitive: photo.sensitive, label: photo.sensitive ? `${label} (${t('analysis.sensitiveMark')})` : label }))}
           selected={chosen}
           onToggle={toggle}
+          onAll={() => setChosen(new Set(photos.filter((p) => !p.photo.sensitive).map((p) => p.photo.id)))}
+          onNone={() => setChosen(new Set())}
         />
       )}
 
       {run.status === 'running' ? (
-        <>
-          <ActivityIndicator />
-          <Hint>{t('analysis.running')}</Hint>
-          <Hint>{t('analysis.elapsed', { time: clock(elapsed) })}</Hint>
+        <GlassSurface style={{ borderRadius: 26, padding: 14, gap: 10 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+            <WaitArc />
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 15, fontWeight: '600' }}>{t('analysis.running')}</Text>
+              <Text style={{ fontSize: 13, color: color.muted }}>{t('analysis.elapsed', { time: clock(elapsed) })}</Text>
+            </View>
+          </View>
           <Button title={t('analysis.cancelRun')} kind="secondary" onPress={() => runner.cancel()} />
-        </>
+        </GlassSurface>
       ) : (
         <>
           {run.status === 'interrupted' && <Hint>{t('analysis.interrupted')}</Hint>}
           {run.status === 'failed' && <Hint>{`${errorMessage(run.error)} ${t('analysis.failedNote')}`}</Hint>}
           {run.status === 'cancelled' && <Hint>{errorMessage(new NettleError('llm_cancelled'))}</Hint>}
-          {(run.status === 'interrupted' || run.status === 'failed') && <Button title={t('analysis.retry')} onPress={() => void runner.retry()} />}
-          <Button title={t('analysis.review')} onPress={review} />
+          {(run.status === 'interrupted' || run.status === 'failed') && <Hint>{t('analysis.retryHint')}</Hint>}
         </>
       )}
 

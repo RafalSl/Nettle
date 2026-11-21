@@ -7,7 +7,7 @@ import { getGroupModel, getModel, setGroupModel, setModel } from '@/core/usecase
 import { flarePeriods } from '@/core/usecases/flares';
 import { addArea, logSkinEntry } from '@/core/usecases/skin';
 import { getPreferences, setAreaFlareThreshold, setFlareScope } from '@/core/usecases/preferences';
-import { DEFAULT_TREND_RANGE, limitTrend, trendRangeStart, type TrendPoint } from '@/core/usecases/timeline';
+import { DEFAULT_TREND_RANGE, downsample, limitTrend, trendRangeStart, type TrendPoint } from '@/core/usecases/timeline';
 import { MemoryRepo } from './fakes/memoryRepo';
 import { makeDeps, syntheticEntry } from './helpers/fixtures';
 
@@ -34,6 +34,18 @@ describe('trend ranges (SK-7, SK-8)', () => {
     expect(limitTrend([pt('2025-12-17'), pt('2025-12-16')], '30d', '2026-01-15').map((p) => p.day)).toEqual(['2025-12-17']); // exactly 30 days: in; the day before: out
     expect(limitTrend([pt('2026-01-16')], 'all', '2026-01-15')).toHaveLength(1); // All is not cut at today
     expect(limitTrend([pt('2026-01-16')], '30d', '2026-01-15')).toHaveLength(0); // a day after today is outside a range
+  });
+});
+
+describe('chart downsampling (SK-8)', () => {
+  const pts = (n: number): TrendPoint[] => Array.from({ length: n }, (_, i) => ({ day: `2026-01-${String(i + 1).padStart(2, '0')}`, value: i % 2 === 0 ? 2 : 4, flare: null }));
+  it('SK-8 up to the maximum nothing changes; above it groups are averaged and keep a flare start before an end', () => {
+    expect(downsample(pts(10), 10)).toEqual(pts(10));
+    const many = pts(30).map((p, i) => (i === 7 ? { ...p, flare: 'end' as const } : i === 8 ? { ...p, flare: 'start' as const } : p));
+    const out = downsample(many, 10);
+    expect(out).toHaveLength(10);
+    expect(out[0]).toEqual({ day: '2026-01-01', value: 2.7, flare: null }); // (2 + 4 + 2) / 3, to one decimal
+    expect(out[2]!.flare).toBe('start'); // the group of days 7 to 9 holds an end and a start
   });
 });
 

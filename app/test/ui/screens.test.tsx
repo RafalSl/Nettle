@@ -1335,6 +1335,27 @@ describe('Review (UX-1, EX-14)', () => {
     expect(second.some((f) => f.startsWith('photos/'))).toBe(true);
   });
 
+  it('EX-4, EX-7 the doctor report can pick photos one by one: Select all leaves sensitive ones out, and only picked photos are exported', async () => {
+    const deps = nowDeps();
+    const a = await logSkinEntry(deps, { areaId: 'area-chin', scores, at: new Date(Date.now() - 86_400_000) });
+    const b = await logSkinEntry(deps, { areaId: 'area-penis', scores, at: new Date(Date.now() - 86_000_000) });
+    await addPhoto(deps, { entryKind: 'skinEntry', entryId: a.id, sourceUri: 'plain', at: new Date(Date.now() - 80_000_000) });
+    await addPhoto(deps, { entryKind: 'skinEntry', entryId: b.id, sourceUri: 'secret', at: new Date(Date.now() - 79_000_000) });
+    const { tree, fileShare } = await mount(() => require('@/app/(tabs)/review/report'), deps);
+    await flush();
+    await toggle(tree, en.doctor.pickPhotos);
+    expect(hasText(tree, en.photos.leftOut)).toBe(true); // the sensitive photo starts unselected
+    await press(tree, en.doctor.button);
+    await flush();
+    const none = Object.keys(unzipSync((fileShare.saveAndShare.mock.calls[0] as unknown as [string, Uint8Array])[1]));
+    expect(none.some((f) => f.startsWith('photos/'))).toBe(false); // nothing picked, nothing exported
+    await press(tree, en.photos.selectAll);
+    await press(tree, en.doctor.button);
+    await flush();
+    const some = Object.keys(unzipSync((fileShare.saveAndShare.mock.calls[1] as unknown as [string, Uint8Array])[1])).filter((f) => f.startsWith('photos/'));
+    expect(some).toHaveLength(1); // the plain one only
+  });
+
   it('EX-14 with nothing in the period the button is disabled and says why; after an export "since last export" is the default', async () => {
     const deps = nowDeps();
     const { tree } = await mount(() => require('@/app/(tabs)/review/report'), deps);
@@ -1605,7 +1626,7 @@ describe('Photos in the Skin and Nails forms (SK-4)', () => {
 
 describe('Daily health trends (SK-7, UX-1)', () => {
   it('SK-7 the trends screen charts one score item at a time over the logged days, and an archived item keeps its history', async () => {
-    const deps = nowDeps();
+    const deps = makeDeps(new MemoryRepo(), '2026-01-20T10:00:00.000Z');
     mockRouter.push.mockClear();
     const empty = await mount(() => require('@/app/(tabs)/review/health'), deps);
     await flush();
@@ -2039,7 +2060,13 @@ describe('Analysis running state (LL-12)', () => {
     await flush();
     expect(hasText(tree, en.analysis.interrupted)).toBe(true);
     expect(await deps.repo.listRecords('analyses')).toEqual([]);
-    await press(tree, en.analysis.retry);
+    await press(tree, en.analysis.retry); // LL-5: the retry opens the confirmation first, nothing is sent yet
+    await flush();
+    expect(llm.requests).toHaveLength(1);
+    const retryConfirm = (Alert.alert as jest.Mock).mock.calls.filter((c) => c[0] === en.analysis.confirmTitle).at(-1)!;
+    await act(async () => {
+      await (retryConfirm[2] as { text: string; onPress?: () => void }[]).find((b) => b.text === en.analysis.send)!.onPress!();
+    });
     await flush();
     expect(llm.requests).toHaveLength(2);
     expect(await deps.repo.listRecords('analyses')).toHaveLength(1);
@@ -2763,7 +2790,7 @@ describe('Area timeline (SK-8)', () => {
   });
 
   it('SK-8, UX-1 the timeline charts a score, switches score, and compares two photos side by side with the earlier one first', async () => {
-    const deps = nowDeps();
+    const deps = makeDeps(new MemoryRepo(), '2026-01-20T10:00:00.000Z');
     const a = await logSkinEntry(deps, { areaId: 'area-chin', scores: { ...scores, severity: 2, itch: 9 }, at: new Date('2026-01-10T08:00:00.000Z') });
     const b = await logSkinEntry(deps, { areaId: 'area-chin', scores: { ...scores, severity: 6, itch: 1 }, at: new Date('2026-01-12T08:00:00.000Z') });
     const pa = await addPhoto(deps, { entryKind: 'skinEntry', entryId: a.id, sourceUri: 'first-photo', at: new Date('2026-01-10T08:05:00.000Z') });
@@ -3987,5 +4014,21 @@ describe('Meal extras: confirmations and results (IN-3, LL-5, LL-12)', () => {
     await flush();
     expect(hasText(tree, en.errors.llm_rate_limited)).toBe(true);
     expect(hasText(tree, en.meal.estimateUntouched)).toBe(true);
+  });
+});
+
+describe('Trend range switch (SK-7, SK-8)', () => {
+  it('SK-8 the chart shows 90 days by default; 30 days drops older points and All brings every point back', async () => {
+    const deps = makeDeps(new MemoryRepo(), '2026-03-20T10:00:00.000Z');
+    await saveCheckIn(deps, { at: new Date('2026-01-10T20:00:00.000Z'), values: { 'item-sleep': 7 }, confirmEmptyDay: true });
+    await saveCheckIn(deps, { at: new Date('2026-03-10T20:00:00.000Z'), values: { 'item-sleep': 5 }, confirmEmptyDay: true });
+    const { tree } = await mount(() => require('@/app/(tabs)/review/health'), deps);
+    await flush();
+    const summary = (from: string, first: number) => en.review.trendSummary.replace('{{label}}', en.tags['item-sleep']).replace('{{from}}', from).replace('{{to}}', '2026-03-10').replace('{{first}}', String(first)).replace('{{last}}', '5').replace('{{min}}', '5').replace('{{max}}', String(first === 5 ? 5 : 7));
+    expect(hasText(tree, summary('2026-01-10', 7))).toBe(true); // 90 days back from 20 March reaches 20 Dec: January is in
+    await press(tree, en.review.range['30d']);
+    expect(hasText(tree, summary('2026-03-10', 5))).toBe(true); // only the March point
+    await press(tree, en.review.range.all);
+    expect(hasText(tree, summary('2026-01-10', 7))).toBe(true);
   });
 });

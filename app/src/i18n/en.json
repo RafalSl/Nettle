@@ -432,7 +432,10 @@
     "title": "Photos",
     "formHint": "Photos are saved with the entry. Tap one to drop it.",
     "drop": "Drop photo",
-    "someFailed": "{{n}} photos could not be saved. The entry was saved."
+    "someFailed": "{{n}} photos could not be saved. The entry was saved.",
+    "selectAll": "Select all",
+    "selectNone": "None",
+    "leftOut": "left out"
   },
   "delete": {
     "title": "Delete data",
@@ -550,9 +553,10 @@
     "meta": "{{date}} · {{from}} to {{to}} · {{model}} · prompt {{prompt}}",
     "noHypotheses": "No pattern stands out.",
     "interrupted": "The analysis was interrupted when the app was left. Nothing was saved.",
-    "retry": "Try again",
+    "retry": "Review and try again",
     "failedNote": "Nothing was saved.",
-    "questions": "Questions for your doctor"
+    "questions": "Questions for your doctor",
+    "retryHint": "Opens the confirmation again. Nothing is sent until you confirm."
   },
   "report": {
     "title": "Skin and health diary: report",
@@ -847,7 +851,15 @@
     "healthTitle": "Daily health trends",
     "healthEmpty": "Nothing to chart yet. Save Daily health records with a score first.",
     "medicalStart": "{{kind}}: {{title}}",
-    "medicalEnd": "Ended: {{title}}"
+    "medicalEnd": "Ended: {{title}}",
+    "range": {
+      "30d": "30 days",
+      "90d": "90 days",
+      "1y": "1 year",
+      "all": "All"
+    },
+    "rangeLabel": "Range of the chart",
+    "trendCompressed": "Each bar is the average of several days."
   },
   "day": {
     "newEntry": "New entry",
@@ -975,7 +987,10 @@
     "summaryUse": "Use in the report",
     "summaryDiscard": "Discard",
     "summaryIncluded": "The report opens with this summary (AI-generated, reviewed by you):",
-    "summaryRemove": "Remove from the report"
+    "summaryRemove": "Remove from the report",
+    "pickPhotos": "Pick photos one by one",
+    "pickPhotosHint": "Only the photos you tick go into the report.",
+    "noPhotosInPeriod": "No photos in this period."
   },
   "sugg": {
     "rows": "Rows shown",

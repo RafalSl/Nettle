@@ -1,6 +1,6 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Alert, Pressable, View } from 'react-native';
 import { Switch, Text } from '@/ui/themed';
 import { addMonths, monthOf, monthOverview, monthShape, type MonthDay } from '@/core/usecases/dayLog';
@@ -18,6 +18,7 @@ import { Rise } from '@/ui/Rise';
 import { color } from '@/ui/theme';
 import { useAnalysisRun } from '@/ui/useAnalysisRun';
 import { Button, Heading, Hint, Label, Screen, Segmented, styles } from '@/ui/components';
+import { formatElapsed, runCardStatus } from '@/core/usecases/analysisRunner';
 
 const WEEKDAY_KEYS = [2, 3, 4, 5, 6, 7, 1]; // Monday first; the names are in reminders.weekdays (1 = Sunday)
 
@@ -89,6 +90,15 @@ export default function ReviewScreen() {
   const { deps } = useServices();
   const router = useRouter();
   const run = useAnalysisRun();
+  // LL-12: the elapsed time on the analysis card ticks once a second while a run is going.
+  const [tick, setTick] = useState(() => deps.clock.now().getTime());
+  useEffect(() => {
+    if (run.status !== 'running') return;
+    const id = setInterval(() => setTick(deps.clock.now().getTime()), 1000);
+    (id as { unref?: () => void }).unref?.();
+    return () => clearInterval(id);
+  }, [run.status, deps]);
+  const cardStatus = runCardStatus(run, Math.max(tick, run.status === 'running' ? run.startedAt : 0));
   const { view: viewParam, month: monthParam } = useLocalSearchParams<{ view?: string; month?: string }>();
   const [pick, setPick] = useState<'days' | 'areas' | null>(null);
   const view = pick ?? (viewParam === 'areas' ? 'areas' : 'days');
@@ -124,11 +134,7 @@ export default function ReviewScreen() {
             icon="sparkle"
             title={t('review.analysis')}
             running={run.status === 'running'}
-            status={
-              run.status === 'idle' || run.status === 'cancelled'
-                ? undefined
-                : t(run.status === 'running' ? 'review.runRunning' : run.status === 'ready' ? 'review.runReady' : run.status === 'interrupted' ? 'review.runInterrupted' : 'review.runFailed')
-            }
+            status={cardStatus ? `${t(cardStatus.state === 'running' ? 'review.runRunning' : cardStatus.state === 'ready' ? 'review.runReady' : cardStatus.state === 'interrupted' ? 'review.runInterrupted' : 'review.runFailed')}${cardStatus.state === 'running' ? ` ${formatElapsed(cardStatus.seconds)}` : ''}` : undefined}
             onPress={() => router.push('/review/analysis')}
           />
         </View>

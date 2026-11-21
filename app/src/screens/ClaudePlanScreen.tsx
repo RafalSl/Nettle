@@ -7,7 +7,9 @@ import { buildPack, importResult, markedEntries, preparePack, previewResult, typ
 import { areaLabel, currentLanguage, errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
 import { DayRangePickers, pickedDay } from '@/ui/DayRangePickers';
-import { Button, Chips, Heading, Hint, Label, Screen } from '@/ui/components';
+import { Button, Heading, Hint, Label, Screen } from '@/ui/components';
+import { FloatingAction } from '@/ui/FloatingSave';
+import { PhotoGrid } from '@/ui/PhotoGrid';
 
 const daysAgo = (n: number) => new Date(Date.now() - n * 24 * 3600 * 1000);
 
@@ -123,7 +125,7 @@ export default function ClaudePlanScreen() {
   }
 
   return (
-    <Screen>
+    <Screen floating={<FloatingAction title={t('plan.prepare')} icon="box" onPress={() => void prepare()} />}>
       <Heading>{t('plan.title')}</Heading>
       <Hint>{t('plan.intro')}</Hint>
       <Hint>{t('analysis.disclaimer')}</Hint>
@@ -135,10 +137,9 @@ export default function ClaudePlanScreen() {
       {photos.length === 0 ? (
         <Hint>{t('analysis.photosNone')}</Hint>
       ) : (
-        <Chips items={photos.map(({ photo, label }) => ({ id: photo.id, label: photo.sensitive ? `${label} (${t('analysis.sensitiveMark')})` : label }))} selected={chosen} onToggle={toggle} />
+        <PhotoGrid items={photos.map(({ photo, label }) => ({ id: photo.id, file: photo.file, sensitive: photo.sensitive, label: photo.sensitive ? `${label} (${t('analysis.sensitiveMark')})` : label }))} selected={chosen} onToggle={toggle} onAll={() => setChosen(new Set(photos.filter((p) => !p.photo.sensitive).map((p) => p.photo.id)))} onNone={() => setChosen(new Set())} />
       )}
       <Hint>{t('plan.markedCount', { n: marked.length })}</Hint>
-      <Button title={t('plan.prepare')} onPress={() => void prepare()} />
       <Hint>{t('plan.prepareHint')}</Hint>
 
       <Heading>{t('plan.importTitle')}</Heading>

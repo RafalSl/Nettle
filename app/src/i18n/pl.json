@@ -432,7 +432,10 @@
     "title": "Zdjęcia",
     "formHint": "Zdjęcia zapisują się razem z wpisem. Dotknij zdjęcia, aby je odrzucić.",
     "drop": "Odrzuć zdjęcie",
-    "someFailed": "Nie udało się zapisać zdjęć: {{n}}. Wpis został zapisany."
+    "someFailed": "Nie udało się zapisać zdjęć: {{n}}. Wpis został zapisany.",
+    "selectAll": "Zaznacz wszystkie",
+    "selectNone": "Żadne",
+    "leftOut": "pominięte"
   },
   "delete": {
     "title": "Usuń dane",
@@ -550,9 +553,10 @@
     "meta": "{{date}} · {{from}} do {{to}} · {{model}} · prompt {{prompt}}",
     "noHypotheses": "Nic nie wyróżnia się jako wzorzec.",
     "interrupted": "Analiza została przerwana po opuszczeniu aplikacji. Nic nie zapisano.",
-    "retry": "Spróbuj ponownie",
+    "retry": "Sprawdź i spróbuj ponownie",
     "failedNote": "Nic nie zapisano.",
-    "questions": "Pytania do lekarza"
+    "questions": "Pytania do lekarza",
+    "retryHint": "Otwiera potwierdzenie jeszcze raz. Nic nie zostanie wysłane bez Twojego potwierdzenia."
   },
   "report": {
     "title": "Dziennik skóry i zdrowia: raport",
@@ -847,7 +851,15 @@
     "healthTitle": "Trendy Zdrowia dnia",
     "healthEmpty": "Brak danych do wykresu. Najpierw zapisz Zdrowie dnia z oceną.",
     "medicalStart": "{{kind}}: {{title}}",
-    "medicalEnd": "Koniec: {{title}}"
+    "medicalEnd": "Koniec: {{title}}",
+    "range": {
+      "30d": "30 dni",
+      "90d": "90 dni",
+      "1y": "1 rok",
+      "all": "Wszystko"
+    },
+    "rangeLabel": "Zakres wykresu",
+    "trendCompressed": "Każdy słupek to średnia z kilku dni."
   },
   "day": {
     "newEntry": "Nowy wpis",
@@ -975,7 +987,10 @@
     "summaryDiscard": "Odrzuć",
     "summaryIncluded": "Raport otwiera to podsumowanie (wygenerowane przez AI, sprawdzone przez Ciebie):",
     "summaryRemove": "Usuń z raportu",
-    "hint": "Raport PDF z surowymi danymi, dla lekarza. Tylko wpisy; pełną kopię zrobisz w Danych i kopii."
+    "hint": "Raport PDF z surowymi danymi, dla lekarza. Tylko wpisy; pełną kopię zrobisz w Danych i kopii.",
+    "pickPhotos": "Wybierz zdjęcia pojedynczo",
+    "pickPhotosHint": "Do raportu trafią tylko zaznaczone zdjęcia.",
+    "noPhotosInPeriod": "Brak zdjęć w tym okresie."
   },
   "sugg": {
     "rows": "Liczba wierszy",

@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react';
-import { Alert, View } from 'react-native';
-import { Switch, Text } from '@/ui/themed';
-import { addDays, localDay } from '@/core/model/time';
-import type { ReportSummary } from '@/core/model/types';
-import { markExported, presetOptions, reportPreview, sinceLastExport, type ReportPreview } from '@/core/usecases/backup';
+import { Alert } from 'react-native';
+import { addDays, localDateTime, localDay } from '@/core/model/time';
+import type { Photo, ReportSummary } from '@/core/model/types';
+import { markExported, presetOptions, reportPhotos, reportPreview, sinceLastExport, type ReportPreview } from '@/core/usecases/backup';
 import { exportBundle } from '@/core/usecases/exchange';
-import { areaLabelIn, currentLanguage, errorMessage, itemLabelIn, t, tIn } from '@/i18n';
+import { areaLabel, areaLabelIn, currentLanguage, errorMessage, itemLabelIn, t, tIn } from '@/i18n';
 import { useServices } from '@/services';
 import { DayRangePickers, pickedDay } from '@/ui/DayRangePickers';
 import { ReportSummaryPanel } from '@/ui/ReportSummaryPanel';
-import { Button, Chips, Hint, Label, Screen, styles } from '@/ui/components';
+import { Chips, Hint, Label, Screen } from '@/ui/components';
+import { FloatingAction } from '@/ui/FloatingSave';
+import { PhotoGrid } from '@/ui/PhotoGrid';
+import { SwitchRow } from '@/ui/SwitchRow';
 
 type Period = 'since' | 'last30' | 'last90' | 'all' | 'custom';
 
@@ -26,6 +28,11 @@ export default function ReportScreen() {
   const [period, setPeriod] = useState<Period>('last30');
   const [language, setLanguage] = useState<'en' | 'pl'>(currentLanguage());
   const [sensitive, setSensitive] = useState(false);
+  // EX-4, EX-7: photos picked one by one (off: all non-sensitive photos of the period, or all with the switch above).
+  const [oneByOne, setOneByOne] = useState(false);
+  const [periodPhotos, setPeriodPhotos] = useState<{ photo: Photo; areaId: string | null }[]>([]);
+  const [pickedPhotos, setPickedPhotos] = useState<Set<string>>(new Set());
+  const [areas, setAreas] = useState<Map<string, string>>(new Map());
   const [preview, setPreview] = useState<ReportPreview | null>(null);
   // LL-14: the reviewed AI summary to open the PDF with; it belongs to one period and language (the panel is keyed by both).
   const [summary, setSummary] = useState<ReportSummary | null>(null);
@@ -51,7 +58,12 @@ export default function ReportScreen() {
   useEffect(() => {
     // A custom range with the first day after the last is shown as a hint by the pickers, not as an error alert.
     if (period === 'custom' && pickedDay(from, deps.clock.timeZone()) > pickedDay(to, deps.clock.timeZone())) return;
-    (async () => setPreview(await reportPreview(deps, await daysFor(period))))().catch((e) => Alert.alert(errorMessage(e)));
+    (async () => {
+      const days = await daysFor(period);
+      setPreview(await reportPreview(deps, days));
+      setPeriodPhotos(await reportPhotos(deps, days));
+      setAreas(new Map((await deps.repo.listAreas()).map((a) => [a.id, areaLabel(a)])));
+    })().catch((e) => Alert.alert(errorMessage(e)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deps, period, from, to]);
 
@@ -60,7 +72,7 @@ export default function ReportScreen() {
       const options = presetOptions({
         kind: 'doctor',
         days: await daysFor(period),
-        photos: { mode: sensitive ? 'all' : 'non_sensitive' },
+        photos: oneByOne ? { mode: 'custom', ids: [...pickedPhotos] } : { mode: sensitive ? 'all' : 'non_sensitive' },
         ...(summary ? { summaryId: summary.id } : {}),
         report: {
           language,
@@ -78,22 +90,25 @@ export default function ReportScreen() {
   }
 
   const empty = preview !== null && preview.entries === 0;
+  const pickable = periodPhotos.map(({ photo, areaId }) => ({ id: photo.id, file: photo.file, sensitive: photo.sensitive, label: `${areaId ? (areas.get(areaId) ?? '') : ''} ${localDateTime(photo.at.utc, photo.at.tz)}`.trim() }));
   return (
-    <Screen>
+    <Screen floating={<FloatingAction title={t('doctor.button')} icon="report" disabled={preview === null || empty} onPress={create} />}>
       <Hint>{t('doctor.hint')}</Hint>
       <Label>{t('doctor.range')}</Label>
       <Chips items={available.map((p) => ({ id: p, label: t(`doctor.${p}`) }))} selected={new Set([period])} onToggle={(id) => setPeriod(id as Period)} />
       {period === 'custom' && <DayRangePickers from={from} to={to} onFrom={setFrom} onTo={setTo} />}
       {preview && !empty && <Hint>{t('doctor.counts', { entries: preview.entries, photos: preview.photos })}</Hint>}
       {empty && <Hint>{t('doctor.empty')}</Hint>}
-      {preview && preview.sensitivePhotos > 0 && (
-        <>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Text style={styles.rowText}>{t('doctor.sensitive', { n: preview.sensitivePhotos })}</Text>
-            <Switch value={sensitive} onValueChange={setSensitive} accessibilityLabel={t('doctor.sensitive', { n: preview.sensitivePhotos })} />
-          </View>
-          <Hint>{t('doctor.sensitiveHint')}</Hint>
-        </>
+      {preview && preview.sensitivePhotos > 0 && !oneByOne && <SwitchRow title={t('doctor.sensitive', { n: preview.sensitivePhotos })} hint={t('doctor.sensitiveHint')} value={sensitive} onChange={setSensitive} />}
+      {preview && preview.photos > 0 && <SwitchRow title={t('doctor.pickPhotos')} hint={oneByOne ? t('doctor.pickPhotosHint') : undefined} value={oneByOne} onChange={setOneByOne} />}
+      {oneByOne && (
+        <PhotoGrid
+          items={pickable}
+          selected={pickedPhotos}
+          onToggle={(id) => setPickedPhotos((cur) => (cur.has(id) ? new Set([...cur].filter((x) => x !== id)) : new Set(cur).add(id)))}
+          onAll={() => setPickedPhotos(new Set(pickable.filter((p) => !p.sensitive).map((p) => p.id)))}
+          onNone={() => setPickedPhotos(new Set())}
+        />
       )}
       <Label>{t('doctor.language')}</Label>
       <Chips
@@ -107,7 +122,6 @@ export default function ReportScreen() {
       {!empty && preview !== null && (
         <ReportSummaryPanel key={`${period}|${period === 'custom' ? `${pickedDay(from, deps.clock.timeZone())}|${pickedDay(to, deps.clock.timeZone())}` : ''}|${language}`} days={() => daysFor(period)} language={language} onChange={setSummary} />
       )}
-      <Button title={t('doctor.button')} disabled={preview === null || empty} onPress={create} />
     </Screen>
   );
 }

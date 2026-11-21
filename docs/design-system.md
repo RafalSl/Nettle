@@ -182,14 +182,9 @@ Built (build plan task 12): the scan screen with the typed code beside the camer
 
 ### Review
 
-1. RANGE SWITCH on the Area timeline trend and on Daily health trends: 30 days | 90 days | 1 year | All, default 90 days, a segmented control above the chart. Today both chart the whole history. Affects SK-8, SK-7.
-2. Review output cards show a status line while a run exists: Analysis running with elapsed time, Analysis ready (accent dot and line). Affects LL-12.
-3. Analysis result shows Evidence, Against and Uncertainty for each possible pattern, a "What the data cannot show" part and "Questions for your doctor"; no advice. Affects LL-4.
-4. A pushed screen's single primary floats at the bottom like the form Save (Prepare the pack, Send and analyse, Create doctor report, Try again). Affects UX-3, UX-12.
-5. Doctor report: period chips, a sensitive photos switch off by default, a one-by-one photo picker, language, optional AI summary. Affects EX-3, EX-7, EX-14, LL-14.
-6. The wait arc is drawn static here; proposed motion: it turns only while a call runs. Affects UX-12.
-7. Claude plan: the confirmation repeats the three notes (file leaves only if you send it, consumer terms, nothing billed). Affects LL-15.
-8. Photo picker: a 3-column grid with a check badge, sensitive photos blurred and unselected, Select all and None. Affects EX-4, EX-7, SK-5.
+Built (build plan task 13): the range switch on the area timeline trend and on Daily health trends (30 days, 90 days, 1 year, All, default 90 days), status lines on the Review output cards with the elapsed time, the analysis result as glass cards (evidence, against, uncertainty; then what the data cannot show and questions for the doctor), the wait arc on the analysis progress, the floating primary on pushed screens (`Screen floating`: Send and analyse, Review and try again, Create doctor report, Prepare the pack), "Review and try again" opening the confirmation again, the Doctor report with a "Pick photos one by one" switch and a three-column photo grid (check badge, sensitive photos blurred and unselected, Select all leaves them out, None) also in the analysis, the Claude plan and the custom export.
+
+Not built: the report summary confirmation and waiting boards were already built earlier (LL-14); the Claude plan confirmation still shows the three notes in its native alert.
 
 ### Settings
 

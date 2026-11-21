@@ -9,14 +9,17 @@ import { Text } from '@/ui/themed';
 import { color } from '@/ui/theme';
 
 /** `scrollRef` lets a screen scroll itself (the area timeline's date jump). */
-export function Screen({ children, scrollRef }: { children: ReactNode; scrollRef?: Ref<ScrollViewInstance> }) {
-  const inset = useBottomInset(); // room under the floating tab bar on the tab screens
+/** `floating` is the one primary action of the screen, drawn above the bottom edge (UX-3). */
+export function Screen({ children, scrollRef, floating }: { children: ReactNode; scrollRef?: Ref<ScrollViewInstance>; floating?: ReactNode }) {
+  const tabInset = useBottomInset(); // room under the floating tab bar on the tab screens
+  const inset = floating ? Math.max(tabInset, 150) : tabInset; // or under the floating action
   return (
   <View style={{ flex: 1, backgroundColor: color.ground }}>
     <Aurora />
     <ScrollView ref={scrollRef} style={{ flex: 1 }} contentContainerStyle={[styles.screen, { paddingBottom: inset }]} contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled">
       {children}
     </ScrollView>
+    {floating}
   </View>
   );
 }

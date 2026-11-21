@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Keyboard, Platform, Pressable, View } from 'react-native';
 import { t } from '@/i18n';
-import { Icon } from '@/ui/Icon';
+import { Icon, type IconName } from '@/ui/Icon';
 import { Text } from '@/ui/themed';
 import { color } from '@/ui/theme';
 
@@ -28,6 +28,14 @@ function useKeyboardHeight(): number {
  * above it that says what is missing.
  */
 export function FloatingSave({ disabled, missing, onPress }: { disabled: boolean; missing: string | null; onPress: () => void }) {
+  return <FloatingAction title={t('common.save')} icon="check" disabled={disabled} missing={missing} onPress={onPress} />;
+}
+
+/**
+ * UX-3, UX-12: the single primary action of a screen, floating like the form Save ("Prepare the pack", "Send and
+ * analyse", "Create doctor report", "Try again"). `missing` is the line above a disabled button.
+ */
+export function FloatingAction({ title, icon, disabled = false, missing = null, onPress }: { title: string; icon?: IconName; disabled?: boolean; missing?: string | null; onPress: () => void }) {
   const keyboard = useKeyboardHeight();
   return (
     <View pointerEvents="box-none" style={{ position: 'absolute', left: 20, right: 20, bottom: keyboard > 0 ? keyboard + 12 : 26, gap: 8 }}>
@@ -36,13 +44,13 @@ export function FloatingSave({ disabled, missing, onPress }: { disabled: boolean
       ) : null}
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={t('common.save')}
+        accessibilityLabel={title}
         accessibilityState={{ disabled }}
         disabled={disabled}
         onPress={onPress}
         style={{ height: 56, borderRadius: 999, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: disabled ? color.disabledFill : color.accent, borderWidth: disabled ? 1 : 0, borderColor: color.glassLine }}>
-        <Icon name="check" size={20} tint={disabled ? color.disabledText : color.onAccent} stroke={2.4} wash={false} />
-        <Text style={{ fontSize: 16.5, fontWeight: '700', color: disabled ? color.disabledText : color.onAccent }}>{t('common.save')}</Text>
+        {icon ? <Icon name={icon} size={20} tint={disabled ? color.disabledText : color.onAccent} stroke={2.4} wash={false} /> : null}
+        <Text style={{ fontSize: 16.5, fontWeight: '700', color: disabled ? color.disabledText : color.onAccent }}>{title}</Text>
       </Pressable>
     </View>
   );

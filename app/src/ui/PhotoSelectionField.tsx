@@ -1,13 +1,14 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useEffect, useState } from 'react';
-import { Switch, View } from 'react-native';
-import { Text } from '@/ui/themed';
+import { View } from 'react-native';
 import { DEFAULT_PHOTO_SELECTION, type PhotoSelection } from '@/core/export/photoSelection';
 import { localDateTime, localDay, localDaysToRange } from '@/core/model/time';
 import type { Photo, SkinArea } from '@/core/model/types';
 import { areaLabel, t } from '@/i18n';
 import { useServices } from '@/services';
 import { Chips, Hint, Label, styles } from '@/ui/components';
+import { PhotoGrid } from '@/ui/PhotoGrid';
+import { SwitchRow } from '@/ui/SwitchRow';
 
 type Mode = 'non_sensitive' | 'all' | 'none' | 'filter' | 'custom';
 const MODES: Mode[] = ['non_sensitive', 'all', 'none', 'filter', 'custom'];
@@ -73,8 +74,8 @@ export function PhotoSelectionField({ onChange }: { onChange: (selection: PhotoS
           {photos.length === 0 ? (
             <Hint>{t('exportPhotos.noPhotos')}</Hint>
           ) : (
-            <Chips
-              items={photos.map(({ photo, label }) => ({ id: photo.id, label: photo.sensitive ? `${label} (${t('analysis.sensitiveMark')})` : label }))}
+            <PhotoGrid
+              items={photos.map(({ photo, label }) => ({ id: photo.id, file: photo.file, sensitive: photo.sensitive, label: photo.sensitive ? `${label} (${t('analysis.sensitiveMark')})` : label }))}
               selected={picked}
               onToggle={(id) =>
                 setPicked((cur) => {
@@ -83,6 +84,8 @@ export function PhotoSelectionField({ onChange }: { onChange: (selection: PhotoS
                   return next;
                 })
               }
+              onAll={() => setPicked(new Set(photos.filter((p) => !p.photo.sensitive).map((p) => p.photo.id)))}
+              onNone={() => setPicked(new Set())}
             />
           )}
         </>
@@ -101,14 +104,8 @@ export function PhotoSelectionField({ onChange }: { onChange: (selection: PhotoS
               })
             }
           />
-          <View style={styles.timeRow}>
-            <Text style={styles.rowText}>{t('exportPhotos.includeSensitive')}</Text>
-            <Switch value={includeSensitive} onValueChange={setIncludeSensitive} accessibilityLabel={t('exportPhotos.includeSensitive')} />
-          </View>
-          <View style={styles.timeRow}>
-            <Text style={styles.rowText}>{t('exportPhotos.limit')}</Text>
-            <Switch value={limit} onValueChange={setLimit} accessibilityLabel={t('exportPhotos.limit')} />
-          </View>
+          <SwitchRow title={t('exportPhotos.includeSensitive')} value={includeSensitive} onChange={setIncludeSensitive} />
+          <SwitchRow title={t('exportPhotos.limit')} value={limit} onChange={setLimit} />
           {limit && (
             <>
               <View style={styles.timeRow}>

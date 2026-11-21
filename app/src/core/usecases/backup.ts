@@ -1,4 +1,5 @@
 import { NettleError } from '../model/errors';
+import type { Photo } from '../model/types';
 import { localDay, localDaysToRange } from '../model/time';
 import type { PhotoSelection } from '../export/photoSelection';
 import type { Deps } from './deps';
@@ -77,4 +78,16 @@ export async function reportPreview(deps: Deps, days: { from?: string; to?: stri
   const ids = new Set([...snap.skinEntries, ...snap.nailEntries].map((e) => e.id));
   const photos = (await deps.repo.listRecords('photos')).filter((p) => ids.has(p.entryId));
   return { entries, photos: photos.length, sensitivePhotos: photos.filter((p) => p.sensitive).length };
+}
+
+/** EX-4, EX-7: the photos a Doctor report for these days could hold, newest last, each with the area of its entry, to pick from one by one. */
+export async function reportPhotos(deps: Deps, days: { from?: string; to?: string }): Promise<{ photo: Photo; areaId: string | null }[]> {
+  const range = localDaysToRange(days.from, days.to, deps.clock.timeZone(), deps.dayStart.get());
+  if (!range) throw new NettleError('invalid_range');
+  const snap = await deps.repo.snapshot(range);
+  const areaOf = new Map([...snap.skinEntries, ...snap.nailEntries].map((e) => [e.id, e.areaId]));
+  return (await deps.repo.listRecords('photos'))
+    .filter((p) => areaOf.has(p.entryId))
+    .sort((a, b) => a.at.utc.localeCompare(b.at.utc) || a.id.localeCompare(b.id))
+    .map((photo) => ({ photo, areaId: areaOf.get(photo.entryId) ?? null }));
 }

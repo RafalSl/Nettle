@@ -613,3 +613,8 @@ Newest entry last. One short entry per working session or meaningful step: what 
 - **Not done:** floating-sheet versions of the three confirmations (they stay native alerts) and the label scan camera screen.
 - **Tests:** the estimate Cancel test follows "Cancel from the start"; the scan tests follow the not-found card and the in-store sheet; three new ones.
 - **Next:** G4, Review.
+
+## 2026-11-21: Review (branch feature/g4-review)
+- **Done:** the Group 4 boards (SK-7, SK-8, LL-2, LL-4, LL-5, LL-12, EX-4, EX-7). A range switch on both trend charts (core `limitTrend`, `downsample` for more than 90 bars; the chart is a glass card). The Review analysis card shows a ticking elapsed time. The analysis result is glass cards with questions for the doctor. `Screen` takes a `floating` primary (`FloatingAction`, shared with the form Save) for Send and analyse, Review and try again (the retry now opens the confirmation again instead of re-sending; the consistency report asked for this), Create doctor report and Prepare the pack. The analysis progress uses the wait arc. A `PhotoGrid` (three columns, check badge, sensitive blurred and left out of Select all) replaces the photo chips in the analysis, the Claude plan and the custom export; the Doctor report gets "Pick photos one by one" (`reportPhotos`) and glass switch rows. Requirements SK-8 and LL-4 carry the new behaviour.
+- **Tests:** the interrupted-run retry test confirms first; the health and timeline tests pin the clock to January 2026; new tests for the range switch, picking report photos one by one and `reportPhotos`.
+- **Next:** G5, Settings.

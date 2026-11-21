@@ -15,7 +15,7 @@ export default function AboutScreen() {
       <Hint>{t('about.local')}</Hint>
       <Hint>{t('about.ai')}</Hint>
       <Hint>{t('about.medical')}</Hint>
-      <NavRow title={t('nav.guide')} subtitle={t('guide.hint')} onPress={() => router.push('/guide')} />
+      <NavRow icon="guide" title={t('nav.guide')} subtitle={t('guide.hint')} onPress={() => router.push('/guide')} />
     </Screen>
   );
 }

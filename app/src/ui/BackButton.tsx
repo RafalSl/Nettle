@@ -1,8 +1,8 @@
 import { useRouter } from 'expo-router';
 import { Pressable } from 'react-native';
-import { Text } from '@/ui/themed';
 import { t } from '@/i18n';
-import { color } from '@/ui/theme';
+import { GlassSurface } from '@/ui/GlassSurface';
+import { Icon } from '@/ui/Icon';
 
 /**
  * UX-1: the Back button of the first Settings screen. Settings is a nested stack inside the root stack, so its first
@@ -16,9 +16,11 @@ export function BackButton() {
       accessibilityRole="button"
       accessibilityLabel={t('common.back')}
       onPress={() => (router.canGoBack() ? router.back() : router.replace('/today'))}
-      hitSlop={8}
+      hitSlop={4}
     >
-      <Text style={{ color: color.accent, fontSize: 17 }}>‹ {t('common.back')}</Text>
+      <GlassSurface style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' }}>
+        <Icon name="back" size={20} wash={false} stroke={2} />
+      </GlassSurface>
     </Pressable>
   );
 }

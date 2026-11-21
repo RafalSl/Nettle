@@ -720,8 +720,7 @@ describe('navigation shell (UX-1, UX-2, UX-3, UX-6)', () => {
     const fs = require('fs') as typeof import('fs');
     const path = require('path') as typeof import('path');
     const root = path.join(__dirname, '../../src/app');
-    expect(fs.readFileSync(path.join(root, '(tabs)/review/_layout.tsx'), 'utf8')).toContain('GearButton');
-    expect(fs.readFileSync(path.join(root, '../screens/TodayScreen.tsx'), 'utf8')).toContain('GearButton'); // Today draws its own header (UX-12)
+    for (const screen of ['TodayScreen', 'ReviewScreen']) expect(fs.readFileSync(path.join(root, `../screens/${screen}.tsx`), 'utf8')).toContain('GearButton'); // both tabs draw their own header (UX-12)
     expect(fs.readFileSync(path.join(root, '_layout.tsx'), 'utf8')).toContain('name="settings"'); // above the tabs, so the tab bar is hidden inside
     const { tree } = await mount(() => ({ default: require('@/ui/GearButton').GearButton }), nowDeps());
     await press(tree, en.nav.gear);

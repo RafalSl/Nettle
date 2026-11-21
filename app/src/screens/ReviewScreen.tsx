@@ -1,14 +1,21 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, Switch, View } from 'react-native';
-import { Text } from '@/ui/themed';
+import { Alert, Pressable, View } from 'react-native';
+import { Switch, Text } from '@/ui/themed';
 import { addMonths, monthOf, monthOverview, monthShape, type MonthDay } from '@/core/usecases/dayLog';
 import { localDay } from '@/core/model/time';
 import { areaOverview, type AreaOverviewRow } from '@/core/usecases/timeline';
 import { areaLabel, errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
+import { GearButton } from '@/ui/GearButton';
+import { GlassSurface } from '@/ui/GlassSurface';
+import type { IconName } from '@/ui/Icon';
+import { IconCircle } from '@/ui/IconCircle';
+import { NavGroup } from '@/ui/NavGroup';
 import { NavRow } from '@/ui/NavRow';
+import { Rise } from '@/ui/Rise';
+import { color } from '@/ui/theme';
 import { useAnalysisRun } from '@/ui/useAnalysisRun';
 import { Button, Heading, Hint, Label, Screen, Segmented, styles } from '@/ui/components';
 
@@ -21,7 +28,7 @@ function Calendar({ month, days, onOpen }: { month: string; days: MonthDay[]; on
   while (cells.length % 7 !== 0) cells.push(null);
   const rows = Array.from({ length: cells.length / 7 }, (_, i) => cells.slice(i * 7, i * 7 + 7));
   return (
-    <View style={{ gap: 4 }}>
+    <GlassSurface style={{ borderRadius: 28, padding: 12, gap: 4 }}>
       <View style={{ flexDirection: 'row' }}>
         {WEEKDAY_KEYS.map((d) => (
           <Text key={d} style={[styles.hint, { flex: 1, textAlign: 'center' }]}>
@@ -38,9 +45,9 @@ function Calendar({ month, days, onOpen }: { month: string; days: MonthDay[]; on
                 accessibilityRole="button"
                 accessibilityLabel={t('review.calendarDay', { day: c.day, n: c.entries, health: c.dailyHealth ? t('review.yes') : t('review.no'), flare: c.flare ? t('review.yes') : t('review.no') })}
                 onPress={() => onOpen(c.day)}
-                style={{ flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center', borderWidth: c.entries > 0 ? 1 : 0, borderColor: '#9996', borderRadius: 6 }}>
-                <Text style={styles.rowText}>{Number(c.day.slice(8))}</Text>
-                <Text style={styles.hint}>{`${c.entries > 0 ? '•' : ''}${c.dailyHealth ? '✓' : ''}${c.flare ? '▲' : ''}` || ' '}</Text>
+                style={{ flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 14, backgroundColor: c.flare ? color.alertSoft : 'transparent', borderWidth: c.dailyHealth ? 1.5 : 0, borderColor: color.accentLine }}>
+                <Text style={[styles.rowText, { fontSize: 15 }]}>{Number(c.day.slice(8))}</Text>
+                <Text style={[styles.hint, { fontSize: 11, color: c.flare ? color.alert : color.muted }]}>{`${c.entries > 0 ? '•' : ''}${c.dailyHealth ? '✓' : ''}${c.flare ? '▲' : ''}` || ' '}</Text>
               </Pressable>
             ) : (
               <View key={`e${j}`} style={{ flex: 1 }} />
@@ -49,7 +56,22 @@ function Calendar({ month, days, onOpen }: { month: string; days: MonthDay[]; on
         </View>
       ))}
       <Hint>{t('review.calendarLegend')}</Hint>
-    </View>
+    </GlassSurface>
+  );
+}
+
+/** UX-12: an output card: an icon circle, a title and a status line (the Doctor report, the AI analysis). */
+function OutputCard({ icon, title, status, running = false, onPress }: { icon: IconName; title: string; status?: string; running?: boolean; onPress: () => void }) {
+  return (
+    <Pressable accessibilityRole="button" accessibilityLabel={title} onPress={onPress} style={{ flex: 1 }}>
+      <GlassSurface style={{ borderRadius: 26, padding: 14, gap: 10, minHeight: 112, ...(status ? { borderColor: color.accentLine } : {}) }}>
+        <IconCircle name={icon} size={40} />
+        <View>
+          <Text style={{ fontSize: 16, fontWeight: '700' }}>{title}</Text>
+          {status ? <Text style={{ fontSize: 13, color: color.accent }}>{running ? '● ' : ''}{status}</Text> : null}
+        </View>
+      </GlassSurface>
+    </Pressable>
   );
 }
 
@@ -90,18 +112,30 @@ export default function ReviewScreen() {
 
   return (
     <Screen>
-      <NavRow title={t('review.report')} onPress={() => router.push('/review/report')} />
-      {/* LL-12: a running or finished analysis shows here, whichever screen it was started from. */}
-      {run.status !== 'idle' && run.status !== 'cancelled' && (
-        <NavRow
-          title={t(
-            run.status === 'running' ? 'review.runRunning' : run.status === 'ready' ? 'review.runReady' : run.status === 'interrupted' ? 'review.runInterrupted' : 'review.runFailed',
-          )}
-          onPress={() => router.push('/review/analysis')}
-        />
-      )}
-      <NavRow title={t('review.analysis')} onPress={() => router.push('/review/analysis')} />
-      <NavRow title={t('review.healthTitle')} onPress={() => router.push('/review/health')} />
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Text style={{ fontSize: 34, fontWeight: '800', letterSpacing: -1 }}>{t('tabs.review')}</Text>
+        <GearButton />
+      </View>
+      <Rise order={0} style={{ gap: 10 }}>
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          <OutputCard icon="report" title={t('review.report')} onPress={() => router.push('/review/report')} />
+          {/* LL-12: a running or finished analysis shows here, whichever screen it was started from. */}
+          <OutputCard
+            icon="sparkle"
+            title={t('review.analysis')}
+            running={run.status === 'running'}
+            status={
+              run.status === 'idle' || run.status === 'cancelled'
+                ? undefined
+                : t(run.status === 'running' ? 'review.runRunning' : run.status === 'ready' ? 'review.runReady' : run.status === 'interrupted' ? 'review.runInterrupted' : 'review.runFailed')
+            }
+            onPress={() => router.push('/review/analysis')}
+          />
+        </View>
+        <NavGroup>
+          <NavRow icon="health" title={t('review.healthTitle')} onPress={() => router.push('/review/health')} />
+        </NavGroup>
+      </Rise>
 
       <Segmented
         items={[
@@ -114,12 +148,10 @@ export default function ReviewScreen() {
 
       {view === 'areas' ? (
         <>
-          <Heading>{t('review.skinGroup')}</Heading>
-          {areas.skin.length === 0 && <Hint>{t('review.noAreas')}</Hint>}
-          {areaRows(areas.skin)}
-          <Heading>{t('review.nailsGroup')}</Heading>
-          {areas.nails.length === 0 && <Hint>{t('review.noNails')}</Hint>}
-          {areaRows(areas.nails)}
+          <Label>{t('review.skinGroup')}</Label>
+          {areas.skin.length === 0 ? <Hint>{t('review.noAreas')}</Hint> : <NavGroup>{areaRows(areas.skin)}</NavGroup>}
+          <Label>{t('review.nailsGroup')}</Label>
+          {areas.nails.length === 0 ? <Hint>{t('review.noNails')}</Hint> : <NavGroup>{areaRows(areas.nails)}</NavGroup>}
         </>
       ) : (
         <>
@@ -154,13 +186,17 @@ export default function ReviewScreen() {
           {incompleteOnly && <Hint>{t('review.incompleteHint')}</Hint>}
           {listed.length === 0 && <Hint>{incompleteOnly ? t('review.noIncomplete') : `${t('review.noDays')} ${t('review.empty')}`}</Hint>}
           {listed.length === 0 && !incompleteOnly && days.every((d) => d.entries === 0) && <Button kind="secondary" title={t('review.goToday')} onPress={() => router.navigate('/today')} />}
-          {listed.map((d) => (
-            <NavRow
-              key={d.day}
-              title={`${t('review.dayRow', { day: d.day, n: d.entries })}${d.dailyHealth ? `, ${t('review.dayComplete')}` : ''}`}
-              onPress={() => open(d.day)}
-            />
-          ))}
+          {listed.length > 0 && (
+            <NavGroup>
+              {listed.map((d) => (
+                <NavRow
+                  key={d.day}
+                  title={`${t('review.dayRow', { day: d.day, n: d.entries })}${d.dailyHealth ? `, ${t('review.dayComplete')}` : ''}`}
+                  onPress={() => open(d.day)}
+                />
+              ))}
+            </NavGroup>
+          )}
         </>
       )}
     </Screen>

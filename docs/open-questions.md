@@ -89,11 +89,7 @@ Requirements and flows are in `docs/requirements.md`, `docs/ux-design.md` and `d
 - First run (UX-1, UX-2): an empty diary shows one card on Today (Log a meal, Where do I log…?); an empty Review has a button to Today. No tour.
 - Guide (UX-11): subtitles on More rows and in the layout editor (`entry.*.hint`), descriptions on predefined routine categories and Daily health items (`itemDescriptions.*`), an optional description on every list item (user treatments, categories, items), shown in the Treatment form and in Settings; `GuideScreen` ("Where do I log…?", 16 everyday situations, each opening its form) from More and from Settings, About.
 
-**Decided in v0.9, not built** (Today redesign, design canvas https://claude.ai/artifact/BVCSSjDYjDDMVcKrshmazt)
-- Today (UX-2, UX-12): the day ring with intake and body-and-care tracks, tappable and merged dots, swipe for the day, at most 5 pins plus More, Edit Today in More, context pills (at most two, fixed order, Daily health from its reminder time), swipe-to-delete on log rows, no treatment shortcut row.
-- Treatment quick sheet with Regular and Often used sections (IN-11, IN-17, UX-3); long press on a quick action opens the full form.
-- More with a search field over entry types and guide situations (UX-11).
-- The Aurora look across the app: dark ground, aurora, glass, Gabarito, washed icons, load motion (UX-12). Forms and Review follow the canvas boards; screens without a board (Skin, Daily health, Review, Settings) still need one.
+**Built from v0.9 (2026-11-21), phone check pending:** Today with the day ring, context pills, quick actions, glass log rows with swipe delete, the floating tab bar, the Treatment, Medication and Stool quick sheets, More with search, Edit Today as its own screen, the floating Save, and the Aurora look (theme, Gabarito, glass, icons) across the app (UX-2, UX-3, UX-5, UX-11, UX-12, IN-11, IN-17). Still open from v0.9: the proposals of `docs/design-system.md` ("Proposed additions") and UX-13 (Later).
 
 **Not built**
 - *Create forms.* Done: every create form is on `FormModal` (Cancel and Save in the header, Save disabled with what is missing, Discard Changes sheet, a past-day default through the `day` route parameter). Skin and nail entries get their photos from the entry's edit form (the "recent" lists they hung off are gone). The reminder-tap guard (`unsavedForm`) covers them.

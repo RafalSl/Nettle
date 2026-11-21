@@ -643,3 +643,6 @@ Newest entry last. One short entry per working session or meaningful step: what 
 - **Why:** Expo Go signed in to an Expo account refuses a project served by a CLI that is not signed in, and the container's `~/.expo` was thrown away on every run.
 - **Done:** a named volume for `/home/node/.expo`; README and CLAUDE.md explain `./run.sh npx expo login`. Compose config only, no app code.
 - **Next:** the user signs in once.
+
+## 2026-11-21: expo login works in the container (branch feature/docker-login-link)
+- **Done:** `expo login` crashed because the image has no `xdg-open`; the image gets a no-op stub, so the CLI prints the login link and waits for the browser callback on localhost (host networking). `run.sh` rebuilds the cached image before each run. No app code changed.

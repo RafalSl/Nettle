@@ -26,4 +26,7 @@ if [ "$#" -eq 0 ]; then
   set -- npx expo start --port "$PORT"
 fi
 
+# Rebuild only when app/Dockerfile changed (cached otherwise).
+docker compose build --quiet >/dev/null
+
 exec docker compose run --rm app "$@"

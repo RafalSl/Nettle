@@ -40,7 +40,8 @@ How it works:
 - Port 8081 must be free (host networking).
 - If Expo Go is signed in to an Expo account, the CLI must be too, or Expo Go
   refuses to open the project: run `./run.sh npx expo login` once (the login is
-  kept in a volume), or sign out in Expo Go.
+  kept in a volume; the CLI prints a link: open it in the host browser, it
+  calls back to localhost), or sign out in Expo Go.
 - The first test run on a fresh cache volume can time out the Today screen
   test; run it again.
 

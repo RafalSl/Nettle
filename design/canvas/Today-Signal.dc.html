@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Today, Signal (lab notebook)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Schibsted+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font:inherit;color:inherit;border:0;background:none;padding:0;margin:0;cursor:pointer;text-align:inherit}
+@keyframes sg-rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes sg-pop{from{opacity:0;transform:translateY(18px) scale(.92)}to{opacity:1;transform:none}}
+.sg-r{animation:sg-rise .6s cubic-bezier(.2,.7,.2,1) both}
+.sg-c{animation:sg-pop .55s cubic-bezier(.3,1.4,.5,1) both}
+.sg-d1{animation-delay:.05s}.sg-d2{animation-delay:.15s}.sg-d3{animation-delay:.25s}.sg-d4{animation-delay:.6s}.sg-d5{animation-delay:.7s}.sg-d6{animation-delay:.8s}
+.sg-c1{animation-delay:.28s}.sg-c2{animation-delay:.34s}.sg-c3{animation-delay:.40s}.sg-c4{animation-delay:.46s}.sg-c5{animation-delay:.52s}.sg-c6{animation-delay:.58s}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; overflow: hidden; background-color: #F7F7F3; background-image: radial-gradient(300px 260px at 100% 0%, {{accentHaze}} 0%, transparent 70%), linear-gradient(rgba(15,15,15,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(15,15,15,0.045) 1px, transparent 1px); background-size: auto, 22px 22px, 22px 22px; font-family: 'Schibsted Grotesk', -apple-system, system-ui, sans-serif; color: #0F0F0F; -webkit-font-smoothing: antialiased">
+
+<svg aria-hidden="true" width="0" height="0" style="position: absolute">
+<defs>
+<linearGradient id="sgWash" gradientUnits="userSpaceOnUse" x1="0" y1="9" x2="0" y2="22"><stop offset="0" stop-color="{{washColor}}" stop-opacity="0"/><stop offset="1" stop-color="{{washColor}}" stop-opacity="0.9"/></linearGradient>
+<linearGradient id="sgWashMeal" gradientUnits="userSpaceOnUse" x1="0" y1="9" x2="0" y2="17"><stop offset="0" stop-color="#0F0F0F" stop-opacity="0"/><stop offset="1" stop-color="#0F0F0F" stop-opacity="0.28"/></linearGradient>
+</defs>
+</svg>
+
+<div style="position: absolute; inset: 0; padding: 54px 20px 0 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px">
+
+<!-- Header: typographic date -->
+<div class="sg-r sg-d1" style="display: flex; align-items: flex-end; gap: 8px">
+<button aria-label="Jump to a date, Saturday 14 November" style="flex: 1; min-width: 0; display: flex; align-items: flex-end; gap: 10px">
+<span style="font-family: Unbounded, sans-serif; font-size: 64px; line-height: 60px; font-weight: 800; letter-spacing: -3px">14</span>
+<span style="display: flex; flex-direction: column; padding-bottom: 4px">
+<span style="font-family: Unbounded, sans-serif; font-size: 15px; font-weight: 700; letter-spacing: 0.5px">NOV</span>
+<span style="font-size: 14px; font-weight: 500; color: #55554F">Saturday · Today</span>
+</span>
+</button>
+<div style="display: flex; gap: 6px; padding-bottom: 4px">
+<button aria-label="Previous day" style="width: 44px; height: 44px; border-radius: 999px; background: #0F0F0F; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+<button aria-label="Next day, not available" disabled style="width: 44px; height: 44px; border-radius: 999px; box-shadow: inset 0 0 0 1.5px #C9C9C2; display: flex; align-items: center; justify-content: center; cursor: default"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9A9A93" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+<button aria-label="Settings" style="width: 44px; height: 44px; border-radius: 999px; background: #FFFFFF; box-shadow: inset 0 0 0 1.5px #0F0F0F; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#0F0F0F" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg></button>
+</div>
+</div>
+
+<!-- Hero field: outlined pill with a hard accent shadow -->
+<div class="sg-r sg-d2" style="display: flex; align-items: center; height: 58px; padding: 0 7px 0 20px; gap: 12px; border-radius: 999px; background: #FFFFFF; box-shadow: inset 0 0 0 1.5px #0F0F0F, 4px 5px 0 {{accent}}">
+<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0F0F0F" stroke-width="2.1" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+<button aria-label="Log anything" style="flex: 1; min-width: 0; height: 44px; font-size: 16.5px; font-weight: 500; color: #55554F">What do you want to log?</button>
+<button aria-label="Scan a barcode or label" style="width: 44px; height: 44px; border-radius: 999px; background: #0F0F0F; display: flex; align-items: center; justify-content: center; flex: none"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{accent}}" stroke-width="2.1" stroke-linecap="round"><path d="M4 6v12M8 6v12M11 6v12M15 6v12M18 6v12M20.5 6v12"/></svg></button>
+</div>
+
+<!-- Quick actions: standing capsules -->
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div class="sg-r sg-d3" style="display: flex; align-items: center; justify-content: space-between">
+<h2 style="margin: 0; font-family: Unbounded, sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 1.2px">QUICK ACTIONS</h2>
+<button style="height: 32px; padding: 0 14px; border-radius: 999px; box-shadow: inset 0 0 0 1.5px #0F0F0F; font-size: 13.5px; font-weight: 700">Edit</button>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px">
+
+<button class="sg-c sg-c1" style="height: 100px; border-radius: 999px; background: {{accent}}; box-shadow: inset 0 0 0 1.5px #0F0F0F; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px">
+<svg aria-hidden="true" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#0F0F0F" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17a8 8 0 0 1 16 0Z" fill="url(#sgWashMeal)"/><path d="M2.5 20.5h19"/><path d="M12 9V7"/><circle cx="12" cy="5.8" r="1.2"/></svg>
+<span style="font-size: 14.5px; font-weight: 700">Meal</span>
+</button>
+
+<button class="sg-c sg-c2" style="height: 100px; border-radius: 999px; background: #FFFFFF; box-shadow: inset 0 0 0 1.5px #0F0F0F; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px">
+<svg aria-hidden="true" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#0F0F0F" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12H22V14a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15L6 14Z" fill="url(#sgWash)" stroke="none"/><path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2"/><path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>
+<span style="font-size: 14.5px; font-weight: 700">Skin</span>
+</button>
+
+<button class="sg-c sg-c3" style="height: 100px; border-radius: 999px; background: #FFFFFF; box-shadow: inset 0 0 0 1.5px #0F0F0F; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px">
+<svg aria-hidden="true" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#0F0F0F" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z" fill="url(#sgWash)"/><path d="m8.5 8.5 7 7"/></svg>
+<span style="font-size: 14.5px; font-weight: 700">Treatment</span>
+</button>
+
+<button class="sg-c sg-c4" style="height: 100px; border-radius: 999px; background: #FFFFFF; box-shadow: inset 0 0 0 1.5px #0F0F0F; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px">
+<svg aria-hidden="true" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#0F0F0F" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" fill="url(#sgWash)"/><path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/></svg>
+<span style="font-size: 14.5px; font-weight: 700">Daily health</span>
+</button>
+
+<button class="sg-c sg-c5" style="height: 100px; border-radius: 999px; background: #FFFFFF; box-shadow: inset 0 0 0 1.5px #0F0F0F; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px">
+<svg aria-hidden="true" width="31" height="31" viewBox="0 0 24 24" fill="none" stroke="#0F0F0F" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="15.5" width="17" height="5" rx="2.5" transform="rotate(-3 12 18)" fill="url(#sgWash)"/><rect x="6" y="10.5" width="12" height="5" rx="2.5" transform="rotate(3 12 13)" fill="url(#sgWash)"/><rect x="8.5" y="6" width="7" height="4.5" rx="2.25" transform="rotate(-4 12 8)" fill="url(#sgWash)"/><path d="M12 6c0-1.6.8-2.6 2.2-3.2"/></svg>
+<span style="font-size: 14.5px; font-weight: 700">Stool</span>
+</button>
+
+<button class="sg-c sg-c6" style="height: 100px; border-radius: 999px; background: transparent; border: 1.5px dashed #0F0F0F; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px">
+<svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="#0F0F0F"><circle cx="6" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="18" cy="12" r="1.7"/></svg>
+<span style="font-size: 14.5px; font-weight: 700">More</span>
+</button>
+
+</div>
+</div>
+
+<!-- Context: two banner pills -->
+<div class="sg-r sg-d4" style="display: flex; flex-direction: column; gap: 8px">
+<button style="height: 48px; display: flex; align-items: center; gap: 10px; padding: 0 8px 0 16px; border-radius: 999px; background: #E4572E; color: #FFFFFF">
+<span style="font-family: Unbounded, sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 1px">FLARE</span>
+<span style="flex: 1; font-size: 15px; font-weight: 600">Chin · severity 8 since 12 Nov</span>
+<span style="height: 34px; padding: 0 12px; border-radius: 999px; background: rgba(255,255,255,0.22); display: flex; align-items: center; font-size: 13.5px; font-weight: 700">Areas</span>
+</button>
+<button style="height: 48px; display: flex; align-items: center; gap: 10px; padding: 0 8px 0 16px; border-radius: 999px; background: #0F0F0F; color: #FFFFFF">
+<span style="font-family: Unbounded, sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 1px; color: {{accent}}">HEALTH</span>
+<span style="flex: 1; font-size: 15px; font-weight: 600">Not recorded today</span>
+<span style="height: 34px; padding: 0 14px; border-radius: 999px; background: {{accent}}; color: #0F0F0F; display: flex; align-items: center; font-size: 13.5px; font-weight: 700">Open</span>
+</button>
+</div>
+
+<!-- One-tap treatments -->
+<div class="sg-r sg-d5" style="display: flex; gap: 8px; flex-wrap: wrap">
+<button aria-label="Apply Emollient to Chin and Neck" style="height: 42px; padding: 0 16px; border-radius: 999px; background: #FFFFFF; box-shadow: inset 0 0 0 1.5px #0F0F0F; display: flex; align-items: center; gap: 8px"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0F0F0F" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span style="font-size: 14.5px; font-weight: 700">Emollient</span><span style="font-size: 14px; color: #55554F">Chin, Neck</span></button>
+<button aria-label="Apply Lotion to Ears" style="height: 42px; padding: 0 16px; border-radius: 999px; background: #FFFFFF; box-shadow: inset 0 0 0 1.5px #0F0F0F; display: flex; align-items: center; gap: 8px"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0F0F0F" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span style="font-size: 14.5px; font-weight: 700">Lotion</span><span style="font-size: 14px; color: #55554F">Ears</span></button>
+</div>
+
+<!-- Log: a time rail -->
+<div class="sg-r sg-d6" style="display: flex; flex-direction: column; -webkit-mask-image: linear-gradient(to bottom, #000 35%, transparent 100%); mask-image: linear-gradient(to bottom, #000 35%, transparent 100%)">
+<div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 6px"><h2 style="margin: 0; font-family: Unbounded, sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 1.2px">LOG</h2><span style="font-size: 13px; font-weight: 600; color: #55554F">3 entries</span></div>
+<button style="display: flex; align-items: center; gap: 14px; height: 50px"><span style="width: 44px; font-size: 13.5px; font-weight: 700; font-variant-numeric: tabular-nums">13:05</span><span style="width: 12px; height: 12px; border-radius: 999px; background: {{accent}}; box-shadow: 0 0 0 1.5px #0F0F0F; flex: none"></span><span style="flex: 1; height: 40px; display: flex; align-items: center; padding: 0 14px; border-radius: 999px; background: {{accent}}; box-shadow: inset 0 0 0 1.5px #0F0F0F; font-size: 15px; font-weight: 700">Stool, type 4</span></button>
+<button style="display: flex; align-items: center; gap: 14px; height: 50px"><span style="width: 44px; font-size: 13.5px; font-weight: 600; color: #55554F; font-variant-numeric: tabular-nums">12:40</span><span style="width: 12px; height: 12px; border-radius: 999px; background: #FFFFFF; box-shadow: 0 0 0 1.5px #0F0F0F; flex: none"></span><span style="flex: 1; height: 40px; display: flex; align-items: center; gap: 8px; padding: 0 14px; border-radius: 999px; background: #FFFFFF; box-shadow: inset 0 0 0 1.5px #0F0F0F; font-size: 15px; font-weight: 700">Chicken salad<span style="font-weight: 500; color: #55554F">egg, mustard</span></span></button>
+</div>
+
+</div>
+
+<!-- Floating tab bar -->
+<nav aria-label="Main" style="position: absolute; left: 0; right: 0; bottom: 26px; display: flex; justify-content: center">
+<div style="display: flex; align-items: center; gap: 4px; padding: 6px; background: #0F0F0F; border-radius: 999px; box-shadow: 4px 5px 0 {{accent}}">
+<a href="Today-Signal.dc.html" aria-current="page" style="display: flex; align-items: center; gap: 8px; height: 52px; padding: 0 22px; border-radius: 999px; background: {{accent}}; color: #0F0F0F; text-decoration: none; font-size: 15px; font-weight: 700">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0F0F0F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="3.5"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>Today</a>
+<a href="Today-Signal.dc.html" style="display: flex; align-items: center; gap: 8px; height: 52px; padding: 0 22px; border-radius: 999px; color: #E8E8E2; text-decoration: none; font-size: 15px; font-weight: 600">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#E8E8E2" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 20v-9M12 20V5M18 20v-6"/></svg>Review</a>
+</div>
+</nav>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#D4F25A","options":["#D4F25A","#7DE2D1","#C9B8FF"],"section":"Look"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const accent = this.props.accent ?? '#D4F25A';
+return {
+accent,
+accentHaze: 'color-mix(in srgb, ' + accent + ' 55%, transparent)',
+washColor: 'color-mix(in srgb, ' + accent + ' 80%, #0F0F0F)'
+};
+}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Colour palette</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 600px; height: 700px; box-sizing: border-box; padding: 36px; background: #F4F5F7; font-family: Inter, -apple-system, system-ui, sans-serif; color: #12151C; display: flex; flex-direction: column; gap: 22px; -webkit-font-smoothing: antialiased">
+
+<div style="display: flex; flex-direction: column; gap: 6px; padding-left: 4px">
+<h1 style="margin: 0; font-size: 28px; line-height: 34px; font-weight: 700; letter-spacing: -0.6px">Colour palette</h1>
+<p style="margin: 0; font-size: 15px; line-height: 22px; color: #5B6270">Neutrals, one accent and one alert. Nothing else: entry types are told apart by icon and label, not by colour.</p>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+
+<div style="display: flex; align-items: center; gap: 14px; background: #FFFFFF; border-radius: 24px; padding: 14px; box-shadow: 0 1px 2px rgba(17,24,39,0.06), 0 8px 22px rgba(17,24,39,0.06)">
+<span style="width: 48px; height: 48px; border-radius: 999px; background: #F4F5F7; box-shadow: inset 0 0 0 1px rgba(17,24,39,0.12); flex: none"></span>
+<div><div style="font-size: 15px; font-weight: 600">Background</div><div style="font-size: 13px; color: #5B6270; margin-top: 2px">#F4F5F7 + soft accent glow</div></div>
+</div>
+
+<div style="display: flex; align-items: center; gap: 14px; background: #FFFFFF; border-radius: 24px; padding: 14px; box-shadow: 0 1px 2px rgba(17,24,39,0.06), 0 8px 22px rgba(17,24,39,0.06)">
+<span style="width: 48px; height: 48px; border-radius: 999px; background: #FFFFFF; box-shadow: inset 0 0 0 1px rgba(17,24,39,0.18); flex: none"></span>
+<div><div style="font-size: 15px; font-weight: 600">Surface</div><div style="font-size: 13px; color: #5B6270; margin-top: 2px">#FFFFFF · pills, cards</div></div>
+</div>
+
+<div style="display: flex; align-items: center; gap: 14px; background: #FFFFFF; border-radius: 24px; padding: 14px; box-shadow: 0 1px 2px rgba(17,24,39,0.06), 0 8px 22px rgba(17,24,39,0.06)">
+<span style="width: 48px; height: 48px; border-radius: 999px; background: #12151C; flex: none"></span>
+<div><div style="font-size: 15px; font-weight: 600">Ink</div><div style="font-size: 13px; color: #5B6270; margin-top: 2px">#12151C · text, icons</div></div>
+</div>
+
+<div style="display: flex; align-items: center; gap: 14px; background: #FFFFFF; border-radius: 24px; padding: 14px; box-shadow: 0 1px 2px rgba(17,24,39,0.06), 0 8px 22px rgba(17,24,39,0.06)">
+<span style="width: 48px; height: 48px; border-radius: 999px; background: #5B6270; flex: none"></span>
+<div><div style="font-size: 15px; font-weight: 600">Muted</div><div style="font-size: 13px; color: #5B6270; margin-top: 2px">#5B6270 · secondary text</div></div>
+</div>
+
+<div style="display: flex; align-items: center; gap: 14px; background: #FFFFFF; border-radius: 24px; padding: 14px; box-shadow: 0 1px 2px rgba(17,24,39,0.06), 0 8px 22px rgba(17,24,39,0.06)">
+<span style="width: 48px; height: 48px; border-radius: 999px; background: #ECEEF2; flex: none"></span>
+<div><div style="font-size: 15px; font-weight: 600">Quiet fill</div><div style="font-size: 13px; color: #5B6270; margin-top: 2px">#ECEEF2 · icon circles</div></div>
+</div>
+
+<div style="display: flex; align-items: center; gap: 14px; background: #FFFFFF; border-radius: 24px; padding: 14px; box-shadow: 0 1px 2px rgba(17,24,39,0.06), 0 8px 22px rgba(17,24,39,0.06)">
+<span style="width: 48px; height: 48px; border-radius: 999px; background: #0B7F72; flex: none"></span>
+<div><div style="font-size: 15px; font-weight: 600">Accent</div><div style="font-size: 13px; color: #5B6270; margin-top: 2px">#0B7F72 · actions, selection</div></div>
+</div>
+
+<div style="display: flex; align-items: center; gap: 14px; background: #FFFFFF; border-radius: 24px; padding: 14px; box-shadow: 0 1px 2px rgba(17,24,39,0.06), 0 8px 22px rgba(17,24,39,0.06)">
+<span style="width: 48px; height: 48px; border-radius: 999px; background: #E7F2F1; flex: none"></span>
+<div><div style="font-size: 15px; font-weight: 600">Accent tint</div><div style="font-size: 13px; color: #5B6270; margin-top: 2px">12% accent · quick actions</div></div>
+</div>
+
+<div style="display: flex; align-items: center; gap: 14px; background: #FFFFFF; border-radius: 24px; padding: 14px; box-shadow: 0 1px 2px rgba(17,24,39,0.06), 0 8px 22px rgba(17,24,39,0.06)">
+<span style="width: 48px; height: 48px; border-radius: 999px; background: #C2410C; flex: none"></span>
+<div><div style="font-size: 15px; font-weight: 600">Alert</div><div style="font-size: 13px; color: #5B6270; margin-top: 2px">#C2410C · flare, urgent, delete</div></div>
+</div>
+
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 12px; background: #FFFFFF; border-radius: 28px; padding: 18px 20px 20px 20px; box-shadow: 0 1px 2px rgba(17,24,39,0.06), 0 8px 22px rgba(17,24,39,0.06)">
+<div style="font-size: 15px; font-weight: 600">Accent candidates</div>
+<div style="font-size: 13px; line-height: 19px; color: #5B6270">Same neutrals and the same alert in all three. On the Today artboard, Tweaks lets you switch between them.</div>
+<div style="display: flex; gap: 22px; margin-top: 2px">
+<div style="display: flex; align-items: center; gap: 10px"><span style="width: 36px; height: 36px; border-radius: 999px; background: #0B7F72"></span><span style="font-size: 13.5px; font-weight: 500">Teal<br><span style="color: #5B6270; font-weight: 400">#0B7F72</span></span></div>
+<div style="display: flex; align-items: center; gap: 10px"><span style="width: 36px; height: 36px; border-radius: 999px; background: #2563EB"></span><span style="font-size: 13.5px; font-weight: 500">Blue<br><span style="color: #5B6270; font-weight: 400">#2563EB</span></span></div>
+<div style="display: flex; align-items: center; gap: 10px"><span style="width: 36px; height: 36px; border-radius: 999px; background: #6D4AE0"></span><span style="font-size: 13.5px; font-weight: 500">Violet<br><span style="color: #5B6270; font-weight: 400">#6D4AE0</span></span></div>
+</div>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":600,"height":700}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

@@ -159,6 +159,8 @@ Read: tab bars, toolbars, sheets, modality, action sheets, settings, entering da
 
 ## Visual design and gestures (v0.9, UX-12)
 
+The full spec (tokens, components, patterns, gestures, the "do not" list and how to build it) is `docs/design-system.md`; this section is the summary.
+
 Approved 2026-11-21 on the design canvas (https://claude.ai/artifact/BVCSSjDYjDDMVcKrshmazt), board "Aurora ring". The canvas also holds the earlier proposals (light floating in teal, blue and violet, dots, Aurora, Day ring, Signal) for comparison, and the next screens in the same style: Treatment quick sheet, Meal choose, Meal review, More.
 
 | Token | Value | Use |

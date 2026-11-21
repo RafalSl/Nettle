@@ -6,6 +6,7 @@ import { LlmSettingsSection } from '@/ui/LlmSettingsSection';
 import { ListSection } from '@/ui/ListSection';
 import { RemindersSection } from '@/ui/RemindersSection';
 import { Screen } from '@/ui/components';
+import { NavGroup } from '@/ui/NavGroup';
 import { NavRow } from '@/ui/NavRow';
 import { useRouter } from 'expo-router';
 import { t } from '@/i18n';
@@ -14,19 +15,23 @@ import { t } from '@/i18n';
 function SubPages() {
   const router = useRouter();
   return (
-    <>
-      <NavRow title={t('nav.suggestions')} onPress={() => router.push('/settings/suggestions')} />
-      <NavRow title={t('nav.areas')} onPress={() => router.push('/settings/areas')} />
-      <NavRow title={t('nav.regular')} onPress={() => router.push('/settings/regular')} />
-      <NavRow title={t('nav.favorites')} onPress={() => router.push('/settings/favorites')} />
-    </>
+    <NavGroup>
+      <NavRow icon="sparkle" title={t('nav.suggestions')} onPress={() => router.push('/settings/suggestions')} />
+      <NavRow icon="skin" title={t('nav.areas')} onPress={() => router.push('/settings/areas')} />
+      <NavRow icon="medication" title={t('nav.regular')} onPress={() => router.push('/settings/regular')} />
+      <NavRow icon="star" title={t('nav.favorites')} onPress={() => router.push('/settings/favorites')} />
+    </NavGroup>
   );
 }
 
 /** UX-6: Privacy and photos belongs to the Reminders and privacy group. */
 function PrivacyRow() {
   const router = useRouter();
-  return <NavRow title={t('nav.privacy')} onPress={() => router.push('/settings/privacy')} />;
+  return (
+    <NavGroup>
+      <NavRow icon="lock" title={t('nav.privacy')} onPress={() => router.push('/settings/privacy')} />
+    </NavGroup>
+  );
 }
 
 export const LoggingSettings = () => (

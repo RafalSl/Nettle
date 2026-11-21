@@ -10,7 +10,7 @@ import { color } from '@/ui/theme';
  * UX-3, UX-12: a quick sheet. It floats 10 pt in from the sides and 26 pt above the bottom edge over a dimmed
  * screen, slides up 60 pt and fades in over 0.5 s, and closes on a tap outside or on the close circle.
  */
-export function Sheet({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
+export function Sheet({ title, subtitle, onClose, children }: { title: string; subtitle?: string; onClose: () => void; children: ReactNode }) {
   const [t0] = useState(() => new Animated.Value(0));
   useEffect(() => {
     const run = Animated.timing(t0, { toValue: 1, duration: 500, easing: Easing.out(Easing.cubic), useNativeDriver: true });
@@ -24,7 +24,10 @@ export function Sheet({ title, onClose, children }: { title: string; onClose: ()
         <Animated.View style={{ marginHorizontal: 10, marginBottom: 26, opacity: t0, transform: [{ translateY: t0.interpolate({ inputRange: [0, 1], outputRange: [60, 0] }) }] }}>
           <GlassSurface sheet blur={30} style={{ borderRadius: 36, padding: 18, gap: 10 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Text style={{ fontSize: 17, fontWeight: '700' }}>{title}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 17, fontWeight: '700' }}>{title}</Text>
+                {subtitle ? <Text style={{ fontSize: 13, color: color.muted }}>{subtitle}</Text> : null}
+              </View>
               <Pressable accessibilityRole="button" accessibilityLabel={t('common.close')} onPress={onClose} hitSlop={6} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: color.glassFillRaised, alignItems: 'center', justifyContent: 'center' }}>
                 <Icon name="x" size={18} wash={false} stroke={2} />
               </Pressable>

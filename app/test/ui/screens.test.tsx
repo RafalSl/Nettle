@@ -17,7 +17,7 @@ import { logDrink, logMedication } from '@/core/usecases/intake';
 import { addPhoto } from '@/core/usecases/photos';
 import { applyImport, exportBundle, previewImport } from '@/core/usecases/exchange';
 import { deleteEntry } from '@/core/usecases/entries';
-import { addRegularMedication } from '@/core/usecases/regular';
+import { addRegularMedication, setRegularTimes } from '@/core/usecases/regular';
 import { pinEntryType, unpinEntryType, toggleFavoriteDrink, toggleFavoriteMeal, updateSuggestionSettings } from '@/core/usecases/preferences';
 import { buildPack, importResult, listSuggestions } from '@/core/usecases/aiPack';
 import { applyTreatment, logChangeEvent, logMedicalEvent, logReaction } from '@/core/usecases/events';
@@ -3820,5 +3820,64 @@ describe('Forms: floating Save (UX-3, UX-12)', () => {
     await flush();
     expect(await deps.repo.listRecords('stoolEntries')).toHaveLength(1);
     expect(mockRouter.back).toHaveBeenCalled();
+  });
+});
+
+describe('Today states (UX-2, UX-3)', () => {
+  beforeEach(() => {
+    jest.spyOn(ActionSheetIOS, 'showActionSheetWithOptions').mockImplementation((_o, cb) => cb(99));
+    jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    mockRouter.push.mockClear();
+  });
+  afterEach(() => jest.restoreAllMocks());
+  const today = () => require('@/app/(tabs)/today/index');
+
+  it('UX-2 a merged dot lists its entries in a sheet; a tap on one opens that entry\'s Edit and Delete sheet', async () => {
+    const deps = nowDeps();
+    const at = Date.now() - 3 * 3600_000;
+    await logMeal(deps, { description: 'Synthetic oats', ingredients: [], at: new Date(at) });
+    await logDrink(deps, { name: 'Synthetic water', amountMl: 200, at: new Date(at + 600_000) });
+    const { tree } = await mount(today, deps);
+    await flush();
+    const dot = tree.root.findAll((n) => n.props.accessibilityLabel === en.day.dot.replace('{{n}}', '2') && typeof n.props.onPress === 'function')[0]!;
+    await act(async () => dot.props.onPress());
+    await flush();
+    expect(ActionSheetIOS.showActionSheetWithOptions).not.toHaveBeenCalled(); // the list comes first
+    expect(hasText(tree, 'Synthetic oats')).toBe(true);
+    expect(hasText(tree, 'Synthetic water, 200 ml')).toBe(true);
+    const row = tree.root.findAll((n) => n.props.accessibilityLabel === 'Synthetic water, 200 ml' && typeof n.props.onPress === 'function')[0]!;
+    await act(async () => row.props.onPress());
+    await flush();
+    expect(ActionSheetIOS.showActionSheetWithOptions).toHaveBeenCalledTimes(1);
+  });
+
+  it('UX-3, NF-2 the stool sheet saves in one tap and the tile turns into "Saved HH:MM"', async () => {
+    const deps = nowDeps();
+    const { tree } = await mount(today, deps);
+    await flush();
+    await press(tree, en.entry.stool.title);
+    expect(hasText(tree, en.stoolTypes['4'])).toBe(true);
+    await press(tree, en.day.stoolType.replace('{{n}}', '4'));
+    await flush();
+    expect((await deps.repo.listRecords('stoolEntries')).map((s) => s.bristol)).toEqual([4]);
+    expect(hasText(tree, en.sheet.saved.replace('{{time}}', ''))).toBe(true);
+    await press(tree, en.day.stoolType.replace('{{n}}', '4')); // a second tap on a saved tile does nothing
+    await flush();
+    expect(await deps.repo.listRecords('stoolEntries')).toHaveLength(1);
+  });
+
+  it('UX-3, IN-17 a regular medication row shows its reminder, and "Taken HH:MM" after the tap', async () => {
+    const deps = nowDeps();
+    const item = await addRegularMedication(deps, { category: 'medication', name: 'Synthetic pill', dose: '5 mg' });
+    await setRegularTimes(deps, item.id, [{ hour: 8, minute: 0 }]);
+    await unpinEntryType(deps, 'stool');
+    await pinEntryType(deps, 'medication');
+    const { tree } = await mount(today, deps);
+    await flush();
+    await press(tree, en.entry.medication.title);
+    expect(hasText(tree, en.sheet.reminderAt.replace('{{times}}', '08:00'))).toBe(true);
+    await press(tree, 'Synthetic pill 5 mg');
+    await flush();
+    expect(hasText(tree, en.sheet.taken.replace('{{time}}', ''))).toBe(true);
   });
 });

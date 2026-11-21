@@ -1176,6 +1176,22 @@
   },
   "sheet": {
     "often": "Często używane",
-    "regular": "Stałe"
+    "regular": "Stałe",
+    "stoolHint": "Dotknij typu, aby zapisać od razu: od 1, twarde grudki, do 7, wodnista",
+    "saved": "Zapisano {{time}}",
+    "taken": "Wzięto {{time}}",
+    "appliedAt": "Nałożono {{time}}",
+    "reminderAt": "przypomnienie {{times}}",
+    "logTapHint": "Dotknij, aby zapisać od razu",
+    "entriesTitle": "Wpisy około {{time}}"
+  },
+  "stoolTypes": {
+    "1": "Twarde grudki",
+    "2": "Grudkowata kiełbaska",
+    "3": "Spękana kiełbaska",
+    "4": "Gładka kiełbaska",
+    "5": "Miękkie kawałki",
+    "6": "Papkowata",
+    "7": "Wodnista"
   }
 }

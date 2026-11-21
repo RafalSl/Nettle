@@ -3,7 +3,7 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, AppState, Pressable, View } from 'react-native';
 import { Text } from '@/ui/themed';
-import { addDays, atOnDay, localDay } from '@/core/model/time';
+import { addDays, atOnDay, localDateTime, localDay } from '@/core/model/time';
 import type { ListItem, SkinArea } from '@/core/model/types';
 import { logStool } from '@/core/usecases/checkin';
 import { dayLog, treatmentShortcuts, type LogRow, type TreatmentShortcut } from '@/core/usecases/dayLog';
@@ -18,10 +18,10 @@ import { useServices } from '@/services';
 import { DayLog, TODAY_LOG_LIMIT } from '@/ui/DayLog';
 import { ENTRY_ROUTE } from '@/ui/entryTypes';
 import { Button, Screen, styles } from '@/ui/components';
-import { ENTRY_ICON } from '@/ui/entryIcons';
+import { ENTRY_ICON, KIND_ENTRY } from '@/ui/entryIcons';
+import { Icon } from '@/ui/Icon';
 import { Sheet, SheetLabel, SheetRow } from '@/ui/Sheet';
 import { color } from '@/ui/theme';
-import { chooseAction } from '@/ui/actionSheet';
 import { ContextPills } from '@/ui/ContextPills';
 import { DayRing } from '@/ui/DayRing';
 import { GearButton } from '@/ui/GearButton';
@@ -73,6 +73,10 @@ export default function TodayScreen() {
   const [picking, setPicking] = useState(false);
   const [layout, setLayout] = useState(defaultPreferences().quickActions);
   const [locked, setLocked] = useState<Set<string>>(new Set());
+  /** UX-3: what a quick sheet row did, shown on the row until the sheet closes: "Taken 08:05". */
+  const [done, setDone] = useState<Record<string, string>>({});
+  /** UX-2: the entries of a merged ring dot, listed in a sheet. */
+  const [merged, setMerged] = useState<LogRow[] | null>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   // After midnight an unchosen day moves on by itself. The clock is state, not a call in the render body: with the
@@ -160,6 +164,12 @@ export default function TodayScreen() {
     return `${treatment ? itemLabel(treatment) : r.treatmentId}: ${r.areaIds.map(areaName).join(', ')}`;
   };
 
+  /** UX-3: the second line of a regular item's row: its dose and reminder times. */
+  const regularDetail = (r: RegularItem) => {
+    const times = r.times.map((x) => `${String(x.hour).padStart(2, '0')}:${String(x.minute).padStart(2, '0')}`).join(', ');
+    return [r.kind === 'medication' ? r.dose : null, times ? t('sheet.reminderAt', { times }) : null].filter(Boolean).join(' · ') || undefined;
+  };
+
   const areaName = (id: string) => {
     const a = ctx.areas.find((x) => x.id === id);
     return a ? areaLabel(a) : id;
@@ -177,11 +187,8 @@ export default function TodayScreen() {
   /** UX-2: a dot opens its entry's Edit and Delete sheet; a merged dot first lists its entries. */
   async function onDot(dot: RingDot) {
     const found = dot.ids.map((id) => rows.find((r) => r.id === id)).filter((r): r is LogRow => !!r);
-    let row: LogRow | undefined = found[0];
-    if (found.length > 1) {
-      const picked = await chooseAction({ title: t('day.dot', { n: found.length }), actions: found.map((r) => ({ label: describeRow(r, ctx).title })) });
-      row = picked === null ? undefined : found[picked];
-    }
+    if (found.length > 1) return setMerged(found);
+    const row = found[0];
     if (row) await openEntry(row.kind, row.id, describeRow(row, ctx).title);
   }
 
@@ -207,18 +214,21 @@ export default function TodayScreen() {
       </Rise>
       {picking && (
         // UX-2: jump to any past day; a picked date is a calendar day, and a day in the future is never chosen.
-        <DateTimePicker
-          mode="date"
-          display="inline"
-          themeVariant="dark"
-          value={new Date(`${day}T12:00:00`)}
-          maximumDate={now}
-          onValueChange={(_e, d) => {
-            const picked = localDay(d.toISOString(), deps.clock.timeZone());
-            setChosen(picked >= today ? null : picked);
-            setPicking(false);
-          }}
-        />
+        <GlassSurface style={{ borderRadius: 28, padding: 8 }}>
+          <DateTimePicker
+            mode="date"
+            display="inline"
+            themeVariant="dark"
+            accentColor={color.accent}
+            value={new Date(`${day}T12:00:00`)}
+            maximumDate={now}
+            onValueChange={(_e, d) => {
+              const picked = localDay(d.toISOString(), deps.clock.timeZone());
+              setChosen(picked >= today ? null : picked);
+              setPicking(false);
+            }}
+          />
+        </GlassSurface>
       )}
 
       <Rise order={1} style={{ gap: 8 }}>
@@ -243,30 +253,67 @@ export default function TodayScreen() {
         />
       </Rise>
 
+      {merged && (
+        // UX-2: a merged dot lists its entries first; a tap opens that entry's Edit and Delete sheet.
+        <Sheet title={t('sheet.entriesTitle', { time: localDateTime(merged[0]!.at.utc, merged[0]!.at.tz).slice(11) })} onClose={() => setMerged(null)}>
+          {merged.map((r) => (
+            <SheetRow
+              key={r.id}
+              icon={ENTRY_ICON[KIND_ENTRY[r.kind]]}
+              title={describeRow(r, ctx).title}
+              detail={localDateTime(r.at.utc, r.at.tz).slice(11)}
+              onPress={() => {
+                setMerged(null);
+                void openEntry(r.kind, r.id, describeRow(r, ctx).title);
+              }}
+            />
+          ))}
+        </Sheet>
+      )}
+
       {stoolOpen && (
-        <Sheet title={t('day.stoolTitle')} onClose={() => setStoolOpen(false)}>
+        // UX-3, NF-2: the seven Bristol types in two columns; a tap saves at once and the tile turns into "Saved 14:20".
+        <Sheet title={t('day.stoolTitle')} subtitle={t('sheet.stoolHint')} onClose={() => { setStoolOpen(false); setDone({}); }}>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            {[1, 2, 3, 4, 5, 6, 7].map((n) => (
-              <Pressable
-                key={n}
-                accessibilityRole="button"
-                accessibilityLabel={t('day.stoolType', { n })}
-                onPress={() => {
-                  setStoolOpen(false);
-                  void run(() => logStool(deps, { bristol: n, at: atNow() }));
-                }}
-                style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: color.glassFillRaised, borderWidth: 1, borderColor: color.glassLineRaised, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ fontSize: 18, fontWeight: '700' }}>{n}</Text>
-              </Pressable>
-            ))}
+            {[1, 2, 3, 4, 5, 6, 7].map((n) => {
+              const saved = done[`stool-${n}`];
+              return (
+                <Pressable
+                  key={n}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('day.stoolType', { n })}
+                  accessibilityState={{ disabled: !!saved }}
+                  onPress={() => {
+                    if (saved) return;
+                    const at = atNow();
+                    setDone((d) => ({ ...d, [`stool-${n}`]: localDateTime(at.toISOString(), deps.clock.timeZone()).slice(11) }));
+                    void run(() => logStool(deps, { bristol: n, at }));
+                  }}
+                  style={{ width: '48.5%' }}>
+                  <GlassSurface raised style={{ height: 52, borderRadius: 999, flexDirection: 'row', alignItems: 'center', gap: 10, paddingLeft: 6, paddingRight: 12, ...(saved ? { borderColor: color.accent, backgroundColor: color.accentSoft } : {}) }}>
+                    <View style={{ width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: saved ? color.accent : color.glassFillRaised }}>
+                      <Text style={{ fontSize: 17, fontWeight: '800', color: saved ? color.onAccent : color.text }}>{n}</Text>
+                    </View>
+                    <Text style={{ flex: 1, fontSize: 14, fontWeight: saved ? '700' : '600' }} numberOfLines={1}>
+                      {saved ? t('sheet.saved', { time: saved }) : t(`stoolTypes.${n}`)}
+                    </Text>
+                  </GlassSurface>
+                </Pressable>
+              );
+            })}
+            <Pressable accessibilityRole="button" accessibilityLabel={t('day.stoolEarlier')} onPress={() => { setStoolOpen(false); router.push(isToday ? '/form/stool' : { pathname: '/form/stool', params: { day } }); }} style={{ width: '48.5%' }}>
+              <GlassSurface raised style={{ height: 52, borderRadius: 999, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                <Icon name="clock" size={18} wash={false} />
+                <Text style={{ fontSize: 14.5, fontWeight: '600' }}>{t('day.stoolEarlier')}</Text>
+              </GlassSurface>
+            </Pressable>
           </View>
-          <SheetRow outline title={t('day.stoolEarlier')} onPress={() => { setStoolOpen(false); router.push(isToday ? '/form/stool' : { pathname: '/form/stool', params: { day } }); }} />
         </Sheet>
       )}
 
       {sheet && (
         // IN-17, UX-3: one tap logs one regular item or one often-used treatment at the current time; the row is locked for 3 seconds against a double tap.
-        <Sheet title={t(sheet === 'medication' ? 'regular.sheetMedication' : 'regular.sheetTreatment')} onClose={() => setSheet(null)}>
+        <Sheet title={t(sheet === 'medication' ? 'regular.sheetMedication' : 'regular.sheetTreatment')} subtitle={t('sheet.logTapHint')} onClose={() => { setSheet(null); setDone({}); }}>
           {regular.some((r) => r.kind === sheet) && sheet === 'treatment' ? <SheetLabel>{t('sheet.regular')}</SheetLabel> : null}
           {regular
             .filter((r) => r.kind === sheet)
@@ -275,10 +322,13 @@ export default function TodayScreen() {
                 key={r.id}
                 icon={ENTRY_ICON[sheet]}
                 title={regularLabel(r)}
+                detail={done[r.id] ? t(r.kind === 'medication' ? 'sheet.taken' : 'sheet.appliedAt', { time: done[r.id]! }) : regularDetail(r)}
                 locked={locked.has(r.id)}
                 onPress={() => {
                   lockShortcut(r.id);
-                  void run(() => logRegular(deps, r.id, atNow()));
+                  const at = atNow();
+                  setDone((d) => ({ ...d, [r.id]: localDateTime(at.toISOString(), deps.clock.timeZone()).slice(11) }));
+                  void run(() => logRegular(deps, r.id, at));
                 }}
               />
             ))}
@@ -292,10 +342,13 @@ export default function TodayScreen() {
                   key={key}
                   icon="treatment"
                   title={`${treatment ? itemLabel(treatment) : sc.treatmentId}: ${sc.areaIds.map(areaName).join(', ')}`}
+                  detail={done[key] ? t('sheet.appliedAt', { time: done[key]! }) : undefined}
                   locked={locked.has(key)}
                   onPress={() => {
                     lockShortcut(key);
-                    void run(() => applyTreatment(deps, { treatmentId: sc.treatmentId, areaIds: sc.areaIds, at: atNow() }));
+                    const at = atNow();
+                    setDone((d) => ({ ...d, [key]: localDateTime(at.toISOString(), deps.clock.timeZone()).slice(11) }));
+                    void run(() => applyTreatment(deps, { treatmentId: sc.treatmentId, areaIds: sc.areaIds, at }));
                   }}
                 />
               );

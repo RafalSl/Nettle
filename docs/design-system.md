@@ -170,12 +170,7 @@ Drawn overnight on the design canvas as boards `G1-` to `G6-` (design/canvas/, g
 
 ### Today states
 
-1. Edit Today is a pushed screen (Back, no Done). Each pinned row has Up, Down and Move to More; Pin to Today is disabled at 5 with a note. Affects UX-2.
-2. Merged dot: the sheet lists its entries first, then each opens Edit or Delete. Affects UX-2, EN-1.
-3. Stool quick sheet: a 2-column grid of the 7 types plus Earlier…; the tapped tile turns into "Saved 14:20". Affects UX-3, NF-2.
-4. Past day: "Back to Today" replaces the context pills; the next-day arrow is active. Affects UX-2.
-5. First-run card carries two buttons: Log a meal (primary) and Where do I log…?. Affects UX-2, UX-11.
-6. Ring dots are 28 pt as approved; the tap area should be 44 pt (hit slop). Affects UX-8 (deferred).
+Built (build plan task 10): Edit Today as a pushed screen, the merged-dot sheet, the Stool grid with "Saved 14:20", "Back to Today" on a past day, the first-run card with two buttons, the Medication and Treatment sheets, the date picker in glass, and 44 pt touch areas on dots and chips.
 
 ### Entry forms
 

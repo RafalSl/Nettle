@@ -658,3 +658,6 @@ Phone test: when the keyboard was hidden, Add ingredient scrolled before the key
 
 ## 2026-11-21: one smooth scroll for Add ingredient
 The scroll for a new ingredient started after the keyboard had finished sliding (keyboardDidShow), so it came as two steps after the system's own adjustment. It now starts with the slide (keyboardWillShow). Next: re-check on the phone.
+
+## 2026-11-21: phone test plan updated for the new design
+`docs/phone-test-plan.md` follows the Aurora ring build: floating tab bar, day ring and dots, quick sheets (stool grid, Taken/Applied), Edit Today, swipe and long-press gestures, per-area flare thresholds, chart ranges, glass forms with the floating Save and the keyboard behaviour, report photo picking, AI key test and model groups, lock cover, permission errors, icon and splash. New sections: L14, L15, R10, S6 and section 12 (design and system states) with a list of what is known not built. Your filled-in results (S1, S2) are kept. Next: run the plan.

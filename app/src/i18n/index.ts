@@ -41,6 +41,16 @@ export function itemDescription(item: { id: string; predefined: boolean; descrip
   return text.startsWith('[missing') ? null : text;
 }
 
+/** UX-2: the weekday and the short date of a diary day ("YYYY-MM-DD") in the app language, for the centre of the ring. */
+export function dayParts(day: string): { weekday: string; date: string } {
+  const locale = i18n.locale.startsWith('pl') ? 'pl-PL' : 'en-GB';
+  const at = new Date(`${day}T12:00:00Z`);
+  return {
+    weekday: at.toLocaleDateString(locale, { weekday: 'long', timeZone: 'UTC' }),
+    date: at.toLocaleDateString(locale, { day: 'numeric', month: 'short', timeZone: 'UTC' }).replace('.', ''),
+  };
+}
+
 /** LL-11: the language LLM answers should use; follows the app language. */
 export function currentLanguage(): 'en' | 'pl' {
   return i18n.locale.startsWith('pl') ? 'pl' : 'en';

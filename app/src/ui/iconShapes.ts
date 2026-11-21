@@ -43,4 +43,7 @@ export const ICON_SHAPES: Record<string, IconShape[]> = {
   flame: [{ tag: 'path', a: {"d": "M12 3c1 3 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3 0-6 1-9z"} }],
   copy: [{ tag: 'rect', a: {"x": 8.5, "y": 8.5, "width": 12.0, "height": 12.0, "rx": 3.0}, fill: 'wash' }, { tag: 'path', a: {"d": "M15.5 8.5V6a2.5 2.5 0 0 0-2.5-2.5H6A2.5 2.5 0 0 0 3.5 6v7A2.5 2.5 0 0 0 6 15.5h2.5"} }],
   minus: [{ tag: 'path', a: {"d": "M5 12h14"} }],
+  dots: [{ tag: 'circle', a: { cx: 6, cy: 12, r: 1.2 } }, { tag: 'circle', a: { cx: 12, cy: 12, r: 1.2 } }, { tag: 'circle', a: { cx: 18, cy: 12, r: 1.2 } }],
+  up: [{ tag: 'path', a: { d: 'M6 15l6-6 6 6' } }],
+  down: [{ tag: 'path', a: { d: 'M6 9l6 6 6-6' } }],
 };

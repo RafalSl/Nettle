@@ -849,7 +849,11 @@
     "openOnToday": "Otwórz ten dzień w Dzisiaj",
     "dayStart": "Dzień zaczyna się o",
     "dayStartHint": "Dzień trwa od tej godziny do tej samej godziny następnego dnia, więc napój o 00:30 może należeć do poprzedniego wieczoru. Ustaw to raz: zmiana przegrupowuje cały dziennik, a godzina każdego wpisu zostaje bez zmian.",
-    "logTitle": "Dziennik"
+    "logTitle": "Dziennik",
+    "entries": "Wpisy: {{n}}",
+    "dot": "Wpisy na tarczy: {{n}}",
+    "backToToday": "Wróć do Dziś",
+    "delete": "Usuń"
   },
   "source": {
     "open_food_facts": "Open Food Facts",

@@ -12,6 +12,7 @@ import {
   type FlareScope,
   type SuggestionSettings,
 } from '../model/preferences';
+import { LANGUAGE_PREFERENCES, type LanguagePreference } from '../model/language';
 import { drinkKey, normalizeText } from '../model/suggestions';
 import type { Drink, Meal, MedicationEntry } from '../model/types';
 import type { Deps } from './deps';
@@ -46,6 +47,12 @@ export async function setFlareThreshold(deps: Deps, threshold: number): Promise<
 export async function setFlareScope(deps: Deps, scope: FlareScope): Promise<FlareScope> {
   if (!FLARE_SCOPES.includes(scope)) throw new NettleError('invalid_value', 'flareScope');
   return (await change(deps, (p) => void (p.flareScope = scope))).flareScope;
+}
+
+/** UX-7: the Language setting (Device language, English or Polski); stored with the preferences, so it travels in the settings part of an export. */
+export async function setLanguage(deps: Deps, language: LanguagePreference): Promise<LanguagePreference> {
+  if (!LANGUAGE_PREFERENCES.includes(language)) throw new NettleError('invalid_value', 'language');
+  return (await change(deps, (p) => void (p.language = language))).language;
 }
 
 /** SK-8: the threshold of one skin area (1 to 10); null removes it, so the area follows the common value again. */

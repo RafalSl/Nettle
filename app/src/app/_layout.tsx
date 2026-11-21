@@ -6,7 +6,7 @@ import { useEffect } from 'react';
 import { AppState, Pressable } from 'react-native';
 import { Text } from '@/ui/themed';
 import { applyReminders, resolveReminderTap } from '@/core/usecases/reminders';
-import { reminderTexts, t } from '@/i18n';
+import { reminderTexts, t, useAppLanguage } from '@/i18n';
 import { ServicesProvider, useServices } from '@/services';
 import { unsavedForm } from '@/ui/formState';
 import { GlassSurface } from '@/ui/GlassSurface';
@@ -86,6 +86,7 @@ const form = (title: string) => ({ title, presentation: 'modal' as const, unstab
 /** UX-1, UX-3: the tabs sit in the root stack, and every entry form is a modal above them, one at a time. */
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts(FONT_FILES);
+  const language = useAppLanguage(); // UX-7: a change of language redraws every screen
   useEffect(() => {
     if (fontsLoaded || fontError) void SplashScreen.hideAsync().catch(() => undefined);
   }, [fontsLoaded, fontError]);
@@ -96,7 +97,7 @@ export default function RootLayout() {
       <ReminderSync />
       <ReminderTaps />
       <AnalysisWatcher />
-      <Stack screenOptions={SCREEN_OPTIONS}>
+      <Stack key={language} screenOptions={SCREEN_OPTIONS}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="settings" options={{ headerShown: false }} />
         <Stack.Screen name="guide" options={{ title: t('nav.guide'), headerBackTitle: t('common.back') }} />

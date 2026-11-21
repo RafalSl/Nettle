@@ -720,6 +720,7 @@ describe('navigation shell (UX-1, UX-2, UX-3, UX-6)', () => {
       [en.nav.remindersPrivacy, '/settings/reminders'],
       [en.nav.ai, '/settings/ai'],
       [en.nav.data, '/settings/data'],
+      [en.nav.language, '/settings/language'], // UX-7: first row of the About group
       [en.nav.about, '/settings/about'],
     ] as const) {
       await press(settings.tree, label);
@@ -4063,6 +4064,22 @@ describe('Settings additions (SK-8, NO-3, SE-9)', () => {
     jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
   });
   afterEach(() => jest.restoreAllMocks());
+
+  it('UX-7 the Language page offers Device language, English and Polski; a choice is saved and applied at once', async () => {
+    const deps = nowDeps();
+    const { tree } = await mount(() => require('@/app/settings/language'), deps);
+    await flush();
+    const checked = (label: string) => tree.root.findAll((n) => n.props.accessibilityRole === 'radio' && n.props.accessibilityLabel === label)[0]?.props.accessibilityState.checked;
+    expect(checked(en.settings.languageDevice)).toBe(true); // the default
+    await press(tree, en.settings.languageNamePl);
+    await flush();
+    expect((await deps.repo.getPreferences())?.language).toBe('pl');
+    expect(checked(en.settings.languageNamePl)).toBe(true);
+    await press(tree, en.settings.languageNameEn);
+    await flush();
+    expect((await deps.repo.getPreferences())?.language).toBe('en');
+    expect(hasText(tree, en.settings.languageChangesApp)).toBe(true);
+  });
 
   it('SK-8 the flare threshold has a scope: Same for all, or a value per skin area that the others follow', async () => {
     const deps = nowDeps();

@@ -753,7 +753,19 @@
     "flareScopeArea": "Per area",
     "flareScopeAreaHint": "An area without its own value follows the common one above.",
     "flareSameAsCommon": "same as the common value",
-    "flareUseCommon": "Use the common value for"
+    "flareUseCommon": "Use the common value for",
+    "languageDevice": "Device language",
+    "languageDeviceDetail": "Follows the iPhone. Now: {{language}}",
+    "languageEnglishDetail": "English",
+    "languagePolishDetail": "Polish",
+    "languageNameEn": "English",
+    "languageNamePl": "Polski",
+    "languageValueDevice": "Device ({{language}})",
+    "languageChanges": "What changes",
+    "languageChangesApp": "The text of the app, at once, without a restart.",
+    "languageChangesAi": "The language of AI answers (analysis, estimates, summary).",
+    "languageChangesReport": "The default language of a new doctor report. You still choose it for each report.",
+    "languageNote": "What you wrote stays as you wrote it. Names of your own areas and items are not translated."
   },
   "about": {
     "title": "About",
@@ -803,7 +815,8 @@
     "health": "Health trends",
     "medical": "Medical event",
     "aiSuggestions": "AI suggestions",
-    "pack": "Claude plan"
+    "pack": "Claude plan",
+    "language": "Language"
   },
   "home": {
     "quickActions": "Quick actions",

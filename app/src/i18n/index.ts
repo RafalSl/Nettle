@@ -1,6 +1,8 @@
 import { getLocales } from 'expo-localization';
 import { I18n } from 'i18n-js';
+import { useSyncExternalStore } from 'react';
 import { NettleError } from '@/core/model/errors';
+import { resolveLanguage, type Language, type LanguagePreference } from '@/core/model/language';
 import type { ReminderTexts } from '@/core/usecases/reminders';
 import en from './en.json';
 import pl from './pl.json';
@@ -9,6 +11,30 @@ const i18n = new I18n({ en, pl });
 i18n.defaultLocale = 'en';
 i18n.enableFallback = true;
 i18n.locale = getLocales()[0]?.languageCode ?? 'en';
+
+const listeners = new Set<() => void>();
+
+/** UX-7: the language of the device (iOS setting, or whatever Expo Go serves). */
+export const deviceLanguage = (): Language => resolveLanguage('system', getLocales()[0]?.languageCode);
+
+/** UX-7: applies the Language setting: every later `t()` call follows it, and `useAppLanguage` subscribers re-render. */
+export function setLanguage(preference: LanguagePreference): void {
+  const next = resolveLanguage(preference, getLocales()[0]?.languageCode);
+  if (i18n.locale === next) return;
+  i18n.locale = next;
+  listeners.forEach((l) => l());
+}
+
+/** UX-7: the app language as React state; the navigation root is keyed by it, so every screen redraws after a change. */
+export function useAppLanguage(): Language {
+  return useSyncExternalStore(
+    (l) => {
+      listeners.add(l);
+      return () => void listeners.delete(l);
+    },
+    () => (i18n.locale.startsWith('pl') ? 'pl' : 'en'),
+  );
+}
 
 export const t = (key: string, options?: Record<string, string | number>): string =>
   i18n.t(key, options);

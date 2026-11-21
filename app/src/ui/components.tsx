@@ -16,7 +16,7 @@ export function Screen({ children, scrollRef, floating }: { children: ReactNode;
   return (
   <View style={{ flex: 1, backgroundColor: color.ground }}>
     <Aurora />
-    <ScrollView ref={scrollRef} style={{ flex: 1 }} contentContainerStyle={[styles.screen, { paddingBottom: inset }]} contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled">
+    <ScrollView ref={scrollRef} style={{ flex: 1 }} contentContainerStyle={[styles.screen, { paddingBottom: inset }]} contentInsetAdjustmentBehavior="automatic" automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled">
       {children}
     </ScrollView>
     {floating}

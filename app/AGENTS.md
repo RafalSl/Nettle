@@ -10,6 +10,8 @@ Expo ships breaking changes every SDK release. APIs you remember are likely rena
 
 ## Commands
 
+In this repo the commands below run inside Docker from the repo root: prefix them with `./run.sh` (for example `./run.sh npx expo install <package>`, `./run.sh npm run check`). There is no Node on the host. See the root `README.md`.
+
 Use `bunx` instead of `npx` if the project uses bun (`bun.lock` present).
 
 ```bash

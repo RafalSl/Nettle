@@ -649,3 +649,6 @@ Newest entry last. One short entry per working session or meaningful step: what 
 
 ## 2026-11-21: first phone run (UX-12)
 Design spike passed on the iPhone (blur, aurora, fonts, arc, swipe). Real-screen pass: Today works. Found that a focused field (ingredient entry in the meal form) stayed behind the keyboard; the shared `Screen` scroll view now has `automaticallyAdjustKeyboardInsets`. Spike screen deleted. Next: re-check the ingredient field on the phone, then the in-depth screen review.
+
+## 2026-11-21: Add ingredient stays above the keyboard; spike route removed
+Adding an ingredient grows the meal form, so the Add ingredient button slid under the keyboard. The form now scrolls (via a `scrollRef` that `FormModal` passes to `Screen`) to keep the button above the keyboard and the floating Save. Also removed the leftover `spike` route from `_layout.tsx` (it caused a "No route named spike" warning) and its test exemption. Next: re-check on the phone.

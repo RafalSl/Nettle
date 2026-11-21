@@ -1,6 +1,6 @@
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { useCallback, useState } from 'react';
-import { Alert, Pressable, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Alert, Keyboard, Pressable, type ScrollViewInstance, useWindowDimensions, View } from 'react-native';
 import { Text, TextInput } from '@/ui/themed';
 import { addIngredients, matchIngredientNames, suggestAllergens } from '@/core/model/allergens';
 import { NettleError } from '@/core/model/errors';
@@ -74,6 +74,19 @@ export default function MealScreen() {
   const [prefs, setPrefs] = useState<Preferences>(defaultPreferences());
   const [description, setDescription] = useState('');
   const [ingredients, setIngredients] = useState<string[]>(['']);
+  // Adding an ingredient grows the form; scroll so Add ingredient stays just above the keyboard and the floating Save.
+  const scrollRef = useRef<ScrollViewInstance>(null);
+  const addBottom = useRef(0);
+  const prevCount = useRef(1);
+  const windowHeight = useWindowDimensions().height;
+  useEffect(() => {
+    if (ingredients.length > prevCount.current) {
+      const kb = Keyboard.metrics()?.height ?? 0;
+      const visible = windowHeight - kb - 190; // header and the floating Save
+      setTimeout(() => scrollRef.current?.scrollTo({ y: Math.max(0, addBottom.current + 52 - visible), animated: true }), 50);
+    }
+    prevCount.current = ingredients.length;
+  }, [ingredients.length, windowHeight]);
   const [allergens, setAllergens] = useState<Set<string>>(new Set());
   const [note, setNote] = useState('');
   const [fillLater, setFillLater] = useState(false);
@@ -232,6 +245,7 @@ export default function MealScreen() {
   const missing = phase !== 'review' ? t('meal.reviewFirst') : description.trim() ? null : t('edit.description');
   return (
     <FormModal
+      scrollRef={scrollRef}
       dirty={phase === 'review' ? edited : description.trim().length > 0}
       missing={missing}
       hideSave={phase !== 'review'}
@@ -334,7 +348,9 @@ export default function MealScreen() {
               )}
             </View>
           ))}
-          <Button kind="secondary" title={t('meal.addIngredient')} onPress={() => setIngredients((l) => [...l, ''])} />
+          <View onLayout={(e) => (addBottom.current = e.nativeEvent.layout.y)}>
+            <Button kind="secondary" title={t('meal.addIngredient')} onPress={() => setIngredients((l) => [...l, ''])} />
+          </View>
 
           <Label>{t('meal.allergens')}</Label>
           <Chips

@@ -55,7 +55,7 @@ describe('theme (UX-12)', () => {
   });
 
   it('UX-12 no colour literals outside theme.ts (tokens only)', () => {
-    const skip = new Set(['theme.ts', 'spike.tsx', 'report.ts', 'migrations.ts', 'types.ts']);
+    const skip = new Set(['theme.ts', 'report.ts', 'migrations.ts', 'types.ts']);
     const found: string[] = [];
     const walk = (dir: string) => {
       for (const f of fs.readdirSync(dir, { withFileTypes: true })) {

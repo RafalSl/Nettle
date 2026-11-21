@@ -2103,7 +2103,7 @@ describe('Inline photo estimate (IN-3, LL-12, IN-10)', () => {
     return { deps, tree };
   }
 
-  it('IN-3, LL-12 the estimate runs inline with the form editable, Cancel appears after 30 seconds and stores nothing', async () => {
+  it('IN-3, LL-12 the estimate runs inline with the form editable, Cancel is there from the start, the text changes after 30 seconds, and nothing is stored', async () => {
     jest.useFakeTimers({ doNotFake: ['setImmediate', 'nextTick'] }); // only this test needs to move the 30 second clock
     const llm = { completeJson: (req: { signal?: AbortSignal }) => new Promise<never>((_r, reject) => req.signal?.addEventListener('abort', () => reject(new Error('aborted')))) };
     const { deps, tree } = await startEstimate(llm);
@@ -2111,7 +2111,8 @@ describe('Inline photo estimate (IN-3, LL-12, IN-10)', () => {
       void buttonOf(en.meal.photoSend).onPress();
     });
     expect(hasText(tree, en.meal.estimating)).toBe(true);
-    expect(hasText(tree, en.meal.estimateCancel)).toBe(false);
+    expect(hasText(tree, en.meal.estimateCancel)).toBe(true); // LL-12: Cancel is there from the start
+    expect(hasText(tree, '0:00')).toBe(true); // and the elapsed time
     await type(tree, en.meal.description, 'Synthetic dinner, edited while waiting'); // still editable
     await act(async () => {
       jest.advanceTimersByTime(30_000);
@@ -2493,6 +2494,7 @@ describe('Inline photo estimate (IN-3, LL-12, IN-10)', () => {
     await type(tree, en.meal.scanCode, '5900000000008');
     await press(tree, en.meal.scanLookup);
     await flush();
+    await press(tree, en.meal.scanByHand);
     await type(tree, en.meal.description, 'Synthetic yoghurt');
     await press(tree, en.meal.fromLabel);
     await act(async () => {
@@ -2686,7 +2688,10 @@ describe('Barcode in the meal form (IN-2, IN-8, IN-9, IN-10)', () => {
     await type(tree, en.meal.scanCode, '3017620422003');
     await press(tree, en.meal.scanLookup);
     await flush();
-    expect(hasText(tree, en.meal.scanNotFound)).toBe(true);
+    expect(hasText(tree, en.meal.scanNotFound)).toBe(true); // IN-8: the scan screen offers the label or manual entry
+    expect(hasText(tree, en.meal.scanReadLabel)).toBe(true);
+    await press(tree, en.meal.scanByHand);
+    expect(hasText(tree, en.meal.ingredients)).toBe(true); // the review form, empty, with the code kept
     await press(tree, en.meal.changeMeal);
     await press(tree, en.meal.scan);
     await type(tree, en.meal.scanCode, '5900000000008');
@@ -2701,15 +2706,15 @@ describe('Barcode in the meal form (IN-2, IN-8, IN-9, IN-10)', () => {
     await type(tree, en.meal.scanCode, '2000000000008');
     await press(tree, en.meal.scanLookup);
     await flush();
-    expect(alert.mock.calls.at(-1)![0]).toBe(en.meal.scanInStoreTitle);
-    const buttons = alert.mock.calls.at(-1)![2] as { text: string; onPress?: () => void }[];
-    await act(async () => buttons.find((b) => b.text === en.common.cancel)!.onPress!());
+    expect(hasText(tree, en.meal.scanInStoreBody)).toBe(true); // a sheet, not an alert
+    const close = tree.root.findAll((n) => n.props.accessibilityLabel === en.common.close && typeof n.props.onPress === 'function')[0]!;
+    await act(async () => close.props.onPress());
     expect(hasText(tree, en.meal.chooseTitle)).toBe(true);
     await press(tree, en.meal.scan);
     await type(tree, en.meal.scanCode, '2000000000008');
     await press(tree, en.meal.scanLookup);
     await flush();
-    await act(async () => (alert.mock.calls.at(-1)![2] as { text: string; onPress?: () => void }[]).find((b) => b.text === en.meal.scanUse)!.onPress!());
+    await press(tree, en.meal.scanUse);
     expect(hasText(tree, en.meal.scanFromDb)).toBe(true);
   });
 
@@ -3916,5 +3921,71 @@ describe('Entry forms (IN-12, IN-13, IN-17, UX-3)', () => {
     await toggle(tree, en.regular.switch);
     expect(hasText(tree, en.regular.switchHint)).toBe(true);
     expect(tree.root.findAll((n) => n.props.accessibilityRole === 'switch' && n.props.accessibilityLabel === en.regular.switch).length).toBeGreaterThan(0);
+  });
+});
+
+describe('Meal extras: confirmations and results (IN-3, LL-5, LL-12)', () => {
+  let alert: jest.SpyInstance;
+  beforeEach(() => {
+    alert = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    require('@/adapters/photos/pickPhotos').pickPhotoUris.mockResolvedValue(['file:///synthetic-meal.jpg']);
+  });
+  afterEach(() => {
+    require('@/adapters/photos/pickPhotos').pickPhotoUris.mockResolvedValue([]);
+    jest.restoreAllMocks();
+  });
+  const buttonOf = (name: string) => alert.mock.calls.at(-1)![2].find((b: { text: string }) => b.text === name) as { onPress: () => unknown };
+  const meal = () => require('@/app/form/meal');
+
+  it('LL-5 every confirmation names the model that will be used', async () => {
+    const deps = nowDeps(new FakeLlm(['{"ingredients":["rice"],"uncertainty":null}']));
+    await saveApiKey(deps, 'sk-synthetic-secret');
+    const { tree } = await mount(meal, deps);
+    await type(tree, en.meal.description, 'Synthetic dinner');
+    await press(tree, en.meal.continue);
+    await press(tree, en.meal.fromPhoto);
+    await act(async () => {
+      await buttonOf(en.photos.library).onPress();
+    });
+    expect(String(alert.mock.calls.at(-1)![1])).toContain(en.meal.confirmModel.replace('{{model}}', 'Haiku'));
+    await press(tree, en.meal.fromName);
+    expect(String(alert.mock.calls.at(-1)![1])).toContain(en.meal.confirmModel.replace('{{model}}', 'Haiku'));
+  });
+
+  it('IN-3 nothing is pre-selected: Add selected is disabled until an item is tapped', async () => {
+    const deps = nowDeps(new FakeLlm(['{"ingredients":["rice","soy sauce"],"uncertainty":null}']));
+    await saveApiKey(deps, 'sk-synthetic-secret');
+    const { tree } = await mount(meal, deps);
+    await type(tree, en.meal.description, 'Synthetic dinner');
+    await press(tree, en.meal.continue);
+    await press(tree, en.meal.fromPhoto);
+    await act(async () => {
+      await buttonOf(en.photos.library).onPress();
+    });
+    await act(async () => {
+      void buttonOf(en.meal.photoSend).onPress();
+    });
+    await flush();
+    const picked = () => tree.root.findAll((n) => n.props.accessibilityLabel === en.meal.estimateAddPicked && n.props.accessibilityState !== undefined);
+    expect(picked().length).toBeGreaterThan(0);
+    expect(picked().every((n) => n.props.accessibilityState.disabled === true)).toBe(true);
+    await press(tree, 'soy sauce');
+    expect(picked().every((n) => n.props.accessibilityState.disabled === false)).toBe(true);
+  });
+
+  it('IN-19, LL-8 a failed estimate says it added nothing and that the form is as it was', async () => {
+    const { NettleError } = require('@/core/model/errors');
+    const deps = nowDeps(new FakeLlm([new NettleError('llm_rate_limited')]));
+    await saveApiKey(deps, 'sk-synthetic-secret');
+    const { tree } = await mount(meal, deps);
+    await type(tree, en.meal.description, 'Synthetic dinner');
+    await press(tree, en.meal.continue);
+    await press(tree, en.meal.fromName);
+    await act(async () => {
+      void buttonOf(en.meal.nameSend).onPress();
+    });
+    await flush();
+    expect(hasText(tree, en.errors.llm_rate_limited)).toBe(true);
+    expect(hasText(tree, en.meal.estimateUntouched)).toBe(true);
   });
 });

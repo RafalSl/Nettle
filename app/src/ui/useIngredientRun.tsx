@@ -1,13 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
-import { Alert } from 'react-native';
+import { Alert, View } from 'react-native';
 import { pickPhotoUris } from '@/adapters/photos/pickPhotos';
 import { NettleError } from '@/core/model/errors';
 import type { LlmProvenance, SourceKind } from '@/core/model/source';
 import type { Allergen } from '@/core/model/types';
-import { estimateIngredients, estimateIngredientsFromName, knownIngredientNames, nameEstimateText, scanLabel } from '@/core/usecases/llm';
+import { estimateIngredients, estimateIngredientsFromName, getModelLabel, knownIngredientNames, nameEstimateText, scanLabel } from '@/core/usecases/llm';
 import { currentLanguage, errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
+import { formatElapsed } from '@/core/usecases/analysisRunner';
 import { Button, Chips, Hint } from '@/ui/components';
+import { GlassSurface } from '@/ui/GlassSurface';
+import { Text } from '@/ui/themed';
+import { color } from '@/ui/theme';
+import { WaitArc } from '@/ui/WaitArc';
 
 /** LL-12: after this long the form says the call is still working. */
 export const SLOW_ESTIMATE_MS = 30_000;
@@ -21,7 +26,7 @@ type Job = { kind: 'photo' | 'label'; uri: string; knownNames: readonly string[]
 
 export type Run =
   | { status: 'idle' }
-  | { status: 'running'; slow: boolean; kind: RunKind }
+  | { status: 'running'; slow: boolean; kind: RunKind; startedAt: number }
   | {
       status: 'ready';
       kind: RunKind;
@@ -75,7 +80,7 @@ export function useIngredientRun() {
     if (prev && prev.kind !== 'name' && !(next.kind !== 'name' && next.uri === prev.uri)) discard();
     job.current = next;
     const kind = next.kind;
-    setRun({ status: 'running', slow: false, kind });
+    setRun({ status: 'running', slow: false, kind, startedAt: deps.clock.now().getTime() });
     slowTimer.current = setTimeout(() => setRun((r) => (r.status === 'running' ? { ...r, slow: true } : r)), SLOW_ESTIMATE_MS);
     try {
       const language = currentLanguage();
@@ -123,7 +128,8 @@ export function useIngredientRun() {
         if (!uri) return;
         // IN-3, LL-5: with "prefer my names" on, the confirmation says how many names go with the photo.
         const known = kind === 'photo' ? await knownIngredientNames(deps) : [];
-        const body = `${t(kind === 'label' ? 'meal.labelConfirmBody' : 'meal.photoConfirmBody')}${known.length > 0 ? `\n\n${t('meal.knownNamesSent', { n: known.length })}` : ''}`;
+        const model = await getModelLabel(deps, kind === 'label' ? 'label_scan' : 'meal_photo');
+        const body = `${t(kind === 'label' ? 'meal.labelConfirmBody' : 'meal.photoConfirmBody')}${known.length > 0 ? `\n\n${t('meal.knownNamesSent', { n: known.length })}` : ''}\n\n${t('meal.confirmModel', { model })}`;
         Alert.alert(title, body, [
           { text: t('common.cancel'), style: 'cancel', onPress: () => void deps.photos.discardTemp(uri).catch(() => undefined) },
           { text: t('meal.photoSend'), onPress: () => void execute({ kind, uri, knownNames: known }) },
@@ -147,7 +153,8 @@ export function useIngredientRun() {
     try {
       const text = nameEstimateText(description);
       const known = await knownIngredientNames(deps);
-      const body = `${t('meal.nameConfirmBody', { text })}${known.length > 0 ? `\n\n${t('meal.knownNamesSentName', { n: known.length })}` : ''}`;
+      const model = await getModelLabel(deps, 'meal_name');
+      const body = `${t('meal.nameConfirmBody', { text })}${known.length > 0 ? `\n\n${t('meal.knownNamesSentName', { n: known.length })}` : ''}\n\n${t('meal.confirmModel', { model })}`;
       Alert.alert(t('meal.nameConfirmTitle'), body, [
         { text: t('common.cancel'), style: 'cancel' },
         { text: t('meal.nameSend'), onPress: () => void execute({ kind: 'name', description: text, knownNames: known }) },
@@ -181,7 +188,39 @@ export function useIngredientRun() {
   };
 }
 
-/** The inline state of a run: waiting, the answer to add from, or a failure with a retry. */
+/** LL-12: whole seconds since `startedAt`, ticking once a second while mounted. */
+function useElapsed(startedAt: number): number {
+  const { deps } = useServices();
+  const [now, setNow] = useState(() => deps.clock.now().getTime());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(deps.clock.now().getTime()), 1000);
+    (timer as { unref?: () => void }).unref?.();
+    return () => clearInterval(timer);
+  }, [deps]);
+  return Math.max(0, Math.floor((now - startedAt) / 1000));
+}
+
+/** LL-12, UX-12: waiting for an LLM call: the wait arc, what is being done, the elapsed time and a Cancel that is there from the start. */
+function WaitCard({ run, onCancel }: { run: Extract<Run, { status: 'running' }>; onCancel: () => void }) {
+  const seconds = useElapsed(run.startedAt);
+  return (
+    <GlassSurface style={{ borderRadius: 26, padding: 14, gap: 10 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+        <WaitArc />
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontSize: 15, fontWeight: '600' }}>{run.slow ? t('meal.estimateSlow') : t(run.kind === 'name' ? 'meal.estimatingName' : 'meal.estimating')}</Text>
+          <Text style={{ fontSize: 13, color: color.muted }}>{formatElapsed(seconds)}</Text>
+        </View>
+      </View>
+      <Button kind="secondary" title={t('meal.estimateCancel')} onPress={onCancel} />
+    </GlassSurface>
+  );
+}
+
+/**
+ * The inline state of a run: waiting (with elapsed time and Cancel), the answer to add from (nothing is selected,
+ * and Add selected stays disabled until an item is tapped, IN-3), or a failure that leaves the form as it was.
+ */
 export function IngredientRunPanel({
   hook,
   onAdd,
@@ -190,34 +229,30 @@ export function IngredientRunPanel({
   onAdd: (names: string[], run: Extract<Run, { status: 'ready' }>) => void;
 }) {
   const { run } = hook;
-  if (run.status === 'running') {
-    return (
-      <>
-        <Hint>{run.slow ? t('meal.estimateSlow') : t(run.kind === 'name' ? 'meal.estimatingName' : 'meal.estimating')}</Hint>
-        {run.slow && <Button kind="secondary" title={t('meal.estimateCancel')} onPress={hook.cancel} />}
-      </>
-    );
-  }
+  if (run.status === 'running') return <WaitCard run={run} onCancel={hook.cancel} />;
   if (run.status === 'ready') {
     return (
-      <>
+      <GlassSurface style={{ borderRadius: 26, padding: 14, gap: 10 }}>
         <Hint>{t(run.kind === 'label' ? 'meal.labelSuggested' : run.kind === 'name' ? (run.names.length === 0 ? 'meal.nameEmpty' : 'meal.nameSuggested') : 'meal.suggested')}</Hint>
         {run.label && run.label.textRead !== '' && <Hint>{t('meal.labelRead', { text: run.label.textRead })}</Hint>}
         {run.uncertainty !== null && <Hint>{t(run.kind === 'label' ? 'meal.labelNote' : 'meal.unsure', { text: run.uncertainty })}</Hint>}
         <Chips items={run.names.map((n) => ({ id: n, label: n }))} selected={run.picked} onToggle={hook.toggle} />
-        {(run.kind !== 'name' || run.names.length > 0) && <Button title={t('meal.estimateAddAll')} onPress={() => onAdd(run.names, run)} />}
-        {run.picked.size > 0 && <Button kind="secondary" title={t('meal.estimateAddPicked')} onPress={() => onAdd([...run.picked], run)} />}
-        <Button kind="secondary" title={t('meal.estimateDismiss')} onPress={hook.dismiss} />
-      </>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+          {(run.kind !== 'name' || run.names.length > 0) && <Button kind="outline" title={t('meal.estimateAddAll')} onPress={() => onAdd(run.names, run)} />}
+          {run.names.length > 0 && <Button kind="secondary" title={t('meal.estimateAddPicked')} disabled={run.picked.size === 0} onPress={() => onAdd([...run.picked], run)} />}
+          <Button kind="secondary" title={t('meal.estimateDismiss')} onPress={hook.dismiss} />
+        </View>
+      </GlassSurface>
     );
   }
   if (run.status === 'failed') {
     return (
-      <>
-        <Hint>{`${errorMessage(run.error)} ${t('meal.estimateFailed')}`}</Hint>
+      <GlassSurface style={{ borderRadius: 26, padding: 14, gap: 10, borderColor: color.alertLine, backgroundColor: color.alertSoft }}>
+        <Text style={{ fontSize: 14.5, color: color.alert, fontWeight: '600' }}>{errorMessage(run.error)}</Text>
+        <Hint>{`${t('meal.estimateFailed')} ${t('meal.estimateUntouched')}`}</Hint>
         <Button title={t('meal.estimateRetry')} onPress={hook.retry} />
         <Button kind="secondary" title={t('meal.estimateDismiss')} onPress={hook.dismiss} />
-      </>
+      </GlassSurface>
     );
   }
   return null;

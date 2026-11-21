@@ -109,7 +109,16 @@
     "scanFromDb": "Wypełniono z Open Food Facts. Sprawdź przed zapisem.",
     "scanFromHistory": "Wypełniono z dziennika: ten kod ostatnio zapisano {{date}}. Składniki i alergeny są takie, jakie wtedy potwierdzono.",
     "scanTagsHint": "Baza podaje alergeny: {{list}}. Nie są zaznaczone, dopóki ich nie zaznaczysz.",
-    "scanSelectTags": "Zaznacz alergeny z bazy"
+    "scanSelectTags": "Zaznacz alergeny z bazy",
+    "confirmModel": "Model: {{model}}.",
+    "waitingFor": "{{what}} {{time}}",
+    "estimateUntouched": "Formularz jest taki, jak go zostawiono.",
+    "estimateDismissed": "Odrzuć",
+    "scanNotFoundTitle": "Brak w bazie",
+    "scanReadLabel": "Odczytaj etykietę ze składem",
+    "scanByHand": "Wpisz ręcznie",
+    "scanBarcode": "Kod kreskowy {{code}}",
+    "scanCameraOff": "Aparat jest wyłączony"
   },
   "skin": {
     "title": "Dodaj stan skóry",

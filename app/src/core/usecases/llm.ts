@@ -33,6 +33,12 @@ export async function getModel(deps: Deps, action: LlmAction): Promise<string> {
   return stored && deps.llmModels.some((m) => m.id === stored) ? stored : DEFAULT_MODEL;
 }
 
+/** LL-5: the name the user sees for the model of an action (its label when the provider lists it). */
+export async function getModelLabel(deps: Deps, action: LlmAction): Promise<string> {
+  const id = await getModel(deps, action);
+  return deps.llmModels.find((m) => m.id === id)?.label ?? id;
+}
+
 /** LL-9: pick the model of one action from the offered list; null restores the default. */
 export async function setModel(deps: Deps, action: LlmAction, model: string | null): Promise<void> {
   if (!LLM_ACTIONS.includes(action)) throw new NettleError('invalid_value', 'action');

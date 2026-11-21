@@ -26,4 +26,4 @@ Checked in this session: typecheck, lint, and an iOS bundle (`expo export`) with
 3. Does the arc draw in once, and does the swipe change the day without fighting a scroll?
 4. Does the Save pill stay above the keyboard while typing?
 
-Result: pending the phone run.
+Result (2026-11-21, iPhone, Expo Go): passed. The aurora drifts smoothly under the blur (no stutter, so `USE_BLUR` stays on); the three Gabarito weights and tabular figures render; the arc draws in and the ring swipe changes the day. Two spike-only flaws, not stack problems: the leaf icon sat behind the date text, and the swipe right also triggered iOS back-navigation because the spike was a pushed screen (the real Today is a tab root and swipes fine). The keyboard test showed a real gap: a focused field hid behind the keyboard; fixed with `automaticallyAdjustKeyboardInsets` on the shared `Screen` scroll view. The spike screen is deleted.

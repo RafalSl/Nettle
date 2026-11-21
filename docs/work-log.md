@@ -646,3 +646,6 @@ Newest entry last. One short entry per working session or meaningful step: what 
 
 ## 2026-11-21: expo login works in the container (branch feature/docker-login-link)
 - **Done:** `expo login` crashed because the image has no `xdg-open`; the image gets a no-op stub, so the CLI prints the login link and waits for the browser callback on localhost (host networking). `run.sh` rebuilds the cached image before each run. No app code changed.
+
+## 2026-11-21: first phone run (UX-12)
+Design spike passed on the iPhone (blur, aurora, fonts, arc, swipe). Real-screen pass: Today works. Found that a focused field (ingredient entry in the meal form) stayed behind the keyboard; the shared `Screen` scroll view now has `automaticallyAdjustKeyboardInsets`. Spike screen deleted. Next: re-check the ingredient field on the phone, then the in-depth screen review.

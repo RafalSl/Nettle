@@ -155,14 +155,87 @@ There is no save gesture.
 
 ## Remaining screens to design
 
-The reference boards cover every pattern; each screen below copies the board named after it. Approve a group before the next one starts.
+The reference boards cover every pattern; each screen below copies the board named after it. All six groups were drawn in one overnight run (boards G1- to G6- on the canvas, copies in `design/canvas/`).
 
-- **Today states** (Today, Treatment quick sheet): a past day with "Back to today"; the first-run card; the Medication and Stool quick sheets; the sheet for a merged dot; the date picker; Edit Today (in More).
-- **Entry forms** (Meal review, Skin form, Daily health): Drink (alcohol switch), Medication (Regular switch), Treatment (areas, Regular switch), Nails (stage, extent, photos), Stool (Bristol 1 to 7), Reaction (the urgent-care advice always visible), Routine change, Medical event, and the edit screen of a treatment application (reaction None, Mild, Strong).
-- **Meal extras** (Meal choose, Meal review): barcode scan with its states (found, not found, in-store code), label scan, photo estimate waiting inline and its result banner, name estimate, the billing confirmation (LL-5).
-- **Review** (Review: Days, Area timeline): Areas, a day's full log ("Show all"), Doctor report (range, counts, photo selection, share), AI analysis (what will be sent and the billing notice, progress with elapsed time and Cancel, result as hypotheses, interrupted and failed states), Daily health trends, Suggestions to review (IN-20), the Claude plan pack (LL-15).
-- **Settings** (Settings, Regular item): Suggestions, Day start, Flare threshold, Daily health items, Skin and nail areas, Treatments, Regular items list, Routine categories, Favorites, Reminders (with the permission-denied state), Privacy and photos (app lock), AI key and models, Data and backup (Full backup, custom export, import preview with the tombstone switch, Delete data with two confirmations), About, "Where do I log…?".
-- **System** (Empty state, Delete sheet): the lock cover (SE-8), permission-denied states for the camera and photos, error and offline states, the app icon and the splash screen (still the Expo defaults).
+- [x] **Today states** (Today, Treatment quick sheet): a past day with "Back to today"; the first-run card; the Medication and Stool quick sheets; the sheet for a merged dot; the date picker; Edit Today (in More). Done: boards `G1-*`.
+- [x] **Entry forms** (Meal review, Skin form, Daily health): Drink (alcohol switch), Medication (Regular switch), Treatment (areas, Regular switch), Nails (stage, extent, photos), Stool (Bristol 1 to 7), Reaction (the urgent-care advice always visible), Routine change, Medical event, and the edit screen of a treatment application (reaction None, Mild, Strong). Done: boards `G2-*`.
+- [x] **Meal extras** (Meal choose, Meal review): barcode scan with its states (found, not found, in-store code), label scan, photo estimate waiting inline and its result banner, name estimate, the billing confirmation (LL-5). Done: boards `G3-*`.
+- [x] **Review** (Review: Days, Area timeline): Areas, a day's full log ("Show all"), Doctor report (range, counts, photo selection, share), AI analysis (what will be sent and the billing notice, progress with elapsed time and Cancel, result as hypotheses, interrupted and failed states), Daily health trends, Suggestions to review (IN-20), the Claude plan pack (LL-15). Done: boards `G4-*`.
+- [x] **Settings** (Settings, Regular item): Suggestions, Day start, Flare threshold, Daily health items, Skin and nail areas, Treatments, Regular items list, Routine categories, Favorites, Reminders (with the permission-denied state), Privacy and photos (app lock), AI key and models, Data and backup (Full backup, custom export, import preview with the tombstone switch, Delete data with two confirmations), About, "Where do I log…?". Done: boards `G5-*`.
+- [x] **System** (Empty state, Delete sheet): the lock cover (SE-8), permission-denied states for the camera and photos, error and offline states, the app icon and the splash screen (still the Expo defaults). Done: boards `G6-*`.
+
+## Proposed additions (needs approval)
+
+Drawn overnight on the design canvas as boards `G1-` to `G6-` (design/canvas/, generator in design/generator/). Nothing below is in the approved sections above; each item names its requirement IDs. The consistency review is in design/consistency-report.md.
+
+### Today states
+
+1. Edit Today is a pushed screen (Back, no Done). Each pinned row has Up, Down and Move to More; Pin to Today is disabled at 5 with a note. Affects UX-2.
+2. Merged dot: the sheet lists its entries first, then each opens Edit or Delete. Affects UX-2, EN-1.
+3. Stool quick sheet: a 2-column grid of the 7 types plus Earlier…; the tapped tile turns into "Saved 14:20". Affects UX-3, NF-2.
+4. Past day: "Back to Today" replaces the context pills; the next-day arrow is active. Affects UX-2.
+5. First-run card carries two buttons: Log a meal (primary) and Where do I log…?. Affects UX-2, UX-11.
+6. Ring dots are 28 pt as approved; the tap area should be 44 pt (hit slop). Affects UX-8 (deferred).
+
+### Entry forms
+
+1. Reaction: the urgent-care advice is a coral note under the header and stays pinned while the form scrolls. Affects IN-13.
+2. Reaction with no meal: the same form with "Log a meal first" and a glass Log a meal button; Save stays disabled with a missing line. Affects IN-13, UX-3.
+3. Medication and Treatment: Regular switch with its hint; reminders are not set in the form. Affects IN-17, UX-4.
+4. Treatment application edit: Reaction None | Mild | Strong as a segmented control with nothing selected; the hint says empty is not none. Affects IN-11.
+5. Medical event: an Illness shows "Ended on" with a Set end date button. Affects IN-18.
+6. Routine change: Stopped lists the items in use now as a single choice. Affects IN-12.
+7. Chips are 38 pt high as approved; the tap area should be 44 pt. Affects UX-8 (deferred).
+
+### Meal extras
+
+1. Scan has one screen for the camera and a typed code beside it; Open Food Facts gets the code only. Affects IN-2.
+2. A history hit shows its date and Scan label again; an in-store code asks first in a sheet with Use it. Affects IN-2.
+3. Not found offers Read the ingredient label (primary) and Enter by hand. Affects IN-8, IN-15.
+4. Camera denied: explains it, Open settings, and the typed code still works. Affects IN-2.
+5. Every confirmation lists exactly what is sent and carries the billing notice; the model is named. Affects LL-5.
+6. Waiting shows elapsed time; Cancel is there from the start; the wait arc is the one proposed motion (rotates only while a call runs). Affects LL-12, UX-12.
+7. Estimate results: nothing is pre-selected, Add selected stays disabled until you tap an item; allergen tags stay unselected. Affects IN-3, IN-10, IN-19.
+8. A failed or too vague estimate leaves the form untouched and says so. Affects IN-19, LL-8.
+
+### Review
+
+1. RANGE SWITCH on the Area timeline trend and on Daily health trends: 30 days | 90 days | 1 year | All, default 90 days, a segmented control above the chart. Today both chart the whole history. Affects SK-8, SK-7.
+2. Review output cards show a status line while a run exists: Analysis running with elapsed time, Analysis ready (accent dot and line). Affects LL-12.
+3. Analysis result shows Evidence, Against and Uncertainty for each possible pattern, a "What the data cannot show" part and "Questions for your doctor"; no advice. Affects LL-4.
+4. A pushed screen's single primary floats at the bottom like the form Save (Prepare the pack, Send and analyse, Create doctor report, Try again). Affects UX-3, UX-12.
+5. Doctor report: period chips, a sensitive photos switch off by default, a one-by-one photo picker, language, optional AI summary. Affects EX-3, EX-7, EX-14, LL-14.
+6. The wait arc is drawn static here; proposed motion: it turns only while a call runs. Affects UX-12.
+7. Claude plan: the confirmation repeats the three notes (file leaves only if you send it, consumer terms, nothing billed). Affects LL-15.
+8. Photo picker: a 3-column grid with a check badge, sensitive photos blurred and unselected, Select all and None. Affects EX-4, EX-7, SK-5.
+
+### Settings
+
+1. Delete data: pick what to delete, then an export-first sheet, then a final confirmation (two asks, SE-9). Affects SE-9.
+2. Import preview carries a "Restore entries I deleted" switch, off by default, and a count of skipped entries. Affects EX-9, EX-10.
+3. Flare threshold: one stepper, scope "Per area" or "Same for all", default Same for all. Affects SK-8.
+4. Custom export reuses the report's "Pick photos one by one" row and the sensitive photos switch, off by default. Affects EX-4, EX-7.
+5. AI key: Save key stays disabled with a "Paste the key first" line; key shown only as the last 4 characters; "Test the key" mentions a possible tiny cost. Affects LL-1, LL-3.
+6. AI models: one choice for photo and name estimates and one for analysis, each a single choice. Affects LL-2.
+7. Reminders denied: a coral banner with "Open iPhone settings" and a disabled switch. Affects NO-3.
+8. Where do I log…? is a settings list of what goes where, not a search. Affects UX-4.
+
+### System
+
+1. App lock cover shows only the lock, never any entry, and the app switcher cover shows only a lock mark. Affects SE-8.
+2. A failed Face ID attempt reuses the lock cover with a coral icon and "Use passcode". Affects SE-8.
+3. Camera and photo library denied: a full-screen explanation with "Open iPhone settings" and "Not now"; typing and the library stay available. Affects IN-8, IN-9.
+4. Storage error and offline barcode lookup keep the form open with a coral banner and the input in place. Affects IN-6, NF-3.
+5. App icon: an accent ring on the Aurora ground, no text; splash is the same ring and the word Nettle. Affects UX-1.
+6. Rate limit gets its own message and a Try again button. Affects LL-8.
+
+### Review-driven (see the consistency report)
+
+1. Control outline token: chip outlines, switch off-track and the unselected radio ring move from white 22 to 28 % to white 34 %, which reaches 3:1 on the ground (was 1.9 to 2.4). Glass line stays decoration. Affects UX-12 (tokens).
+2. Failure and permission states use the coral alert colour with a banner (G3, G4, G5, G6 error boards). The spec lists coral for flare, urgent advice and delete only; either add "failures" to that row or switch these to the quiet info banner. Affects UX-12.
+3. Tabular figures on for the whole app (root style) instead of per element. Affects UX-12.
+4. Segmented control with 3 or 4 options (range switch, treatment reaction). The spec says two options; alternative is chips. Affects UX-12, SK-7, SK-8.
+5. Icon stroke: many icons are drawn at stroke 1.8 to 2.8 at 15 to 18 px to stay legible; proposal is to scale the stroke so the rendered line is 1.6 px or to document a small-size rule. New glyphs used: minus, dots (more), up, down. Affects UX-12.
 
 ## Adding a board
 

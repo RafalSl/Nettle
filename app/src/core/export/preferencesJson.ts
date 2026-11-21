@@ -1,10 +1,21 @@
 import { isDayStartHour } from '../model/dayStart';
-import { ENTRY_TYPES, MAX_SUGGESTION_ROWS, WINDOW_DAYS, type EntryType, type Preferences, type RegularItem } from '../model/preferences';
+import { ENTRY_TYPES, FLARE_SCOPES, MAX_SUGGESTION_ROWS, WINDOW_DAYS, type EntryType, type FlareScope, type Preferences, type RegularItem } from '../model/preferences';
 import { ALLERGENS, MEDICATION_CATEGORIES } from '../model/types';
 import { parseBarcode, parseSource, sourceToJson } from './sourceJson';
 import { bad, bool, enumList, isObj, list, nullableText, oneOf, str, stringList, unique, type Obj } from './guards';
 
 /** data.json form of the preferences (`settings.preferences`), snake_case like the rest of the file. */
+/** SK-8: area id to a threshold of 1 to 10. */
+function parseAreaThresholds(v: unknown, where: string): Record<string, number> {
+  if (!isObj(v)) return bad(where);
+  const out: Record<string, number> = {};
+  for (const [id, n] of Object.entries(v)) {
+    if (typeof n !== 'number' || !Number.isInteger(n) || n < 1 || n > 10) return bad(`${where}.${id}`);
+    out[id] = n;
+  }
+  return out;
+}
+
 export function preferencesToJson(p: Preferences): Obj {
   return {
     favorites: {
@@ -16,6 +27,8 @@ export function preferencesToJson(p: Preferences): Obj {
     quick_actions: { pinned: [...p.quickActions.pinned] },
     day_start_hour: p.dayStartHour,
     flare_threshold: p.flareThreshold,
+    flare_scope: p.flareScope,
+    flare_thresholds: { ...p.flareThresholdByArea },
     regular: p.regular.map((r) => ({ id: r.id, kind: r.kind, category: r.category, name: r.name, dose: r.dose, treatment_id: r.treatmentId, area_ids: [...r.areaIds], times: r.times.map((t) => ({ hour: t.hour, minute: t.minute })), hide_name: r.hideName })),
   };
 }
@@ -99,5 +112,7 @@ export function parsePreferences(o: Obj, where = 'settings.preferences'): Prefer
     dayStartHour: isDayStartHour(o.day_start_hour) ? o.day_start_hour : bad(`${where}.day_start_hour`),
     regular: parseRegular(o, where),
     flareThreshold: typeof o.flare_threshold === 'number' && Number.isInteger(o.flare_threshold) && o.flare_threshold >= 1 && o.flare_threshold <= 10 ? o.flare_threshold : bad(`${where}.flare_threshold`),
+    flareScope: FLARE_SCOPES.includes(o.flare_scope as never) ? (o.flare_scope as FlareScope) : bad(`${where}.flare_scope`),
+    flareThresholdByArea: parseAreaThresholds(o.flare_thresholds, `${where}.flare_thresholds`),
   };
 }

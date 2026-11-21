@@ -552,7 +552,7 @@ describe('screen flows (NF-2, NF-3)', () => {
 
   it('LL-5, LL-7 the analysis screen reviews exactly what is sent, then runs and shows the stored result', async () => {
     const llm = new FakeLlm([
-      JSON.stringify({ summary: 'Synthetic summary', hypotheses: [], order_and_lag: 'none', data_limits: [], suggestions: [] }),
+      JSON.stringify({ summary: 'Synthetic summary', hypotheses: [], order_and_lag: 'none', data_limits: [], questions_for_doctor: [] }),
     ]);
     const deps = nowDeps(llm);
     await saveApiKey(deps, 'sk-synthetic-secret');
@@ -1981,7 +1981,7 @@ describe('Analysis running state (LL-12)', () => {
   });
   afterEach(() => jest.restoreAllMocks());
 
-  const answer = JSON.stringify({ summary: 'Synthetic summary', hypotheses: [], order_and_lag: 'none', data_limits: [], suggestions: [] });
+  const answer = JSON.stringify({ summary: 'Synthetic summary', hypotheses: [], order_and_lag: 'none', data_limits: [], questions_for_doctor: [] });
   async function prepared(deps: Deps) {
     await saveApiKey(deps, 'sk-synthetic-secret');
     await logMeal(deps, { description: 'Synthetic meal', ingredients: [], at: new Date(Date.now() - 2 * 3600 * 1000) });
@@ -3653,7 +3653,7 @@ describe('Fill later with AI and My Claude plan (IN-20, LL-15)', () => {
     await logSkinEntry(deps, { areaId: 'area-chin', scores, at: longAgo });
     const meal = await logMeal(deps, { description: 'Synthetic pancakes', ingredients: [], fillLater: true, at: longAgo });
     const { packId } = await buildPack(deps, days());
-    const result = bytesOf(answer(packId, { analysis: { summary: 'Synthetic summary', hypotheses: [], order_and_lag: 'none', data_limits: [], suggestions: [] }, fills: [{ kind: 'meal', id: meal.id, ingredients: ['flour'], allergens: [], note: null }] }));
+    const result = bytesOf(answer(packId, { analysis: { summary: 'Synthetic summary', hypotheses: [], order_and_lag: 'none', data_limits: [], questions_for_doctor: [] }, fills: [{ kind: 'meal', id: meal.id, ingredients: ['flour'], allergens: [], note: null }] }));
     const pick = { saveAndShare: jest.fn(async () => undefined), pickFile: jest.fn(async () => result as unknown as null) };
     const { tree } = await mount(() => require('@/app/(tabs)/review/pack'), deps, pick);
     await press(tree, en.plan.import);

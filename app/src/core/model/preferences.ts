@@ -1,6 +1,9 @@
-import { DEFAULT_FLARE_THRESHOLD } from './flares';
+import { DEFAULT_FLARE_THRESHOLD, type FlareRule } from './flares';
 import type { IngredientSource } from './source';
 import type { Allergen, MedicationCategory } from './types';
+
+export const FLARE_SCOPES = ['all', 'perArea'] as const;
+export type FlareScope = (typeof FLARE_SCOPES)[number];
 
 /** IN-14: a favorite keeps a snapshot, so it survives when its entries are deleted. `key` is the suggestion identity. */
 export interface FavoriteMeal {
@@ -85,6 +88,10 @@ export interface Preferences {
   dayStartHour: number;
   /** SK-6: severity at or above which a skin entry counts as a flare (1 to 10, default 8). */
   flareThreshold: number;
+  /** SK-8: "all" uses `flareThreshold` for every area; "perArea" uses `flareThresholdByArea` where an area has an entry and `flareThreshold` elsewhere. */
+  flareScope: FlareScope;
+  /** SK-8: thresholds of single areas (1 to 10), used only while the scope is "perArea". */
+  flareThresholdByArea: Record<string, number>;
   /** IN-17: regular medication and treatment (travels in the settings part of an export). */
   regular: RegularItem[];
 }
@@ -97,8 +104,14 @@ export const DEFAULT_PREFERENCES: Preferences = {
   quickActions: { pinned: [...DEFAULT_PINNED] },
   dayStartHour: 0,
   flareThreshold: DEFAULT_FLARE_THRESHOLD,
+  flareScope: 'all',
+  flareThresholdByArea: {},
   regular: [],
 };
 
 /** A fresh copy of the defaults, so callers can change it freely. */
 export const defaultPreferences = (): Preferences => structuredClone(DEFAULT_PREFERENCES);
+
+/** SK-8: the flare rule these preferences give. */
+export const flareRule = (p: Pick<Preferences, 'flareThreshold' | 'flareScope' | 'flareThresholdByArea'>): FlareRule =>
+  p.flareScope === 'perArea' ? { fallback: p.flareThreshold, perArea: { ...p.flareThresholdByArea } } : p.flareThreshold;

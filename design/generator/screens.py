@@ -31,7 +31,7 @@ input::placeholder{{color:#9AA4B2}}
 .ax-b1{{animation:ax-drift1 18s ease-in-out infinite}}.ax-b2{{animation:ax-drift2 22s ease-in-out infinite}}
 </style>
 </helmet>
-<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; overflow: hidden; background: #070B12; font-family: Gabarito, -apple-system, system-ui, sans-serif; color: #F2F5F9; -webkit-font-smoothing: antialiased">
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; overflow: hidden; background: #070B12; font-family: Gabarito, -apple-system, system-ui, sans-serif; font-variant-numeric: tabular-nums; color: #F2F5F9; -webkit-font-smoothing: antialiased">
 <div aria-hidden="true" style="position: absolute; inset: 0; overflow: hidden; pointer-events: none">
 <div class="ax-b1" style="position: absolute; left: -120px; top: -120px; width: 420px; height: 380px; border-radius: 999px; background: {{{{glowA}}}}; filter: blur(70px); opacity: 0.5"></div>
 <div class="ax-b2" style="position: absolute; right: -160px; top: 300px; width: 380px; height: 360px; border-radius: 999px; background: {{{{glowB}}}}; filter: blur(80px); opacity: 0.34"></div>
@@ -108,7 +108,7 @@ def modal_top(title):
 <div class="ax-s" style="position: absolute; left: 0; right: 0; top: 54px; bottom: 0; border-radius: 34px 34px 0 0; background: rgba(13,19,29,0.86); box-shadow: inset 0 1px 0 rgba(255,255,255,0.10), 0 -10px 40px rgba(0,0,0,0.45); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); overflow: hidden">
 <div aria-hidden="true" style="width: 40px; height: 5px; border-radius: 999px; background: rgba(255,255,255,0.22); margin: 8px auto 0 auto"></div>
 <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 16px 0 16px">
-<button style="height: 40px; padding: 0 16px; border-radius: 999px; {GLASS}; font-size: 15.5px; font-weight: 600">Cancel</button>
+<button style="height: 44px; padding: 0 16px; border-radius: 999px; {GLASS}; font-size: 15.5px; font-weight: 600">Cancel</button>
 <h1 style="margin: 0; font-size: 17px; font-weight: 700">{title}</h1>
 <span aria-hidden="true" style="width: 82px"></span>
 </div>
@@ -234,7 +234,7 @@ def tag(text, on):
         return (f'<button aria-pressed="true" style="height: 38px; display: flex; align-items: center; gap: 6px; padding: 0 14px 0 10px; border-radius: 999px; '
                 f'background: {{{{accent}}}}; color: #062A26; font-size: 14.5px; font-weight: 700">{svg(IC["check"], 16, "#062A26", 2.6)}{text}</button>')
     return (f'<button aria-pressed="false" style="height: 38px; display: flex; align-items: center; padding: 0 14px; border-radius: 999px; '
-            f'box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.22); font-size: 14.5px; font-weight: 500; color: #C9D0DA">{text}</button>')
+            f'box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.34); font-size: 14.5px; font-weight: 500; color: #C9D0DA">{text}</button>')
 
 review_body = modal_top('Log a meal') + f'''
 <div class="ax-r ax-d1" style="display: flex; align-items: center; gap: 10px">
@@ -253,7 +253,7 @@ review_body = modal_top('Log a meal') + f'''
 {section_label("Ingredients", '<span style="font-size: 13px; color: #9AA4B2">from 12 Nov</span>')}
 <div style="display: flex; flex-wrap: wrap; gap: 8px">
 {chip("chicken")}{chip("lettuce")}{chip("egg")}{chip("mustard")}{chip("bread croutons")}
-<button style="height: 38px; display: flex; align-items: center; gap: 6px; padding: 0 14px 0 10px; border-radius: 999px; border: 1.5px dashed rgba(255,255,255,0.28); box-sizing: border-box; font-size: 14.5px; font-weight: 600; color: {{{{accent}}}}">{svg(IC["plus"], 15, "{{accent}}", 2.4)}Add</button>
+<button style="height: 38px; display: flex; align-items: center; gap: 6px; padding: 0 14px 0 10px; border-radius: 999px; border: 1.5px dashed rgba(255,255,255,0.34); box-sizing: border-box; font-size: 14.5px; font-weight: 600; color: {{{{accent}}}}">{svg(IC["plus"], 15, "{{accent}}", 2.4)}Add</button>
 </div>
 <div style="display: flex; gap: 8px">
 <button style="flex: 1; height: 40px; display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 999px; {GLASS}; font-size: 13.5px; font-weight: 600">{svg(IC["sparkle"], 16)}From name</button>
@@ -266,7 +266,7 @@ review_body = modal_top('Log a meal') + f'''
 {section_label("Allergens")}
 <div style="display: flex; flex-wrap: wrap; gap: 8px">
 {tag("Eggs", True)}{tag("Mustard", True)}{tag("Gluten", "guess")}
-<button style="height: 38px; display: flex; align-items: center; padding: 0 14px; border-radius: 999px; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.22); font-size: 14.5px; font-weight: 600; color: #C9D0DA">+ 11 more</button>
+<button style="height: 38px; display: flex; align-items: center; padding: 0 14px; border-radius: 999px; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.34); font-size: 14.5px; font-weight: 600; color: #C9D0DA">+ 11 more</button>
 </div>
 <p style="margin: 0; padding: 0 4px; font-size: 13px; line-height: 19px; color: #9AA4B2">Ticked: from this meal's history. Dashed: a guess from the ingredients, tap to add.</p>
 </div>

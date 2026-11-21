@@ -2,6 +2,7 @@ import { addDays, localDay, localDaysToRange } from '../model/time';
 import type { CheckIn, DateRange, LocalDay, Records, Stamp } from '../model/types';
 import type { Deps } from './deps';
 import { getCheckIn } from './checkin';
+import { flareRule } from '../model/preferences';
 import { getPreferences } from './preferences';
 import { deriveFlares } from '../model/flares';
 
@@ -163,7 +164,7 @@ export async function monthOverview(deps: Deps, month: string): Promise<MonthDay
     }
   }
   const flareDays = new Set<LocalDay>();
-  const threshold = (await getPreferences(deps)).flareThreshold;
+  const threshold = flareRule(await getPreferences(deps));
   for (const f of deriveFlares(snap.skinEntries, threshold)) {
     const from = localDay(f.start.utc, f.start.tz, start);
     const to = f.end ? (addDays(localDay(f.end.utc, f.end.tz, start), -1) ?? from) : localDay(f.lastEntryAt.utc, f.lastEntryAt.tz, start);

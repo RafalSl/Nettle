@@ -6,6 +6,7 @@ import { addDays, localDay, makeStamp } from '../model/time';
 import type { LocalDay, ReportSummary } from '../model/types';
 import type { Language, LlmRequest } from '../ports/llm';
 import { MAX_INPUT_CHARS } from './analysis';
+import { flareRule } from '../model/preferences';
 import { getPreferences } from './preferences';
 import type { Deps } from './deps';
 import { currentProvider, getModel } from './llm';
@@ -59,7 +60,7 @@ export async function summaryDays(deps: Deps, days: { from?: string; to?: string
 /** LL-14, LL-2, LL-5: build the request from the same diary data as the analysis, without photos. Sends nothing, changes nothing. */
 export async function prepareSummary(deps: Deps, sel: SummarySelection): Promise<PreparedSummary> {
   if (!validDay(sel.dayFrom) || !validDay(sel.dayTo) || sel.dayFrom > sel.dayTo) throw new NettleError('invalid_range');
-  const built = buildAnalysisInput(await deps.repo.snapshot(), sel.dayFrom, sel.dayTo, deps.dayStart.get(), (await getPreferences(deps)).flareThreshold, deps.clock.now().toISOString());
+  const built = buildAnalysisInput(await deps.repo.snapshot(), sel.dayFrom, sel.dayTo, deps.dayStart.get(), flareRule(await getPreferences(deps)), deps.clock.now().toISOString());
   if (built.periodRecords === 0) throw new NettleError('analysis_no_data');
   const prompt = summaryPrompt(sel.language, { json: built.json });
   const sentCharacters = prompt.system.length + prompt.user.length;

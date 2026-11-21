@@ -63,7 +63,7 @@ def switch(on):
     if on:
         return ('<span aria-hidden="true" style="width: 51px; height: 31px; border-radius: 999px; background: @A@; position: relative; flex: none">'
                 '<span style="position: absolute; right: 2px; top: 2px; width: 27px; height: 27px; border-radius: 999px; background: #FFFFFF; box-shadow: 0 2px 6px rgba(0,0,0,0.3)"></span></span>')
-    return ('<span aria-hidden="true" style="width: 51px; height: 31px; border-radius: 999px; background: rgba(255,255,255,0.16); position: relative; flex: none">'
+    return ('<span aria-hidden="true" style="width: 51px; height: 31px; border-radius: 999px; background: rgba(255,255,255,0.34); position: relative; flex: none">'
             '<span style="position: absolute; left: 2px; top: 2px; width: 27px; height: 27px; border-radius: 999px; background: #E6EAF0; box-shadow: 0 2px 6px rgba(0,0,0,0.3)"></span></span>')
 
 def toggle_row(title, on, hint=None, icon=None):
@@ -97,7 +97,7 @@ def chip(text, state='plain', icon=None, dot=None):
         return (f'<button aria-pressed="true" style="height: 38px; display: flex; align-items: center; gap: 6px; padding: 0 14px 0 10px; border-radius: 999px; '
                 f'background: @A@; color: #062A26; font-size: 14.5px; font-weight: 700">{svg(IC["check"], 16, "#062A26", 2.6)}{text}{d}</button>')
     return (f'<button aria-pressed="false" style="height: 38px; display: flex; align-items: center; gap: 6px; padding: 0 14px; border-radius: 999px; '
-            f'box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.22); font-size: 14.5px; font-weight: 500; color: {SOFT}">{text}{d}</button>')
+            f'box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.34); font-size: 14.5px; font-weight: 500; color: {SOFT}">{text}{d}</button>')
 
 def nav_row(icon, title, value=None, sub=None, danger=False, last=False):
     color = CORAL if danger else '#F2F5F9'
@@ -138,7 +138,7 @@ def photo(label, sensitive=False, size=76):
     blur = 'filter: blur(6px); ' if sensitive else ''
     return (f'<button aria-label="Photo, {label}" style="position: relative; width: {size}px; height: {size}px; border-radius: 22px; overflow: hidden; flex: none; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14)">'
             f'<span style="position: absolute; inset: -8px; {blur}background: radial-gradient(60% 50% at 40% 45%, #C9A39A 0%, #8E6E68 55%, #3B302F 100%)"></span>{lock}'
-            f'<span style="position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 6px 5px 6px; background: linear-gradient(transparent, rgba(7,11,18,0.75)); font-size: 10.5px; font-weight: 600; color: #F2F5F9; text-align: center">{label}</span></button>')
+            f'<span style="position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 6px 5px 6px; background: linear-gradient(transparent, rgba(7,11,18,0.75)); font-size: 11px; font-weight: 600; color: #F2F5F9; text-align: center">{label}</span></button>')
 
 def content(pad_top=54, gap=16):
     return f'<div style="position: absolute; inset: 0; padding: {pad_top}px 20px 120px 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: {gap}px">'
@@ -173,7 +173,7 @@ skin = modal_top('Log skin status') + f'''
 <div class="ax-r ax-d4" style="display: flex; flex-direction: column; gap: 10px">
 {section_label("Photos", f'<span style="font-size: 13px; color: {MUTED}">stay on this phone</span>')}
 <div style="display: flex; gap: 10px">
-<button aria-label="Add a photo" style="width: 76px; height: 76px; border-radius: 22px; border: 1.5px dashed rgba(255,255,255,0.28); box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 600; color: @A@">{svg(IC["camera"], 22, "@A@", 1.8)}Add</button>
+<button aria-label="Add a photo" style="width: 76px; height: 76px; border-radius: 22px; border: 1.5px dashed rgba(255,255,255,0.34); box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 600; color: @A@">{svg(IC["camera"], 22, "@A@", 1.8)}Add</button>
 {photo("14:12")}
 </div>
 </div>
@@ -254,7 +254,7 @@ review = content() + f'''
 </div>
 <div class="ax-r ax-d4" style="display: flex; align-items: center; justify-content: space-between">
 {section_label("Days")}
-<button aria-pressed="false" style="height: 34px; padding: 0 14px; border-radius: 999px; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.22); font-size: 13.5px; font-weight: 600; color: {SOFT}">Incomplete days</button>
+<button aria-pressed="false" style="height: 34px; padding: 0 14px; border-radius: 999px; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.34); font-size: 13.5px; font-weight: 600; color: {SOFT}">Incomplete days</button>
 </div>
 <div class="ax-r ax-d5" style="display: flex; flex-direction: column; gap: 8px; -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent 100%); mask-image: linear-gradient(to bottom, #000 55%, transparent 100%)">
 {day_row("Saturday, 14 Nov", 3, False)}{day_row("Friday, 13 Nov", 7, True)}{day_row("Thursday, 12 Nov", 6, True)}
@@ -274,17 +274,17 @@ def trend_chart():
     y8 = T + 2 * (H - T - 22) / 10
     base = H - 22
     grid = ''.join(f'<line x1="{L}" x2="{W}" y1="{T + (10 - g) * (H - T - 22) / 10:.1f}" y2="{T + (10 - g) * (H - T - 22) / 10:.1f}" stroke="rgba(255,255,255,0.07)"/>'
-                   f'<text x="{L - 8}" y="{T + (10 - g) * (H - T - 22) / 10 + 4:.1f}" text-anchor="end" font-size="10" fill="{MUTED}">{g}</text>' for g in (0, 5, 10))
+                   f'<text x="{L - 8}" y="{T + (10 - g) * (H - T - 22) / 10 + 4:.1f}" text-anchor="end" font-size="11" fill="{MUTED}">{g}</text>' for g in (0, 5, 10))
     flare_x = xs[-3]
     area = f'{xs[0]:.1f},{base} ' + pts + f' {xs[-1]:.1f},{base}'
-    return (f'<svg role="img" aria-label="Severity for Chin over the last 30 days, from 4 to 8; at the flare threshold since 12 Nov" width="100%" height="150" viewBox="0 0 {W} {H}" preserveAspectRatio="none">'
+    return (f'<svg role="img" aria-label="Severity for Chin over all entries, from 4 to 8; at the flare threshold since 12 Nov" width="100%" height="150" viewBox="0 0 {W} {H}" preserveAspectRatio="none">'
             f'<defs><linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="@A@" stop-opacity="0.32"/><stop offset="1" stop-color="@A@" stop-opacity="0"/></linearGradient></defs>'
             f'{grid}<rect x="{flare_x:.1f}" y="{T}" width="{W - flare_x:.1f}" height="{base - T}" fill="rgba(255,138,107,0.14)"/>'
             f'<line x1="{L}" x2="{W}" y1="{y8:.1f}" y2="{y8:.1f}" stroke="{CORAL}" stroke-dasharray="4 4" stroke-width="1.2"/>'
-            f'<text x="{L + 4}" y="{y8 - 5:.1f}" font-size="10" fill="{CORAL}" font-weight="600">flare 8</text>'
+            f'<text x="{L + 4}" y="{y8 - 5:.1f}" font-size="11" fill="{CORAL}" font-weight="600">flare 8</text>'
             f'<polygon points="{area}" fill="url(#trendFill)"/><polyline points="{pts}" fill="none" stroke="@A@" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>'
             f'<circle cx="{xs[-1]:.1f}" cy="{ys[-1]:.1f}" r="4.5" fill="#FFFFFF" stroke="@A@" stroke-width="2.5"/>'
-            f'<g font-size="10" fill="{MUTED}"><text x="{L}" y="{H - 6}">15 Oct</text><text x="{(L + W) / 2:.0f}" y="{H - 6}" text-anchor="middle">31 Oct</text><text x="{W}" y="{H - 6}" text-anchor="end">14 Nov</text></g></svg>')
+            f'<g font-size="11" fill="{MUTED}"><text x="{L}" y="{H - 6}">15 Oct</text><text x="{(L + W) / 2:.0f}" y="{H - 6}" text-anchor="middle">31 Oct</text><text x="{W}" y="{H - 6}" text-anchor="end">14 Nov</text></g></svg>')
 
 def entry_card(day, scores, photos, caption):
     sc = ''.join(f'<span style="display: flex; flex-direction: column; align-items: center; gap: 1px; min-width: 40px"><span style="font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums">{v}</span><span style="font-size: 11px; color: {MUTED}">{k}</span></span>' for k, v in scores)
@@ -302,7 +302,7 @@ score_chips = ''.join(
 timeline = content() + f'''
 {pushed_header("Chin", "Skin · flare since 12 Nov", "Back to Review", btn("Go to date", "glass", "calendar", h=40))}
 <div class="ax-r ax-d2" style="display: flex; flex-direction: column; gap: 10px; padding: 14px 14px 12px 14px; border-radius: 30px; {GLASS_BLUR}">
-<div style="display: flex; align-items: center; justify-content: space-between"><h2 style="margin: 0; font-size: 16px; font-weight: 700">Trend</h2><span style="font-size: 13px; color: {MUTED}">30 days</span></div>
+<div style="display: flex; align-items: center; justify-content: space-between"><h2 style="margin: 0; font-size: 16px; font-weight: 700">Trend</h2><span style="font-size: 13px; color: {MUTED}">All</span></div>
 <div style="display: flex; gap: 2px; overflow-x: auto; margin: 0 -4px">{score_chips}</div>
 {trend_chart()}
 <p style="margin: 0; font-size: 12.5px; line-height: 18px; color: {MUTED}">Severity, 15 Oct to 14 Nov: from 4 to 8, lowest 2, highest 8.</p>
@@ -342,7 +342,7 @@ regular = content(gap=18) + f'''
 <div class="ax-r ax-d2" style="display: flex; flex-direction: column; gap: 10px">
 {section_label("Reminder times")}
 <div style="display: flex; flex-wrap: wrap; gap: 8px">{time_chip("08:00")}{time_chip("21:00")}
-<button style="height: 44px; display: flex; align-items: center; gap: 6px; padding: 0 16px 0 12px; border-radius: 999px; border: 1.5px dashed rgba(255,255,255,0.28); box-sizing: border-box; font-size: 14.5px; font-weight: 600; color: @A@">{svg(IC["plus"], 15, "@A@", 2.4)}Add a time</button></div>
+<button style="height: 44px; display: flex; align-items: center; gap: 6px; padding: 0 16px 0 12px; border-radius: 999px; border: 1.5px dashed rgba(255,255,255,0.34); box-sizing: border-box; font-size: 14.5px; font-weight: 600; color: @A@">{svg(IC["plus"], 15, "@A@", 2.4)}Add a time</button></div>
 </div>
 <div class="ax-r ax-d3">{toggle_row("Hide the name in reminders", False, "A reminder then says only “Time for your treatment”. It never shows a dose or a note.")}</div>
 <div class="ax-r ax-d3" style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 26px; background: rgba(255,255,255,0.04); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08)">

@@ -12,6 +12,7 @@ import { addPhoto } from '@/core/usecases/photos';
 import { addArea, logNailEntry, logSkinEntry } from '@/core/usecases/skin';
 import { prepareAnalysis, runAnalysis } from '@/core/usecases/analysis';
 import { saveApiKey } from '@/core/usecases/llm';
+import { setAreaFlareThreshold, setFlareScope } from '@/core/usecases/preferences';
 import { FakeLlm } from './fakes/fakeLlm';
 import { FakePdf } from './fakes/fakePdf';
 import { MemoryRepo } from './fakes/memoryRepo';
@@ -51,7 +52,7 @@ async function diary() {
       hypotheses: [{ title: 'Synthetic hypothesis', explanation: 'x', evidence: ['e1'], counter_evidence: [], uncertainty: 'u', lag_hours: null, strength: 'weak' }],
       order_and_lag: 'none',
       data_limits: ['limit'],
-      suggestions: [],
+      questions_for_doctor: [],
     }),
   ]);
   const deps = makeDeps(repo, '2026-01-20T10:00:00.000Z', llm);
@@ -118,6 +119,16 @@ describe('export with CSV and PDF report (EX-3, EX-4, EX-5, EX-8)', () => {
     expect(html).toContain('<svg'); // severity trend
     expect(html).toContain('Synthetic cream');
     expect(html).toContain('Synthetic soap');
+  });
+
+  it('SK-8 the report says which flare thresholds were used when areas have their own', async () => {
+    const { deps, pdf } = await diary();
+    await exportBundle(deps, { report: reportOptions() });
+    expect(pdf.html[0]).not.toContain('[report.flaresBasisByArea');
+    await setAreaFlareThreshold(deps, 'area-chin', 3);
+    await setFlareScope(deps, 'perArea');
+    await exportBundle(deps, { report: reportOptions() });
+    expect(pdf.html[1]).toContain('[report.flaresBasisByArea{');
   });
 
   it('EX-4 AI analyses sit in their own labelled section after the person\'s records', async () => {

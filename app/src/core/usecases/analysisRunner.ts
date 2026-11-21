@@ -87,3 +87,22 @@ export class AnalysisRunner {
     if (this.current.status !== 'running') this.set({ status: 'idle' });
   }
 }
+
+/** LL-12: what a Review output card says about the run: nothing for idle or cancelled, else a state and, while running, the seconds so far. */
+export type RunCardStatus = { state: 'running'; seconds: number } | { state: 'ready' | 'interrupted' | 'failed' } | null;
+
+export function runCardStatus(run: AnalysisRun, nowMs: number): RunCardStatus {
+  switch (run.status) {
+    case 'running':
+      return { state: 'running', seconds: Math.max(0, Math.floor((nowMs - run.startedAt) / 1000)) };
+    case 'ready':
+    case 'interrupted':
+    case 'failed':
+      return { state: run.status };
+    default:
+      return null;
+  }
+}
+
+/** LL-12: seconds as "m:ss" for the elapsed time of a call. */
+export const formatElapsed = (seconds: number): string => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;

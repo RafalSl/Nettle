@@ -62,7 +62,7 @@ chips = card('Chips', f'''
 <div style="display: flex; flex-wrap: wrap; gap: 8px">{chip("Eggs", "on")}{chip("Milk")}
 <button aria-pressed="false" style="height: 38px; display: flex; align-items: center; gap: 6px; padding: 0 14px 0 10px; border-radius: 999px; border: 1.5px dashed @A@; box-sizing: border-box; font-size: 14.5px; font-weight: 600; color: @A@">{svg(IC["plus"], 15, "@A@", 2.4)}Gluten</button>
 <button style="height: 38px; display: flex; align-items: center; gap: 6px; padding: 0 10px 0 14px; border-radius: 999px; {GLASS}; font-size: 14.5px; font-weight: 500">mustard<span style="display: flex; opacity: 0.6">{svg(IC["x"], 14, "#F2F5F9", 2.2)}</span></button>
-<button style="height: 38px; display: flex; align-items: center; gap: 6px; padding: 0 14px 0 10px; border-radius: 999px; border: 1.5px dashed rgba(255,255,255,0.28); box-sizing: border-box; font-size: 14.5px; font-weight: 600; color: @A@">{svg(IC["plus"], 15, "@A@", 2.4)}Add</button></div>
+<button style="height: 38px; display: flex; align-items: center; gap: 6px; padding: 0 14px 0 10px; border-radius: 999px; border: 1.5px dashed rgba(255,255,255,0.34); box-sizing: border-box; font-size: 14.5px; font-weight: 600; color: @A@">{svg(IC["plus"], 15, "@A@", 2.4)}Add</button></div>
 ''', 'Selected: accent with a tick. Unselected: outline. Suggested by the app: dashed accent, never selected until tapped. Editable item: glass with a remove cross. Add: dashed outline.')
 
 inputs = card('Fields and switches', f'''

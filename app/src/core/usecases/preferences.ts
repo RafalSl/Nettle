@@ -8,6 +8,8 @@ import {
   type Preferences,
   type EntryType,
   ENTRY_TYPES,
+  FLARE_SCOPES,
+  type FlareScope,
   type SuggestionSettings,
 } from '../model/preferences';
 import { drinkKey, normalizeText } from '../model/suggestions';
@@ -40,6 +42,26 @@ export async function setFlareThreshold(deps: Deps, threshold: number): Promise<
 }
 
 /** IN-14, UX-6: a favorite removed in Settings (the key is the suggestion identity). */
+/** SK-8: "all" uses one threshold for every area; "perArea" lets each area have its own (areas without one use the common value). */
+export async function setFlareScope(deps: Deps, scope: FlareScope): Promise<FlareScope> {
+  if (!FLARE_SCOPES.includes(scope)) throw new NettleError('invalid_value', 'flareScope');
+  return (await change(deps, (p) => void (p.flareScope = scope))).flareScope;
+}
+
+/** SK-8: the threshold of one skin area (1 to 10); null removes it, so the area follows the common value again. */
+export async function setAreaFlareThreshold(deps: Deps, areaId: string, threshold: number | null): Promise<Record<string, number>> {
+  const area = (await deps.repo.listAreas()).find((a) => a.id === areaId);
+  if (!area) throw new NettleError('unknown_area', areaId);
+  if (area.kind !== 'skin') throw new NettleError('wrong_area_kind', areaId);
+  if (threshold !== null && (!Number.isInteger(threshold) || threshold < 1 || threshold > 10)) throw new NettleError('invalid_value', 'flareThreshold');
+  return (
+    await change(deps, (p) => {
+      if (threshold === null) delete p.flareThresholdByArea[areaId];
+      else p.flareThresholdByArea[areaId] = threshold;
+    })
+  ).flareThresholdByArea;
+}
+
 export async function removeFavorite(deps: Deps, kind: 'meals' | 'drinks' | 'medications', key: string): Promise<void> {
   await change(deps, (p) => {
     p.favorites[kind] = (p.favorites[kind] as { key: string }[]).filter((f) => f.key !== key) as never;

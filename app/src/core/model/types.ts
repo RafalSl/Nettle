@@ -272,7 +272,8 @@ export interface AnalysisResult {
   orderAndLag: string;
   /** LL-4: what the data cannot answer. */
   dataLimits: string[];
-  suggestions: string[];
+  /** LL-4: questions the person could ask a doctor about the patterns; never advice. */
+  doctorQuestions: string[];
 }
 
 /**

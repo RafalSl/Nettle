@@ -537,12 +537,12 @@
     },
     "order": "Order and timing",
     "limits": "What the data cannot show",
-    "suggestions": "Ideas",
     "meta": "{{date}} · {{from}} to {{to}} · {{model}} · prompt {{prompt}}",
     "noHypotheses": "No pattern stands out.",
     "interrupted": "The analysis was interrupted when the app was left. Nothing was saved.",
     "retry": "Try again",
-    "failedNote": "Nothing was saved."
+    "failedNote": "Nothing was saved.",
+    "questions": "Questions for your doctor"
   },
   "report": {
     "title": "Skin and health diary: report",
@@ -633,7 +633,9 @@
     "medicalKind": "Kind",
     "medicalTitle": "Title",
     "medicalUntil": "Until",
-    "manual": "made by hand in a chat on the user's own Claude plan"
+    "manual": "made by hand in a chat on the user's own Claude plan",
+    "aiQuestions": "Questions for your doctor",
+    "flaresBasisByArea": "Own thresholds: {{list}}."
   },
   "export": {
     "extras": "Extra files",

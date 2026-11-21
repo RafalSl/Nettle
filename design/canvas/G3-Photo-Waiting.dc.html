@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Photo estimate: waiting</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Gabarito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font:inherit;color:inherit;border:0;background:none;padding:0;margin:0;cursor:pointer;text-align:inherit}
+input{font:inherit;color:inherit;border:0;background:none;outline:none;margin:0;padding:0}
+input::placeholder{color:#9AA4B2}
+@keyframes ax-rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes ax-sheet{from{transform:translateY(60px);opacity:0}to{transform:none;opacity:1}}
+@keyframes ax-drift1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(40px,30px) scale(1.12)}}
+@keyframes ax-drift2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-50px,-20px) scale(1.08)}}
+.ax-r{animation:ax-rise .6s cubic-bezier(.2,.7,.2,1) both}
+.ax-s{animation:ax-sheet .5s cubic-bezier(.2,.8,.2,1) both}
+.ax-d1{animation-delay:.05s}.ax-d2{animation-delay:.15s}.ax-d3{animation-delay:.25s}.ax-d4{animation-delay:.35s}.ax-d5{animation-delay:.45s}
+.ax-b1{animation:ax-drift1 18s ease-in-out infinite}.ax-b2{animation:ax-drift2 22s ease-in-out infinite}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 1100px; box-sizing: border-box; overflow: hidden; background: #070B12; font-family: Gabarito, -apple-system, system-ui, sans-serif; font-variant-numeric: tabular-nums; color: #F2F5F9; -webkit-font-smoothing: antialiased">
+<div aria-hidden="true" style="position: absolute; inset: 0; overflow: hidden; pointer-events: none">
+<div class="ax-b1" style="position: absolute; left: -120px; top: -120px; width: 420px; height: 380px; border-radius: 999px; background: {{glowA}}; filter: blur(70px); opacity: 0.5"></div>
+<div class="ax-b2" style="position: absolute; right: -160px; top: 300px; width: 380px; height: 360px; border-radius: 999px; background: {{glowB}}; filter: blur(80px); opacity: 0.34"></div>
+<div style="position: absolute; inset: 0; background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.06) 1px, transparent 1.5px); background-size: 24px 24px"></div>
+</div>
+<svg aria-hidden="true" width="0" height="0" style="position: absolute">
+<defs>
+<linearGradient id="axWash" gradientUnits="userSpaceOnUse" x1="0" y1="9" x2="0" y2="22"><stop offset="0" stop-color="{{accent}}" stop-opacity="0"/><stop offset="1" stop-color="{{accent}}" stop-opacity="0.7"/></linearGradient>
+<linearGradient id="axNail" gradientUnits="userSpaceOnUse" x1="0" y1="2.5" x2="0" y2="9.5"><stop offset="0" stop-color="{{accent}}" stop-opacity="0.95"/><stop offset="1" stop-color="{{accent}}" stop-opacity="0.45"/></linearGradient>
+<linearGradient id="axWashMeal" gradientUnits="userSpaceOnUse" x1="0" y1="9" x2="0" y2="17"><stop offset="0" stop-color="{{accent}}" stop-opacity="0"/><stop offset="1" stop-color="{{accent}}" stop-opacity="0.75"/></linearGradient>
+</defs>
+</svg>
+<!-- Full-height modal sheet: the screen behind shows as a strip at the top -->
+<div aria-hidden="true" style="position: absolute; left: 14px; right: 14px; top: 44px; height: 30px; border-radius: 28px 28px 0 0; background: rgba(255,255,255,0.05)"></div>
+<div class="ax-s" style="position: absolute; left: 0; right: 0; top: 54px; bottom: 0; border-radius: 34px 34px 0 0; background: rgba(13,19,29,0.86); box-shadow: inset 0 1px 0 rgba(255,255,255,0.10), 0 -10px 40px rgba(0,0,0,0.45); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); overflow: hidden">
+<div aria-hidden="true" style="width: 40px; height: 5px; border-radius: 999px; background: rgba(255,255,255,0.22); margin: 8px auto 0 auto"></div>
+<div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 16px 0 16px">
+<button style="height: 44px; padding: 0 16px; border-radius: 999px; background: rgba(255,255,255,0.07); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12); font-size: 15.5px; font-weight: 600">Cancel</button>
+<h1 style="margin: 0; font-size: 17px; font-weight: 700">Log a meal</h1>
+<span aria-hidden="true" style="width: 82px"></span>
+</div>
+<div style="padding: 18px 20px 0 20px; display: flex; flex-direction: column; gap: 18px">
+<div class="ax-r ax-d1" style="display: flex; flex-direction: column; gap: 10px"><div style="display: flex; align-items: center; gap: 10px; height: 56px; padding: 0 6px 0 18px; border-radius: 999px; background: rgba(255,255,255,0.09); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14)"><label for="mealName" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Meal description</label><input id="mealName" value="Pasta with tomato sauce" style="flex: 1; min-width: 0; height: 44px; font-size: 18px; font-weight: 700"></div><div style="display: flex; align-items: center; gap: 8px"><button style="height: 44px; display: flex; align-items: center; gap: 6px; padding: 0 16px 0 12px; border-radius: 999px; background: rgba(255,255,255,0.07); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12); font-size: 14.5px; font-weight: 600; font-variant-numeric: tabular-nums; flex: none"><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#F2F5F9" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>Now · 14:20</button><button style="height: 44px; display: flex; align-items: center; gap: 4px; padding: 0 12px 0 8px; border-radius: 999px; font-size: 14px; font-weight: 600; color: {{accent}}"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{accent}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>Change meal</button><span style="height: 26px; padding: 0 10px; border-radius: 999px; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.34); font-size: 12.5px; font-weight: 600; color: #C9D0DA; display: flex; align-items: center; flex: none">manual</span></div></div><div class="ax-r ax-d1"><div role="status" style="display: flex; align-items: center; gap: 12px; padding: 12px 12px 12px 16px; border-radius: 26px; background: rgba(255,255,255,0.05); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.10)"><svg aria-hidden="true" width="32" height="32" viewBox="0 0 44 44" fill="none"><circle cx="22" cy="22" r="17" stroke="rgba(255,255,255,0.12)" stroke-width="4"/><path d="M22 5a17 17 0 0 1 14.7 8.5" stroke="{{accent}}" stroke-width="4" stroke-linecap="round"/></svg><span style="flex: 1; min-width: 0"><span style="display: block; font-size: 14px; line-height: 19px; color: #C9D0DA">Estimating ingredients from the photo. You can keep entering the meal.</span><span style="font-size: 13px; color: #9AA4B2; font-variant-numeric: tabular-nums">Running for 0:12</span></span><button style="height: 44px; padding: 0 18px; border-radius: 999px; background: rgba(255,255,255,0.07); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12); font-weight: 600; font-size: 15.5px; display: flex; align-items: center; justify-content: center; gap: 8px; flex: none">Cancel</button></div></div><div class="ax-r ax-d2" style="display: flex; flex-direction: column; gap: 10px"><div style="display: flex; align-items: baseline; justify-content: space-between; padding: 0 4px"><h2 style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 1.4px; text-transform: uppercase; color: #9AA4B2">Ingredients</h2></div><div style="display: flex; flex-wrap: wrap; gap: 8px"><button aria-label="Edit ingredient pasta" style="height: 38px; display: flex; align-items: center; gap: 6px; padding: 0 10px 0 14px; border-radius: 999px; background: rgba(255,255,255,0.07); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12); font-size: 14.5px; font-weight: 500">pasta<span aria-hidden="true" style="display: flex; opacity: 0.6"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F2F5F9" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7l10 10M17 7 7 17"/></svg></span></button><button style="height: 38px; display: flex; align-items: center; gap: 6px; padding: 0 14px 0 10px; border-radius: 999px; border: 1.5px dashed rgba(255,255,255,0.34); box-sizing: border-box; font-size: 14.5px; font-weight: 600; color: {{accent}}"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="{{accent}}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>Add ingredient</button></div><div style="display: flex; gap: 8px"><button style="flex: 1; height: 44px; display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 999px; background: rgba(255,255,255,0.07); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12); font-size: 13.5px; font-weight: 600"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F2F5F9" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8Z"/><path d="M19 16l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7Z"/></svg>From name</button><button style="flex: 1; height: 44px; display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 999px; background: rgba(255,255,255,0.07); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12); font-size: 13.5px; font-weight: 600; box-shadow: inset 0 0 0 1.5px {{accentLine}}; color: {{accent}}"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{accent}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></svg>Photo</button><button style="flex: 1; height: 44px; display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 999px; background: rgba(255,255,255,0.07); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12); font-size: 13.5px; font-weight: 600"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F2F5F9" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2.5"/><path d="M8.5 8h7M8.5 11.5h7M8.5 15h4"/></svg>Label</button></div></div><div class="ax-r ax-d2" style="display: flex; flex-direction: column; gap: 10px"><div style="display: flex; align-items: baseline; justify-content: space-between; padding: 0 4px"><h2 style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 1.4px; text-transform: uppercase; color: #9AA4B2">Allergens</h2></div><div style="display: flex; flex-wrap: wrap; gap: 8px"><button aria-pressed="false" aria-label="Gluten cereals, suggested" style="height: 38px; display: flex; align-items: center; gap: 6px; padding: 0 14px 0 10px; border-radius: 999px; border: 1.5px dashed {{accent}}; box-sizing: border-box; font-size: 14.5px; font-weight: 600; color: {{accent}}"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="{{accent}}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>Gluten cereals</button><button aria-pressed="false" style="height: 38px; display: flex; align-items: center; gap: 6px; padding: 0 14px; border-radius: 999px; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.34); font-size: 14.5px; font-weight: 500; color: #C9D0DA">+ 12 more</button></div><p style="margin: 0; font-size: 13px; line-height: 19px; color: #9AA4B2">Ticked: from this meal's history. Dashed: a guess from the ingredients, tap to add.</p></div><div class="ax-r ax-d4"><div style="display: flex; align-items: center; height: 44px; padding: 0 16px; border-radius: 999px; background: rgba(255,255,255,0.07); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12); flex: 1; min-width: 0"><label for="mealNote" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Note</label><input id="mealNote" placeholder="Note (optional)" style="flex: 1; min-width: 0; height: 40px; font-size: 15px"></div></div><!-- Save floats at the bottom, in thumb reach; it rides above the keyboard while typing -->
+<div class="ax-r ax-d5" style="position: absolute; left: 20px; right: 20px; bottom: 24px"><button style="width: 100%; height: 56px; border-radius: 999px; background: {{accent}}; color: #062A26; font-size: 17px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 14px 34px rgba(0,0,0,0.45), 0 0 30px {{accentSoft}}"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#062A26" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Save meal</button></div></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#5EEAD4","options":["#5EEAD4","#A3E635","#C4B5FD"],"section":"Look"},"$preview":{"width":390,"height":1100}}'>
+class Component extends DCLogic {
+renderVals() {
+const accent = this.props.accent ?? '#5EEAD4';
+return {
+accent,
+accentSoft: 'color-mix(in srgb, ' + accent + ' 16%, transparent)',
+accentLine: 'color-mix(in srgb, ' + accent + ' 45%, transparent)',
+glowA: 'radial-gradient(circle, ' + accent + ' 0%, transparent 70%)',
+glowB: 'radial-gradient(circle, #6D4AE0 0%, transparent 70%)'
+};
+}
+}
+</script>
+</body>
+</html>

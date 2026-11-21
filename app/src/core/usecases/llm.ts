@@ -41,6 +41,28 @@ export async function setModel(deps: Deps, action: LlmAction, model: string | nu
   await deps.settings.set(modelSetting(action), model);
 }
 
+/**
+ * LL-2, LL-9: the settings screen offers two choices: one model for the estimates (label scan, meal photo, meal name,
+ * allergen tags) and one for the analysis and the report summary. Each is still stored per action.
+ */
+export const MODEL_GROUPS = {
+  estimates: ['label_scan', 'meal_photo', 'meal_name', 'allergen_suggest'],
+  analysis: ['analysis', 'report_summary'],
+} as const satisfies Record<string, readonly LlmAction[]>;
+export type ModelGroup = keyof typeof MODEL_GROUPS;
+
+/** LL-2: the model of a group when all its actions use the same one; null when they differ (set one by hand earlier). */
+export async function getGroupModel(deps: Deps, group: ModelGroup): Promise<string | null> {
+  const models = await Promise.all(MODEL_GROUPS[group].map((a) => getModel(deps, a)));
+  return models.every((m) => m === models[0]) ? models[0]! : null;
+}
+
+/** LL-2: pick the model of a whole group (every action of it); null restores the default. */
+export async function setGroupModel(deps: Deps, group: ModelGroup, model: string | null): Promise<void> {
+  if (model !== null && model !== DEFAULT_MODEL && !deps.llmModels.some((m) => m.id === model)) throw new NettleError('invalid_value', 'model');
+  for (const action of MODEL_GROUPS[group]) await setModel(deps, action, model);
+}
+
 /** The provider for one action under the current settings, or `llm_no_key`. */
 export async function currentProvider(deps: Deps, action: LlmAction): Promise<{ provider: LlmProvider; model: string }> {
   const apiKey = await deps.keys.get(API_KEY_NAME);

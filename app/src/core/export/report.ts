@@ -1,4 +1,4 @@
-import { DEFAULT_FLARE_THRESHOLD, deriveFlares } from '../model/flares';
+import { baseThreshold, DEFAULT_FLARE_THRESHOLD, deriveFlares, type FlareRule } from '../model/flares';
 import { sinceCaption, sinceLastTreatment, timeToRelapse } from '../model/derived';
 import { isAiSource, type IngredientSource } from '../model/source';
 import { localDateTime, localDay } from '../model/time';
@@ -10,7 +10,7 @@ export type ReportText = (key: string, vars?: Record<string, string | number>) =
 
 export interface ReportInput {
   /** SK-6: severity at or above which a skin entry counts as a flare (default 8). */
-  flareThreshold?: number;
+  flareThreshold?: FlareRule;
   language: Language;
   text: ReportText;
   /** Display names in the report language (a predefined area is localized, a user area keeps its name). */
@@ -101,7 +101,9 @@ export function buildReportHtml(input: ReportInput): string {
   const flares = deriveFlares(r.skinEntries, input.flareThreshold ?? DEFAULT_FLARE_THRESHOLD);
   if (flares.length > 0) {
     out.push(`<h2>${esc(tx('report.flares'))}</h2>`);
-    out.push(`<p class="note">${esc(tx('report.flaresBasis', { n: input.flareThreshold ?? DEFAULT_FLARE_THRESHOLD }))}</p>`);
+    const rule = input.flareThreshold ?? DEFAULT_FLARE_THRESHOLD;
+    const byArea = typeof rule === 'number' ? '' : Object.entries(rule.perArea).map(([id, n]) => `${area(id)} ${n}`).join(', ');
+    out.push(`<p class="note">${esc(tx('report.flaresBasis', { n: baseThreshold(rule) }))}${byArea ? ` ${esc(tx('report.flaresBasisByArea', { list: byArea }))}` : ''}</p>`);
     out.push(
       table(
         [tx('report.areas'), tx('report.start'), tx('report.end')],
@@ -286,7 +288,7 @@ ${a.result.hypotheses
     (h) => `<h3>${esc(h.title)} (${esc(tx(`analysis.strength.${h.strength}`))})</h3><p>${esc(h.explanation)}</p>${list(tx('report.aiEvidence'), h.evidence)}${list(tx('report.aiAgainst'), h.counterEvidence)}<p class="note">${esc(tx('report.aiUncertainty'))}: ${esc(h.uncertainty)}</p>`,
   )
   .join('')}
-<h3>${esc(tx('report.aiOrder'))}</h3><p>${esc(a.result.orderAndLag)}</p>${list(tx('report.aiLimits'), a.result.dataLimits)}</div>`,
+<h3>${esc(tx('report.aiOrder'))}</h3><p>${esc(a.result.orderAndLag)}</p>${list(tx('report.aiLimits'), a.result.dataLimits)}${list(tx('report.aiQuestions'), a.result.doctorQuestions)}</div>`,
     )
     .join('');
   return `<h2 class="page-break">${esc(tx('report.aiTitle'))}</h2><p><strong>${esc(tx('report.aiWarning'))}</strong></p>${body}`;

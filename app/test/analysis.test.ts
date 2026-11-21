@@ -40,7 +40,7 @@ const VALID_ANSWER = JSON.stringify({
   ],
   order_and_lag: 'No clear order',
   data_limits: ['Only 5 days'],
-  suggestions: ['Keep logging'],
+  questions_for_doctor: ['Could this be linked to the dry weather?'],
 });
 
 /** A small synthetic diary: a period of 2026-01-10 to 2026-01-14 (Warsaw, UTC+1) and an antibiotic started before it. */
@@ -151,6 +151,11 @@ describe('buildAnalysisInput (LL-2, LL-3, LL-4)', () => {
 
 describe('analysis prompt (LL-4, LL-10, LL-11)', () => {
   const p = analysisPrompt('pl', { json: '{}', photoNotes: ['Chin 2026-01-12 20:00'] });
+  it('LL-4 it asks for questions to a doctor and forbids advice', () => {
+    expect(p.system).toContain('questions_for_doctor');
+    expect(p.system).toContain('never advice on what to eat, take, apply, stop or log');
+    expect(JSON.stringify(p.schema)).toContain('questions_for_doctor');
+  });
 
   it('asks for hypotheses with uncertainty, windows, lookbacks, confounders, incomplete days and limits', () => {
     for (const phrase of ['never diagnose', 'tentative hypothes', '24, 48 and 72 hours', '7 and 21 days', 'confounders', '"logged": false', 'most days', 'cannot answer', 'order_and_lag']) {
@@ -175,6 +180,9 @@ describe('analysisResultFromJson (LL-4)', () => {
     expect(analysisResultFromJson({ ...ok, hypotheses: [{ ...ok.hypotheses[0], evidence: 'x' }] })).toBeNull();
     expect(analysisResultFromJson({ ...ok, summary: undefined })).toBeNull();
     expect(analysisResultFromJson({ ...ok, data_limits: [1] })).toBeNull();
+    expect(analysisResultFromJson({ ...ok, questions_for_doctor: undefined })).toBeNull(); // LL-4: the questions part is required
+    expect(analysisResultFromJson({ ...ok, suggestions: [] , questions_for_doctor: undefined })).toBeNull(); // the old name is gone
+    expect(analysisResultFromJson(ok)?.doctorQuestions).toEqual(['Could this be linked to the dry weather?']);
     expect(analysisResultFromJson(null)).toBeNull();
   });
 });
@@ -186,7 +194,7 @@ describe.each(repos)('prepare and run an analysis (%s)', (_name, make) => {
     const { deps, llm } = await diary(make);
     const prepared = await prepareAnalysis(deps, sel);
     expect(llm.requests).toHaveLength(0);
-    expect(prepared).toMatchObject({ dayFrom: '2026-01-10', dayTo: '2026-01-14', model: 'claude-haiku-5-5', promptVersion: 'analysis-9' });
+    expect(prepared).toMatchObject({ dayFrom: '2026-01-10', dayTo: '2026-01-14', model: 'claude-haiku-5-5', promptVersion: 'analysis-10' });
     expect(prepared.counts).toMatchObject({ meals: 3, skinEntries: 1, nailEntries: 1, reactions: 1, treatmentApplications: 1, checkIns: 2, days: 5, completeDays: 2, photos: 0 });
     expect(prepared.counts.changeEvents).toBe(1); // lookback
     expect(prepared.sentCharacters).toBeGreaterThan(500);
@@ -230,7 +238,7 @@ describe.each(repos)('prepare and run an analysis (%s)', (_name, make) => {
     const prepared = await prepareAnalysis(deps, sel);
     const analysis = await runAnalysis(deps, prepared);
     expect(llm.requests[0]).toBe(prepared.request); // exactly what was confirmed
-    expect(analysis).toMatchObject({ dayFrom: '2026-01-10', dayTo: '2026-01-14', model: 'fake-model', promptVersion: 'analysis-9', language: 'en', at: { utc: '2026-01-20T10:00:00.000Z' } });
+    expect(analysis).toMatchObject({ dayFrom: '2026-01-10', dayTo: '2026-01-14', model: 'fake-model', promptVersion: 'analysis-10', language: 'en', at: { utc: '2026-01-20T10:00:00.000Z' } });
     expect(analysis.result.hypotheses[0]?.title).toBe('Synthetic hypothesis');
     expect(await listAnalyses(deps)).toEqual([analysis]);
     const after = await repo.snapshot();

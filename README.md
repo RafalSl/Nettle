@@ -21,6 +21,7 @@ Run these from the repo root:
 | Tests only | `./run.sh npm test` |
 | Add an Expo library | `./run.sh npx expo install <pkg>` |
 | Dev server through a tunnel | `./run.sh npx expo start --tunnel --port 8081` |
+| Sign the Expo CLI in (once) | `./run.sh npx expo login` |
 | Shell in the container | `./run.sh bash` |
 | Reset installed dependencies and caches | `docker compose down -v` |
 
@@ -37,6 +38,9 @@ How it works:
 - `run.sh` tells the phone your Wi-Fi address. If the QR code shows a wrong one,
   set `NETTLE_LAN_IP=<Wi-Fi IP>`.
 - Port 8081 must be free (host networking).
+- If Expo Go is signed in to an Expo account, the CLI must be too, or Expo Go
+  refuses to open the project: run `./run.sh npx expo login` once (the login is
+  kept in a volume), or sign out in Expo Go.
 - The first test run on a fresh cache volume can time out the Today screen
   test; run it again.
 

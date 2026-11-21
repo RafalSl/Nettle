@@ -70,6 +70,7 @@ changes.
 - install / update dependencies: automatic on the next `run` after the lockfile changes
 - add an Expo library: `./run.sh npx expo install <pkg>` (never plain `npm i` for Expo modules); it edits `app/package.json` and the lockfile through the mount
 - start dev server: `./run.sh`, scan the QR code in Expo Go. If Wi-Fi blocks it, `./run.sh npx expo start --tunnel --port 8081`. `run.sh` detects the Wi-Fi address; if the QR code still shows a wrong one, set `NETTLE_LAN_IP=<Wi-Fi IP>`. It uses host networking, so port 8081 must be free
+- Expo login: if Expo Go says it is signed in but the CLI is not, run `./run.sh npx expo login` once (kept in a volume) or sign out in Expo Go
 - typecheck: `./run.sh npm run typecheck`
 - lint: `./run.sh npm run lint` (also enforces that `src/core` imports no Expo/RN/adapters)
 - test: `./run.sh npm test` (the first run on a fresh cache volume can time out the Today screen test; run it again)

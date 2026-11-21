@@ -2,6 +2,7 @@ import { isDayStartHour } from '../model/dayStart';
 import { NettleError } from '../model/errors';
 import {
   defaultPreferences,
+  MAX_PINNED,
   MAX_SUGGESTION_ROWS,
   WINDOW_DAYS,
   type Preferences,
@@ -147,7 +148,13 @@ const known = (id: EntryType) => {
 /** UX-2: pin an entry type to the end of the Today list (a type that is already pinned stays where it is). */
 export async function pinEntryType(deps: Deps, id: EntryType): Promise<EntryType[]> {
   known(id);
-  return (await change(deps, (p) => void (p.quickActions.pinned = [...new Set([...p.quickActions.pinned, id])]))).quickActions.pinned;
+  return (
+    await change(deps, (p) => {
+      const next = [...new Set([...p.quickActions.pinned, id])];
+      if (next.length > MAX_PINNED) throw new NettleError('too_many_pinned', String(MAX_PINNED));
+      p.quickActions.pinned = next;
+    })
+  ).quickActions.pinned;
 }
 
 /** UX-2: move an entry type from Today to More. Nothing is hidden; the type shows up in More. */

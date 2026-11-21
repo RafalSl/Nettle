@@ -45,6 +45,8 @@ export const ENTRY_TYPES = ['meal', 'drink', 'medication', 'skin', 'nails', 'tre
 export type EntryType = (typeof ENTRY_TYPES)[number];
 /** UX-2: the default pins. */
 export const DEFAULT_PINNED: readonly EntryType[] = ['meal', 'skin', 'treatment', 'checkin', 'stool'];
+/** UX-2: at most this many entry types are pinned to Today; the More tile comes on top of them. */
+export const MAX_PINNED = 5;
 /** UX-2: the ordered pins. Nothing is hidden: whatever is not pinned is in More. The More tile itself is always shown. */
 export interface QuickActionLayout {
   pinned: EntryType[];

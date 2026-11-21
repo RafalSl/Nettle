@@ -99,6 +99,15 @@ export function addDays(day: string, n: number): string | null {
 }
 
 /**
+ * SK-9: the instant of a wall-clock time (hour and minute) on a calendar day in `tz`, independent of the time zone of
+ * the process. Null for an invalid day. A time inside a daylight saving gap lands an hour later.
+ */
+export function wallTimeOnDay(day: string, hour: number, minute: number, tz: string): Date | null {
+  const ms = dayToMs(day);
+  return ms === null ? null : new Date(startOfLocalDayMs(ms, tz) + (hour * 60 + minute) * 60 * 1000);
+}
+
+/**
  * UX-2: the moment to use for a new entry on a chosen day: the current clock time on that day (in the given
  * timezone), never later than the end of that day. For today it is simply now.
  */

@@ -545,3 +545,7 @@ Newest entry last. One short entry per working session or meaningful step: what 
 - **Done:** requirements v0.9.3 (UX-4 exception for Daily health's yes/no items; "Same as yesterday" gets a copy icon on the canvas). `docs/design-system.md` lists the screens still to design, grouped, each with the reference board to copy. Docs and design files only.
 - **Next:** the remaining screens (next model), then the Expo spike for the design (blur, font, ring, gestures, floating Save over the keyboard).
 
+
+## 2026-11-21: known bugs fixed (branch feature/fix-known-bugs)
+- **Done:** SK-9: the Daily health reminder time is now built on the clock's own time zone (`wallTimeOnDay` in `core/model/time.ts`), so the reminder and the diary-day lookup use one zone; the test passes under UTC, Europe/Warsaw, America/Los_Angeles and Asia/Tokyo. Jest now exits: the UI tests unmount every tree they create, which stops Today's one-minute timer. Both are removed from "Known bugs".
+- **Next:** the Expo Go design spike (build plan task 2).

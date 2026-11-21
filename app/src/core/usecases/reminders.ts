@@ -1,5 +1,5 @@
 import { NettleError } from '../model/errors';
-import { localDay } from '../model/time';
+import { addDays, localDay, wallTimeOnDay } from '../model/time';
 import type { ReminderSpec, ReminderStatus, ReminderTap } from '../ports/notifier';
 import type { Deps } from './deps';
 import { getCheckIn } from './checkin';
@@ -78,12 +78,12 @@ export async function plannedReminders(deps: Deps, texts: ReminderTexts): Promis
   const specs: ReminderSpec[] = [];
   if (s.checkIn.enabled) {
     const now = deps.clock.now();
+    const tz = deps.clock.timeZone(); // one time zone for the clock time and the diary day (SK-9)
+    const today = localDay(now.toISOString(), tz, 0);
     for (let i = 0; i < CHECKIN_REMINDER_DAYS; i++) {
-      const at = new Date(now);
-      at.setDate(at.getDate() + i);
-      at.setHours(s.checkIn.hour, s.checkIn.minute, 0, 0);
-      if (at.getTime() <= now.getTime()) continue;
-      if (i === 0 && (await getCheckIn(deps, localDay(at.toISOString(), deps.clock.timeZone(), deps.dayStart.get())))) continue;
+      const at = wallTimeOnDay(addDays(today, i) ?? today, s.checkIn.hour, s.checkIn.minute, tz);
+      if (!at || at.getTime() <= now.getTime()) continue;
+      if (i === 0 && (await getCheckIn(deps, localDay(at.toISOString(), tz, deps.dayStart.get())))) continue;
       specs.push({ id: `checkin-${i}`, target: 'checkin', ...texts.checkIn, when: { type: 'at', at } });
     }
   }

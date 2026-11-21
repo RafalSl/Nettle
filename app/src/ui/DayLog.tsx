@@ -1,14 +1,14 @@
-import { Pressable } from 'react-native';
-import { Text } from '@/ui/themed';
+import { View } from 'react-native';
 import { localDateTime } from '@/core/model/time';
 import type { ListItem, SkinArea } from '@/core/model/types';
 import type { LogRow } from '@/core/usecases/dayLog';
 import { t } from '@/i18n';
-import { Heading, Hint, styles } from '@/ui/components';
+import { Heading, Hint } from '@/ui/components';
+import { KIND_ENTRY, ENTRY_ICON } from '@/ui/entryIcons';
+import { LogRowView } from '@/ui/LogRowView';
 import { describeRow } from '@/ui/logRow';
 import { NavRow } from '@/ui/NavRow';
-import { useEntryActions } from '@/ui/useEntryActions';
-import { color } from '@/ui/theme';
+import { useEntryActions, useEntryDelete } from '@/ui/useEntryActions';
 
 /** UX-2: Today shows this many of the day's newest entries and a "Show all (n)" row for the rest. */
 export const TODAY_LOG_LIMIT = 8;
@@ -36,6 +36,7 @@ export function DayLog({
   highlight?: ReadonlySet<string>;
 }) {
   const openEntry = useEntryActions(onChanged);
+  const deleteRow = useEntryDelete(onChanged);
   const newestFirst = [...rows].reverse();
   const shown = limit === undefined ? newestFirst : newestFirst.slice(0, limit);
   const onRow = (row: LogRow) => openEntry(row.kind, row.id, describeRow(row, ctx).title);
@@ -44,22 +45,26 @@ export function DayLog({
     <>
       <Heading>{t('day.logTitle')}</Heading>
       {rows.length === 0 && <Hint>{t('day.empty')}</Hint>}
-      {shown.map((row) => {
-        const { title, detail } = describeRow(row, ctx);
-        const time = localDateTime(row.at.utc, row.at.tz).slice(11);
-        return (
-          <Pressable
-            key={`${row.kind}-${row.id}`}
-            accessibilityRole="button"
-            accessibilityLabel={`${time} ${title}`}
-            accessibilityHint={highlight?.has(row.id) ? t('day.newEntry') : undefined}
-            onPress={() => void onRow(row)}
-            style={({ pressed }) => [{ paddingVertical: 8 }, highlight?.has(row.id) && { backgroundColor: color.accentSoft, borderRadius: 8, paddingHorizontal: 6 }, pressed && { opacity: 0.6 }]}>
-            <Text style={styles.rowText}>{`${time}  ${title}`}</Text>
-            {detail ? <Hint>{detail}</Hint> : null}
-          </Pressable>
-        );
-      })}
+      <View style={{ gap: 8 }}>
+        {shown.map((row) => {
+          const { title, detail } = describeRow(row, ctx);
+          const time = localDateTime(row.at.utc, row.at.tz).slice(11);
+          return (
+            <LogRowView
+              key={`${row.kind}-${row.id}`}
+              icon={ENTRY_ICON[KIND_ENTRY[row.kind]]}
+              title={title}
+              detail={detail}
+              time={time}
+              label={`${time} ${title}`}
+              hint={highlight?.has(row.id) ? t('day.newEntry') : undefined}
+              highlighted={highlight?.has(row.id)}
+              onPress={() => void onRow(row)}
+              onDelete={() => void deleteRow(row.kind, row.id, title)}
+            />
+          );
+        })}
+      </View>
       {limit !== undefined && rows.length > limit && onShowAll && (
         <NavRow title={t('day.showAll', { n: rows.length })} onPress={onShowAll} />
       )}

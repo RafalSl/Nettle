@@ -716,9 +716,8 @@ describe('navigation shell (UX-1, UX-2, UX-3, UX-6)', () => {
     const fs = require('fs') as typeof import('fs');
     const path = require('path') as typeof import('path');
     const root = path.join(__dirname, '../../src/app');
-    for (const layout of ['(tabs)/today/_layout.tsx', '(tabs)/review/_layout.tsx']) {
-      expect(fs.readFileSync(path.join(root, layout), 'utf8')).toContain('GearButton');
-    }
+    expect(fs.readFileSync(path.join(root, '(tabs)/review/_layout.tsx'), 'utf8')).toContain('GearButton');
+    expect(fs.readFileSync(path.join(root, '../screens/TodayScreen.tsx'), 'utf8')).toContain('GearButton'); // Today draws its own header (UX-12)
     expect(fs.readFileSync(path.join(root, '_layout.tsx'), 'utf8')).toContain('name="settings"'); // above the tabs, so the tab bar is hidden inside
     const { tree } = await mount(() => ({ default: require('@/ui/GearButton').GearButton }), nowDeps());
     await press(tree, en.nav.gear);
@@ -840,7 +839,7 @@ describe('Today (UX-2, UX-5, EN-1, UX-9)', () => {
     const [stool] = await deps.repo.listRecords('stoolEntries');
     const yesterday = new Date(Date.now() - 86_400_000);
     expect(localDay(stool!.at.utc, stool!.at.tz)).toBe(localDay(yesterday.toISOString(), deps.clock.timeZone()));
-    await press(tree, en.day.today);
+    await press(tree, en.day.backToToday);
     expect(hasText(tree, en.day.empty)).toBe(true);
   });
 
@@ -849,10 +848,10 @@ describe('Today (UX-2, UX-5, EN-1, UX-9)', () => {
     await logSkinEntry(deps, { areaId: 'area-chin', scores: { severity: 9, itch: 0, pain: 0, dryness: 0, scaling: 0 }, at: new Date(Date.now() - 3600_000) });
     const { tree } = await mount(today, deps);
     await flush();
-    expect(hasText(tree, en.cards.notLogged)).toBe(true);
-    expect(hasText(tree, en.cards.noExport)).toBe(true);
+    expect(hasText(tree, en.cards.noExport)).toBe(true); // before the Daily health time (21:00 by default) the pills are the flare and the backup
+    expect(hasText(tree, en.cards.notLogged)).toBe(false);
     expect(hasText(tree, 'Chin, severity 9')).toBe(true); // one area: name, latest severity and the day it started
-    await press(tree, en.cards.openAreas);
+    await press(tree, 'Flare: Chin, severity 9 since ' + localDay(new Date(Date.now() - 3600_000).toISOString(), deps.clock.timeZone()));
     expect(mockRouter.navigate).toHaveBeenLastCalledWith({ pathname: '/review', params: { view: 'areas' } });
   });
 });
@@ -1147,7 +1146,7 @@ describe('Review (UX-1, EX-14)', () => {
       mockPicker.last!.onValueChange({}, new Date('2026-01-10T12:00:00'));
     });
     await flush();
-    expect(hasText(tree, '2026-01-10')).toBe(true);
+    expect(hasText(tree, '10 Jan')).toBe(true);
     expect(hasText(tree, 'Synthetic old meal')).toBe(true);
     mockPicker.last = undefined;
     await flush();
@@ -1157,7 +1156,7 @@ describe('Review (UX-1, EX-14)', () => {
       mockPicker.last!.onValueChange({}, new Date(Date.now() + 5 * 86_400_000));
     });
     await flush();
-    expect(hasText(tree, en.day.today)).toBe(true); // a future date lands on today
+    expect(hasText(tree, en.day.backToToday)).toBe(false); // a future date lands on today
     expect(hasText(tree, 'Synthetic old meal')).toBe(false);
   });
 
@@ -1187,7 +1186,7 @@ describe('Review (UX-1, EX-14)', () => {
     const { tree } = await mount(() => require('@/app/(tabs)/today/index'), deps);
     await flush();
     expect(hasText(tree, 'Synthetic old meal')).toBe(true);
-    expect(hasText(tree, '2026-01-10')).toBe(true);
+    expect(hasText(tree, '10 Jan')).toBe(true);
   });
 
   it('UX-2, NF-7 Today moves on to the new day by itself when the app comes back after midnight', async () => {
@@ -1202,11 +1201,11 @@ describe('Review (UX-1, EX-14)', () => {
     mockParams.current = {};
     const { tree } = await mount(() => require('@/app/(tabs)/today/index'), deps);
     await flush();
-    expect(hasText(tree, '2026-11-14')).toBe(true);
+    expect(hasText(tree, '14 Nov')).toBe(true);
     now = new Date('2026-11-14T23:30:00.000Z'); // 00:30 on the 15th
     await act(async () => onChange!('active'));
-    expect(hasText(tree, '2026-11-15')).toBe(true);
-    expect(hasText(tree, '2026-11-14')).toBe(false);
+    expect(hasText(tree, '15 Nov')).toBe(true);
+    expect(hasText(tree, '14 Nov')).toBe(false);
     jest.restoreAllMocks();
   });
 
@@ -3553,7 +3552,7 @@ describe('Fill later with AI and My Claude plan (IN-20, LL-15)', () => {
     const today = await mount(() => require('@/app/(tabs)/today/index'), deps);
     await flush();
     expect(hasText(today.tree, en.cards.suggestions.replace('{{n}}', '1'))).toBe(true);
-    await press(today.tree, en.cards.openSuggestions);
+    await press(today.tree, en.cards.suggestions.replace('{{n}}', '1'));
     expect(mockRouter.push).toHaveBeenLastCalledWith('/today/suggestions');
     const list = await mount(() => require('@/app/(tabs)/today/suggestions'), deps);
     await flush();
@@ -3707,5 +3706,62 @@ describe('Fill later with AI and My Claude plan (IN-20, LL-15)', () => {
     await press(tree, en.plan.useImported.replace('{{model}}', 'Synthetic Model 9'));
     expect(hasText(tree, en.doctor.summaryIncluded)).toBe(true);
     expect(hasText(tree, 'Synthetic narrative for the doctor.')).toBe(true);
+  });
+});
+
+describe('Today: ring, quick actions and rows (UX-2, UX-12)', () => {
+  let sheet: jest.SpyInstance;
+  beforeEach(() => {
+    sheet = jest.spyOn(ActionSheetIOS, 'showActionSheetWithOptions').mockImplementation((_o, cb) => cb(99));
+    jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    mockRouter.push.mockClear();
+  });
+  afterEach(() => jest.restoreAllMocks());
+  const today = () => require('@/app/(tabs)/today/index');
+  const dotButtons = (tree: ReactTestRenderer) => tree.root.findAll((n) => n.props.accessibilityRole === 'button' && /entries on the ring/.test(String(n.props.accessibilityLabel)) && typeof n.props.onPress === 'function');
+
+  it('UX-2 an entry is a dot on the ring and a tap on the dot opens that entry\'s action sheet; close entries merge', async () => {
+    const deps = nowDeps();
+    await logMeal(deps, { description: 'Synthetic oats', ingredients: [], at: new Date(Date.now() - 3 * 3600_000) });
+    await logStool(deps, { bristol: 4, at: new Date(Date.now() - 2 * 3600_000) });
+    const { tree } = await mount(today, deps);
+    await flush();
+    expect(dotButtons(tree)).toHaveLength(2); // one per track
+    await act(async () => dotButtons(tree)[0]!.props.onPress());
+    await flush();
+    expect(sheet).toHaveBeenCalledTimes(1);
+    expect((sheet.mock.calls[0] as [{ options: string[] }])[0].options).toEqual([en.log.editAction, en.log.deleteAction, en.common.cancel]);
+    await logDrink(deps, { name: 'Synthetic water', amountMl: 200, at: new Date(Date.now() - 3 * 3600_000 + 600_000) });
+    const again = await mount(today, deps);
+    await flush();
+    expect(dotButtons(again.tree)).toHaveLength(2); // the drink merged into the meal's dot
+    expect(hasText(again.tree, '2 entries on the ring') || dotButtons(again.tree).some((n) => n.props.accessibilityLabel === '2 entries on the ring')).toBe(true);
+  });
+
+  it('UX-2 a long press on a quick action opens its full form, also for the stool tile that opens a sheet on a tap', async () => {
+    const { tree } = await mount(today, nowDeps());
+    await flush();
+    const tile = tree.root.findAll((n) => n.props.accessibilityLabel === en.entry.stool.title && typeof n.props.onLongPress === 'function')[0]!;
+    await act(async () => tile.props.onLongPress());
+    expect(mockRouter.push).toHaveBeenLastCalledWith('/form/stool');
+  });
+
+  it('UX-2 Pin to Today is disabled at five pins', async () => {
+    const { tree } = await mount(today, nowDeps());
+    await flush();
+    await press(tree, en.home.edit);
+    const pins = tree.root.findAll((n) => n.props.accessibilityLabel === `${en.home.pin} ${en.entry.drink.title}` && n.props.accessibilityState !== undefined);
+    expect(pins.length).toBeGreaterThan(0);
+    expect(pins.every((n) => n.props.accessibilityState.disabled === true)).toBe(true);
+  });
+
+  it('UX-2 a past day shows Back to Today and no pills', async () => {
+    const deps = nowDeps();
+    const { tree } = await mount(today, deps);
+    await flush();
+    expect(hasText(tree, en.day.backToToday)).toBe(false);
+    await press(tree, en.day.previous);
+    expect(hasText(tree, en.day.backToToday)).toBe(true);
+    expect(hasText(tree, en.cards.noExport)).toBe(false);
   });
 });

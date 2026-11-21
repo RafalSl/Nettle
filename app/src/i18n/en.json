@@ -849,7 +849,11 @@
     "openOnToday": "Open this day on Today",
     "dayStart": "Day starts at",
     "dayStartHint": "A day runs from this hour to the same hour the next day, so a drink at 00:30 can belong to the evening before. Set it once: changing it regroups the whole diary, while the time of each entry stays as it was.",
-    "logTitle": "Log"
+    "logTitle": "Log",
+    "entries": "{{n}} entries",
+    "dot": "{{n}} entries on the ring",
+    "backToToday": "Back to Today",
+    "delete": "Delete"
   },
   "source": {
     "open_food_facts": "Open Food Facts",

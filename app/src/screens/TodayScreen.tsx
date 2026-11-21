@@ -1,24 +1,32 @@
-import { listSuggestions } from '@/core/usecases/aiPack';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, AppState, Pressable, View } from 'react-native';
+import { Alert, AppState, View } from 'react-native';
 import { Text } from '@/ui/themed';
 import { addDays, atOnDay, localDay } from '@/core/model/time';
 import type { ListItem, SkinArea } from '@/core/model/types';
-import { backupCardDue, daysSinceExport } from '@/core/usecases/backup';
 import { logStool } from '@/core/usecases/checkin';
-import { daysWithEntries, dayLog, dayStatus, treatmentShortcuts, type DayStatus, type LogRow, type TreatmentShortcut } from '@/core/usecases/dayLog';
+import { dayLog, treatmentShortcuts, type LogRow, type TreatmentShortcut } from '@/core/usecases/dayLog';
 import { applyTreatment } from '@/core/usecases/events';
-import { openFlareSummary, type OpenFlare } from '@/core/usecases/flares';
-import { defaultPreferences, type EntryType, type RegularItem } from '@/core/model/preferences';
+import { defaultPreferences, MAX_PINNED, type EntryType, type RegularItem } from '@/core/model/preferences';
 import { logRegular } from '@/core/usecases/regular';
 import { getPreferences, movePinnedEntryType, pinEntryType, unpinEntryType, unpinnedEntryTypes } from '@/core/usecases/preferences';
-import { areaLabel, errorMessage, itemLabel, t } from '@/i18n';
+import { arcPosition, ringDots, type RingDot } from '@/core/model/ring';
+import { todayContext, type TodayContext } from '@/core/usecases/today';
+import { areaLabel, dayParts, errorMessage, itemLabel, t } from '@/i18n';
 import { useServices } from '@/services';
 import { DayLog, TODAY_LOG_LIMIT } from '@/ui/DayLog';
 import { ENTRY_ROUTE, entrySubtitle, entryTitle } from '@/ui/entryTypes';
-import { Button, Heading, Hint, Label, Screen, styles } from '@/ui/components';
+import { Button, Hint, Label, Screen, styles } from '@/ui/components';
+import { chooseAction } from '@/ui/actionSheet';
+import { ContextPills } from '@/ui/ContextPills';
+import { DayRing } from '@/ui/DayRing';
+import { GearButton } from '@/ui/GearButton';
+import { GlassSurface } from '@/ui/GlassSurface';
+import { describeRow } from '@/ui/logRow';
+import { QuickActions } from '@/ui/QuickActions';
+import { Rise } from '@/ui/Rise';
+import { useEntryActions } from '@/ui/useEntryActions';
 
 /** UX-2: how long a new row stays highlighted. */
 export const HIGHLIGHT_MS = 3000;
@@ -29,9 +37,7 @@ const SHORTCUT_LOCK_MS = 3000;
 /** A "YYYY-MM-DD" route parameter, or null. */
 const validDay = (v: unknown): string | null => (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null);
 
-const Card = ({ children }: { children: React.ReactNode }) => (
-  <View style={{ borderWidth: 1, borderColor: '#9993', borderRadius: 10, padding: 12, gap: 8 }}>{children}</View>
-);
+const Card = ({ children }: { children: React.ReactNode }) => <GlassSurface style={{ borderRadius: 26, padding: 16, gap: 10 }}>{children}</GlassSurface>;
 
 /**
  * UX-2: the start screen. A day switcher, quick actions (each opens a modal form), one-tap treatment shortcuts,
@@ -49,14 +55,9 @@ export default function TodayScreen() {
   const setChosen = (d: string | null) => setPick({ param: dayParam, day: d });
   const [rows, setRows] = useState<LogRow[]>([]);
   const [ctx, setCtx] = useState<{ areas: SkinArea[]; treatments: ListItem[]; categories: ListItem[] }>({ areas: [], treatments: [], categories: [] });
-  const [status, setStatus] = useState<DayStatus | null>(null);
   const [shortcuts, setShortcuts] = useState<TreatmentShortcut[]>([]);
-  const [flare, setFlare] = useState<OpenFlare | null>(null);
-  const [backup, setBackup] = useState<{ due: boolean; days: number | null }>({ due: false, days: null });
-  const [waiting, setWaiting] = useState(0); // IN-20: AI suggestions to review
+  const [context, setContext] = useState<TodayContext>({ isToday: true, firstRun: false, pills: [] });
   const [stoolOpen, setStoolOpen] = useState(false);
-  /** UX-1: nothing has ever been logged: the first-run card explains where to start. */
-  const [diaryEmpty, setDiaryEmpty] = useState(false);
   const [regular, setRegular] = useState<RegularItem[]>([]);
   /** IN-17: the quick sheet of regular items that is open, if any. */
   const [sheetPick, setSheet] = useState<'medication' | 'treatment' | null | undefined>(undefined);
@@ -109,12 +110,8 @@ export default function TodayScreen() {
       seenIds.current = { day, ids: new Set(next.map((r) => r.id)), loaded: true };
       setRows(next);
       setCtx({ areas: await deps.repo.listAreas(), treatments: await deps.repo.listItems('treatments'), categories: await deps.repo.listItems('changeCategories') });
-      setStatus(await dayStatus(deps, day));
-      setDiaryEmpty((await daysWithEntries(deps, 1)).length === 0);
       setShortcuts(await treatmentShortcuts(deps));
-      setFlare(await openFlareSummary(deps));
-      setBackup({ due: await backupCardDue(deps), days: await daysSinceExport(deps) });
-      setWaiting((await listSuggestions(deps)).length);
+      setContext(await todayContext(deps, day));
       const prefs = await getPreferences(deps);
       setLayout(prefs.quickActions);
       setRegular(prefs.regular);
@@ -167,24 +164,52 @@ export default function TodayScreen() {
     return a ? areaLabel(a) : id;
   };
 
+  const openEntry = useEntryActions(load);
+  const dots = ringDots(
+    rows.map((r) => ({ id: r.id, kind: r.kind, at: r.at })),
+    day,
+    deps.clock.timeZone(),
+    deps.dayStart.get(),
+  );
+  const arc = arcPosition(now, day, today, deps.clock.timeZone(), deps.dayStart.get());
+  const parts = dayParts(day);
+  /** UX-2: a dot opens its entry's Edit and Delete sheet; a merged dot first lists its entries. */
+  async function onDot(dot: RingDot) {
+    const found = dot.ids.map((id) => rows.find((r) => r.id === id)).filter((r): r is LogRow => !!r);
+    let row: LogRow | undefined = found[0];
+    if (found.length > 1) {
+      const picked = await chooseAction({ title: t('day.dot', { n: found.length }), actions: found.map((r) => ({ label: describeRow(r, ctx).title })) });
+      row = picked === null ? undefined : found[picked];
+    }
+    if (row) await openEntry(row.kind, row.id, describeRow(row, ctx).title);
+  }
+
   return (
     <Screen>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Pressable accessibilityRole="button" accessibilityLabel={t('day.previous')} onPress={() => moveDay(-1)} hitSlop={12}>
-          <Text style={styles.heading}>‹</Text>
-        </Pressable>
-        <Pressable accessibilityRole="button" accessibilityLabel={t('day.jump')} onPress={() => setPicking((p) => !p)} hitSlop={8}>
-          <Heading>{isToday ? `${t('day.today')}, ${day}` : day}</Heading>
-        </Pressable>
-        <Pressable accessibilityRole="button" accessibilityLabel={t('day.next')} onPress={() => moveDay(1)} hitSlop={12} disabled={isToday}>
-          <Text style={[styles.heading, isToday && { opacity: 0.3 }]}>›</Text>
-        </Pressable>
+      <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
+        <GearButton />
       </View>
+      <Rise order={0}>
+        <DayRing
+          dots={dots}
+          arc={arc}
+          startHour={deps.dayStart.get()}
+          weekday={parts.weekday}
+          date={parts.date}
+          count={rows.length}
+          canGoNext={!isToday}
+          onPrevious={() => moveDay(-1)}
+          onNext={() => moveDay(1)}
+          onPickDate={() => setPicking((p) => !p)}
+          onDot={(d) => void onDot(d)}
+        />
+      </Rise>
       {picking && (
         // UX-2: jump to any past day; a picked date is a calendar day, and a day in the future is never chosen.
         <DateTimePicker
           mode="date"
           display="inline"
+          themeVariant="dark"
           value={new Date(`${day}T12:00:00`)}
           maximumDate={now}
           onValueChange={(_e, d) => {
@@ -194,52 +219,61 @@ export default function TodayScreen() {
           }}
         />
       )}
-      {!isToday && <Button kind="secondary" title={t('day.today')} onPress={() => setChosen(null)} />}
 
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Label>{t('home.quickActions')}</Label>
-        <Button kind="secondary" title={editing ? t('home.done') : t('home.edit')} onPress={() => setEditing((e) => !e)} />
-      </View>
-      {editing ? (
-        // UX-2: two lists, On Today and In More, with buttons to reorder and to move between them, never by dragging.
-        <View style={{ gap: 4 }}>
-          <Label>{t('home.pinned')}</Label>
-          {layout.pinned.map((id) => (
-            <View key={id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.rowText}>{entryTitle(id)}</Text>
-                <Text style={styles.hint}>{entrySubtitle(id)}</Text>
-              </View>
-              <Button kind="secondary" title="▲" accessibilityLabel={`${t('home.moveUp')} ${entryTitle(id)}`} onPress={() => void run(async () => setLayoutPinned(await movePinnedEntryType(deps, id, -1)))} />
-              <Button kind="secondary" title="▼" accessibilityLabel={`${t('home.moveDown')} ${entryTitle(id)}`} onPress={() => void run(async () => setLayoutPinned(await movePinnedEntryType(deps, id, 1)))} />
-              <Button kind="secondary" title={t('home.unpin')} accessibilityLabel={`${t('home.unpin')} ${entryTitle(id)}`} onPress={() => void run(async () => setLayoutPinned(await unpinEntryType(deps, id)))} />
-            </View>
-          ))}
-          <Hint>{t('home.moreFixed')}</Hint>
-          <Label>{t('home.inMore')}</Label>
-          {unpinnedEntryTypes({ ...defaultPreferences(), quickActions: layout }).map((id) => (
-            <View key={id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.rowText}>{entryTitle(id)}</Text>
-                <Text style={styles.hint}>{entrySubtitle(id)}</Text>
-              </View>
-              <Button kind="secondary" title={t('home.pin')} accessibilityLabel={`${t('home.pin')} ${entryTitle(id)}`} onPress={() => void run(async () => setLayoutPinned(await pinEntryType(deps, id)))} />
-            </View>
-          ))}
+      <Rise order={1} style={{ gap: 8 }}>
+        {!isToday && <Button kind="outline" title={t('day.backToToday')} onPress={() => setChosen(null)} />}
+        {context.firstRun && (
+          // UX-1: an empty diary says where to start; no tour and no onboarding.
+          <Card>
+            <Text style={styles.rowText}>{t('cards.firstRun')}</Text>
+            <Button title={t('cards.firstMeal')} onPress={() => router.push('/form/meal')} />
+            <Button kind="secondary" title={t('nav.guide')} onPress={() => router.push('/guide')} />
+          </Card>
+        )}
+        <ContextPills pills={context.pills} areaName={areaName} startHour={deps.dayStart.get()} />
+      </Rise>
+
+      <Rise order={2} style={{ gap: 8 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Label>{t('home.quickActions')}</Label>
+          <Button kind="secondary" title={editing ? t('home.done') : t('home.edit')} onPress={() => setEditing((e) => !e)} />
         </View>
-      ) : (
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-          {[...layout.pinned, 'more' as const].map((id) => (
-            <View key={id} style={{ flexBasis: '31%', flexGrow: 1 }}>
-              <Button
-                kind="secondary"
-                title={id === 'more' ? t('home.more') : entryTitle(id)}
-                onPress={id === 'more' ? () => router.push('/today/more') : open(id)}
-              />
-            </View>
-          ))}
-        </View>
-      )}
+        {editing ? (
+          // UX-2: two lists, On Today and In More, with buttons to reorder and to move between them, never by dragging.
+          <View style={{ gap: 4 }}>
+            <Label>{t('home.pinned')}</Label>
+            {layout.pinned.map((id) => (
+              <View key={id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.rowText}>{entryTitle(id)}</Text>
+                  <Text style={styles.hint}>{entrySubtitle(id)}</Text>
+                </View>
+                <Button kind="secondary" title="▲" accessibilityLabel={`${t('home.moveUp')} ${entryTitle(id)}`} onPress={() => void run(async () => setLayoutPinned(await movePinnedEntryType(deps, id, -1)))} />
+                <Button kind="secondary" title="▼" accessibilityLabel={`${t('home.moveDown')} ${entryTitle(id)}`} onPress={() => void run(async () => setLayoutPinned(await movePinnedEntryType(deps, id, 1)))} />
+                <Button kind="secondary" title={t('home.unpin')} accessibilityLabel={`${t('home.unpin')} ${entryTitle(id)}`} onPress={() => void run(async () => setLayoutPinned(await unpinEntryType(deps, id)))} />
+              </View>
+            ))}
+            <Hint>{t('home.moreFixed')}</Hint>
+            <Label>{t('home.inMore')}</Label>
+            {unpinnedEntryTypes({ ...defaultPreferences(), quickActions: layout }).map((id) => (
+              <View key={id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.rowText}>{entryTitle(id)}</Text>
+                  <Text style={styles.hint}>{entrySubtitle(id)}</Text>
+                </View>
+                <Button kind="secondary" title={t('home.pin')} accessibilityLabel={`${t('home.pin')} ${entryTitle(id)}`} disabled={layout.pinned.length >= MAX_PINNED} onPress={() => void run(async () => setLayoutPinned(await pinEntryType(deps, id)))} />
+              </View>
+            ))}
+          </View>
+        ) : (
+          <QuickActions
+            pinned={layout.pinned}
+            onOpen={(id) => open(id)()}
+            onFull={(id) => router.push(isToday ? ENTRY_ROUTE[id] : { pathname: ENTRY_ROUTE[id], params: { day } })}
+            onMore={() => router.push('/today/more')}
+          />
+        )}
+      </Rise>
 
       {stoolOpen && (
         <Card>
@@ -305,44 +339,9 @@ export default function TodayScreen() {
         </View>
       )}
 
-      {diaryEmpty && isToday && (
-        // UX-1: an empty diary says where to start; no tour and no onboarding.
-        <Card>
-          <Text style={styles.rowText}>{t('cards.firstRun')}</Text>
-          <Button kind="secondary" title={t('cards.firstMeal')} onPress={() => router.push('/form/meal')} />
-          <Button kind="secondary" title={t('nav.guide')} onPress={() => router.push('/guide')} />
-        </Card>
-      )}
-      {isToday && flare && (
-        <Card>
-          <Text style={styles.rowText}>
-            {flare.areas.length === 1
-              ? t('cards.openFlareOne', { area: areaName(flare.areas[0]!.areaId), severity: flare.areas[0]!.severity, since: localDay(flare.period.start.utc, flare.period.start.tz, deps.dayStart.get()) })
-              : t('cards.openFlareMany', { n: flare.period.areaIds.length, area: areaName(flare.areas[0]!.areaId) })}
-          </Text>
-          <Button kind="secondary" title={t('cards.openAreas')} onPress={() => router.navigate({ pathname: '/review', params: { view: 'areas' } })} />
-        </Card>
-      )}
-      {status && !status.checkIn && day <= today && (
-        <Card>
-          <Text style={styles.rowText}>{t('cards.notLogged')}</Text>
-          <Button kind="secondary" title={t('cards.openCheckin')} onPress={() => router.push('/form/checkin')} />
-        </Card>
-      )}
-      {waiting > 0 && (
-        <Card>
-          <Text style={styles.rowText}>{t('cards.suggestions', { n: waiting })}</Text>
-          <Button kind="secondary" title={t('cards.openSuggestions')} onPress={() => router.push('/today/suggestions')} />
-        </Card>
-      )}
-      {backup.due && (
-        <Card>
-          <Text style={styles.rowText}>{backup.days === null ? t('cards.noExport') : t('cards.lastExport', { days: backup.days })}</Text>
-          <Button kind="secondary" title={t('cards.openBackup')} onPress={() => router.push('/settings/data')} />
-        </Card>
-      )}
-
-      <DayLog rows={rows} ctx={ctx} onChanged={load} limit={TODAY_LOG_LIMIT} highlight={highlight} onShowAll={() => router.navigate({ pathname: '/review/day', params: { day } })} />
+      <Rise order={3} style={{ gap: 8 }}>
+        <DayLog rows={rows} ctx={ctx} onChanged={load} limit={TODAY_LOG_LIMIT} highlight={highlight} onShowAll={() => router.navigate({ pathname: '/review/day', params: { day } })} />
+      </Rise>
     </Screen>
   );
 }

@@ -4,18 +4,22 @@ import type { ReactNode, Ref } from 'react';
 import { Pressable, ScrollView, type ScrollViewInstance, StyleSheet, View } from 'react-native';
 import { t } from '@/i18n';
 import { Aurora } from '@/ui/Aurora';
+import { useBottomInset } from '@/ui/FloatingTabBar';
 import { Text } from '@/ui/themed';
 import { color } from '@/ui/theme';
 
 /** `scrollRef` lets a screen scroll itself (the area timeline's date jump). */
-export const Screen = ({ children, scrollRef }: { children: ReactNode; scrollRef?: Ref<ScrollViewInstance> }) => (
+export function Screen({ children, scrollRef }: { children: ReactNode; scrollRef?: Ref<ScrollViewInstance> }) {
+  const inset = useBottomInset(); // room under the floating tab bar on the tab screens
+  return (
   <View style={{ flex: 1, backgroundColor: color.ground }}>
     <Aurora />
-    <ScrollView ref={scrollRef} style={{ flex: 1 }} contentContainerStyle={styles.screen} contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled">
+    <ScrollView ref={scrollRef} style={{ flex: 1 }} contentContainerStyle={[styles.screen, { paddingBottom: inset }]} contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled">
       {children}
     </ScrollView>
   </View>
-);
+  );
+}
 
 export const Heading = ({ children }: { children: ReactNode }) => (
   <Text style={styles.heading}>{children}</Text>

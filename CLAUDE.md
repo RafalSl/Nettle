@@ -67,7 +67,7 @@ thin wrapper around `docker compose run --rm app` (no arguments: start the dev
 server on :8081; with arguments: run that command in the container). The
 container installs dependencies into a named volume when `app/package-lock.json`
 changes.
-- install / update dependencies: automatic on the next `run` after the lockfile changes
+- install / update dependencies: automatic on the next `run` after the lockfile changes. All containers share one `node_modules` volume: while one runs (the dev server), another refuses to reinstall and says so. Stop the dev server first, and after any dependency change restart it with `./run.sh npx expo start --clear`
 - add an Expo library: `./run.sh npx expo install <pkg>` (never plain `npm i` for Expo modules); it edits `app/package.json` and the lockfile through the mount
 - start dev server: `./run.sh`, scan the QR code in Expo Go. If Wi-Fi blocks it, `./run.sh npx expo start --tunnel --port 8081`. `run.sh` detects the Wi-Fi address; if the QR code still shows a wrong one, set `NETTLE_LAN_IP=<Wi-Fi IP>`. It uses host networking, so port 8081 must be free
 - Expo login: if Expo Go says it is signed in but the CLI is not, run `./run.sh npx expo login` once (kept in a volume) or sign out in Expo Go

@@ -34,7 +34,10 @@ How it works:
   cache and `/tmp` (Jest and Metro caches) live in named volumes, so nothing
   Linux-built lands in the working tree.
 - `app/docker-entrypoint.sh`: runs `npm ci` when `app/package-lock.json` has
-  changed since the last install.
+  changed since the last install, but never while another Nettle container (the
+  dev server) uses `node_modules`: it then stops and asks you to stop the other
+  one first. After a dependency change, restart the dev server with
+  `./run.sh npx expo start --clear`.
 - `run.sh` tells the phone your Wi-Fi address. If the QR code shows a wrong one,
   set `NETTLE_LAN_IP=<Wi-Fi IP>`.
 - Port 8081 must be free (host networking).

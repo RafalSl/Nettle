@@ -5,6 +5,10 @@ module.exports = defineConfig([
   globalIgnores(['node_modules/', '.expo/', 'dist/']),
   expo,
   {
+    // `useFocusLoad(load, deps, apply)` lists its dependencies like useEffect; check them the same way.
+    rules: { 'react-hooks/exhaustive-deps': ['warn', { additionalHooks: '(useFocusLoad)' }] },
+  },
+  {
     // Ports and adapters: core logic makes no platform or network calls and knows no adapters.
     files: ['src/core/**'],
     rules: {

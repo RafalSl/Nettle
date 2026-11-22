@@ -1,6 +1,6 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { useCallback, useRef, useState } from 'react';
+import { useLocalSearchParams } from 'expo-router';
+import { useRef, useState } from 'react';
 import { Pressable, type ScrollViewInstance, View } from 'react-native';
 import { Text } from '@/ui/themed';
 import { sinceCaption } from '@/core/model/derived';
@@ -20,6 +20,7 @@ import { SCORE_KEYS, type Photo, type SkinArea } from '@/core/model/types';
 import { localDateTime, localDay } from '@/core/model/time';
 import { areaLabel, itemLabel, t } from '@/i18n';
 import { useServices } from '@/services';
+import { useFocusLoad } from '@/ui/useFocusLoad';
 import { useNow } from '@/ui/useNow';
 import { PhotoCompare } from '@/ui/PhotoCompare';
 import { PhotoThumbs } from '@/ui/PhotoThumbs';
@@ -28,7 +29,6 @@ import { Button, Chips, Heading, Hint, Screen, styles } from '@/ui/components';
 import { describeRow, skinExtras } from '@/ui/logRow';
 import { useEntryActions } from '@/ui/useEntryActions';
 import { color } from '@/ui/theme';
-import { showError } from '@/ui/showError';
 
 /**
  * SK-8, EN-1: one area across dates: the scores or nail stage of each entry with its photos beside them, newest day
@@ -51,17 +51,21 @@ export default function AreaTimelineScreen() {
   const [jump, setJump] = useState<{ target: JumpTarget; picked: string } | null>(null);
   const scrollRef = useRef<ScrollViewInstance>(null);
   const dayY = useRef<Record<string, number>>({});
-  const load = useCallback(() => {
-    (async () => {
-      const all = await deps.repo.listAreas();
-      const area = all.find((a) => a.id === id);
-      setAreas(all);
-      setTreatmentNames(Object.fromEntries((await deps.repo.listItems('treatments')).map((x) => [x.id, itemLabel(x)])));
+  const load = useFocusLoad(
+    async () => ({
+      all: await deps.repo.listAreas(),
+      treatments: await deps.repo.listItems('treatments'),
+      days: await areaTimeline(deps, id),
+    }),
+    [deps, id],
+    (r) => {
+      const area = r.all.find((a) => a.id === id);
+      setAreas(r.all);
+      setTreatmentNames(Object.fromEntries(r.treatments.map((x) => [x.id, itemLabel(x)])));
       setName(area ? areaLabel(area) : '');
-      setDays(await areaTimeline(deps, id));
-    })().catch((e) => showError(e));
-  }, [deps, id]);
-  useFocusEffect(load);
+      setDays(r.days);
+    },
+  );
   const openEntry = useEntryActions(load);
 
   /** SK-8: the picked calendar day leads to that day, or the nearest earlier one; the list and chart stay complete. */

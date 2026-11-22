@@ -23,6 +23,7 @@ import { color } from '@/ui/theme';
 import { formatElapsed } from '@/core/usecases/analysisRunner';
 import { showError } from '@/ui/showError';
 import { toggled } from '@/ui/sets';
+import { useFocusLoad } from '@/ui/useFocusLoad';
 
 /** Earlier analyses, and the photos taken in the chosen days with a label for each. */
 async function loadScreenData(deps: Deps, dayFrom: string, dayTo: string) {
@@ -62,15 +63,14 @@ export default function AnalysisScreen() {
   const dayFrom = localDay(from.toISOString(), tz);
   const dayTo = localDay(to.toISOString(), tz);
 
-  const reload = useCallback(() => {
-    loadScreenData(deps, dayFrom, dayTo)
-      .then((data) => {
-        setPast(data.past);
-        setPhotos(data.photos);
-      })
-      .catch((e) => showError(e));
-  }, [deps, dayFrom, dayTo, setPast, setPhotos]);
-  useFocusEffect(reload);
+  const reload = useFocusLoad(
+    () => loadScreenData(deps, dayFrom, dayTo),
+    [deps, dayFrom, dayTo],
+    (data) => {
+      setPast(data.past);
+      setPhotos(data.photos);
+    },
+  );
 
   const toggle = (id: string) => setChosen((cur) => toggled(cur, id));
 

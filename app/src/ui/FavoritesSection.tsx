@@ -1,5 +1,4 @@
-import { useFocusEffect } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import React, { useState } from 'react';
 import { Pressable } from 'react-native';
 import { Text } from '@/ui/themed';
 import { defaultPreferences, type Preferences } from '@/core/model/preferences';
@@ -8,6 +7,7 @@ import { t } from '@/i18n';
 import { useServices } from '@/services';
 import { Heading, Hint, styles } from '@/ui/components';
 import { showError } from '@/ui/showError';
+import { useFocusLoad } from '@/ui/useFocusLoad';
 
 type Kind = 'meals' | 'drinks' | 'medications';
 
@@ -15,10 +15,7 @@ type Kind = 'meals' | 'drinks' | 'medications';
 export function FavoritesSection() {
   const { deps } = useServices();
   const [prefs, setPrefs] = useState<Preferences>(defaultPreferences());
-  const reload = useCallback(() => {
-    getPreferences(deps).then(setPrefs, (e) => showError(e));
-  }, [deps]);
-  useFocusEffect(reload);
+  const reload = useFocusLoad(() => getPreferences(deps), [deps], setPrefs);
 
   const groups: { kind: Kind; title: string; rows: { key: string; label: string }[] }[] = [
     { kind: 'meals', title: t('settings.favMeals'), rows: prefs.favorites.meals.map((m) => ({ key: m.key, label: m.description })) },

@@ -1,6 +1,6 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { Alert, Linking, View } from 'react-native';
 import { Text } from '@/ui/themed';
 import { listRegular } from '@/core/usecases/regular';
@@ -20,6 +20,7 @@ import { Button, Chips, Heading, Hint, Label, styles } from '@/ui/components';
 import { SwitchRow } from '@/ui/SwitchRow';
 import { color } from '@/ui/theme';
 import { showError } from '@/ui/showError';
+import { useFocusLoad } from '@/ui/useFocusLoad';
 
 const at = (hour: number, minute: number) => {
   const d = new Date();
@@ -38,17 +39,20 @@ export function RemindersSection() {
   const [denied, setDenied] = useState(false);
   const [status, setStatus] = useState<ReminderStatus | null>(null);
 
-  const load = useCallback(() => {
-    loadReminderSettings(deps)
-      .then(setS)
-      .catch(() => undefined);
-    reminderStatus(deps).then(setStatus, () => setStatus(null));
-    listRegular(deps).then(
-      (r) => setRegular({ n: r.length, withReminders: r.filter((x) => x.times.length > 0).length }),
-      () => undefined,
-    );
-  }, [deps]);
-  useFocusEffect(load);
+  const ignore = () => undefined;
+  useFocusLoad(() => loadReminderSettings(deps), [deps], setS, ignore);
+  useFocusLoad(
+    () => reminderStatus(deps),
+    [deps],
+    setStatus,
+    () => setStatus(null),
+  );
+  useFocusLoad(
+    () => listRegular(deps),
+    [deps],
+    (r) => setRegular({ n: r.length, withReminders: r.filter((x) => x.times.length > 0).length }),
+    ignore,
+  );
 
   /** Shows the new value only after it was saved, so a refused permission leaves the switch off. */
   async function change(next: ReminderSettings) {

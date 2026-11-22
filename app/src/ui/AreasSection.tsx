@@ -1,5 +1,4 @@
-import { useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { View } from 'react-native';
 import { TextInput } from '@/ui/themed';
 import type { AreaKind, SkinArea } from '@/core/model/types';
@@ -9,6 +8,7 @@ import { useServices } from '@/services';
 import { Button, Chips, Heading, Hint, Label, styles } from '@/ui/components';
 import { SwitchRow } from '@/ui/SwitchRow';
 import { showError } from '@/ui/showError';
+import { useFocusLoad } from '@/ui/useFocusLoad';
 
 /**
  * SK-2, SK-10, UX-6: add, rename and archive the skin or nail areas. Active names are unique. A predefined area
@@ -19,10 +19,7 @@ export function AreasSection({ kind }: { kind: AreaKind }) {
   const [areas, setAreas] = useState<SkinArea[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [name, setName] = useState('');
-  const reload = useCallback(() => {
-    deps.repo.listAreas().then((all) => setAreas(all.filter((a) => a.kind === kind)));
-  }, [deps, kind]);
-  useFocusEffect(reload);
+  const reload = useFocusLoad(async () => (await deps.repo.listAreas()).filter((a) => a.kind === kind), [deps, kind], setAreas);
 
   const run = async (fn: () => Promise<unknown>) => {
     try {

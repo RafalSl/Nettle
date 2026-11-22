@@ -1,10 +1,9 @@
-import { useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { defaultPreferences, type Preferences } from '@/core/model/preferences';
 import { type Suggestion } from '@/core/model/suggestions';
 import { getPreferences } from '@/core/usecases/preferences';
 import { useServices } from '@/services';
-import { showError } from '@/ui/showError';
+import { useFocusLoad } from '@/ui/useFocusLoad';
 
 export const rowText = (s: Suggestion<unknown>) => `${s.favorite ? '★ ' : ''}${s.label}${s.count >= 2 ? ` ×${s.count}` : ''}`;
 
@@ -13,14 +12,18 @@ export function useSuggestions<P>(load: (deps: ReturnType<typeof useServices>['d
   const { deps } = useServices();
   const [prefs, setPrefs] = useState<Preferences>(defaultPreferences());
   const [list, setList] = useState<Suggestion<P>[]>([]);
-  const refresh = useCallback(() => {
-    (async () => {
+  const refresh = useFocusLoad(
+    async () => {
       const p = await getPreferences(deps);
-      setPrefs(p);
-      setList(await load(deps, p));
-    })().catch((e) => showError(e));
+      return { p, list: await load(deps, p) };
+    },
+    // `load` is a new function on every render but always means the same query for one form, so only `deps` counts.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deps]);
-  useFocusEffect(refresh);
+    [deps],
+    (r) => {
+      setPrefs(r.p);
+      setList(r.list);
+    },
+  );
   return { list, saveOnTap: prefs.suggestions.saveOnTap, prefs, refresh };
 }

@@ -1,6 +1,6 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useState } from 'react';
 import { Linking, View } from 'react-native';
 import { Text } from '@/ui/themed';
 import type { RegularItem, ReminderTime } from '@/core/model/preferences';
@@ -15,6 +15,7 @@ import { Button, Heading, Hint, Label, Screen, styles } from '@/ui/components';
 import { SwitchRow } from '@/ui/SwitchRow';
 import { EmptyState } from '@/ui/EmptyState';
 import { showError } from '@/ui/showError';
+import { useFocusLoad } from '@/ui/useFocusLoad';
 
 /** The name of a regular item for lists: a medication's name and dose, or a treatment with its areas. */
 export function regularName(r: RegularItem, treatments: ListItem[], areas: SkinArea[]): string {
@@ -34,15 +35,15 @@ function useRegular() {
     treatments: [],
     areas: [],
   });
-  const reload = useCallback(() => {
-    (async () =>
-      setState({
-        items: await listRegular(deps),
-        treatments: await deps.repo.listItems('treatments'),
-        areas: await deps.repo.listAreas(),
-      }))().catch((e) => showError(e));
-  }, [deps]);
-  useFocusEffect(reload);
+  const reload = useFocusLoad(
+    async () => ({
+      items: await listRegular(deps),
+      treatments: await deps.repo.listItems('treatments'),
+      areas: await deps.repo.listAreas(),
+    }),
+    [deps],
+    setState,
+  );
   return { ...state, reload };
 }
 

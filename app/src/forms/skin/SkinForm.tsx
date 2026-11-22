@@ -1,5 +1,5 @@
-import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { Alert } from 'react-native';
 import { TextInput } from '@/ui/themed';
 import { type SkinArea, type SkinScores } from '@/core/model/types';
@@ -14,6 +14,7 @@ import { useFormTime } from '@/forms/useFormTime';
 import { Button, Chips, Hint, Label, TimeField, styles } from '@/ui/components';
 import { showError } from '@/ui/showError';
 import { SkinScoreFields } from '@/forms/skin/SkinScoreFields';
+import { useFocusLoad } from '@/ui/useFocusLoad';
 
 const ZERO: SkinScores = { severity: 0, itch: 0, pain: 0, dryness: 0, scaling: 0 };
 
@@ -39,10 +40,7 @@ export default function SkinForm() {
   const [photos, setPhotos] = useField<string[]>([], f.touch);
   const time = useFormTime(f.touch);
 
-  const reload = useCallback(() => {
-    listActiveAreas(deps, 'skin').then(setAreas);
-  }, [deps]);
-  useFocusEffect(reload);
+  const reload = useFocusLoad(() => listActiveAreas(deps, 'skin'), [deps], setAreas);
   const selected = areaId && areas.some((a) => a.id === areaId) ? areaId : (areas[0]?.id ?? null);
 
   /** SK-3: start from the area's last values so a small change is a tap or two; Details opens by itself for an area with a size. */

@@ -1,5 +1,4 @@
-import { useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { View } from 'react-native';
 import { TextInput } from '@/ui/themed';
 import type { ListItem, ListKind } from '@/core/model/types';
@@ -8,6 +7,7 @@ import { itemDescription, itemLabel, t } from '@/i18n';
 import { useServices } from '@/services';
 import { Button, Chips, Heading, Hint, Label, styles } from '@/ui/components';
 import { showError } from '@/ui/showError';
+import { useFocusLoad } from '@/ui/useFocusLoad';
 
 /** IN-6, IN-11: add, rename, archive and restore the items of a user-editable list. */
 export function ListSection({ kind }: { kind: ListKind }) {
@@ -18,10 +18,7 @@ export function ListSection({ kind }: { kind: ListKind }) {
   const [description, setDescription] = useState('');
   const daily = kind === 'dailyItems';
 
-  const reload = useCallback(() => {
-    deps.repo.listItems(kind).then(setItems);
-  }, [deps, kind]);
-  useFocusEffect(reload);
+  const reload = useFocusLoad(() => deps.repo.listItems(kind), [deps, kind], setItems);
 
   const run = async (fn: () => Promise<unknown>) => {
     try {

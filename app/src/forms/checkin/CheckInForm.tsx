@@ -1,5 +1,5 @@
-import { useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useLocalSearchParams } from 'expo-router';
+import { useState } from 'react';
 import { Alert } from 'react-native';
 import { TextInput } from '@/ui/themed';
 import { NettleError } from '@/core/model/errors';
@@ -15,6 +15,7 @@ import { FormModal, useForm } from '@/ui/FormModal';
 import { DailyHealthFields, type DailyValues } from '@/forms/checkin/DailyHealthFields';
 import { Button, Hint, Label, TimeField, styles } from '@/ui/components';
 import { showError } from '@/ui/showError';
+import { useFocusLoad } from '@/ui/useFocusLoad';
 
 /**
  * SK-7, SK-11: the Daily health form, one record per local day. Nothing is filled in silently: "Same as
@@ -34,15 +35,15 @@ export default function CheckInForm() {
   const [items, setItems] = useState<ListItem[]>([]);
   const day = localDay((at ?? deps.clock.now()).toISOString(), deps.clock.timeZone(), deps.dayStart.get());
 
-  const load = useCallback(() => {
-    (async () => {
-      setItems(await listActiveItems(deps, 'dailyItems'));
-      const existing = await getCheckIn(deps, day);
+  useFocusLoad(
+    async () => ({ items: await listActiveItems(deps, 'dailyItems'), existing: await getCheckIn(deps, day) }),
+    [deps, day],
+    ({ items: active, existing }) => {
+      setItems(active);
       setValues(existing ? { ...existing.values } : {});
       setNote(existing?.note ?? '');
-    })().catch((e) => showError(e));
-  }, [deps, day]);
-  useFocusEffect(load);
+    },
+  );
 
   /** SK-7: copies yesterday's values into the form for all items still asked; the note and the time stay as they are. */
   async function sameAsYesterday() {

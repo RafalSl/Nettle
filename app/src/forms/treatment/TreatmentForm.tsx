@@ -1,5 +1,4 @@
-import { useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { View } from 'react-native';
 import { TextInput } from '@/ui/themed';
 import type { ListItem, SkinArea } from '@/core/model/types';
@@ -15,6 +14,7 @@ import { Button, Hint, TimeField, styles } from '@/ui/components';
 import { SwitchRow } from '@/ui/SwitchRow';
 import { showError } from '@/ui/showError';
 import { TreatmentFields } from '@/forms/treatment/TreatmentFields';
+import { useFocusLoad } from '@/ui/useFocusLoad';
 
 /** IN-11: a saved list of treatments; applying one to one or more areas is timestamped (now, or the chosen day). */
 export default function TreatmentForm() {
@@ -28,11 +28,14 @@ export default function TreatmentForm() {
   const [regular, setRegular] = useField(false, f.touch);
   const time = useFormTime(f.touch);
 
-  const reload = useCallback(() => {
-    listActiveItems(deps, 'treatments').then(setTreatments);
-    listActiveAreas(deps).then(setAreas);
-  }, [deps]);
-  useFocusEffect(reload);
+  const reload = useFocusLoad(
+    async () => ({ treatments: await listActiveItems(deps, 'treatments'), areas: await listActiveAreas(deps) }),
+    [deps],
+    (r) => {
+      setTreatments(r.treatments);
+      setAreas(r.areas);
+    },
+  );
   const selected = treatmentId && treatments.some((x) => x.id === treatmentId) ? treatmentId : (treatments[0]?.id ?? null);
 
   async function addTreatment() {

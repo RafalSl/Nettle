@@ -1,5 +1,4 @@
-import { useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { DEFAULT_FLARE_THRESHOLD } from '@/core/model/flares';
 import type { FlareScope } from '@/core/model/preferences';
@@ -13,6 +12,7 @@ import { Icon } from '@/ui/Icon';
 import { Text } from '@/ui/themed';
 import { color } from '@/ui/theme';
 import { showError } from '@/ui/showError';
+import { useFocusLoad } from '@/ui/useFocusLoad';
 
 /**
  * SK-6, SK-8, UX-6: the severity at or above which skin entries count as a flare. "Same for all" is one value for
@@ -25,16 +25,15 @@ export function FlareThresholdSection() {
   const [scope, setScope] = useState<FlareScope>('all');
   const [byArea, setByArea] = useState<Record<string, number>>({});
   const [areas, setAreas] = useState<SkinArea[]>([]);
-  useFocusEffect(
-    useCallback(() => {
-      (async () => {
-        const p = await getPreferences(deps);
-        setThreshold(p.flareThreshold);
-        setScope(p.flareScope);
-        setByArea(p.flareThresholdByArea);
-        setAreas((await deps.repo.listAreas()).filter((a) => a.kind === 'skin' && !a.archived));
-      })().catch((e) => showError(e));
-    }, [deps]),
+  useFocusLoad(
+    async () => ({ p: await getPreferences(deps), areas: await deps.repo.listAreas() }),
+    [deps],
+    ({ p, areas: all }) => {
+      setThreshold(p.flareThreshold);
+      setScope(p.flareScope);
+      setByArea(p.flareThresholdByArea);
+      setAreas(all.filter((a) => a.kind === 'skin' && !a.archived));
+    },
   );
   const fail = (e: unknown) => showError(e);
   const step = (a: SkinArea, delta: number) => {

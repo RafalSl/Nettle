@@ -1,5 +1,4 @@
-import { useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { defaultPreferences, ENTRY_TYPES, MAX_PINNED, type EntryType } from '@/core/model/preferences';
 import { getPreferences, movePinnedEntryType, pinEntryType, unpinEntryType } from '@/core/usecases/preferences';
@@ -14,6 +13,7 @@ import { IconCircle } from '@/ui/IconCircle';
 import { Text } from '@/ui/themed';
 import { color } from '@/ui/theme';
 import { showError } from '@/ui/showError';
+import { useFocusLoad } from '@/ui/useFocusLoad';
 
 function Round({ icon, label, disabled = false, onPress }: { icon: IconName; label: string; disabled?: boolean; onPress: () => void }) {
   return (
@@ -46,13 +46,10 @@ function Round({ icon, label, disabled = false, onPress }: { icon: IconName; lab
 export default function EditTodayScreen() {
   const { deps } = useServices();
   const [pinned, setPinned] = useState<EntryType[]>(defaultPreferences().quickActions.pinned);
-  useFocusEffect(
-    useCallback(() => {
-      getPreferences(deps).then(
-        (p) => setPinned(p.quickActions.pinned),
-        (e) => showError(e),
-      );
-    }, [deps]),
+  useFocusLoad(
+    () => getPreferences(deps),
+    [deps],
+    (p) => setPinned(p.quickActions.pinned),
   );
   const run = (action: () => Promise<EntryType[]>) => action().then(setPinned, (e) => showError(e));
   const full = pinned.length >= MAX_PINNED;

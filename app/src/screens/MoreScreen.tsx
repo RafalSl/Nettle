@@ -1,5 +1,5 @@
-import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { View } from 'react-native';
 import { ENTRY_TYPES, type EntryType } from '@/core/model/preferences';
 import { searchItems, type SearchItem } from '@/core/model/search';
@@ -16,7 +16,7 @@ import { NavRow } from '@/ui/NavRow';
 import { TextInput } from '@/ui/themed';
 import { GUIDE } from '@/screens/GuideScreen';
 import { color } from '@/ui/theme';
-import { showError } from '@/ui/showError';
+import { useFocusLoad } from '@/ui/useFocusLoad';
 
 type Target = { entry: EntryType; guide: boolean };
 
@@ -30,13 +30,10 @@ export default function MoreScreen() {
   const { deps } = useServices();
   const [rows, setRows] = useState<EntryType[]>([]);
   const [query, setQuery] = useState('');
-  useFocusEffect(
-    useCallback(() => {
-      getPreferences(deps).then(
-        (p) => setRows(unpinnedEntryTypes(p)),
-        (e) => showError(e),
-      );
-    }, [deps]),
+  useFocusLoad(
+    () => getPreferences(deps),
+    [deps],
+    (p) => setRows(unpinnedEntryTypes(p)),
   );
   const searching = query.trim().length > 0;
   const items: SearchItem<Target>[] = [

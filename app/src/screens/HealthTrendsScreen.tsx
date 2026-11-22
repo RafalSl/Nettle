@@ -1,5 +1,4 @@
-import { useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import type { ListItem } from '@/core/model/types';
 import { localDay } from '@/core/model/time';
 import {
@@ -12,10 +11,10 @@ import {
 } from '@/core/usecases/timeline';
 import { itemDescription, itemLabel, t } from '@/i18n';
 import { useServices } from '@/services';
+import { useFocusLoad } from '@/ui/useFocusLoad';
 import { useNow } from '@/ui/useNow';
 import { TrendChart } from '@/ui/TrendChart';
 import { Chips, Heading, Hint, Screen } from '@/ui/components';
-import { showError } from '@/ui/showError';
 
 /** SK-7, UX-1: a trend chart of one Daily health score item (0 to 10), one bar per logged day, with a text summary. */
 export default function HealthTrendsScreen() {
@@ -26,15 +25,11 @@ export default function HealthTrendsScreen() {
   const [range, setRange] = useState<TrendRange>(DEFAULT_TREND_RANGE);
   const selected = pick && items.some((i) => i.id === pick) ? pick : (items[0]?.id ?? null);
 
-  useFocusEffect(
-    useCallback(() => {
-      trendScoreItems(deps).then(setItems, (e) => showError(e));
-    }, [deps]),
-  );
-  useFocusEffect(
-    useCallback(() => {
-      if (selected) healthTrendPoints(deps, selected).then(setPoints, (e) => showError(e));
-    }, [deps, selected]),
+  useFocusLoad(() => trendScoreItems(deps), [deps], setItems);
+  useFocusLoad(
+    async () => (selected ? healthTrendPoints(deps, selected) : null),
+    [deps, selected],
+    (p) => p && setPoints(p),
   );
   const now = useNow(deps);
   const item = items.find((i) => i.id === selected);

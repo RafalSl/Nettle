@@ -1,5 +1,5 @@
-import { useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useLocalSearchParams } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
 import { Keyboard, Pressable, type ScrollViewInstance, useWindowDimensions, View } from 'react-native';
 import { Text, TextInput } from '@/ui/themed';
 import { addIngredients, matchIngredientNames, suggestAllergens } from '@/core/model/allergens';
@@ -28,6 +28,7 @@ import { Sheet, SheetRow } from '@/ui/Sheet';
 import { color } from '@/ui/theme';
 import { showError } from '@/ui/showError';
 import { AllergenChips } from '@/forms/AllergenChips';
+import { useFocusLoad } from '@/ui/useFocusLoad';
 
 /** What a pick fills into the review form: the latest use of the meal, or a favorite's snapshot. */
 interface MealDraft {
@@ -123,14 +124,19 @@ export default function MealScreen() {
   const [focused, setFocused] = useState<number | null>(null);
   const [dateHint, setDateHint] = useState<string | null>(null);
 
-  const load = useCallback(() => {
-    (async () => {
-      setMeals(mealHistory(await deps.repo.listRecords('meals')));
-      setPrefs(await getPreferences(deps));
-      setNames(await ingredientNameHistory(deps));
-    })().catch((e) => showError(e));
-  }, [deps]);
-  useFocusEffect(load);
+  useFocusLoad(
+    async () => ({
+      meals: mealHistory(await deps.repo.listRecords('meals')),
+      prefs: await getPreferences(deps),
+      names: await ingredientNameHistory(deps),
+    }),
+    [deps],
+    (r) => {
+      setMeals(r.meals);
+      setPrefs(r.prefs);
+      setNames(r.names);
+    },
+  );
 
   const now = deps.clock.now();
   const tz = deps.clock.timeZone();

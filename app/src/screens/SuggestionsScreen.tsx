@@ -1,12 +1,12 @@
-import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import type { Drink, Meal } from '@/core/model/types';
 import { listSuggestions, type Suggestion } from '@/core/usecases/aiPack';
 import { t } from '@/i18n';
 import { useServices } from '@/services';
 import { NavRow } from '@/ui/NavRow';
 import { Hint, Screen } from '@/ui/components';
-import { showError } from '@/ui/showError';
+import { useFocusLoad } from '@/ui/useFocusLoad';
 
 type Row = Suggestion & { entry: Meal | Drink };
 const text = (s: Row) => ('description' in s.entry ? s.entry.description : s.entry.name);
@@ -19,11 +19,7 @@ export default function SuggestionsScreen() {
   const { deps } = useServices();
   const router = useRouter();
   const [rows, setRows] = useState<Row[] | null>(null);
-  useFocusEffect(
-    useCallback(() => {
-      listSuggestions(deps).then(setRows, (e) => showError(e));
-    }, [deps]),
-  );
+  useFocusLoad(() => listSuggestions(deps), [deps], setRows);
   return (
     <Screen>
       <Hint>{t('aiSuggestions.intro')}</Hint>

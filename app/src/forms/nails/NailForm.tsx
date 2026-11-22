@@ -1,5 +1,5 @@
-import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { Alert, View } from 'react-native';
 import { TextInput } from '@/ui/themed';
 import { type NailExtent, type NailStage, type SkinArea } from '@/core/model/types';
@@ -14,6 +14,7 @@ import { useFormTime } from '@/forms/useFormTime';
 import { Button, Chips, Hint, TimeField, styles } from '@/ui/components';
 import { showError } from '@/ui/showError';
 import { NailFields } from '@/forms/nails/NailFields';
+import { useFocusLoad } from '@/ui/useFocusLoad';
 
 /**
  * SK-10, SK-3: one nail area per affected nail; an entry has a stage and a rough extent instead of scores.
@@ -31,10 +32,7 @@ export default function NailForm() {
   const [photos, setPhotos] = useField<string[]>([], f.touch);
   const time = useFormTime(f.touch);
 
-  const reload = useCallback(() => {
-    listActiveAreas(deps, 'nail').then(setAreas);
-  }, [deps]);
-  useFocusEffect(reload);
+  const reload = useFocusLoad(() => listActiveAreas(deps, 'nail'), [deps], setAreas);
   const selected = areaId && areas.some((a) => a.id === areaId) ? areaId : (areas[0]?.id ?? null);
 
   async function addNail() {

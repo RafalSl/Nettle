@@ -1,6 +1,6 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { Text } from '@/ui/themed';
 import { addDays, atOnDay, dayParam as asDay, localDateTime, localDay } from '@/core/model/time';
@@ -15,6 +15,7 @@ import { arcPosition, ringDots, type RingDot } from '@/core/model/ring';
 import { todayContext, type TodayContext } from '@/core/usecases/today';
 import { areaLabel, dayParts, itemLabel, t } from '@/i18n';
 import { useServices } from '@/services';
+import { useFocusLoad } from '@/ui/useFocusLoad';
 import { useNow } from '@/ui/useNow';
 import { DayLog, TODAY_LOG_LIMIT } from '@/ui/DayLog';
 import { ENTRY_ROUTE } from '@/ui/entryTypes';
@@ -94,14 +95,25 @@ export default function TodayScreen() {
   const isToday = day === today;
   const atNow = () => atOnDay(day, deps.clock.now(), deps.clock.timeZone(), deps.dayStart.get());
 
-  const load = useCallback(() => {
-    (async () => {
-      const next = await dayLog(deps, day);
+  const load = useFocusLoad(
+    async () => ({
+      rows: await dayLog(deps, day),
+      ctx: {
+        areas: await deps.repo.listAreas(),
+        treatments: await deps.repo.listItems('treatments'),
+        categories: await deps.repo.listItems('changeCategories'),
+      },
+      shortcuts: await treatmentShortcuts(deps),
+      context: await todayContext(deps, day),
+      prefs: await getPreferences(deps),
+    }),
+    [deps, day],
+    (r) => {
       // UX-2: an entry that appeared since the last look (a form just saved it) is highlighted for a moment.
       // The first load of a day highlights nothing.
       const seen = seenIds.current;
       if (seen.day === day && seen.loaded) {
-        const fresh = next.filter((r) => !seen.ids.has(r.id)).map((r) => r.id);
+        const fresh = r.rows.filter((x) => !seen.ids.has(x.id)).map((x) => x.id);
         if (fresh.length > 0) {
           setHighlight(new Set(fresh));
           clearTimeout(highlightTimer.current);
@@ -109,21 +121,15 @@ export default function TodayScreen() {
           (highlightTimer.current as { unref?: () => void }).unref?.(); // never keeps a test or a process alive
         }
       }
-      seenIds.current = { day, ids: new Set(next.map((r) => r.id)), loaded: true };
-      setRows(next);
-      setCtx({
-        areas: await deps.repo.listAreas(),
-        treatments: await deps.repo.listItems('treatments'),
-        categories: await deps.repo.listItems('changeCategories'),
-      });
-      setShortcuts(await treatmentShortcuts(deps));
-      setContext(await todayContext(deps, day));
-      const prefs = await getPreferences(deps);
-      setLayout(prefs.quickActions);
-      setRegular(prefs.regular);
-    })().catch((e) => showError(e));
-  }, [deps, day]);
-  useFocusEffect(load);
+      seenIds.current = { day, ids: new Set(r.rows.map((x) => x.id)), loaded: true };
+      setRows(r.rows);
+      setCtx(r.ctx);
+      setShortcuts(r.shortcuts);
+      setContext(r.context);
+      setLayout(r.prefs.quickActions);
+      setRegular(r.prefs.regular);
+    },
+  );
   useEffect(
     () => () => {
       timers.current.forEach(clearTimeout);

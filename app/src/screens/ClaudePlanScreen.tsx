@@ -1,5 +1,4 @@
-import { useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { Alert } from 'react-native';
 import { localDateTime, localDay } from '@/core/model/time';
 import { RECORD_KINDS, type Photo } from '@/core/model/types';
@@ -20,6 +19,7 @@ import { FloatingAction } from '@/ui/FloatingSave';
 import { PhotoGrid } from '@/ui/PhotoGrid';
 import { showError } from '@/ui/showError';
 import { toggled } from '@/ui/sets';
+import { useFocusLoad } from '@/ui/useFocusLoad';
 
 const daysAgo = (n: number) => new Date(Date.now() - n * 24 * 3600 * 1000);
 
@@ -39,27 +39,27 @@ export default function ClaudePlanScreen() {
   const dayFrom = pickedDay(from, tz);
   const dayTo = pickedDay(to, tz);
 
-  useFocusEffect(
-    useCallback(() => {
-      (async () => {
-        const areas = new Map((await deps.repo.listAreas()).map((a) => [a.id, a]));
-        const entryArea = new Map(
-          [...(await deps.repo.listRecords('skinEntries')), ...(await deps.repo.listRecords('nailEntries'))].map((e) => [e.id, e.areaId]),
-        );
-        setPhotos(
-          (await deps.repo.listRecords('photos'))
-            .filter(
-              (p) =>
-                localDay(p.at.utc, p.at.tz, deps.dayStart.get()) >= dayFrom && localDay(p.at.utc, p.at.tz, deps.dayStart.get()) <= dayTo,
-            )
-            .map((photo) => {
-              const area = areas.get(entryArea.get(photo.entryId) ?? '');
-              return { photo, label: `${area ? areaLabel(area) : ''} ${localDateTime(photo.at.utc, photo.at.tz)}`.trim() };
-            }),
-        );
-        setMarked(await markedEntries(deps));
-      })().catch((e) => showError(e));
-    }, [deps, dayFrom, dayTo, setPhotos, setMarked]),
+  useFocusLoad(
+    async () => {
+      const areas = new Map((await deps.repo.listAreas()).map((a) => [a.id, a]));
+      const entryArea = new Map(
+        [...(await deps.repo.listRecords('skinEntries')), ...(await deps.repo.listRecords('nailEntries'))].map((e) => [e.id, e.areaId]),
+      );
+      const inRange = (p: { at: { utc: string; tz: string } }) => {
+        const d = localDay(p.at.utc, p.at.tz, deps.dayStart.get());
+        return d >= dayFrom && d <= dayTo;
+      };
+      const photos = (await deps.repo.listRecords('photos')).filter(inRange).map((photo) => {
+        const area = areas.get(entryArea.get(photo.entryId) ?? '');
+        return { photo, label: `${area ? areaLabel(area) : ''} ${localDateTime(photo.at.utc, photo.at.tz)}`.trim() };
+      });
+      return { photos, marked: await markedEntries(deps) };
+    },
+    [deps, dayFrom, dayTo],
+    (r) => {
+      setPhotos(r.photos);
+      setMarked(r.marked);
+    },
   );
 
   const toggle = (id: string) => setChosen((cur) => toggled(cur, id));

@@ -1,5 +1,4 @@
-import { useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/ui/themed';
 import { MAX_SUGGESTION_ROWS, WINDOW_DAYS, defaultPreferences, type SuggestionSettings } from '@/core/model/preferences';
@@ -9,17 +8,17 @@ import { useServices } from '@/services';
 import { Button, Chips, Hint, Label, Screen, styles } from '@/ui/components';
 import { SwitchRow } from '@/ui/SwitchRow';
 import { showError } from '@/ui/showError';
+import { useFocusLoad } from '@/ui/useFocusLoad';
 
 /** IN-14, UX-6: how many suggestions show, how far back "frequent" looks, and "save on tap". Defaults need no visit here. */
 export default function SuggestionSettingsScreen() {
   const { deps } = useServices();
   const [s, setS] = useState<SuggestionSettings>(defaultPreferences().suggestions);
-  const load = useCallback(() => {
-    getPreferences(deps)
-      .then((p) => setS(p.suggestions))
-      .catch((e) => showError(e));
-  }, [deps]);
-  useFocusEffect(load);
+  useFocusLoad(
+    () => getPreferences(deps),
+    [deps],
+    (p) => setS(p.suggestions),
+  );
 
   async function change(patch: Partial<SuggestionSettings>) {
     try {

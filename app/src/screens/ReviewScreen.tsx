@@ -1,6 +1,6 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { Text } from '@/ui/themed';
 import { addMonths, monthOf, monthOverview, monthShape, type MonthDay } from '@/core/usecases/dayLog';
@@ -8,6 +8,7 @@ import { localDay } from '@/core/model/time';
 import { areaOverview, type AreaOverviewRow } from '@/core/usecases/timeline';
 import { areaLabel, t } from '@/i18n';
 import { useServices } from '@/services';
+import { useFocusLoad } from '@/ui/useFocusLoad';
 import { useNow } from '@/ui/useNow';
 import { GearButton } from '@/ui/GearButton';
 import { GlassSurface } from '@/ui/GlassSurface';
@@ -22,7 +23,6 @@ import { Heading, Hint, Label, Screen, Segmented, styles } from '@/ui/components
 import { formatElapsed, runCardStatus } from '@/core/usecases/analysisRunner';
 import { SwitchRow } from '@/ui/SwitchRow';
 import { EmptyState } from '@/ui/EmptyState';
-import { showError } from '@/ui/showError';
 
 const WEEKDAY_KEYS = [2, 3, 4, 5, 6, 7, 1]; // Monday first; the names are in reminders.weekdays (1 = Sunday)
 
@@ -153,15 +153,13 @@ export default function ReviewScreen() {
   const [days, setDays] = useState<MonthDay[]>([]);
   const [areas, setAreas] = useState<{ skin: AreaOverviewRow[]; nails: AreaOverviewRow[] }>({ skin: [], nails: [] });
 
-  const load = useCallback(() => {
-    monthOverview(deps, month)
-      .then(setDays)
-      .catch((e) => showError(e));
-    areaOverview(deps)
-      .then(setAreas)
-      .catch(() => setAreas({ skin: [], nails: [] }));
-  }, [deps, month]);
-  useFocusEffect(load);
+  useFocusLoad(() => monthOverview(deps, month), [deps, month], setDays);
+  useFocusLoad(
+    () => areaOverview(deps),
+    [deps],
+    setAreas,
+    () => setAreas({ skin: [], nails: [] }),
+  );
 
   const open = (day: string) => router.navigate({ pathname: '/review/day', params: { day } });
   const listed = days.filter((d) => d.entries > 0 && (!incompleteOnly || !d.dailyHealth)).sort((a, b) => b.day.localeCompare(a.day));

@@ -1,5 +1,5 @@
-import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/ui/themed';
 import { type Meal, type Symptom } from '@/core/model/types';
@@ -10,8 +10,8 @@ import { FormModal, useField, useForm } from '@/ui/FormModal';
 import { useFormTime } from '@/forms/useFormTime';
 import { Button, Chips, Hint, Label, TimeField } from '@/ui/components';
 import { color } from '@/ui/theme';
-import { showError } from '@/ui/showError';
 import { SymptomChips } from '@/forms/reaction/SymptomChips';
+import { useFocusLoad } from '@/ui/useFocusLoad';
 
 /** IN-13: symptoms within about two hours of a meal, linked to that meal. Always shows the urgent-care advice. */
 export default function ReactionForm() {
@@ -23,13 +23,11 @@ export default function ReactionForm() {
   const [symptoms, setSymptoms] = useField<Set<Symptom>>(new Set(), f.touch);
   const time = useFormTime(f.touch);
 
-  const reload = useCallback(() => {
-    deps.repo
-      .listRecords('meals')
-      .then((m) => setMeals(m.slice(0, 5)))
-      .catch((e) => showError(e));
-  }, [deps]);
-  useFocusEffect(reload);
+  useFocusLoad(
+    () => deps.repo.listRecords('meals'),
+    [deps],
+    (m) => setMeals(m.slice(0, 5)),
+  );
   const selected = mealId && meals.some((m) => m.id === mealId) ? mealId : (meals[0]?.id ?? null);
 
   const missing = !selected ? t('edit.meal') : symptoms.size === 0 ? t('edit.symptoms') : null;

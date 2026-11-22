@@ -1,13 +1,13 @@
-import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useState } from 'react';
 import type { ListItem, SkinArea } from '@/core/model/types';
 import { dayParam } from '@/core/model/time';
 import { dayLog, type LogRow } from '@/core/usecases/dayLog';
 import { t } from '@/i18n';
 import { useServices } from '@/services';
+import { useFocusLoad } from '@/ui/useFocusLoad';
 import { Button, Heading, Screen } from '@/ui/components';
 import { DayLog } from '@/ui/DayLog';
-import { showError } from '@/ui/showError';
 
 /** UX-2: one day's full log (Today shows only the newest entries), opened from "Show all" or the days list. */
 export default function ReviewDayScreen() {
@@ -21,18 +21,25 @@ export default function ReviewDayScreen() {
     categories: [],
   });
   const valid = dayParam(day);
-  const load = useCallback(() => {
-    if (!valid) return;
-    (async () => {
-      setRows(await dayLog(deps, valid));
-      setCtx({
-        areas: await deps.repo.listAreas(),
-        treatments: await deps.repo.listItems('treatments'),
-        categories: await deps.repo.listItems('changeCategories'),
-      });
-    })().catch((e) => showError(e));
-  }, [deps, valid]);
-  useFocusEffect(load);
+  const load = useFocusLoad(
+    async () =>
+      valid
+        ? {
+            rows: await dayLog(deps, valid),
+            ctx: {
+              areas: await deps.repo.listAreas(),
+              treatments: await deps.repo.listItems('treatments'),
+              categories: await deps.repo.listItems('changeCategories'),
+            },
+          }
+        : null,
+    [deps, valid],
+    (r) => {
+      if (!r) return;
+      setRows(r.rows);
+      setCtx(r.ctx);
+    },
+  );
   if (!valid) return <Screen>{null}</Screen>;
   return (
     <Screen>

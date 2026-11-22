@@ -1,5 +1,5 @@
-import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { deviceLanguage, t } from '@/i18n';
 import type { LanguagePreference } from '@/core/model/language';
 import { getPreferences } from '@/core/usecases/preferences';
@@ -8,21 +8,18 @@ import { languageName } from '@/screens/LanguageScreen';
 import { NavGroup } from '@/ui/NavGroup';
 import { NavRow } from '@/ui/NavRow';
 import { Screen } from '@/ui/components';
+import { useFocusLoad } from '@/ui/useFocusLoad';
 
 /** UX-6: five groups. Data and backup is next to last and About last; Delete data sits at the end of Data and backup. */
 export default function SettingsScreen() {
   const router = useRouter();
   const { deps } = useServices();
   const [language, setLanguage] = useState<LanguagePreference>('system');
-  useFocusEffect(
-    useCallback(
-      () =>
-        void getPreferences(deps).then(
-          (p) => setLanguage(p.language),
-          () => undefined,
-        ),
-      [deps],
-    ),
+  useFocusLoad(
+    () => getPreferences(deps),
+    [deps],
+    (p) => setLanguage(p.language),
+    () => undefined,
   );
   const languageValue =
     language === 'system' ? t('settings.languageValueDevice', { language: languageName(deviceLanguage()) }) : languageName(language);

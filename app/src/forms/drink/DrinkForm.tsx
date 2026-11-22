@@ -1,5 +1,5 @@
-import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { Alert, Pressable } from 'react-native';
 import { Text, TextInput } from '@/ui/themed';
 import { drinkHistory, drinkKey, rankSuggestions } from '@/core/model/suggestions';
@@ -22,6 +22,7 @@ import { IngredientRunPanel, SOURCE_OF, useIngredientRun, type Run } from '@/ui/
 import { Button, Hint, Label, TimeField, styles } from '@/ui/components';
 import { showError } from '@/ui/showError';
 import { rowText, useSuggestions } from '@/forms/intakeSuggestions';
+import { useFocusLoad } from '@/ui/useFocusLoad';
 
 /** IN-4, IN-10: a drink with an alcohol switch and optional ingredients and allergen tags. */
 export default function DrinkForm() {
@@ -114,10 +115,11 @@ export default function DrinkForm() {
   // IN-3, IN-15: a label scan or photo estimate adds names to the list; its tags stay unselected (IN-10).
   const run = useIngredientRun();
   const [names, setNames] = useState<string[]>([]);
-  useFocusEffect(
-    useCallback(() => {
-      ingredientNameHistory(deps).then(setNames, () => undefined);
-    }, [deps]),
+  useFocusLoad(
+    () => ingredientNameHistory(deps),
+    [deps],
+    setNames,
+    () => undefined,
   );
   const [pendingTags, setPendingTags] = useState<Allergen[]>([]);
   const [pendingHint, setPendingHint] = useState('meal.labelTagsHint');

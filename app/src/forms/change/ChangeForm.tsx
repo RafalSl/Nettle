@@ -1,5 +1,4 @@
-import { useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { View } from 'react-native';
 import { type ChangeAction, type ListItem } from '@/core/model/types';
 import { itemsInUse, logChangeEvent, type InUseItem } from '@/core/usecases/events';
@@ -10,8 +9,8 @@ import { FormModal, useField, useForm } from '@/ui/FormModal';
 import { useFormTime } from '@/forms/useFormTime';
 import { Hint, Label, TimeField } from '@/ui/components';
 import { RadioRow } from '@/ui/RadioRow';
-import { showError } from '@/ui/showError';
 import { ChangeFields } from '@/forms/change/ChangeFields';
+import { useFocusLoad } from '@/ui/useFocusLoad';
 
 /**
  * IN-12: a routine change: a product or diet started or stopped, on a date. "Stopped" offers what is in use now;
@@ -27,13 +26,13 @@ export default function ChangeForm() {
   const [unknown, setUnknown] = useField(false, f.touch);
   const [inUse, setInUse] = useState<InUseItem[]>([]);
   const time = useFormTime(f.touch);
-  useFocusEffect(
-    useCallback(() => {
-      (async () => {
-        setCategories(await listActiveItems(deps, 'changeCategories'));
-        setInUse(await itemsInUse(deps));
-      })().catch((e) => showError(e));
-    }, [deps]),
+  useFocusLoad(
+    async () => ({ categories: await listActiveItems(deps, 'changeCategories'), inUse: await itemsInUse(deps) }),
+    [deps],
+    (r) => {
+      setCategories(r.categories);
+      setInUse(r.inUse);
+    },
   );
   const selected = categories.find((c) => c.id === category);
   const description = selected ? itemDescription(selected) : null;

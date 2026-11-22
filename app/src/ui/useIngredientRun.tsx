@@ -21,6 +21,7 @@ import { Text } from '@/ui/themed';
 import { color } from '@/ui/theme';
 import { WaitArc } from '@/ui/WaitArc';
 import { showError } from '@/ui/showError';
+import { toggled } from '@/ui/sets';
 
 /** LL-12: after this long the form says the call is still working. */
 export const SLOW_ESTIMATE_MS = 30_000;
@@ -191,7 +192,7 @@ export function useIngredientRun() {
         { text: t('meal.nameSend'), onPress: () => void execute({ kind: 'name', description: text, knownNames: known }) },
       ]);
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
   }
 
@@ -212,9 +213,7 @@ export function useIngredientRun() {
     toggle: (id: string) =>
       setRun((r) => {
         if (r.status !== 'ready') return r;
-        const picked = new Set(r.picked);
-        if (!picked.delete(id)) picked.add(id);
-        return { ...r, picked };
+        return { ...r, picked: toggled(r.picked, id) };
       }),
   };
 }

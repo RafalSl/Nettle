@@ -1,7 +1,7 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
-import { Alert, Pressable, type ScrollViewInstance, View } from 'react-native';
+import { Pressable, type ScrollViewInstance, View } from 'react-native';
 import { Text } from '@/ui/themed';
 import { sinceCaption } from '@/core/model/derived';
 import {
@@ -18,7 +18,7 @@ import {
 } from '@/core/usecases/timeline';
 import { SCORE_KEYS, type Photo, type SkinArea } from '@/core/model/types';
 import { localDateTime, localDay } from '@/core/model/time';
-import { areaLabel, errorMessage, itemLabel, t } from '@/i18n';
+import { areaLabel, itemLabel, t } from '@/i18n';
 import { useServices } from '@/services';
 import { useNow } from '@/ui/useNow';
 import { PhotoCompare } from '@/ui/PhotoCompare';
@@ -28,6 +28,7 @@ import { Button, Chips, Heading, Hint, Screen, styles } from '@/ui/components';
 import { describeRow, skinExtras } from '@/ui/logRow';
 import { useEntryActions } from '@/ui/useEntryActions';
 import { color } from '@/ui/theme';
+import { showError } from '@/ui/showError';
 
 /**
  * SK-8, EN-1: one area across dates: the scores or nail stage of each entry with its photos beside them, newest day
@@ -58,7 +59,7 @@ export default function AreaTimelineScreen() {
       setTreatmentNames(Object.fromEntries((await deps.repo.listItems('treatments')).map((x) => [x.id, itemLabel(x)])));
       setName(area ? areaLabel(area) : '');
       setDays(await areaTimeline(deps, id));
-    })().catch((e) => Alert.alert(errorMessage(e)));
+    })().catch((e) => showError(e));
   }, [deps, id]);
   useFocusEffect(load);
   const openEntry = useEntryActions(load);

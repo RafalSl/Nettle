@@ -1,13 +1,13 @@
 import { NettleError } from '../model/errors';
 import { CANONICAL_UTC } from '../model/time';
+import { isObj, type Obj } from '../model/json';
 import { MAX_SIZE_MM } from '../model/types';
 
-export type Obj = Record<string, unknown>;
+export { isObj, type Obj };
 
 export const bad = (detail: string): never => {
   throw new NettleError('import_invalid_data', detail);
 };
-export const isObj = (v: unknown): v is Obj => typeof v === 'object' && v !== null && !Array.isArray(v);
 export const str = (o: Obj, k: string, where: string): string =>
   typeof o[k] === 'string' && (o[k] as string).length > 0 ? (o[k] as string) : bad(`${where}.${k}`);
 export const text = (o: Obj, k: string, where: string): string => (typeof o[k] === 'string' ? (o[k] as string) : bad(`${where}.${k}`));

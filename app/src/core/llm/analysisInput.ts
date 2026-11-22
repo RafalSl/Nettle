@@ -3,6 +3,7 @@ import { baseThreshold, DEFAULT_FLARE_THRESHOLD, deriveFlares, type FlareRule } 
 import type { IngredientSource } from '../model/source';
 import { localDateTime, localDay, addDays } from '../model/time';
 import type { Allergen, ListItem, Records, SkinArea } from '../model/types';
+import { shownName as label } from '../model/names';
 
 /** LL-3: how far before the analysed period illness, antibiotics, stress, sleep and change events are looked up. */
 /** LL-4, IN-16: where an ingredient list came from; typed lists say nothing. Photo estimates are rough. */
@@ -42,7 +43,6 @@ export interface BuiltInput {
   periodRecords: number;
 }
 
-const label = (x: { name: string; nameOverride: string | null }) => x.nameOverride ?? x.name;
 const time = (utc: string, tz: string) => localDateTime(utc, tz).slice(11);
 
 /**

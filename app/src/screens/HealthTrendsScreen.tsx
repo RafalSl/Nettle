@@ -1,6 +1,5 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert } from 'react-native';
 import type { ListItem } from '@/core/model/types';
 import { localDay } from '@/core/model/time';
 import {
@@ -11,11 +10,12 @@ import {
   type TrendPoint,
   type TrendRange,
 } from '@/core/usecases/timeline';
-import { errorMessage, itemDescription, itemLabel, t } from '@/i18n';
+import { itemDescription, itemLabel, t } from '@/i18n';
 import { useServices } from '@/services';
 import { useNow } from '@/ui/useNow';
 import { TrendChart } from '@/ui/TrendChart';
 import { Chips, Heading, Hint, Screen } from '@/ui/components';
+import { showError } from '@/ui/showError';
 
 /** SK-7, UX-1: a trend chart of one Daily health score item (0 to 10), one bar per logged day, with a text summary. */
 export default function HealthTrendsScreen() {
@@ -28,12 +28,12 @@ export default function HealthTrendsScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      trendScoreItems(deps).then(setItems, (e) => Alert.alert(errorMessage(e)));
+      trendScoreItems(deps).then(setItems, (e) => showError(e));
     }, [deps]),
   );
   useFocusEffect(
     useCallback(() => {
-      if (selected) healthTrendPoints(deps, selected).then(setPoints, (e) => Alert.alert(errorMessage(e)));
+      if (selected) healthTrendPoints(deps, selected).then(setPoints, (e) => showError(e));
     }, [deps, selected]),
   );
   const now = useNow(deps);

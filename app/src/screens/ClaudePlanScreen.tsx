@@ -12,12 +12,14 @@ import {
   type MarkedEntry,
   type ResultPreview,
 } from '@/core/usecases/aiPack';
-import { areaLabel, currentLanguage, errorMessage, t } from '@/i18n';
+import { areaLabel, currentLanguage, t } from '@/i18n';
 import { useServices } from '@/services';
 import { DayRangePickers, pickedDay } from '@/ui/DayRangePickers';
 import { Button, Heading, Hint, Label, Screen } from '@/ui/components';
 import { FloatingAction } from '@/ui/FloatingSave';
 import { PhotoGrid } from '@/ui/PhotoGrid';
+import { showError } from '@/ui/showError';
+import { toggled } from '@/ui/sets';
 
 const daysAgo = (n: number) => new Date(Date.now() - n * 24 * 3600 * 1000);
 
@@ -56,16 +58,11 @@ export default function ClaudePlanScreen() {
             }),
         );
         setMarked(await markedEntries(deps));
-      })().catch((e) => Alert.alert(errorMessage(e)));
+      })().catch((e) => showError(e));
     }, [deps, dayFrom, dayTo, setPhotos, setMarked]),
   );
 
-  const toggle = (id: string) =>
-    setChosen((cur) => {
-      const next = new Set(cur);
-      if (!next.delete(id)) next.add(id);
-      return next;
-    });
+  const toggle = (id: string) => setChosen((cur) => toggled(cur, id));
 
   /** LL-5-style confirmation: exactly what the pack holds and the three things the person must know. */
   async function prepare() {
@@ -101,12 +98,12 @@ export default function ClaudePlanScreen() {
             (async () => {
               const pack = await buildPack(deps, sel);
               await fileShare.saveAndShare(pack.fileName, pack.bytes, 'application/zip');
-            })().catch((e) => Alert.alert(errorMessage(e)));
+            })().catch((e) => showError(e));
           },
         },
       ]);
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
   }
 
@@ -134,13 +131,13 @@ export default function ClaudePlanScreen() {
           onPress: () => {
             importResult(deps, bytes).then(
               () => Alert.alert(t('plan.importedTitle'), t('plan.importedBody')),
-              (e) => Alert.alert(errorMessage(e)),
+              (e) => showError(e),
             );
           },
         },
       ]);
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
   }
 

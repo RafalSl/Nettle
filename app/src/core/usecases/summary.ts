@@ -2,7 +2,7 @@ import { buildAnalysisInput } from '../llm/analysisInput';
 import { parseSummary } from '../llm/parse';
 import { SUMMARY_PROMPT_VERSION, summaryPrompt } from '../llm/summaryPrompt';
 import { NettleError } from '../model/errors';
-import { addDays, localDay, makeStamp } from '../model/time';
+import { isDayRange, localDay, makeStamp } from '../model/time';
 import type { LocalDay, ReportSummary } from '../model/types';
 import type { Language, LlmRequest } from '../ports/llm';
 import { MAX_INPUT_CHARS } from './analysis';
@@ -37,8 +37,6 @@ export interface SummaryDraft {
   text: string;
 }
 
-const validDay = (d: string) => /^\d{4}-\d{2}-\d{2}$/.test(d) && addDays(d, 0) === d;
-
 /**
  * LL-14: turns the doctor report's period (open ends allowed) into concrete diary days: an open start becomes the
  * first day that has an entry, an open end today (NF-7). Null when the diary has nothing to summarize.
@@ -70,7 +68,7 @@ export async function summaryDays(
 
 /** LL-14, LL-2, LL-5: build the request from the same diary data as the analysis, without photos. Sends nothing, changes nothing. */
 export async function prepareSummary(deps: Deps, sel: SummarySelection): Promise<PreparedSummary> {
-  if (!validDay(sel.dayFrom) || !validDay(sel.dayTo) || sel.dayFrom > sel.dayTo) throw new NettleError('invalid_range');
+  if (!isDayRange(sel.dayFrom, sel.dayTo)) throw new NettleError('invalid_range');
   const built = buildAnalysisInput(
     await deps.repo.snapshot(),
     sel.dayFrom,

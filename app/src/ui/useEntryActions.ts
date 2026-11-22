@@ -1,11 +1,11 @@
 import { useRouter } from 'expo-router';
-import { Alert } from 'react-native';
 import type { RecordKind } from '@/core/model/types';
 import { deleteEntry, previewEntryDelete } from '@/core/usecases/entries';
-import { errorMessage, t } from '@/i18n';
+import { t } from '@/i18n';
 import { useServices } from '@/services';
 import { chooseAction } from '@/ui/actionSheet';
 import { rescheduleReminders } from '@/ui/rescheduleReminders';
+import { showError } from '@/ui/showError';
 
 /** What else goes with an entry, as one line (a meal's reactions, an entry's photos), or undefined. */
 async function alsoLine(deps: Parameters<typeof previewEntryDelete>[0], kind: RecordKind, id: string): Promise<string | undefined> {
@@ -35,7 +35,7 @@ export function useEntryDelete(onChanged: () => void) {
         onChanged();
       }
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
   };
 }
@@ -62,7 +62,7 @@ export function useEntryActions(onChanged: () => void) {
         onChanged();
       }
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
   };
 }

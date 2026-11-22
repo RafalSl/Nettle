@@ -1,13 +1,13 @@
 import { NettleError } from '../model/errors';
 import type { Photo } from '../model/types';
-import { localDay, localDaysToRange } from '../model/time';
+import { DAY_MS, localDay, localDaysToRange } from '../model/time';
 import type { PhotoSelection } from '../export/photoSelection';
 import type { Deps } from './deps';
 import { LOG_KINDS } from './dayLog';
 import type { ExportOptions } from './exchange';
+import { SETTING_KEYS } from './settingsStore';
 
-const LAST_EXPORT = 'lastExportAt';
-const DAY_MS = 86_400_000;
+const LAST_EXPORT = SETTING_KEYS.lastExport;
 /** UX-2: the Today card appears when the last export is older than this many days. */
 export const BACKUP_CARD_DAYS = 7;
 

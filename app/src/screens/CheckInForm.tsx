@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react';
 import { Alert } from 'react-native';
 import { TextInput } from '@/ui/themed';
 import { NettleError } from '@/core/model/errors';
-import { addDays, atOnDay, localDay } from '@/core/model/time';
+import { addDays, atOnDay, dayParam as asDay, localDay } from '@/core/model/time';
 import type { ListItem } from '@/core/model/types';
 import { askableValues, getCheckIn, saveCheckIn } from '@/core/usecases/checkin';
 import { listActiveItems } from '@/core/usecases/lists';
@@ -14,6 +14,7 @@ import { chooseAction } from '@/ui/actionSheet';
 import { FormModal, useForm } from '@/ui/FormModal';
 import { DailyHealthFields, type DailyValues } from '@/ui/DailyHealthFields';
 import { Button, Hint, Label, TimeField, styles } from '@/ui/components';
+import { showError } from '@/ui/showError';
 
 /**
  * SK-7, SK-11: the Daily health form, one record per local day. Nothing is filled in silently: "Same as
@@ -24,11 +25,10 @@ export default function CheckInForm() {
   const f = useForm();
   const { day: dayParam } = useLocalSearchParams<{ day?: string }>();
   // SK-9: a tap on a late reminder opens the form of the day it was delivered, not of today.
-  const [at, setAt] = useState<Date | null>(() =>
-    typeof dayParam === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dayParam)
-      ? atOnDay(dayParam, deps.clock.now(), deps.clock.timeZone(), deps.dayStart.get())
-      : null,
-  );
+  const [at, setAt] = useState<Date | null>(() => {
+    const forDay = asDay(dayParam);
+    return forDay ? atOnDay(forDay, deps.clock.now(), deps.clock.timeZone(), deps.dayStart.get()) : null;
+  });
   const [values, setValues] = useState<DailyValues>({});
   const [note, setNote] = useState('');
   const [items, setItems] = useState<ListItem[]>([]);
@@ -40,7 +40,7 @@ export default function CheckInForm() {
       const existing = await getCheckIn(deps, day);
       setValues(existing ? { ...existing.values } : {});
       setNote(existing?.note ?? '');
-    })().catch((e) => Alert.alert(errorMessage(e)));
+    })().catch((e) => showError(e));
   }, [deps, day]);
   useFocusEffect(load);
 
@@ -52,7 +52,7 @@ export default function CheckInForm() {
       f.touch();
       setValues(askableValues(items, before));
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
   }
 

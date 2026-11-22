@@ -24,6 +24,7 @@ import {
   type StoolEntry,
   type TreatmentApplication,
 } from '../model/types';
+import { isLocalDay } from '../model/time';
 import { analysisResultFromJson, analysisResultToJson } from '../llm/analysisResult';
 import { parseBarcode, parseSource, sourceToJson } from './sourceJson';
 import { bad, bool, enumList, nullableText, optionalFlag, parseFillLater, oneOf, str, stringList, tz, utc, type Obj } from './guards';
@@ -59,14 +60,12 @@ const nail: Codec<NailEntry> = {
   }),
 };
 
-const LOCAL_DAY = /^\d{4}-\d{2}-\d{2}$/;
-
 const checkIn: Codec<CheckIn> = {
   key: 'check_ins',
   toJson: (c) => ({ id: c.id, utc: c.at.utc, tz: c.at.tz, day: c.day, values: { ...c.values }, note: c.note }),
   parse: (o, w) => {
     const day = str(o, 'day', w);
-    if (!LOCAL_DAY.test(day) || Number.isNaN(Date.parse(day))) bad(`${w}.day`);
+    if (!isLocalDay(day)) bad(`${w}.day`);
     const raw = o.values;
     if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) bad(`${w}.values`);
     const values: Record<string, number | boolean> = {};
@@ -149,7 +148,7 @@ const medicalEvent: Codec<MedicalEvent> = {
     const title = str(o, 'title', w);
     if (!title.trim() || title.length > MAX_MEDICAL_TITLE) bad(`${w}.title`);
     const endDay = o.end_day === null ? null : str(o, 'end_day', w);
-    if (endDay !== null && (!LOCAL_DAY.test(endDay) || Number.isNaN(Date.parse(endDay)) || kind !== 'illness')) bad(`${w}.end_day`);
+    if (endDay !== null && (!isLocalDay(endDay) || kind !== 'illness')) bad(`${w}.end_day`);
     return { id: str(o, 'id', w), at: { utc: utc(o, w), tz: tz(o, w) }, kind, title, endDay, note: nullableText(o, 'note', w) };
   },
 };
@@ -276,7 +275,7 @@ const analysis: Codec<Analysis> = {
     if (!result) bad(`${w}.result`);
     const day = (k: string) => {
       const v = str(o, k, w);
-      return /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(Date.parse(v)) ? v : bad(`${w}.${k}`);
+      return isLocalDay(v) ? v : bad(`${w}.${k}`);
     };
     return {
       id: str(o, 'id', w),
@@ -316,7 +315,7 @@ const reportSummary: Codec<ReportSummary> = {
       bad(`${w}.counts`);
     const day = (k: string) => {
       const v = str(o, k, w);
-      return /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(Date.parse(v)) ? v : bad(`${w}.${k}`);
+      return isLocalDay(v) ? v : bad(`${w}.${k}`);
     };
     return {
       id: str(o, 'id', w),

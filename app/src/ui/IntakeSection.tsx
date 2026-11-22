@@ -13,7 +13,7 @@ import { ingredientNameHistory } from '@/core/usecases/llm';
 import { logDrink, logMedication } from '@/core/usecases/intake';
 import { addRegularMedication } from '@/core/usecases/regular';
 import { getPreferences, toggleFavoriteDrink, toggleFavoriteMedication, type DrinkSnapshot } from '@/core/usecases/preferences';
-import { errorMessage, t } from '@/i18n';
+import { t } from '@/i18n';
 import { useServices } from '@/services';
 import { FormModal, useField, useForm } from '@/ui/FormModal';
 import { DrinkFields, draftFromDrink, drinkInput, drinkMissing, emptyDrinkDraft, type DrinkDraft } from '@/ui/DrinkFields';
@@ -23,6 +23,7 @@ import { AllergenAiControls, useAllergenAi } from '@/ui/useAllergenAi';
 import { IngredientRunPanel, SOURCE_OF, useIngredientRun, type Run } from '@/ui/useIngredientRun';
 import { Button, Chips, Hint, Label, TimeField, styles } from '@/ui/components';
 import { SwitchRow } from '@/ui/SwitchRow';
+import { showError } from '@/ui/showError';
 
 const rowText = (s: Suggestion<unknown>) => `${s.favorite ? '★ ' : ''}${s.label}${s.count >= 2 ? ` ×${s.count}` : ''}`;
 
@@ -36,7 +37,7 @@ function useSuggestions<P>(load: (deps: ReturnType<typeof useServices>['deps'], 
       const p = await getPreferences(deps);
       setPrefs(p);
       setList(await load(deps, p));
-    })().catch((e) => Alert.alert(errorMessage(e)));
+    })().catch((e) => showError(e));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deps]);
   useFocusEffect(refresh);
@@ -124,7 +125,7 @@ export function DrinkSection() {
         ]);
       } else fill();
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      showError(e);
       setScanning(false); // IN-8: the source is out of reach, so enter the drink by hand
     } finally {
       setLooking(false);
@@ -179,7 +180,7 @@ export function DrinkSection() {
       await logDrink(deps, { ...s, at: time.atForSave });
       router.back();
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
   }
 
@@ -254,7 +255,7 @@ export function DrinkSection() {
         onPress={() => {
           const { name, amountMl, alcohol, ingredients, allergens, barcode, source } = drinkInput(draft);
           toggleFavoriteDrink(deps, { name: name.trim(), amountMl, alcohol, ingredients, allergens, barcode, source }).then(refresh, (e) =>
-            Alert.alert(errorMessage(e)),
+            showError(e),
           );
         }}
       />
@@ -302,7 +303,7 @@ export function MedicationSection() {
       await logMedication(deps, { category: s.category, name: s.name, dose: s.dose ?? undefined, at: time.atForSave });
       router.back();
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
   }
 
@@ -358,9 +359,7 @@ export function MedicationSection() {
         }
         disabled={!name.trim()}
         onPress={() =>
-          toggleFavoriteMedication(deps, { category, name: name.trim(), dose: dose.trim() || null }).then(refresh, (e) =>
-            Alert.alert(errorMessage(e)),
-          )
+          toggleFavoriteMedication(deps, { category, name: name.trim(), dose: dose.trim() || null }).then(refresh, (e) => showError(e))
         }
       />
       <SwitchRow title={t('regular.switch')} hint={regular ? t('regular.switchHint') : undefined} value={regular} onChange={setRegular} />

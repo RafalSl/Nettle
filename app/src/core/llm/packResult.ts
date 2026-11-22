@@ -1,6 +1,7 @@
 import { strFromU8 } from 'fflate';
 import { MAX_DATA_BYTES } from '../export/bundle';
 import { NettleError } from '../model/errors';
+import { isObj } from '../model/json';
 import { ALLERGENS, type AnalysisResult, type Allergen } from '../model/types';
 import { analysisResultFromJson } from './analysisResult';
 import { parseJson } from './parse';
@@ -29,7 +30,6 @@ export interface PackResult {
   fills: PackFill[];
 }
 
-const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 const bad = (): never => {
   throw new NettleError('result_invalid');
 };

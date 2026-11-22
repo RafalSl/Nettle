@@ -1,10 +1,10 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, View } from 'react-native';
+import { View } from 'react-native';
 import { ENTRY_TYPES, type EntryType } from '@/core/model/preferences';
 import { searchItems, type SearchItem } from '@/core/model/search';
 import { getPreferences, unpinnedEntryTypes } from '@/core/usecases/preferences';
-import { errorMessage, t } from '@/i18n';
+import { t } from '@/i18n';
 import { useServices } from '@/services';
 import { Hint, Screen } from '@/ui/components';
 import { ENTRY_ICON } from '@/ui/entryIcons';
@@ -16,6 +16,7 @@ import { NavRow } from '@/ui/NavRow';
 import { TextInput } from '@/ui/themed';
 import { GUIDE } from '@/screens/GuideScreen';
 import { color } from '@/ui/theme';
+import { showError } from '@/ui/showError';
 
 type Target = { entry: EntryType; guide: boolean };
 
@@ -33,7 +34,7 @@ export default function MoreScreen() {
     useCallback(() => {
       getPreferences(deps).then(
         (p) => setRows(unpinnedEntryTypes(p)),
-        (e) => Alert.alert(errorMessage(e)),
+        (e) => showError(e),
       );
     }, [deps]),
   );

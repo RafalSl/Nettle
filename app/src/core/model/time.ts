@@ -1,5 +1,8 @@
 import type { Clock } from '../ports/platform';
-import type { DateRange, Stamp } from './types';
+import type { DateRange, LocalDay, Stamp } from './types';
+
+export const HOUR_MS = 3_600_000;
+export const DAY_MS = 24 * HOUR_MS;
 
 /** Canonical form: fixed width, so string order equals time order. */
 export const CANONICAL_UTC = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
@@ -40,8 +43,6 @@ export function localDay(utc: string, tz: string, startHour = 0): string {
   return new Date(Date.UTC(+y, +mo - 1, +d, +h, +mi) - startHour * HOUR_MS).toISOString().slice(0, 10);
 }
 
-const HOUR_MS = 3600 * 1000;
-
 const DAY = /^(\d{4})-(\d{2})-(\d{2})$/;
 
 /** Parses "YYYY-MM-DD" into UTC midnight milliseconds, or null when it is not a real calendar day. */
@@ -51,6 +52,15 @@ function dayToMs(day: string): number | null {
   const ms = Date.UTC(+m[1]!, +m[2]! - 1, +m[3]!);
   return new Date(ms).toISOString().startsWith(day) ? ms : null;
 }
+
+/** A real calendar day written as "YYYY-MM-DD" (the form of a diary day). */
+export const isLocalDay = (v: unknown): v is LocalDay => typeof v === 'string' && dayToMs(v) !== null;
+
+/** A route or form parameter that should be a day: the day, or null for anything else. */
+export const dayParam = (v: unknown): LocalDay | null => (isLocalDay(v) ? v : null);
+
+/** Two real days with `from` not after `to`. */
+export const isDayRange = (from: unknown, to: unknown): boolean => isLocalDay(from) && isLocalDay(to) && from <= to;
 
 /** How far the wall clock in `tz` is ahead of UTC at an instant, in milliseconds. */
 function offsetMs(instantMs: number, tz: string): number {
@@ -88,7 +98,7 @@ export function localDaysToRange(from: string | undefined, to: string | undefine
   if (f !== undefined && t !== undefined && f > t) return null;
   const shift = startHour * HOUR_MS; // NF-7: a day begins at its start hour
   if (f !== undefined) range.from = new Date(startOfLocalDayMs(f + shift, tz)).toISOString();
-  if (t !== undefined) range.to = new Date(startOfLocalDayMs(t + 24 * HOUR_MS + shift, tz) - 1).toISOString();
+  if (t !== undefined) range.to = new Date(startOfLocalDayMs(t + DAY_MS + shift, tz) - 1).toISOString();
   return range;
 }
 
@@ -101,7 +111,7 @@ export function localDateTime(utc: string, tz: string): string {
 /** The calendar day `n` days after (or before, when negative) a "YYYY-MM-DD" day. Returns null for an invalid day. */
 export function addDays(day: string, n: number): string | null {
   const ms = dayToMs(day);
-  return ms === null ? null : new Date(ms + n * 24 * 3600 * 1000).toISOString().slice(0, 10);
+  return ms === null ? null : new Date(ms + n * DAY_MS).toISOString().slice(0, 10);
 }
 
 /**

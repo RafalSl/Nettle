@@ -12,9 +12,10 @@ import {
   testApiKey,
   type ModelGroup,
 } from '@/core/usecases/llm';
-import { errorMessage, t } from '@/i18n';
+import { t } from '@/i18n';
 import { useServices } from '@/services';
 import { Button, Chips, Heading, Hint, Label, styles } from '@/ui/components';
+import { showError } from '@/ui/showError';
 
 /** SE-2, SE-5, LL-9: enter, rotate or delete the API key (Keychain only) and choose the model for each LLM action (LL-9). */
 const GROUPS: ModelGroup[] = ['estimates', 'analysis'];
@@ -46,7 +47,7 @@ export function LlmSettingsSection() {
       await reload();
       if (done) Alert.alert(done);
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
   };
   const empty = keyInput.trim() === '';

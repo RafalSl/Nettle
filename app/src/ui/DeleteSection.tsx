@@ -5,13 +5,15 @@ import { DELETE_GROUPS, DELETE_GROUP_IDS, type DeleteGroup } from '@/core/model/
 import { localDay, localDaysToRange } from '@/core/model/time';
 import type { RecordKind } from '@/core/model/types';
 import { deleteData, previewDelete } from '@/core/usecases/deleteData';
-import { errorMessage, t } from '@/i18n';
+import { t } from '@/i18n';
 import { useServices } from '@/services';
 import { confirmDestructive } from '@/ui/actionSheet';
 import { confirmWithExport, exportEverything } from '@/ui/exportFirst';
 import { Button, Chips, Heading, Hint, Label, styles } from '@/ui/components';
 import { SwitchRow } from '@/ui/SwitchRow';
 import { rescheduleReminders } from '@/ui/rescheduleReminders';
+import { showError } from '@/ui/showError';
+import { toggled } from '@/ui/sets';
 
 /** SE-9: delete by entry type and date range, with a confirmation that lists the counts and offers an export first. */
 export function DeleteSection() {
@@ -47,7 +49,7 @@ export function DeleteSection() {
         message: t('delete.confirmBody', { lines: lines.join('\n') }),
         action: t('delete.confirm'),
         exportNow: () => exportEverything(deps, fileShare),
-        onExportError: (e) => Alert.alert(errorMessage(e)),
+        onExportError: (e) => showError(e),
       });
       if (!go) return;
       if (
@@ -59,16 +61,11 @@ export function DeleteSection() {
       setGroups(new Set());
       Alert.alert(t('delete.done'));
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
   }
 
-  const toggle = (id: string) =>
-    setGroups((cur) => {
-      const next = new Set(cur);
-      if (!next.delete(id)) next.add(id);
-      return next;
-    });
+  const toggle = (id: string) => setGroups((cur) => toggled(cur, id));
 
   return (
     <>

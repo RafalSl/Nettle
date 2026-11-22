@@ -1,5 +1,5 @@
 import { useLocalSearchParams } from 'expo-router';
-import { atOnDay } from '@/core/model/time';
+import { atOnDay, dayParam } from '@/core/model/time';
 import { useServices } from '@/services';
 import { useField } from '@/ui/FormModal';
 
@@ -11,7 +11,7 @@ import { useField } from '@/ui/FormModal';
 export function useFormTime(touch: () => void) {
   const { deps } = useServices();
   const { day } = useLocalSearchParams<{ day?: string }>();
-  const forDay = typeof day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(day) ? day : null;
+  const forDay = dayParam(day);
   const now = deps.clock.now();
   const initial = forDay ? atOnDay(forDay, now, deps.clock.timeZone(), deps.dayStart.get()) : now;
   const [picked, setPicked] = useField<Date | null>(null, touch);

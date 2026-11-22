@@ -1,7 +1,8 @@
 import { NettleError } from '../model/errors';
 import type { Deps } from './deps';
+import { SETTING_KEYS } from './settingsStore';
 
-const KEY = 'appLockEnabled';
+const KEY = SETTING_KEYS.appLock;
 /** SE-8 default: lock after this long in the background, and on every cold start. */
 export const LOCK_AFTER_MS = 60_000;
 

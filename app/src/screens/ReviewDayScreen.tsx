@@ -1,12 +1,13 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert } from 'react-native';
 import type { ListItem, SkinArea } from '@/core/model/types';
+import { dayParam } from '@/core/model/time';
 import { dayLog, type LogRow } from '@/core/usecases/dayLog';
-import { errorMessage, t } from '@/i18n';
+import { t } from '@/i18n';
 import { useServices } from '@/services';
 import { Button, Heading, Screen } from '@/ui/components';
 import { DayLog } from '@/ui/DayLog';
+import { showError } from '@/ui/showError';
 
 /** UX-2: one day's full log (Today shows only the newest entries), opened from "Show all" or the days list. */
 export default function ReviewDayScreen() {
@@ -19,7 +20,7 @@ export default function ReviewDayScreen() {
     treatments: [],
     categories: [],
   });
-  const valid = typeof day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(day) ? day : null;
+  const valid = dayParam(day);
   const load = useCallback(() => {
     if (!valid) return;
     (async () => {
@@ -29,7 +30,7 @@ export default function ReviewDayScreen() {
         treatments: await deps.repo.listItems('treatments'),
         categories: await deps.repo.listItems('changeCategories'),
       });
-    })().catch((e) => Alert.alert(errorMessage(e)));
+    })().catch((e) => showError(e));
   }, [deps, valid]);
   useFocusEffect(load);
   if (!valid) return <Screen>{null}</Screen>;

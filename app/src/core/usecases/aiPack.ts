@@ -8,20 +8,23 @@ import { SUMMARY_PROMPT_VERSION, summaryPrompt } from '../llm/summaryPrompt';
 import { sinceCaptionEn, sinceLastTreatment } from '../model/derived';
 import { NettleError } from '../model/errors';
 import type { IngredientSource } from '../model/source';
-import { localDateTime, makeStamp } from '../model/time';
+import { isDayRange, localDateTime, makeStamp } from '../model/time';
 import type { Allergen, Analysis, Drink, LocalDay, Meal, ReportSummary } from '../model/types';
 import type { Language } from '../ports/llm';
-import { MAX_ANALYSIS_PHOTOS, validDay } from './analysis';
+import { MAX_ANALYSIS_PHOTOS } from './analysis';
 import type { Deps } from './deps';
 import { flareRule } from '../model/preferences';
 import { getPreferences } from './preferences';
+import { shownName } from '../model/names';
+import { readJsonSetting, SETTING_KEYS, writeJsonSetting } from './settingsStore';
+import { isObj } from '../model/json';
 
 /**
  * LL-15, IN-20: the manual handoff to the user's own Claude plan. The app writes a pack (a ZIP) and later imports a
  * `result.json`; the model never edits `data.json`, an import never changes an entry, and nothing is sent by the app.
  * Everything the app must remember between the two steps lives in one settings value that is not exported.
  */
-const STATE_KEY = 'ai_pack_state';
+const STATE_KEY = SETTING_KEYS.aiPack;
 export const MAX_REMEMBERED_PACKS = 20;
 
 export type MarkedKind = 'meal' | 'drink';
@@ -61,20 +64,18 @@ interface State {
   suggestions: Suggestion[];
 }
 
-async function readState(deps: Deps): Promise<State> {
-  try {
-    const raw = await deps.settings.get(STATE_KEY);
-    const s = raw ? (JSON.parse(raw) as Partial<State>) : {};
-    return {
-      packs: Array.isArray(s.packs) ? s.packs : [],
-      imported: Array.isArray(s.imported) ? s.imported : [],
-      suggestions: Array.isArray(s.suggestions) ? s.suggestions : [],
-    };
-  } catch {
-    return { packs: [], imported: [], suggestions: [] };
-  }
-}
-const writeState = (deps: Deps, s: State) => deps.settings.set(STATE_KEY, JSON.stringify(s));
+const list = <T>(v: unknown): T[] => (Array.isArray(v) ? (v as T[]) : []);
+const readState = (deps: Deps): Promise<State> =>
+  readJsonSetting(
+    deps,
+    STATE_KEY,
+    (raw) =>
+      isObj(raw)
+        ? { packs: list<PackRecord>(raw.packs), imported: list<string>(raw.imported), suggestions: list<Suggestion>(raw.suggestions) }
+        : null,
+    () => ({ packs: [], imported: [], suggestions: [] }),
+  );
+const writeState = (deps: Deps, s: State) => writeJsonSetting(deps, STATE_KEY, s);
 
 /** IN-20: forgets packs, imported results and suggestions (Delete data, AI). Entries and their marks stay. */
 export const clearAiPackState = (deps: Deps) => deps.settings.delete(STATE_KEY);
@@ -120,7 +121,7 @@ export interface PreparedPack {
 }
 
 async function gather(deps: Deps, sel: PackSelection) {
-  if (!validDay(sel.dayFrom) || !validDay(sel.dayTo) || sel.dayFrom > sel.dayTo) throw new NettleError('invalid_range');
+  if (!isDayRange(sel.dayFrom, sel.dayTo)) throw new NettleError('invalid_range');
   const photoIds = [...new Set(sel.photoIds ?? [])];
   if (photoIds.length > MAX_ANALYSIS_PHOTOS) throw new NettleError('too_many_photos');
   const snap = await deps.repo.snapshot();
@@ -134,9 +135,9 @@ async function gather(deps: Deps, sel: PackSelection) {
   );
   const marked = await markedEntries(deps);
   if (built.periodRecords === 0 && marked.length === 0) throw new NettleError('analysis_no_data');
-  const areaName = new Map(snap.skinAreas.map((a) => [a.id, a.nameOverride ?? a.name]));
+  const areaName = new Map(snap.skinAreas.map((a) => [a.id, shownName(a)]));
   const areaOfEntry = new Map([...snap.skinEntries, ...snap.nailEntries].map((e) => [e.id, e.areaId]));
-  const treatmentName = new Map(snap.treatments.map((x) => [x.id, x.nameOverride ?? x.name]));
+  const treatmentName = new Map(snap.treatments.map((x) => [x.id, shownName(x)]));
   const photos = photoIds.map((id) => {
     const photo = snap.photos.find((p) => p.id === id);
     if (!photo) throw new NettleError('unknown_photo', id);

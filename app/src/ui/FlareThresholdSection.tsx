@@ -1,17 +1,18 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { DEFAULT_FLARE_THRESHOLD } from '@/core/model/flares';
 import type { FlareScope } from '@/core/model/preferences';
 import type { SkinArea } from '@/core/model/types';
 import { getPreferences, setAreaFlareThreshold, setFlareScope, setFlareThreshold } from '@/core/usecases/preferences';
-import { areaLabel, errorMessage, t } from '@/i18n';
+import { areaLabel, t } from '@/i18n';
 import { useServices } from '@/services';
 import { Chips, Heading, Hint, Label, Segmented } from '@/ui/components';
 import { GlassSurface } from '@/ui/GlassSurface';
 import { Icon } from '@/ui/Icon';
 import { Text } from '@/ui/themed';
 import { color } from '@/ui/theme';
+import { showError } from '@/ui/showError';
 
 /**
  * SK-6, SK-8, UX-6: the severity at or above which skin entries count as a flare. "Same for all" is one value for
@@ -32,10 +33,10 @@ export function FlareThresholdSection() {
         setScope(p.flareScope);
         setByArea(p.flareThresholdByArea);
         setAreas((await deps.repo.listAreas()).filter((a) => a.kind === 'skin' && !a.archived));
-      })().catch((e) => Alert.alert(errorMessage(e)));
+      })().catch((e) => showError(e));
     }, [deps]),
   );
-  const fail = (e: unknown) => Alert.alert(errorMessage(e));
+  const fail = (e: unknown) => showError(e);
   const step = (a: SkinArea, delta: number) => {
     const next = Math.min(10, Math.max(1, (byArea[a.id] ?? threshold) + delta));
     setAreaFlareThreshold(deps, a.id, next).then(setByArea, fail);

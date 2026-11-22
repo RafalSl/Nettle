@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Alert } from 'react-native';
-import { addDays, localDateTime, localDay } from '@/core/model/time';
+import { addDays, DAY_MS, localDateTime, localDay } from '@/core/model/time';
 import type { Photo, ReportSummary } from '@/core/model/types';
 import { markExported, presetOptions, reportPhotos, reportPreview, sinceLastExport, type ReportPreview } from '@/core/usecases/backup';
 import { exportBundle } from '@/core/usecases/exchange';
-import { areaLabel, areaLabelIn, currentLanguage, errorMessage, itemLabelIn, t, tIn } from '@/i18n';
+import { areaLabel, areaLabelIn, currentLanguage, itemLabelIn, t, tIn } from '@/i18n';
 import { useServices } from '@/services';
 import { DayRangePickers, pickedDay } from '@/ui/DayRangePickers';
 import { ReportSummaryPanel } from '@/ui/ReportSummaryPanel';
@@ -12,6 +11,8 @@ import { Chips, Hint, Label, Screen } from '@/ui/components';
 import { FloatingAction } from '@/ui/FloatingSave';
 import { PhotoGrid } from '@/ui/PhotoGrid';
 import { SwitchRow } from '@/ui/SwitchRow';
+import { showError } from '@/ui/showError';
+import { toggled } from '@/ui/sets';
 
 type Period = 'since' | 'last30' | 'last90' | 'all' | 'custom';
 
@@ -23,7 +24,7 @@ type Period = 'since' | 'last30' | 'last90' | 'all' | 'custom';
 export default function ReportScreen() {
   const { deps, fileShare } = useServices();
   const [available, setAvailable] = useState<Period[]>(['last30', 'last90', 'all', 'custom']);
-  const [from, setFrom] = useState(() => new Date(Date.now() - 29 * 86_400_000));
+  const [from, setFrom] = useState(() => new Date(deps.clock.now().getTime() - 29 * DAY_MS));
   const [to, setTo] = useState(() => new Date());
   const [period, setPeriod] = useState<Period>('last30');
   const [language, setLanguage] = useState<'en' | 'pl'>(currentLanguage());
@@ -63,7 +64,7 @@ export default function ReportScreen() {
       setPreview(await reportPreview(deps, days));
       setPeriodPhotos(await reportPhotos(deps, days));
       setAreas(new Map((await deps.repo.listAreas()).map((a) => [a.id, areaLabel(a)])));
-    })().catch((e) => Alert.alert(errorMessage(e)));
+    })().catch((e) => showError(e));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deps, period, from, to]);
 
@@ -85,7 +86,7 @@ export default function ReportScreen() {
       await fileShare.saveAndShare(`nettle-report-${deps.clock.now().toISOString().slice(0, 10)}.zip`, bytes, 'application/zip');
       await markExported(deps);
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
   }
 
@@ -128,7 +129,7 @@ export default function ReportScreen() {
         <PhotoGrid
           items={pickable}
           selected={pickedPhotos}
-          onToggle={(id) => setPickedPhotos((cur) => (cur.has(id) ? new Set([...cur].filter((x) => x !== id)) : new Set(cur).add(id)))}
+          onToggle={(id) => setPickedPhotos((cur) => toggled(cur, id))}
           onAll={() => setPickedPhotos(new Set(pickable.filter((p) => !p.sensitive).map((p) => p.id)))}
           onNone={() => setPickedPhotos(new Set())}
         />

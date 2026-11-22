@@ -1,12 +1,13 @@
 import { useFocusEffect } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { Alert, Pressable } from 'react-native';
+import { Pressable } from 'react-native';
 import { Text } from '@/ui/themed';
 import { defaultPreferences, type Preferences } from '@/core/model/preferences';
 import { getPreferences, removeFavorite } from '@/core/usecases/preferences';
-import { errorMessage, t } from '@/i18n';
+import { t } from '@/i18n';
 import { useServices } from '@/services';
 import { Heading, Hint, styles } from '@/ui/components';
+import { showError } from '@/ui/showError';
 
 type Kind = 'meals' | 'drinks' | 'medications';
 
@@ -15,7 +16,7 @@ export function FavoritesSection() {
   const { deps } = useServices();
   const [prefs, setPrefs] = useState<Preferences>(defaultPreferences());
   const reload = useCallback(() => {
-    getPreferences(deps).then(setPrefs, (e) => Alert.alert(errorMessage(e)));
+    getPreferences(deps).then(setPrefs, (e) => showError(e));
   }, [deps]);
   useFocusEffect(reload);
 
@@ -47,7 +48,7 @@ export function FavoritesSection() {
                 key={r.key}
                 accessibilityRole="button"
                 accessibilityLabel={t('settings.favRemove', { name: r.label })}
-                onPress={() => removeFavorite(deps, g.kind, r.key).then(reload, (e) => Alert.alert(errorMessage(e)))}
+                onPress={() => removeFavorite(deps, g.kind, r.key).then(reload, (e) => showError(e))}
                 style={{ paddingVertical: 8 }}
               >
                 <Text style={styles.rowText}>{`★ ${r.label}`}</Text>

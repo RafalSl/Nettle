@@ -6,6 +6,9 @@ import { getCheckIn } from './checkin';
 import { listActiveAreas } from './skin';
 import { getPreferences } from './preferences';
 import { logRegular, listRegular } from './regular';
+import { shownName } from '../model/names';
+import { readJsonSetting, SETTING_KEYS, writeJsonSetting } from './settingsStore';
+import { isObj } from '../model/json';
 
 /** SK-9 and the monthly backup nudge (Data, privacy and security): what the user switched on. */
 export interface ReminderSettings {
@@ -39,7 +42,7 @@ export interface ReminderTexts {
 /** SK-9: the Daily health reminder is scheduled for this many days ahead, one by one, so a day that already has a record can be skipped. */
 export const CHECKIN_REMINDER_DAYS = 14;
 
-const KEY = 'reminders';
+const KEY = SETTING_KEYS.reminders;
 const int = (n: unknown, min: number, max: number) => typeof n === 'number' && Number.isInteger(n) && n >= min && n <= max;
 
 function valid(s: ReminderSettings): boolean {
@@ -56,14 +59,12 @@ function valid(s: ReminderSettings): boolean {
 
 /** Stored settings, or the defaults when nothing valid is stored. */
 export async function loadReminderSettings(deps: Deps): Promise<ReminderSettings> {
-  const raw = await deps.settings.get(KEY);
-  if (!raw) return structuredCloneSettings(DEFAULT_REMINDERS);
-  try {
-    const parsed = JSON.parse(raw) as ReminderSettings;
-    return valid(parsed) ? parsed : structuredCloneSettings(DEFAULT_REMINDERS);
-  } catch {
-    return structuredCloneSettings(DEFAULT_REMINDERS);
-  }
+  return readJsonSetting(
+    deps,
+    KEY,
+    (raw) => (isObj(raw) && valid(raw as unknown as ReminderSettings) ? (raw as unknown as ReminderSettings) : null),
+    () => structuredCloneSettings(DEFAULT_REMINDERS),
+  );
 }
 
 const structuredCloneSettings = (s: ReminderSettings): ReminderSettings => JSON.parse(JSON.stringify(s)) as ReminderSettings;
@@ -101,7 +102,7 @@ export async function plannedReminders(deps: Deps, texts: ReminderTexts): Promis
       when: { type: 'monthly', day: s.backup.day, hour: s.backup.hour, minute: s.backup.minute },
     });
   }
-  const treatments = new Map((await deps.repo.listItems('treatments')).map((t) => [t.id, t.nameOverride ?? t.name]));
+  const treatments = new Map((await deps.repo.listItems('treatments')).map((t) => [t.id, shownName(t)]));
   for (const r of (await getPreferences(deps)).regular) {
     const name = r.kind === 'medication' ? r.name : (treatments.get(r.treatmentId ?? '') ?? null);
     const text = r.hideName || !name ? texts.regular.hidden(r.kind) : texts.regular.named(name, r.kind);
@@ -133,7 +134,7 @@ export async function saveReminderSettings(deps: Deps, next: ReminderSettings, t
   if ((next.checkIn.enabled || next.nails.enabled || next.backup.enabled) && !(await deps.notifier.requestPermission())) {
     throw new NettleError('notifications_denied');
   }
-  await deps.settings.set(KEY, JSON.stringify(next));
+  await writeJsonSetting(deps, KEY, next);
   await applyReminders(deps, texts);
 }
 
@@ -159,7 +160,7 @@ export interface TapAction {
   notLogged?: boolean;
 }
 
-const TAP_MARKER = 'lastReminderTap';
+const TAP_MARKER = SETTING_KEYS.lastReminderTap;
 
 /**
  * SK-9: what to do with a tap on a reminder. The target comes from a fixed list and is never a URL. Returns null

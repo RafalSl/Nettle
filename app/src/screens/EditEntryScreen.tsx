@@ -51,16 +51,10 @@ import { parseSizeText, sizeToSave, SkinExtraFields } from '@/ui/SkinExtraFields
 import { DailyHealthFields, type DailyValues } from '@/ui/DailyHealthFields';
 import { Chips, Hint, Label, ScoreInput, Segmented, TimeField, styles } from '@/ui/components';
 import { SwitchRow } from '@/ui/SwitchRow';
+import { toggled, one } from '@/ui/sets';
 
 type Rec<K extends LogKind> = Extract<LogRow, { kind: K }>['record'];
 type LogKind = (typeof LOG_KINDS)[number];
-
-const one = (id: string | null) => new Set(id ? [id] : []);
-const toggled = (set: Set<string>, id: string) => {
-  const next = new Set(set);
-  if (!next.delete(id)) next.add(id);
-  return next;
-};
 
 /** Time and note, the two fields every entry has. `at` stays null until the user changes the time, which keeps the original stamp. */
 function useCommon(initialNote: string | null, touch: () => void) {

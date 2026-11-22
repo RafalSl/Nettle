@@ -1,9 +1,9 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { Text } from '@/ui/themed';
-import { addDays, atOnDay, localDateTime, localDay } from '@/core/model/time';
+import { addDays, atOnDay, dayParam as asDay, localDateTime, localDay } from '@/core/model/time';
 import type { ListItem, SkinArea } from '@/core/model/types';
 import { logStool } from '@/core/usecases/checkin';
 import { dayLog, treatmentShortcuts, type LogRow, type TreatmentShortcut } from '@/core/usecases/dayLog';
@@ -13,7 +13,7 @@ import { logRegular } from '@/core/usecases/regular';
 import { getPreferences } from '@/core/usecases/preferences';
 import { arcPosition, ringDots, type RingDot } from '@/core/model/ring';
 import { todayContext, type TodayContext } from '@/core/usecases/today';
-import { areaLabel, dayParts, errorMessage, itemLabel, t } from '@/i18n';
+import { areaLabel, dayParts, itemLabel, t } from '@/i18n';
 import { useServices } from '@/services';
 import { useNow } from '@/ui/useNow';
 import { DayLog, TODAY_LOG_LIMIT } from '@/ui/DayLog';
@@ -31,6 +31,7 @@ import { describeRow } from '@/ui/logRow';
 import { QuickActions } from '@/ui/QuickActions';
 import { Rise } from '@/ui/Rise';
 import { useEntryActions } from '@/ui/useEntryActions';
+import { showError } from '@/ui/showError';
 
 /** UX-2: how long a new row stays highlighted. */
 export const HIGHLIGHT_MS = 3000;
@@ -39,7 +40,6 @@ export const HIGHLIGHT_MS = 3000;
 const SHORTCUT_LOCK_MS = 3000;
 
 /** A "YYYY-MM-DD" route parameter, or null. */
-const validDay = (v: unknown): string | null => (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null);
 
 const Card = ({ children }: { children: React.ReactNode }) => (
   <GlassSurface style={{ borderRadius: 26, padding: 16, gap: 10 }}>{children}</GlassSurface>
@@ -57,7 +57,7 @@ export default function TodayScreen() {
   const { day: dayParam, sheet: sheetParam } = useLocalSearchParams<{ day?: string; sheet?: string }>();
   // A day picked on this screen wins until the route parameter (from the Review days list) changes again.
   const [pick, setPick] = useState<{ param: string | undefined; day: string | null } | null>(null);
-  const chosen = pick && pick.param === dayParam ? pick.day : validDay(dayParam);
+  const chosen = pick && pick.param === dayParam ? pick.day : asDay(dayParam);
   const setChosen = (d: string | null) => setPick({ param: dayParam, day: d });
   const [rows, setRows] = useState<LogRow[]>([]);
   const [ctx, setCtx] = useState<{ areas: SkinArea[]; treatments: ListItem[]; categories: ListItem[] }>({
@@ -121,7 +121,7 @@ export default function TodayScreen() {
       const prefs = await getPreferences(deps);
       setLayout(prefs.quickActions);
       setRegular(prefs.regular);
-    })().catch((e) => Alert.alert(errorMessage(e)));
+    })().catch((e) => showError(e));
   }, [deps, day]);
   useFocusEffect(load);
   useEffect(
@@ -137,7 +137,7 @@ export default function TodayScreen() {
       await action();
       load();
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
   }
 

@@ -14,6 +14,7 @@ import {
   type SkinScores,
 } from '../model/types';
 import type { Deps } from './deps';
+import { shownName } from '../model/names';
 
 export interface LogSkinEntryInput {
   areaId: string;
@@ -78,7 +79,6 @@ export async function addArea(deps: Deps, name: string, kind: AreaKind = 'skin')
   return area;
 }
 
-const shownName = (a: SkinArea) => a.nameOverride ?? a.name;
 const sameName = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
 
 /** SK-2: active area names are unique, compared without regard to case. `exceptId` is the area being changed. */

@@ -1,13 +1,14 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, View } from 'react-native';
+import { View } from 'react-native';
 import { TextInput } from '@/ui/themed';
 import type { AreaKind, SkinArea } from '@/core/model/types';
 import { addArea, archiveSkinArea, renameSkinArea, resetSkinAreaName, setAreaSensitiveDefault } from '@/core/usecases/skin';
-import { areaLabel, errorMessage, t } from '@/i18n';
+import { areaLabel, t } from '@/i18n';
 import { useServices } from '@/services';
 import { Button, Chips, Heading, Hint, Label, styles } from '@/ui/components';
 import { SwitchRow } from '@/ui/SwitchRow';
+import { showError } from '@/ui/showError';
 
 /**
  * SK-2, SK-10, UX-6: add, rename and archive the skin or nail areas. Active names are unique. A predefined area
@@ -29,7 +30,7 @@ export function AreasSection({ kind }: { kind: AreaKind }) {
       setName('');
       reload();
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
   };
   const active = areas.filter((a) => !a.archived);

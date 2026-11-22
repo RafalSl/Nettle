@@ -1,4 +1,5 @@
 import { NettleError } from '../model/errors';
+import { isObj } from '../model/json';
 import { ALLERGENS, type Allergen } from '../model/types';
 
 export interface IngredientEstimate {
@@ -15,8 +16,6 @@ export function parseJson(text: string): unknown {
     throw new NettleError('llm_bad_response');
   }
 }
-
-const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 
 export function parseIngredientEstimate(text: string): IngredientEstimate {
   const o = parseJson(text);

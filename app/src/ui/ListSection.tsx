@@ -1,12 +1,13 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, View } from 'react-native';
+import { View } from 'react-native';
 import { TextInput } from '@/ui/themed';
 import type { ListItem, ListKind } from '@/core/model/types';
 import { addListItem, archiveListItem, renameListItem } from '@/core/usecases/lists';
-import { errorMessage, itemDescription, itemLabel, t } from '@/i18n';
+import { itemDescription, itemLabel, t } from '@/i18n';
 import { useServices } from '@/services';
 import { Button, Chips, Heading, Hint, Label, styles } from '@/ui/components';
+import { showError } from '@/ui/showError';
 
 /** IN-6, IN-11: add, rename, archive and restore the items of a user-editable list. */
 export function ListSection({ kind }: { kind: ListKind }) {
@@ -29,7 +30,7 @@ export function ListSection({ kind }: { kind: ListKind }) {
       setDescription('');
       reload();
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
   };
   const active = items.filter((i) => !i.archived);

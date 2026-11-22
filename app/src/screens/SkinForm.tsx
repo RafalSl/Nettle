@@ -5,13 +5,14 @@ import { TextInput } from '@/ui/themed';
 import { SCORE_KEYS, type SkinArea, type SkinScores } from '@/core/model/types';
 import { attachPhotos } from '@/core/usecases/photos';
 import { lastSkinValues, listActiveAreas, logSkinEntry, repeatAllAreas, repeatSkinEntry } from '@/core/usecases/skin';
-import { areaLabel, errorMessage, t } from '@/i18n';
+import { areaLabel, t } from '@/i18n';
 import { useServices } from '@/services';
 import { FormModal, useField, useForm } from '@/ui/FormModal';
 import { PendingPhotos } from '@/ui/PendingPhotos';
 import { parseSizeText, sizeToSave, SkinExtraFields } from '@/ui/SkinExtraFields';
 import { useFormTime } from '@/ui/useFormTime';
 import { Button, Chips, Hint, Label, ScoreInput, TimeField, styles } from '@/ui/components';
+import { showError } from '@/ui/showError';
 
 const ZERO: SkinScores = { severity: 0, itch: 0, pain: 0, dryness: 0, scaling: 0 };
 
@@ -62,7 +63,7 @@ export default function SkinForm() {
       if (close) router.back();
       else reload();
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
   };
 
@@ -83,7 +84,7 @@ export default function SkinForm() {
       }
       router.back();
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
   }
 

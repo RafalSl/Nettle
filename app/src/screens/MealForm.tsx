@@ -1,19 +1,19 @@
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, Keyboard, Pressable, type ScrollViewInstance, useWindowDimensions, View } from 'react-native';
+import { Keyboard, Pressable, type ScrollViewInstance, useWindowDimensions, View } from 'react-native';
 import { Text, TextInput } from '@/ui/themed';
 import { addIngredients, matchIngredientNames, suggestAllergens } from '@/core/model/allergens';
 import { NettleError } from '@/core/model/errors';
 import { defaultPreferences, type Preferences } from '@/core/model/preferences';
 import { mealHistory, rankSuggestions, type Suggestion } from '@/core/model/suggestions';
-import { atOnDay, localDay } from '@/core/model/time';
+import { atOnDay, DAY_MS, dayParam, localDay } from '@/core/model/time';
 import { afterEdit, sameIngredients, typedSource, type IngredientSource } from '@/core/model/source';
 import { ALLERGENS, type Allergen } from '@/core/model/types';
 import { lookupProduct } from '@/core/usecases/barcode';
 import { ingredientNameHistory } from '@/core/usecases/llm';
 import { logMeal } from '@/core/usecases/logMeal';
 import { getPreferences, toggleFavoriteMeal } from '@/core/usecases/preferences';
-import { errorMessage, t } from '@/i18n';
+import { t } from '@/i18n';
 import { useServices } from '@/services';
 import { confirmDestructive } from '@/ui/actionSheet';
 import { BarcodeScanner } from '@/ui/BarcodeScanner';
@@ -26,6 +26,8 @@ import { GlassSurface } from '@/ui/GlassSurface';
 import { Icon } from '@/ui/Icon';
 import { Sheet, SheetRow } from '@/ui/Sheet';
 import { color } from '@/ui/theme';
+import { showError } from '@/ui/showError';
+import { toggled } from '@/ui/sets';
 
 /** What a pick fills into the review form: the latest use of the meal, or a favorite's snapshot. */
 interface MealDraft {
@@ -48,8 +50,6 @@ interface Origin {
 const typedOrigin = (): Origin => ({ barcode: null, source: typedSource(), filled: { ingredients: [], allergens: [] } });
 
 export { SLOW_ESTIMATE_MS } from '@/ui/useIngredientRun';
-
-const DAY_MS = 86_400_000;
 
 /**
  * IN-1, IN-7, IN-14: the meal form has two phases. Choose: suggestions from the diary's own history (favorites,
@@ -128,14 +128,15 @@ export default function MealScreen() {
       setMeals(mealHistory(await deps.repo.listMeals()));
       setPrefs(await getPreferences(deps));
       setNames(await ingredientNameHistory(deps));
-    })().catch((e) => Alert.alert(errorMessage(e)));
+    })().catch((e) => showError(e));
   }, [deps]);
   useFocusEffect(load);
 
   const now = deps.clock.now();
   const tz = deps.clock.timeZone();
   // UX-2: a new entry for a past day gets the current clock time on that day.
-  const defaultAt = typeof day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(day) ? atOnDay(day, now, tz, deps.dayStart.get()) : now;
+  const forDay = dayParam(day);
+  const defaultAt = forDay ? atOnDay(forDay, now, tz, deps.dayStart.get()) : now;
 
   const suggestions: Suggestion<MealDraft>[] = rankSuggestions(
     meals.map((h) => ({
@@ -226,7 +227,7 @@ export default function MealScreen() {
         setInStore({ name: found.history?.name ?? found.product?.name ?? '', fill });
       } else fill();
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      showError(e);
       if (e instanceof NettleError && e.code === 'barcode_lookup_failed') {
         review({ description: '', ingredients: [], allergens: [] }); // IN-8: the source is out of reach, so enter it by hand
       }
@@ -292,7 +293,7 @@ export default function MealScreen() {
       await toggleFavoriteMeal(deps, { description: description.trim(), ...saveFields() });
       setPrefs(await getPreferences(deps));
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
   }
 
@@ -452,11 +453,7 @@ export default function MealScreen() {
           <Chips
             items={ALLERGENS.map((a) => ({ id: a, label: t(`allergens.${a}`) }))}
             selected={allergens}
-            onToggle={(id) => {
-              const next = new Set(allergens);
-              if (!next.delete(id)) next.add(id);
-              touch(setAllergens)(next);
-            }}
+            onToggle={(id) => touch(setAllergens)(toggled(allergens, id))}
           />
           {fromCode && fromCode.tags.some((a) => !allergens.has(a)) && (
             <>

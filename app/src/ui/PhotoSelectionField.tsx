@@ -9,6 +9,7 @@ import { useServices } from '@/services';
 import { Chips, Hint, Label, styles } from '@/ui/components';
 import { PhotoGrid } from '@/ui/PhotoGrid';
 import { SwitchRow } from '@/ui/SwitchRow';
+import { toggled } from '@/ui/sets';
 
 type Mode = 'non_sensitive' | 'all' | 'none' | 'filter' | 'custom';
 const MODES: Mode[] = ['non_sensitive', 'all', 'none', 'filter', 'custom'];
@@ -89,13 +90,7 @@ export function PhotoSelectionField({ onChange }: { onChange: (selection: PhotoS
                 label: photo.sensitive ? `${label} (${t('analysis.sensitiveMark')})` : label,
               }))}
               selected={picked}
-              onToggle={(id) =>
-                setPicked((cur) => {
-                  const next = new Set(cur);
-                  if (!next.delete(id)) next.add(id);
-                  return next;
-                })
-              }
+              onToggle={(id) => setPicked((cur) => toggled(cur, id))}
               onAll={() => setPicked(new Set(photos.filter((p) => !p.photo.sensitive).map((p) => p.photo.id)))}
               onNone={() => setPicked(new Set())}
             />
@@ -108,13 +103,7 @@ export function PhotoSelectionField({ onChange }: { onChange: (selection: PhotoS
           <Chips
             items={areas.map((a) => ({ id: a.id, label: areaLabel(a) }))}
             selected={areaIds}
-            onToggle={(id) =>
-              setAreaIds((cur) => {
-                const next = new Set(cur);
-                if (!next.delete(id)) next.add(id);
-                return next;
-              })
-            }
+            onToggle={(id) => setAreaIds((cur) => toggled(cur, id))}
           />
           <SwitchRow title={t('exportPhotos.includeSensitive')} value={includeSensitive} onChange={setIncludeSensitive} />
           <SwitchRow title={t('exportPhotos.limit')} value={limit} onChange={setLimit} />

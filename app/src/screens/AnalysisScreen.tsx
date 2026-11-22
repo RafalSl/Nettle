@@ -21,6 +21,8 @@ import { WaitArc } from '@/ui/WaitArc';
 import { Text } from '@/ui/themed';
 import { color } from '@/ui/theme';
 import { formatElapsed } from '@/core/usecases/analysisRunner';
+import { showError } from '@/ui/showError';
+import { toggled } from '@/ui/sets';
 
 /** Earlier analyses, and the photos taken in the chosen days with a label for each. */
 async function loadScreenData(deps: Deps, dayFrom: string, dayTo: string) {
@@ -66,16 +68,11 @@ export default function AnalysisScreen() {
         setPast(data.past);
         setPhotos(data.photos);
       })
-      .catch((e) => Alert.alert(errorMessage(e)));
+      .catch((e) => showError(e));
   }, [deps, dayFrom, dayTo, setPast, setPhotos]);
   useFocusEffect(reload);
 
-  const toggle = (id: string) =>
-    setChosen((cur) => {
-      const next = new Set(cur);
-      if (!next.delete(id)) next.add(id);
-      return next;
-    });
+  const toggle = (id: string) => setChosen((cur) => toggled(cur, id));
 
   // LL-12: elapsed time while the request runs. The run itself lives in the runner, so it goes on when this screen is left.
   const startedAt = run.status === 'running' ? run.startedAt : null;
@@ -128,7 +125,7 @@ export default function AnalysisScreen() {
       });
       confirm(prepared, () => runner.start(prepared));
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
   }
 

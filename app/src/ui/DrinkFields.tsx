@@ -7,6 +7,7 @@ import { t } from '@/i18n';
 import { Chips, Label, styles } from '@/ui/components';
 import { FillLaterSwitch } from '@/ui/FillLaterSwitch';
 import { SwitchRow } from '@/ui/SwitchRow';
+import { toggled } from '@/ui/sets';
 
 /** The editable part of a drink (IN-4, IN-10) as form state: amount as text, ingredients as a comma list. */
 export interface DrinkDraft {
@@ -123,11 +124,7 @@ export function DrinkFields({
       <Chips
         items={ALLERGENS.map((a) => ({ id: a, label: t(`allergens.${a}`) }))}
         selected={draft.allergens}
-        onToggle={(id) => {
-          const next = new Set(draft.allergens);
-          if (!next.delete(id)) next.add(id);
-          set('allergens', next);
-        }}
+        onToggle={(id) => set('allergens', toggled(draft.allergens, id))}
       />
       <FillLaterSwitch value={draft.fillLater} onChange={(v) => set('fillLater', v)} />
     </>

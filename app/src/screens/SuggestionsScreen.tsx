@@ -1,12 +1,12 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert } from 'react-native';
 import type { Drink, Meal } from '@/core/model/types';
 import { listSuggestions, type Suggestion } from '@/core/usecases/aiPack';
-import { errorMessage, t } from '@/i18n';
+import { t } from '@/i18n';
 import { useServices } from '@/services';
 import { NavRow } from '@/ui/NavRow';
 import { Hint, Screen } from '@/ui/components';
+import { showError } from '@/ui/showError';
 
 type Row = Suggestion & { entry: Meal | Drink };
 const text = (s: Row) => ('description' in s.entry ? s.entry.description : s.entry.name);
@@ -21,7 +21,7 @@ export default function SuggestionsScreen() {
   const [rows, setRows] = useState<Row[] | null>(null);
   useFocusEffect(
     useCallback(() => {
-      listSuggestions(deps).then(setRows, (e) => Alert.alert(errorMessage(e)));
+      listSuggestions(deps).then(setRows, (e) => showError(e));
     }, [deps]),
   );
   return (

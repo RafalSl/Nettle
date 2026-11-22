@@ -1,12 +1,12 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { Text } from '@/ui/themed';
 import { addMonths, monthOf, monthOverview, monthShape, type MonthDay } from '@/core/usecases/dayLog';
 import { localDay } from '@/core/model/time';
 import { areaOverview, type AreaOverviewRow } from '@/core/usecases/timeline';
-import { areaLabel, errorMessage, t } from '@/i18n';
+import { areaLabel, t } from '@/i18n';
 import { useServices } from '@/services';
 import { useNow } from '@/ui/useNow';
 import { GearButton } from '@/ui/GearButton';
@@ -22,6 +22,7 @@ import { Heading, Hint, Label, Screen, Segmented, styles } from '@/ui/components
 import { formatElapsed, runCardStatus } from '@/core/usecases/analysisRunner';
 import { SwitchRow } from '@/ui/SwitchRow';
 import { EmptyState } from '@/ui/EmptyState';
+import { showError } from '@/ui/showError';
 
 const WEEKDAY_KEYS = [2, 3, 4, 5, 6, 7, 1]; // Monday first; the names are in reminders.weekdays (1 = Sunday)
 
@@ -155,7 +156,7 @@ export default function ReviewScreen() {
   const load = useCallback(() => {
     monthOverview(deps, month)
       .then(setDays)
-      .catch((e) => Alert.alert(errorMessage(e)));
+      .catch((e) => showError(e));
     areaOverview(deps)
       .then(setAreas)
       .catch(() => setAreas({ skin: [], nails: [] }));

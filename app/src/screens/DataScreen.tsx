@@ -3,11 +3,12 @@ import { Alert } from 'react-native';
 import { TextInput } from '@/ui/themed';
 import { NettleError } from '@/core/model/errors';
 import type { Parts } from '@/core/model/types';
+import { DAY_MS } from '@/core/model/time';
 import type { ImportMode } from '@/core/ports/storage';
 import { EXTRA_KINDS, LIST_KINDS } from '@/core/model/types';
 import { markExported, presetOptions } from '@/core/usecases/backup';
 import { applyImport, exportBundle, previewImport, type ExportOptions, type ParsedImport } from '@/core/usecases/exchange';
-import { areaLabelIn, currentLanguage, errorMessage, itemLabelIn, reminderTexts, t, tIn } from '@/i18n';
+import { areaLabelIn, currentLanguage, itemLabelIn, reminderTexts, t, tIn } from '@/i18n';
 import { restoreReminders } from '@/core/usecases/reminders';
 import { useServices } from '@/services';
 import { confirmWithExport, exportEverything } from '@/ui/exportFirst';
@@ -18,6 +19,7 @@ import { DeleteSection } from '@/ui/DeleteSection';
 import { Button, Chips, Heading, Hint, Label, Screen, styles } from '@/ui/components';
 import { SwitchRow } from '@/ui/SwitchRow';
 import { rescheduleReminders } from '@/ui/rescheduleReminders';
+import { showError } from '@/ui/showError';
 
 function PartSwitch({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void }) {
   return <SwitchRow title={label} value={value} onChange={onChange} />;
@@ -33,7 +35,7 @@ export default function DataScreen() {
   const [csv, setCsv] = useState(false);
   // EX-1, EX-11: an optional range of diary days for the records of a custom export.
   const [limit, setLimit] = useState(false);
-  const [from, setFrom] = useState(() => new Date(Date.now() - 29 * 86_400_000));
+  const [from, setFrom] = useState(() => new Date(deps.clock.now().getTime() - 29 * DAY_MS));
   const [to, setTo] = useState(() => new Date());
   const [report, setReport] = useState(false);
   const [reportLanguage, setReportLanguage] = useState<'en' | 'pl'>(currentLanguage());
@@ -61,7 +63,7 @@ export default function DataScreen() {
       setPassword('');
       setRepeat('');
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
   }
 
@@ -99,7 +101,7 @@ export default function DataScreen() {
         return;
       }
       if (!(e instanceof NettleError && e.code === 'import_wrong_password')) setLocked(null);
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
   }
 
@@ -108,7 +110,7 @@ export default function DataScreen() {
       const bytes = await fileShare.pickFile();
       if (bytes) await open(bytes);
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
   }
 
@@ -122,7 +124,7 @@ export default function DataScreen() {
       const reminders = importParts.settings ? await restoreReminders(deps, reminderTexts()) : (await rescheduleReminders(deps), true);
       Alert.alert(t('data.imported'), reminders ? undefined : t('regular.denied'));
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
   }
 
@@ -133,7 +135,7 @@ export default function DataScreen() {
       message: t('data.replaceConfirmBody'),
       action: t('data.replace'),
       exportNow: () => exportEverything(deps, fileShare),
-      onExportError: (e) => Alert.alert(errorMessage(e)),
+      onExportError: (e) => showError(e),
     });
     if (go) await apply('replace');
   }

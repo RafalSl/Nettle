@@ -8,6 +8,7 @@ import { listSummaries, prepareSummary, runSummary, saveSummary, summaryDays, ty
 import { errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
 import { Button, Hint, Label, styles } from '@/ui/components';
+import { showError } from '@/ui/showError';
 
 type Phase =
   | { s: 'idle' }
@@ -88,7 +89,7 @@ export function ReportSummaryPanel({
         { text: t('doctor.summarySend'), onPress: () => void start(prepared) },
       ]);
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
   }
 
@@ -118,7 +119,7 @@ export function ReportSummaryPanel({
       setPhase({ s: 'included', summary });
       onChange(summary);
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
   }
 

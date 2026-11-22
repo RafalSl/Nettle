@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { Alert } from 'react-native';
 import { DAY_START_HOURS } from '@/core/model/dayStart';
 import { setDayStartHour } from '@/core/usecases/preferences';
-import { errorMessage, t } from '@/i18n';
+import { t } from '@/i18n';
 import { useServices } from '@/services';
 import { Chips, Heading, Hint } from '@/ui/components';
+import { showError } from '@/ui/showError';
 
 const label = (h: number) => `${String(h).padStart(2, '0')}:00`;
 
@@ -19,7 +19,7 @@ export function DayStartSection() {
         items={DAY_START_HOURS.map((h) => ({ id: String(h), label: label(h) }))}
         selected={new Set([String(hour)])}
         onToggle={(id) => {
-          setDayStartHour(deps, Number(id)).then(setHour, (e) => Alert.alert(errorMessage(e)));
+          setDayStartHour(deps, Number(id)).then(setHour, (e) => showError(e));
         }}
       />
       <Hint>{t('day.dayStartHint')}</Hint>

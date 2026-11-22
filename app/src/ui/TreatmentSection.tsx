@@ -1,18 +1,20 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, View } from 'react-native';
+import { View } from 'react-native';
 import { TextInput } from '@/ui/themed';
 import type { ListItem, SkinArea } from '@/core/model/types';
 import { applyTreatment } from '@/core/usecases/events';
 import { addListItem, listActiveItems } from '@/core/usecases/lists';
 import { addRegularTreatment } from '@/core/usecases/regular';
 import { listActiveAreas } from '@/core/usecases/skin';
-import { areaLabel, errorMessage, itemDescription, itemLabel, t } from '@/i18n';
+import { areaLabel, itemDescription, itemLabel, t } from '@/i18n';
 import { useServices } from '@/services';
 import { FormModal, useField, useForm } from '@/ui/FormModal';
 import { useFormTime } from '@/ui/useFormTime';
 import { Button, Chips, Hint, Label, TimeField, styles } from '@/ui/components';
 import { SwitchRow } from '@/ui/SwitchRow';
+import { showError } from '@/ui/showError';
+import { toggled } from '@/ui/sets';
 
 /** IN-11: a saved list of treatments; applying one to one or more areas is timestamped (now, or the chosen day). */
 export function TreatmentSection() {
@@ -41,7 +43,7 @@ export function TreatmentSection() {
       setTreatmentId(item.id);
       reload();
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
   }
 
@@ -73,11 +75,7 @@ export function TreatmentSection() {
           <Chips
             items={areas.map((a) => ({ id: a.id, label: areaLabel(a) }))}
             selected={areaIds}
-            onToggle={(id) => {
-              const next = new Set(areaIds);
-              if (!next.delete(id)) next.add(id);
-              setAreaIds(next);
-            }}
+            onToggle={(id) => setAreaIds(toggled(areaIds, id))}
           />
           <SwitchRow
             title={t('regular.switch')}

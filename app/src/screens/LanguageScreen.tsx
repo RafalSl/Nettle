@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react';
-import { Alert, View } from 'react-native';
+import { View } from 'react-native';
 import { LANGUAGE_PREFERENCES, type LanguagePreference } from '@/core/model/language';
 import { applyReminders } from '@/core/usecases/reminders';
 import { getPreferences, setLanguage as saveLanguage } from '@/core/usecases/preferences';
-import { deviceLanguage, errorMessage, reminderTexts, setLanguage, t } from '@/i18n';
+import { deviceLanguage, reminderTexts, setLanguage, t } from '@/i18n';
 import { useServices } from '@/services';
 import { Hint, Label, Screen } from '@/ui/components';
 import { GlassSurface } from '@/ui/GlassSurface';
 import { Icon } from '@/ui/Icon';
 import { RadioRow } from '@/ui/RadioRow';
 import { Text } from '@/ui/themed';
+import { showError } from '@/ui/showError';
 
 /** The name of a language in its own words ("English", "Polski"), for the Language row and the page. */
 export const languageName = (code: 'en' | 'pl'): string => t(code === 'pl' ? 'settings.languageNamePl' : 'settings.languageNameEn');
@@ -32,7 +33,7 @@ export default function LanguageScreen() {
       setLanguage(next); // the text of the whole app follows at once
       await applyReminders(deps, reminderTexts()); // SK-9: scheduled reminders keep their old text until they are scheduled again
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
   }
 

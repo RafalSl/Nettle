@@ -6,12 +6,13 @@ import { NAIL_EXTENTS, NAIL_STAGES, type NailExtent, type NailStage, type SkinAr
 import { addArea, listActiveAreas, logNailEntry, repeatNailEntry } from '@/core/usecases/skin';
 import { attachPhotos } from '@/core/usecases/photos';
 import { applyReminders } from '@/core/usecases/reminders';
-import { areaLabel, errorMessage, reminderTexts, t } from '@/i18n';
+import { areaLabel, reminderTexts, t } from '@/i18n';
 import { useServices } from '@/services';
 import { FormModal, useField, useForm } from '@/ui/FormModal';
 import { PendingPhotos } from '@/ui/PendingPhotos';
 import { useFormTime } from '@/ui/useFormTime';
 import { Button, Chips, Hint, Label, TimeField, styles } from '@/ui/components';
+import { showError } from '@/ui/showError';
 
 /**
  * SK-10, SK-3: one nail area per affected nail; an entry has a stage and a rough extent instead of scores.
@@ -43,7 +44,7 @@ export function NailSection() {
       reload();
       await applyReminders(deps, reminderTexts()); // the weekly nail reminder exists only while nail areas exist
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
   }
 
@@ -60,7 +61,7 @@ export function NailSection() {
       await attach(entry.id, entry.at.utc);
       router.back();
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
   }
 

@@ -1,11 +1,11 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, View } from 'react-native';
+import { View } from 'react-native';
 import { Text, TextInput } from '@/ui/themed';
 import { CHANGE_ACTIONS, SYMPTOMS, type ChangeAction, type ListItem, type Meal, type Symptom } from '@/core/model/types';
 import { itemsInUse, logChangeEvent, logReaction, type InUseItem } from '@/core/usecases/events';
 import { listActiveItems } from '@/core/usecases/lists';
-import { errorMessage, itemDescription, itemLabel, t } from '@/i18n';
+import { itemDescription, itemLabel, t } from '@/i18n';
 import { useServices } from '@/services';
 import { FormModal, useField, useForm } from '@/ui/FormModal';
 import { useFormTime } from '@/ui/useFormTime';
@@ -13,12 +13,8 @@ import { Button, Chips, Hint, Label, TimeField, styles } from '@/ui/components';
 import { color } from '@/ui/theme';
 import { SwitchRow } from '@/ui/SwitchRow';
 import { RadioRow } from '@/ui/RadioRow';
-
-const toggled = (set: Set<string>, id: string) => {
-  const next = new Set(set);
-  if (!next.delete(id)) next.add(id);
-  return next;
-};
+import { showError } from '@/ui/showError';
+import { toggled } from '@/ui/sets';
 
 /**
  * IN-12: a routine change: a product or diet started or stopped, on a date. "Stopped" offers what is in use now;
@@ -39,7 +35,7 @@ export function ChangeEventSection() {
       (async () => {
         setCategories(await listActiveItems(deps, 'changeCategories'));
         setInUse(await itemsInUse(deps));
-      })().catch((e) => Alert.alert(errorMessage(e)));
+      })().catch((e) => showError(e));
     }, [deps]),
   );
   const selected = categories.find((c) => c.id === category);
@@ -112,7 +108,7 @@ export function ReactionSection() {
     deps.repo
       .listMeals()
       .then((m) => setMeals(m.slice(0, 5)))
-      .catch((e) => Alert.alert(errorMessage(e)));
+      .catch((e) => showError(e));
   }, [deps]);
   useFocusEffect(reload);
   const selected = mealId && meals.some((m) => m.id === mealId) ? mealId : (meals[0]?.id ?? null);

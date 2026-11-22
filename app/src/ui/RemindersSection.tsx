@@ -13,12 +13,13 @@ import {
   sendTestReminder,
   type ReminderSettings,
 } from '@/core/usecases/reminders';
-import { errorMessage, reminderTexts, t } from '@/i18n';
+import { reminderTexts, t } from '@/i18n';
 import { useServices } from '@/services';
 import type { ReminderStatus } from '@/core/ports/notifier';
 import { Button, Chips, Heading, Hint, Label, styles } from '@/ui/components';
 import { SwitchRow } from '@/ui/SwitchRow';
 import { color } from '@/ui/theme';
+import { showError } from '@/ui/showError';
 
 const at = (hour: number, minute: number) => {
   const d = new Date();
@@ -58,7 +59,7 @@ export function RemindersSection() {
       reminderStatus(deps).then(setStatus, () => undefined);
     } catch (e) {
       setDenied(e instanceof Error && 'code' in e && (e as { code: string }).code === 'notifications_denied');
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
   }
 
@@ -67,7 +68,7 @@ export function RemindersSection() {
       await sendTestReminder(deps, t('reminders.test.title'), t('reminders.test.body'));
       Alert.alert(t('reminders.test.sent'));
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
     reminderStatus(deps).then(setStatus, () => undefined);
   }

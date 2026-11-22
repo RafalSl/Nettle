@@ -4,13 +4,14 @@ import { sinceCaptionEn, sinceLastTreatment } from '../model/derived';
 import { analysisResultFromJson } from '../llm/analysisResult';
 import { parseJson } from '../llm/parse';
 import { NettleError } from '../model/errors';
-import { addDays, localDateTime, makeStamp } from '../model/time';
+import { isDayRange, localDateTime, makeStamp } from '../model/time';
 import type { Analysis, LocalDay } from '../model/types';
 import type { Language, LlmImage, LlmRequest } from '../ports/llm';
 import { flareRule } from '../model/preferences';
 import { getPreferences } from './preferences';
 import type { Deps } from './deps';
 import { currentProvider, getModel } from './llm';
+import { shownName } from '../model/names';
 
 /** LL-6: photos in one run are capped, to keep the request and its cost reasonable. */
 export const MAX_ANALYSIS_PHOTOS = 20;
@@ -40,11 +41,9 @@ export interface PreparedAnalysis {
   request: LlmRequest;
 }
 
-export const validDay = (d: string) => /^\d{4}-\d{2}-\d{2}$/.test(d) && addDays(d, 0) === d;
-
 /** LL-2, LL-3, LL-5, LL-6: build the request from the diary for a date range. Makes no network call and changes nothing. */
 export async function prepareAnalysis(deps: Deps, sel: AnalysisSelection): Promise<PreparedAnalysis> {
-  if (!validDay(sel.dayFrom) || !validDay(sel.dayTo) || sel.dayFrom > sel.dayTo) throw new NettleError('invalid_range');
+  if (!isDayRange(sel.dayFrom, sel.dayTo)) throw new NettleError('invalid_range');
   const photoIds = [...new Set(sel.photoIds ?? [])];
   if (photoIds.length > MAX_ANALYSIS_PHOTOS) throw new NettleError('too_many_photos');
 
@@ -59,9 +58,9 @@ export async function prepareAnalysis(deps: Deps, sel: AnalysisSelection): Promi
   );
   if (built.periodRecords === 0) throw new NettleError('analysis_no_data');
 
-  const areas = new Map(snap.skinAreas.map((a) => [a.id, a.nameOverride ?? a.name]));
+  const areas = new Map(snap.skinAreas.map((a) => [a.id, shownName(a)]));
   const areaOfEntry = new Map([...snap.skinEntries, ...snap.nailEntries].map((e) => [e.id, e.areaId]));
-  const treatmentNames = new Map(snap.treatments.map((x) => [x.id, x.nameOverride ?? x.name]));
+  const treatmentNames = new Map(snap.treatments.map((x) => [x.id, shownName(x)]));
   const entryArea = new Map([...snap.skinEntries, ...snap.nailEntries].map((e) => [e.id, areas.get(e.areaId) ?? '']));
   const images: LlmImage[] = [];
   const photos: PreparedAnalysis['photos'] = [];

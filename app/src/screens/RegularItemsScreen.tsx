@@ -1,19 +1,20 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Linking, View } from 'react-native';
+import { Linking, View } from 'react-native';
 import { Text } from '@/ui/themed';
 import type { RegularItem, ReminderTime } from '@/core/model/preferences';
 import type { ListItem, SkinArea } from '@/core/model/types';
 import { listRegular } from '@/core/usecases/regular';
 import { saveRegularHideName, saveRegularReminders, stopRegularAndRemind } from '@/core/usecases/regularReminders';
-import { areaLabel, errorMessage, itemLabel, reminderTexts, t } from '@/i18n';
+import { areaLabel, itemLabel, reminderTexts, t } from '@/i18n';
 import { useServices } from '@/services';
 import { confirmDestructive } from '@/ui/actionSheet';
 import { NavRow } from '@/ui/NavRow';
 import { Button, Heading, Hint, Label, Screen, styles } from '@/ui/components';
 import { SwitchRow } from '@/ui/SwitchRow';
 import { EmptyState } from '@/ui/EmptyState';
+import { showError } from '@/ui/showError';
 
 /** The name of a regular item for lists: a medication's name and dose, or a treatment with its areas. */
 export function regularName(r: RegularItem, treatments: ListItem[], areas: SkinArea[]): string {
@@ -39,7 +40,7 @@ function useRegular() {
         items: await listRegular(deps),
         treatments: await deps.repo.listItems('treatments'),
         areas: await deps.repo.listAreas(),
-      }))().catch((e) => Alert.alert(errorMessage(e)));
+      }))().catch((e) => showError(e));
   }, [deps]);
   useFocusEffect(reload);
   return { ...state, reload };
@@ -96,7 +97,7 @@ export function RegularItemScreen() {
       reload();
     } catch (e) {
       if (e instanceof Error && 'code' in e && (e as { code: string }).code === 'notifications_denied') setDenied(true);
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
   }
   const setTimes = (times: ReminderTime[]) => run(() => saveRegularReminders(deps, item!.id, times, reminderTexts()));

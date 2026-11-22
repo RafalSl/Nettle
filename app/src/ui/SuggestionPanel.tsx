@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Alert } from 'react-native';
 import type { Allergen } from '@/core/model/types';
 import { dismissSuggestion, getSuggestion, type Suggestion } from '@/core/usecases/aiPack';
-import { errorMessage, t } from '@/i18n';
+import { t } from '@/i18n';
 import { useServices } from '@/services';
 import { Button, Chips, Hint } from '@/ui/components';
+import { showError } from '@/ui/showError';
+import { toggled } from '@/ui/sets';
 
 /**
  * IN-20: a fill that came back from a pack, in the same editable panel as a photo estimate (IN-3). Add all of it or
@@ -28,7 +29,7 @@ export function SuggestionPanel({
   const [added, setAdded] = useState(false);
   const [tagsDone, setTagsDone] = useState(false);
   useEffect(() => {
-    getSuggestion(deps, suggestionId).then(setS, (e) => Alert.alert(errorMessage(e)));
+    getSuggestion(deps, suggestionId).then(setS, (e) => showError(e));
   }, [deps, suggestionId]);
   if (!s) return null;
   const add = (names: string[]) => {
@@ -48,13 +49,7 @@ export function SuggestionPanel({
               <Chips
                 items={s.ingredients.map((n) => ({ id: n, label: n }))}
                 selected={picked}
-                onToggle={(id) =>
-                  setPicked((cur) => {
-                    const next = new Set(cur);
-                    if (!next.delete(id)) next.add(id);
-                    return next;
-                  })
-                }
+                onToggle={(id) => setPicked((cur) => toggled(cur, id))}
               />
               <Button title={t('meal.estimateAddAll')} onPress={() => add(s.ingredients)} />
               {picked.size > 0 && <Button kind="secondary" title={t('meal.estimateAddPicked')} onPress={() => add([...picked])} />}
@@ -84,7 +79,7 @@ export function SuggestionPanel({
               setS(null);
               onDismissed();
             },
-            (e) => Alert.alert(errorMessage(e)),
+            (e) => showError(e),
           );
         }}
       />

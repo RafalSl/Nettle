@@ -1,9 +1,9 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { defaultPreferences, ENTRY_TYPES, MAX_PINNED, type EntryType } from '@/core/model/preferences';
 import { getPreferences, movePinnedEntryType, pinEntryType, unpinEntryType } from '@/core/usecases/preferences';
-import { errorMessage, t } from '@/i18n';
+import { t } from '@/i18n';
 import { useServices } from '@/services';
 import { Hint, Label, Screen } from '@/ui/components';
 import { ENTRY_ICON } from '@/ui/entryIcons';
@@ -13,6 +13,7 @@ import { Icon, type IconName } from '@/ui/Icon';
 import { IconCircle } from '@/ui/IconCircle';
 import { Text } from '@/ui/themed';
 import { color } from '@/ui/theme';
+import { showError } from '@/ui/showError';
 
 function Round({ icon, label, disabled = false, onPress }: { icon: IconName; label: string; disabled?: boolean; onPress: () => void }) {
   return (
@@ -49,11 +50,11 @@ export default function EditTodayScreen() {
     useCallback(() => {
       getPreferences(deps).then(
         (p) => setPinned(p.quickActions.pinned),
-        (e) => Alert.alert(errorMessage(e)),
+        (e) => showError(e),
       );
     }, [deps]),
   );
-  const run = (action: () => Promise<EntryType[]>) => action().then(setPinned, (e) => Alert.alert(errorMessage(e)));
+  const run = (action: () => Promise<EntryType[]>) => action().then(setPinned, (e) => showError(e));
   const full = pinned.length >= MAX_PINNED;
   const inMore = ENTRY_TYPES.filter((id) => !pinned.includes(id));
 

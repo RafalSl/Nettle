@@ -1,13 +1,14 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, View } from 'react-native';
+import { View } from 'react-native';
 import { Text } from '@/ui/themed';
 import { MAX_SUGGESTION_ROWS, WINDOW_DAYS, defaultPreferences, type SuggestionSettings } from '@/core/model/preferences';
 import { getPreferences, updateSuggestionSettings } from '@/core/usecases/preferences';
-import { errorMessage, t } from '@/i18n';
+import { t } from '@/i18n';
 import { useServices } from '@/services';
 import { Button, Chips, Hint, Label, Screen, styles } from '@/ui/components';
 import { SwitchRow } from '@/ui/SwitchRow';
+import { showError } from '@/ui/showError';
 
 /** IN-14, UX-6: how many suggestions show, how far back "frequent" looks, and "save on tap". Defaults need no visit here. */
 export default function SuggestionSettingsScreen() {
@@ -16,7 +17,7 @@ export default function SuggestionSettingsScreen() {
   const load = useCallback(() => {
     getPreferences(deps)
       .then((p) => setS(p.suggestions))
-      .catch((e) => Alert.alert(errorMessage(e)));
+      .catch((e) => showError(e));
   }, [deps]);
   useFocusEffect(load);
 
@@ -24,7 +25,7 @@ export default function SuggestionSettingsScreen() {
     try {
       setS(await updateSuggestionSettings(deps, patch));
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
   }
 

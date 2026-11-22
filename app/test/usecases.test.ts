@@ -25,7 +25,7 @@ describe('logMeal', () => {
     const meal = await logMeal(deps, { description: '  Synthetic soup ', ingredients: [' water ', '', 'salt'] });
     expect(meal.description).toBe('Synthetic soup');
     expect(meal.ingredients).toEqual(['water', 'salt']);
-    expect(await deps.repo.listMeals()).toEqual([meal]);
+    expect(await deps.repo.listRecords('meals')).toEqual([meal]);
   });
 
   it('IN-1 rejects an empty description', async () => {
@@ -47,7 +47,7 @@ describe('logSkinEntry', () => {
     const e = await logSkinEntry(deps, { areaId: 'area-chin', scores, note: ' ok ' });
     expect(e.scores).toEqual(scores);
     expect(e.note).toBe('ok');
-    expect(await deps.repo.listSkinEntries()).toEqual([e]);
+    expect(await deps.repo.listRecords('skinEntries')).toEqual([e]);
   });
 
   it.each([11, -1, 2.5, Number.NaN])('SK-3 rejects score %p', async (bad) => {

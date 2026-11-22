@@ -106,7 +106,7 @@ export function ReactionSection() {
 
   const reload = useCallback(() => {
     deps.repo
-      .listMeals()
+      .listRecords('meals')
       .then((m) => setMeals(m.slice(0, 5)))
       .catch((e) => showError(e));
   }, [deps]);

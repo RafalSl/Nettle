@@ -118,7 +118,7 @@ export async function exportBundle(deps: Deps, options: ExportOptions = {}): Pro
     let summary: ReportSummary | undefined;
     if (options.summaryId) {
       // LL-14: changing the range or the language asks for a new summary, so a stale one is refused, not printed.
-      summary = (await deps.repo.listRecords('reportSummaries')).find((s) => s.id === options.summaryId);
+      summary = (await deps.repo.getRecord('reportSummaries', options.summaryId)) ?? undefined;
       const days = options.days;
       if (
         !summary ||

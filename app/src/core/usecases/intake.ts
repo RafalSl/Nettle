@@ -1,9 +1,9 @@
 import { NettleError } from '../model/errors';
 import { assertSource, typedSource, type IngredientSource } from '../model/source';
-import { makeStamp } from '../model/time';
 import { ALLERGENS, MEDICATION_CATEGORIES, type Allergen, type Drink, type MedicationCategory, type MedicationEntry } from '../model/types';
 import type { Deps } from './deps';
 import { refreshFavoriteDrink } from './preferences';
+import { entryId, entryStamp, saveEntry, type EntryWrite } from './write';
 
 export interface LogDrinkInput {
   name: string;
@@ -23,7 +23,7 @@ export interface LogDrinkInput {
 }
 
 /** IN-4: any beverage, with an alcohol switch and optional ingredients and allergen tags. */
-export async function logDrink(deps: Deps, input: LogDrinkInput): Promise<Drink> {
+export async function logDrink(deps: Deps, input: LogDrinkInput, w: EntryWrite = {}): Promise<Drink> {
   const name = input.name.trim();
   if (!name) throw new NettleError('empty_name');
   if (!Number.isInteger(input.amountMl) || input.amountMl <= 0) throw new NettleError('invalid_amount');
@@ -32,8 +32,8 @@ export async function logDrink(deps: Deps, input: LogDrinkInput): Promise<Drink>
   const source = input.source ?? typedSource();
   assertSource(source);
   const entry: Drink = {
-    id: deps.ids(),
-    at: makeStamp(deps.clock, input.at),
+    id: entryId(deps, w),
+    at: entryStamp(deps, input.at, w),
     name,
     amountMl: input.amountMl,
     alcohol: input.alcohol ?? false,
@@ -44,7 +44,7 @@ export async function logDrink(deps: Deps, input: LogDrinkInput): Promise<Drink>
     ...(input.fillLater ? { fillLater: true as const } : {}),
     note: input.note?.trim() || null,
   };
-  await deps.repo.addRecord('drinks', entry);
+  await saveEntry(deps, 'drinks', entry, w);
   await refreshFavoriteDrink(deps, entry);
   return entry;
 }
@@ -53,18 +53,19 @@ export async function logDrink(deps: Deps, input: LogDrinkInput): Promise<Drink>
 export async function logMedication(
   deps: Deps,
   input: { category: MedicationCategory; name: string; dose?: string; at?: Date; note?: string },
+  w: EntryWrite = {},
 ): Promise<MedicationEntry> {
   if (!MEDICATION_CATEGORIES.includes(input.category)) throw new NettleError('invalid_value', 'category');
   const name = input.name.trim();
   if (!name) throw new NettleError('empty_name');
   const entry: MedicationEntry = {
-    id: deps.ids(),
-    at: makeStamp(deps.clock, input.at),
+    id: entryId(deps, w),
+    at: entryStamp(deps, input.at, w),
     category: input.category,
     name,
     dose: input.dose?.trim() || null,
     note: input.note?.trim() || null,
   };
-  await deps.repo.addRecord('medicationEntries', entry);
+  await saveEntry(deps, 'medicationEntries', entry, w);
   return entry;
 }

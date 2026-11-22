@@ -60,9 +60,14 @@ interface EntryRow {
   note: string | null;
 }
 
-function rangeClause(range?: DateRange): { sql: string; params: SqlValue[] } {
+/** The WHERE clause of a list (a time range) or of a lookup (one id). */
+function whereClause(range?: DateRange, id?: string): { sql: string; params: SqlValue[] } {
   const parts: string[] = [];
   const params: SqlValue[] = [];
+  if (id !== undefined) {
+    parts.push('id = ?');
+    params.push(id);
+  }
   if (range?.from) {
     parts.push('ts_utc >= ?');
     params.push(range.from);
@@ -73,6 +78,9 @@ function rangeClause(range?: DateRange): { sql: string; params: SqlValue[] } {
   }
   return { sql: parts.length ? `WHERE ${parts.join(' AND ')}` : '', params };
 }
+
+type Where = ReturnType<typeof whereClause>;
+type AnyRecord = Records[RecordKind][number];
 
 export class SqliteRepo implements StorageRepository {
   private constructor(private readonly db: SqlDb) {}
@@ -139,10 +147,7 @@ export class SqliteRepo implements StorageRepository {
 
   private async insertMeal(m: Meal, ignoreIfExists: boolean) {
     // A skipped duplicate keeps its own row and ingredients: the file's ingredients must not be appended to it.
-    if (ignoreIfExists) {
-      const [row] = await this.db.all<{ n: number }>('SELECT COUNT(*) AS n FROM meal WHERE id = ?', [m.id]);
-      if ((row?.n ?? 0) > 0) return;
-    }
+    if (ignoreIfExists && (await this.exists('meal', m.id))) return;
     await this.db.run(
       'INSERT INTO meal (id, ts_utc, tz, description, allergens_json, barcode, source_json, fill_later, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
@@ -194,11 +199,7 @@ export class SqliteRepo implements StorageRepository {
     );
   }
 
-  async addRecord<K extends ExtraKind>(kind: K, record: Records[K][number]) {
-    await this.insertExtra(kind, record, false);
-  }
-
-  async putRecord<K extends ExtraKind>(kind: K, record: Records[K][number]) {
+  private async upsertExtra(kind: ExtraKind, record: Records[ExtraKind][number]) {
     const t = EXTRA_TABLES[kind] as (typeof EXTRA_TABLES)[ExtraKind];
     const cols = ['id', 'ts_utc', 'tz', ...t.columns];
     await this.db.run(
@@ -211,27 +212,21 @@ export class SqliteRepo implements StorageRepository {
     );
   }
 
-  async listRecords<K extends ExtraKind>(kind: K, range?: DateRange): Promise<Records[K]> {
+  private async readExtra(kind: ExtraKind, where: Where): Promise<AnyRecord[]> {
     const t = EXTRA_TABLES[kind] as (typeof EXTRA_TABLES)[ExtraKind];
-    const { sql, params } = rangeClause(range);
     const rows = await this.db.all<Record<string, string | number | null>>(
-      `SELECT * FROM ${t.table} ${sql} ORDER BY ts_utc DESC, id ASC`,
-      params,
+      `SELECT * FROM ${t.table} ${where.sql} ORDER BY ts_utc DESC, id ASC`,
+      where.params,
     );
-    return rows.map((r) => t.fromRow(r)) as unknown as Records[K];
+    return rows.map((r) => t.fromRow(r));
   }
 
-  async addMeal(meal: Meal) {
-    await this.db.transaction(() => this.insertMeal(meal, false));
-  }
-
-  async listMeals(range?: DateRange): Promise<Meal[]> {
-    const { sql, params } = rangeClause(range);
-    const rows = await this.db.all<MealRow>(`SELECT * FROM meal ${sql} ORDER BY ts_utc DESC, id ASC`, params);
-    // Only the ingredients of the meals in range, in one pass without copying arrays.
+  private async readMeals(where: Where): Promise<Meal[]> {
+    const rows = await this.db.all<MealRow>(`SELECT * FROM meal ${where.sql} ORDER BY ts_utc DESC, id ASC`, where.params);
+    // Only the ingredients of the meals asked for, in one pass without copying arrays.
     const ing = await this.db.all<{ meal_id: string; name: string }>(
-      `SELECT meal_id, name FROM meal_ingredient WHERE meal_id IN (SELECT id FROM meal ${sql}) ORDER BY meal_id, position`,
-      params,
+      `SELECT meal_id, name FROM meal_ingredient WHERE meal_id IN (SELECT id FROM meal ${where.sql}) ORDER BY meal_id, position`,
+      where.params,
     );
     const byMeal = new Map<string, string[]>();
     for (const r of ing) {
@@ -250,6 +245,100 @@ export class SqliteRepo implements StorageRepository {
       ...(r.fill_later ? { fillLater: true as const } : {}),
       note: r.note,
     }));
+  }
+
+  private async readSkinEntries(where: Where): Promise<SkinEntry[]> {
+    const rows = await this.db.all<EntryRow>(`SELECT * FROM skin_entry ${where.sql} ORDER BY ts_utc DESC, id ASC`, where.params);
+    return rows.map((r) => ({
+      id: r.id,
+      at: { utc: r.ts_utc, tz: r.tz },
+      areaId: r.area_id,
+      scores: { severity: r.severity, itch: r.itch, pain: r.pain, dryness: r.dryness, scaling: r.scaling },
+      cracks: r.cracks === 1,
+      sizeMm: r.size_mm,
+      note: r.note,
+    }));
+  }
+
+  private read(kind: RecordKind, where: Where): Promise<AnyRecord[]> {
+    if (kind === 'meals') return this.readMeals(where);
+    if (kind === 'skinEntries') return this.readSkinEntries(where);
+    return this.readExtra(kind, where);
+  }
+
+  private async exists(table: string, id: string): Promise<boolean> {
+    const [row] = await this.db.all<{ n: number }>(`SELECT COUNT(*) AS n FROM ${table} WHERE id = ?`, [id]);
+    return (row?.n ?? 0) > 0;
+  }
+
+  private async updateMeal(meal: Meal) {
+    await this.db.run(
+      'UPDATE meal SET ts_utc = ?, tz = ?, description = ?, allergens_json = ?, barcode = ?, source_json = ?, fill_later = ?, note = ? WHERE id = ?',
+      [
+        meal.at.utc,
+        meal.at.tz,
+        meal.description,
+        JSON.stringify(meal.allergens),
+        meal.barcode,
+        JSON.stringify(meal.source),
+        meal.fillLater ? 1 : 0,
+        meal.note,
+        meal.id,
+      ],
+    );
+    await this.db.run('DELETE FROM meal_ingredient WHERE meal_id = ?', [meal.id]);
+    for (const [i, name] of meal.ingredients.entries()) {
+      await this.db.run('INSERT INTO meal_ingredient (meal_id, position, name) VALUES (?, ?, ?)', [meal.id, i, name]);
+    }
+  }
+
+  private async updateSkinEntry(e: SkinEntry) {
+    await this.db.run(
+      `UPDATE skin_entry SET ts_utc = ?, tz = ?, area_id = ?, severity = ?, itch = ?, pain = ?, dryness = ?,
+         scaling = ?, cracks = ?, size_mm = ?, note = ? WHERE id = ?`,
+      [
+        e.at.utc,
+        e.at.tz,
+        e.areaId,
+        e.scores.severity,
+        e.scores.itch,
+        e.scores.pain,
+        e.scores.dryness,
+        e.scores.scaling,
+        +e.cracks,
+        e.sizeMm,
+        e.note,
+        e.id,
+      ],
+    );
+  }
+
+  async addRecord<K extends RecordKind>(kind: K, record: Records[K][number]) {
+    if (kind === 'meals') await this.db.transaction(() => this.insertMeal(record as Meal, false));
+    else if (kind === 'skinEntries') await this.insertEntry(record as SkinEntry, false);
+    else await this.insertExtra(kind as ExtraKind, record as Records[ExtraKind][number], false);
+  }
+
+  async putRecord<K extends RecordKind>(kind: K, record: Records[K][number]) {
+    if (kind === 'meals') {
+      const meal = record as Meal;
+      // A meal has child rows (its ingredients), so a replace is an update, never a delete and insert: reactions point at it.
+      await this.db.transaction(async () => ((await this.exists('meal', meal.id)) ? this.updateMeal(meal) : this.insertMeal(meal, false)));
+    } else if (kind === 'skinEntries') {
+      const e = record as SkinEntry;
+      await this.db.transaction(async () =>
+        (await this.exists('skin_entry', e.id)) ? this.updateSkinEntry(e) : this.insertEntry(e, false),
+      );
+    } else await this.upsertExtra(kind as ExtraKind, record as Records[ExtraKind][number]);
+  }
+
+  async listRecords<K extends RecordKind>(kind: K, range?: DateRange): Promise<Records[K]> {
+    return (await this.read(kind, whereClause(range))) as Records[K];
+  }
+
+  async getRecord<K extends RecordKind>(kind: K, id: string): Promise<Records[K][number] | null> {
+    const [found] = await this.read(kind, whereClause(undefined, id));
+    return (found as Records[K][number] | undefined) ?? null;
   }
 
   async upsertArea(area: SkinArea) {
@@ -274,80 +363,6 @@ export class SqliteRepo implements StorageRepository {
       sensitiveDefault: !!r.sensitive_default,
       nameOverride: r.name_override,
     }));
-  }
-
-  async addSkinEntry(entry: SkinEntry) {
-    await this.insertEntry(entry, false);
-  }
-
-  async listSkinEntries(range?: DateRange): Promise<SkinEntry[]> {
-    const { sql, params } = rangeClause(range);
-    const rows = await this.db.all<EntryRow>(`SELECT * FROM skin_entry ${sql} ORDER BY ts_utc DESC, id ASC`, params);
-    return rows.map((r) => ({
-      id: r.id,
-      at: { utc: r.ts_utc, tz: r.tz },
-      areaId: r.area_id,
-      scores: {
-        severity: r.severity,
-        itch: r.itch,
-        pain: r.pain,
-        dryness: r.dryness,
-        scaling: r.scaling,
-      },
-      cracks: r.cracks === 1,
-      sizeMm: r.size_mm,
-      note: r.note,
-    }));
-  }
-
-  async putMeal(meal: Meal) {
-    await this.db.transaction(async () => {
-      const [row] = await this.db.all<{ n: number }>('SELECT COUNT(*) AS n FROM meal WHERE id = ?', [meal.id]);
-      if (!row?.n) throw new Error('unknown meal');
-      await this.db.run(
-        'UPDATE meal SET ts_utc = ?, tz = ?, description = ?, allergens_json = ?, barcode = ?, source_json = ?, fill_later = ?, note = ? WHERE id = ?',
-        [
-          meal.at.utc,
-          meal.at.tz,
-          meal.description,
-          JSON.stringify(meal.allergens),
-          meal.barcode,
-          JSON.stringify(meal.source),
-          meal.fillLater ? 1 : 0,
-          meal.note,
-          meal.id,
-        ],
-      );
-      await this.db.run('DELETE FROM meal_ingredient WHERE meal_id = ?', [meal.id]);
-      for (const [i, name] of meal.ingredients.entries()) {
-        await this.db.run('INSERT INTO meal_ingredient (meal_id, position, name) VALUES (?, ?, ?)', [meal.id, i, name]);
-      }
-    });
-  }
-
-  async putSkinEntry(e: SkinEntry) {
-    await this.db.transaction(async () => {
-      const [row] = await this.db.all<{ n: number }>('SELECT COUNT(*) AS n FROM skin_entry WHERE id = ?', [e.id]);
-      if (!row?.n) throw new Error('unknown entry');
-      await this.db.run(
-        `UPDATE skin_entry SET ts_utc = ?, tz = ?, area_id = ?, severity = ?, itch = ?, pain = ?, dryness = ?,
-           scaling = ?, cracks = ?, size_mm = ?, note = ? WHERE id = ?`,
-        [
-          e.at.utc,
-          e.at.tz,
-          e.areaId,
-          e.scores.severity,
-          e.scores.itch,
-          e.scores.pain,
-          e.scores.dryness,
-          e.scores.scaling,
-          +e.cracks,
-          e.sizeMm,
-          e.note,
-          e.id,
-        ],
-      );
-    });
   }
 
   /** Table and kind of every record collection, in delete order. */
@@ -429,9 +444,9 @@ export class SqliteRepo implements StorageRepository {
 
   async snapshot(range?: DateRange): Promise<Snapshot> {
     const snap = {
-      meals: await this.listMeals(range),
+      meals: await this.listRecords('meals', range),
       skinAreas: await this.listAreas(),
-      skinEntries: await this.listSkinEntries(range),
+      skinEntries: await this.listRecords('skinEntries', range),
     } as Snapshot;
     for (const kind of LIST_KINDS) Object.assign(snap, { [kind]: await this.listItems(kind) });
     for (const kind of EXTRA_KINDS) Object.assign(snap, { [kind]: await this.listRecords(kind, range) });

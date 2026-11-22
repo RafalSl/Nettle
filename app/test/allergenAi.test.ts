@@ -69,7 +69,7 @@ describe('AI allergen suggestion (IN-10, LL-9)', () => {
     expect(seen).toEqual(['claude-sonnet-5-5']);
     expect(llm.requests[0]!.images).toBeUndefined();
     expect(llm.requests[0]!.user).toContain('["Butter","flour"]');
-    expect(await repo.listMeals()).toEqual([]);
+    expect(await repo.listRecords('meals')).toEqual([]);
   });
 
   it('IN-10 answers are saved per ingredient: a name asked before is not sent again, and a full hit makes no call', async () => {

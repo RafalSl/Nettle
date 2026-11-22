@@ -56,7 +56,7 @@ describe('meal name estimate (IN-19)', () => {
     expect(out.provenance).toMatchObject({ model: 'fake-model', promptVersion: NAME_PROMPT_VERSION });
     expect(llm.requests[0]!.images).toBeUndefined();
     expect(llm.requests[0]!.user).toContain('Synthetic pancakes');
-    expect(await repo.listMeals()).toEqual([]);
+    expect(await repo.listRecords('meals')).toEqual([]);
   });
 
   it('IN-19 a vague name comes back as an empty list with the note, not an error', async () => {

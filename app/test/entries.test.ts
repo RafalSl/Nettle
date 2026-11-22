@@ -53,14 +53,14 @@ describe.each(repos)('editing and deleting one entry (%s)', (_name, make) => {
       at: d('2026-01-15T07:30:00.000Z'),
     });
     expect(edited).toMatchObject({ id: meal.id, description: 'Synthetic porridge', ingredients: ['b', 'c'], allergens: ['milk'] });
-    expect(await repo.listMeals()).toEqual([edited]);
+    expect(await repo.listRecords('meals')).toEqual([edited]);
   });
 
   it('EN-1 an edit without a new time keeps the original stamp, and validation still applies', async () => {
     const { repo, deps } = await setup();
     const meal = await logMeal(deps, { description: 'Synthetic oats', ingredients: [], at: d('2026-01-15T08:00:00.000Z') });
     await editMeal(deps, meal.id, { description: 'Synthetic oats 2', ingredients: [] });
-    expect((await repo.listMeals())[0]?.at).toEqual(meal.at);
+    expect((await repo.listRecords('meals'))[0]?.at).toEqual(meal.at);
     expect(await code(editMeal(deps, meal.id, { description: '  ', ingredients: [] }))).toBe('empty_description');
     expect(await code(editMeal(deps, 'nope', { description: 'x', ingredients: [] }))).toBe('unknown_entry');
   });
@@ -99,7 +99,7 @@ describe.each(repos)('editing and deleting one entry (%s)', (_name, make) => {
     await archiveSkinArea(deps, 'area-neck');
     const edited = await editSkinEntry(deps, entry.id, { areaId: 'area-chin', scores: { ...scores, itch: 9 } });
     expect(edited.scores.itch).toBe(9);
-    expect((await repo.listSkinEntries())[0]?.id).toBe(entry.id);
+    expect((await repo.listRecords('skinEntries'))[0]?.id).toBe(entry.id);
     expect(await code(editSkinEntry(deps, entry.id, { areaId: 'area-neck', scores }))).toBe('area_archived');
     expect(await code(editSkinEntry(deps, entry.id, { areaId: 'area-sternum', scores: { ...scores, pain: 11 } }))).toBe('invalid_score');
   });
@@ -139,7 +139,7 @@ describe.each(repos)('editing and deleting one entry (%s)', (_name, make) => {
     expect(await flarePeriods(deps)).toHaveLength(1);
     await deleteEntry(deps, 'skinEntries', high.id);
     expect(await flarePeriods(deps)).toEqual([]);
-    expect(await repo.listSkinEntries()).toHaveLength(1);
+    expect(await repo.listRecords('skinEntries')).toHaveLength(1);
   });
 
   it('EN-1, EX-13 deleting a meal also deletes its reactions and tombstones all of them', async () => {
@@ -149,7 +149,7 @@ describe.each(repos)('editing and deleting one entry (%s)', (_name, make) => {
     const r = await logReaction(deps, { mealId: meal.id, symptoms: ['hives'], at: d('2026-01-15T09:00:00.000Z') });
     expect(await previewEntryDelete(deps, 'meals', meal.id)).toEqual({ reactions: 1 });
     expect(await deleteEntry(deps, 'meals', meal.id)).toEqual({ reactions: 1 });
-    expect((await repo.listMeals()).map((m) => m.id)).toEqual([other.id]);
+    expect((await repo.listRecords('meals')).map((m) => m.id)).toEqual([other.id]);
     expect(await repo.listRecords('reactions')).toEqual([]);
     const tombs = await repo.listTombstones();
     expect(tombs.map((t) => [t.id, t.kind]).sort()).toEqual(

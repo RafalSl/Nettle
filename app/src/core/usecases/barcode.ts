@@ -30,7 +30,7 @@ export interface HistoryProduct {
 /** IN-2: the latest meal or drink made from this barcode, or null. */
 export async function findInHistory(deps: Deps, barcode: string): Promise<HistoryProduct | null> {
   const hits: (HistoryProduct & { kind: 'meal' | 'drink' })[] = [];
-  for (const m of await deps.repo.listMeals()) {
+  for (const m of await deps.repo.listRecords('meals')) {
     if (m.barcode === barcode)
       hits.push({ kind: 'meal', name: m.description, ingredients: m.ingredients, allergens: m.allergens, source: m.source, at: m.at.utc });
   }

@@ -268,7 +268,7 @@ describe.each(repos)('prepare and run an analysis (%s)', (_name, make) => {
 
   it('LL-6 photos are off by default; chosen photos are sent with labels, sensitive ones only when chosen', async () => {
     const { deps, llm } = await diary(make);
-    const entry = (await deps.repo.listSkinEntries())[0]!;
+    const entry = (await deps.repo.listRecords('skinEntries'))[0]!;
     const intimate = await logSkinEntry(deps, { areaId: 'area-penis', scores, at: new Date('2026-01-12T22:00:00.000Z') });
     const normal = await addPhoto(deps, {
       entryKind: 'skinEntry',
@@ -406,6 +406,6 @@ describe.each(repos)('stored analyses travel with the export (%s)', (_name, make
     const counts = await deleteData(deps, { kinds: DELETE_GROUPS.ai });
     expect(counts.analyses).toBe(1);
     expect(await listAnalyses(deps)).toEqual([]);
-    expect((await repo.listMeals()).length).toBeGreaterThan(0);
+    expect((await repo.listRecords('meals')).length).toBeGreaterThan(0);
   });
 });

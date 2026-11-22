@@ -82,7 +82,7 @@ describe.each(repos)('preferences (%s)', (_name, make) => {
   it('IN-14 saving a meal that is not a favorite stores no preferences', async () => {
     const deps = makeDeps(await make());
     await logMeal(deps, { description: 'Synthetic oats', ingredients: [] });
-    await refreshFavoriteMeal(deps, { ...(await deps.repo.listMeals())[0]! });
+    await refreshFavoriteMeal(deps, { ...(await deps.repo.listRecords('meals'))[0]! });
     expect(await deps.repo.getPreferences()).toBeNull();
   });
 

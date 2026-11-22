@@ -69,7 +69,7 @@ describe('label scan (IN-15, LL-13)', () => {
     expect(seen).toEqual(['claude-sonnet-5-5']);
     expect(out.provenance).toMatchObject({ promptVersion: LABEL_PROMPT_VERSION });
     expect(llm.requests[0]!.images).toEqual([image]);
-    expect(await repo.listMeals()).toEqual([]);
+    expect(await repo.listRecords('meals')).toEqual([]);
   });
 
   it('SE-2 without a key nothing is sent', async () => {

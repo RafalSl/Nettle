@@ -11,7 +11,7 @@ describe('sqlite migrations', () => {
   it('NF-3 reopening an already migrated database keeps data and does not re-run migrations', async () => {
     const db = createNodeSqliteDb();
     const first = await SqliteRepo.open(db);
-    await first.addMeal({
+    await first.addRecord('meals', {
       id: 'm1',
       at: { utc: '2026-01-01T08:00:00.000Z', tz: 'UTC' },
       description: 'Synthetic',
@@ -22,7 +22,7 @@ describe('sqlite migrations', () => {
       note: null,
     });
     const second = await SqliteRepo.open(db);
-    expect(await second.listMeals()).toHaveLength(1);
+    expect(await second.listRecords('meals')).toHaveLength(1);
     const [v] = await db.all<{ user_version: number }>('PRAGMA user_version');
     expect(v?.user_version).toBe(MIGRATIONS.length);
   });
@@ -45,7 +45,7 @@ describe('sqlite migrations', () => {
     await db.run(`INSERT INTO skin_area (id, name, predefined, archived, sensitive_default) VALUES ('area-chin', 'Chin', 1, 0, 0)`);
     await db.run(`INSERT INTO meal (id, ts_utc, tz, description) VALUES ('m1', '2026-01-01T08:00:00.000Z', 'UTC', 'Synthetic')`);
     const repo = await SqliteRepo.open(db);
-    expect(await repo.listMeals()).toHaveLength(1);
+    expect(await repo.listRecords('meals')).toHaveLength(1);
     expect((await repo.listAreas()).find((a) => a.id === 'area-chin')?.nameOverride).toBeNull();
     expect((await repo.listAreas()).find((a) => a.id === 'area-chin')?.kind).toBe('skin'); // SK-10 default
     const [v] = await db.all<{ user_version: number }>('PRAGMA user_version');
@@ -92,7 +92,7 @@ describe('sqlite migrations', () => {
     }
     await db.run(`INSERT INTO meal (id, ts_utc, tz, description) VALUES ('m1', '2026-01-01T08:00:00.000Z', 'UTC', 'Synthetic')`);
     const repo = await SqliteRepo.open(db);
-    expect((await repo.listMeals())[0]?.allergens).toEqual([]);
+    expect((await repo.listRecords('meals'))[0]?.allergens).toEqual([]);
     expect(await repo.listRecords('reactions')).toEqual([]);
   });
 
@@ -154,7 +154,7 @@ describe('sqlite migrations', () => {
     await db.run(`INSERT INTO drink (id, ts_utc, tz, name, amount_ml) VALUES ('d1', '2026-01-01T00:00:00.000Z', 'UTC', 'tea', 200)`);
     const repo = await SqliteRepo.open(db);
     const typed = { kind: 'typed', edited: false, llm: null, aiTags: false };
-    expect(await repo.listMeals()).toMatchObject([{ id: 'm1', barcode: null, source: typed }]);
+    expect(await repo.listRecords('meals')).toMatchObject([{ id: 'm1', barcode: null, source: typed }]);
     expect(await repo.listRecords('drinks')).toMatchObject([{ id: 'd1', barcode: null, source: typed }]);
   });
 
@@ -175,7 +175,7 @@ describe('sqlite migrations', () => {
     const repo = await SqliteRepo.open(db);
     const old = (await repo.listAreas()).find((a) => a.id === 'area-intimate');
     expect(old).toMatchObject({ name: 'Intimate area', predefined: false, archived: true });
-    expect((await repo.listSkinEntries()).map((e) => e.areaId)).toEqual(['area-intimate']); // history stays
+    expect((await repo.listRecords('skinEntries')).map((e) => e.areaId)).toEqual(['area-intimate']); // history stays
     expect((await repo.listAreas()).filter((a) => a.predefined).map((a) => a.id)).toEqual(
       expect.arrayContaining(['area-penis', 'area-perineum-groin', 'area-between-buttocks']),
     );

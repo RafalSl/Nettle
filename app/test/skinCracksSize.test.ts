@@ -58,7 +58,7 @@ describe('cracks and size on a skin entry (SK-3)', () => {
     const edited = await editSkinEntry(deps, e.id, { areaId: 'area-chin', scores, cracks: false, sizeMm: null });
     expect(edited).toMatchObject({ id: e.id, cracks: false, sizeMm: null });
     expect(await code(editSkinEntry(deps, e.id, { areaId: 'area-chin', scores, sizeMm: 0 }))).toBe('invalid_size');
-    expect((await deps.repo.listSkinEntries())[0]).toMatchObject({ cracks: false, sizeMm: null });
+    expect((await deps.repo.listRecords('skinEntries'))[0]).toMatchObject({ cracks: false, sizeMm: null });
   });
 
   it('SK-3 SQLite enforces the flag and the size range in the database, and an old entry gets the defaults', async () => {
@@ -84,7 +84,7 @@ describe('cracks and size on a skin entry (SK-3)', () => {
     await expect(insert('b', 0, 0)).rejects.toThrow();
     await expect(insert('c', 0, 501)).rejects.toThrow();
     await insert('d', 1, 500);
-    expect((await repo.listSkinEntries()).find((e) => e.id === 'd')).toMatchObject({ cracks: true, sizeMm: 500 });
+    expect((await repo.listRecords('skinEntries')).find((e) => e.id === 'd')).toMatchObject({ cracks: true, sizeMm: 500 });
   });
 
   it('SK-3, EX-1 data.json carries cracks and size_mm, and an import refuses a missing flag or a size out of range', async () => {

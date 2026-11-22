@@ -195,7 +195,7 @@ describe.each(repos)('export and import with photos (%s)', (_name, make) => {
     const parsed = await previewImport(target, broken);
     expect(await code(applyImport(target, parsed, { mode: 'replace', parts: BOTH }))).toBe('import_missing_photo');
     expect(store(target).files.size).toBe(0);
-    expect(await target.repo.listSkinEntries()).toEqual([]);
+    expect(await target.repo.listRecords('skinEntries')).toEqual([]);
   });
 
   it('EX-10 photos of entries that are not in the app are refused unless the entries are imported too', async () => {
@@ -229,7 +229,7 @@ describe.each(repos)('export and import with photos (%s)', (_name, make) => {
     const { deps } = await seeded(make);
     const big = new Uint8Array(200_000).map((_, i) => (i * 7919) % 251);
     await deps.photos.saveBytes(big); // not referenced; just check the writer through a direct export below
-    const entry = (await deps.repo.listSkinEntries())[0]!;
+    const entry = (await deps.repo.listRecords('skinEntries'))[0]!;
     const key = await deps.photos.saveBytes(big);
     await deps.repo.addRecord('photos', {
       id: 'big',

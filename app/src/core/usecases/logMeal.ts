@@ -1,9 +1,9 @@
 import { NettleError } from '../model/errors';
 import { assertSource, typedSource, type IngredientSource } from '../model/source';
-import { makeStamp } from '../model/time';
 import { ALLERGENS, type Allergen, type Meal } from '../model/types';
 import type { Deps } from './deps';
 import { refreshFavoriteMeal } from './preferences';
+import { entryId, entryStamp, saveEntry, type EntryWrite } from './write';
 
 export interface LogMealInput {
   description: string;
@@ -22,7 +22,7 @@ export interface LogMealInput {
 }
 
 /** IN-1: free-text description plus editable ingredient list. */
-export async function logMeal(deps: Deps, input: LogMealInput): Promise<Meal> {
+export async function logMeal(deps: Deps, input: LogMealInput, w: EntryWrite = {}): Promise<Meal> {
   const description = input.description.trim();
   if (!description) throw new NettleError('empty_description');
   const allergens = [...new Set(input.allergens ?? [])];
@@ -30,8 +30,8 @@ export async function logMeal(deps: Deps, input: LogMealInput): Promise<Meal> {
   const source = input.source ?? typedSource();
   assertSource(source);
   const meal: Meal = {
-    id: deps.ids(),
-    at: makeStamp(deps.clock, input.at),
+    id: entryId(deps, w),
+    at: entryStamp(deps, input.at, w),
     description,
     ingredients: input.ingredients.map((i) => i.trim()).filter(Boolean),
     allergens,
@@ -40,7 +40,7 @@ export async function logMeal(deps: Deps, input: LogMealInput): Promise<Meal> {
     ...(input.fillLater ? { fillLater: true as const } : {}),
     note: input.note?.trim() || null,
   };
-  await deps.repo.addMeal(meal);
+  await saveEntry(deps, 'meals', meal, w);
   await refreshFavoriteMeal(deps, meal);
   return meal;
 }

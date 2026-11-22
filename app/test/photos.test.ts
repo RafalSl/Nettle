@@ -133,7 +133,7 @@ describe.each(repos)('photos (%s)', (_name, make) => {
     await addPhoto(deps, { entryKind: 'skinEntry', entryId: e.id, sourceUri: 'x' });
     await deleteData(deps, { kinds: ['photos'] });
     expect(store.files.size).toBe(0);
-    expect(await repo.listSkinEntries()).toHaveLength(1);
+    expect(await repo.listRecords('skinEntries')).toHaveLength(1);
   });
 });
 

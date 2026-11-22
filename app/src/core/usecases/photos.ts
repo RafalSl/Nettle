@@ -15,10 +15,7 @@ export interface AddPhotoInput {
 
 /** The area an entry belongs to, or an error when the entry does not exist. */
 async function areaOfEntry(deps: Deps, kind: PhotoEntryKind, entryId: string) {
-  const entry =
-    kind === 'skinEntry'
-      ? (await deps.repo.listSkinEntries()).find((e) => e.id === entryId)
-      : (await deps.repo.listRecords('nailEntries')).find((e) => e.id === entryId);
+  const entry = await deps.repo.getRecord(kind === 'skinEntry' ? 'skinEntries' : 'nailEntries', entryId);
   if (!entry) throw new NettleError('unknown_entry', entryId);
   const area = (await deps.repo.listAreas()).find((a) => a.id === entry.areaId);
   if (!area) throw new NettleError('unknown_area', entry.areaId);
@@ -79,7 +76,7 @@ export async function attachPhotos(
 }
 
 async function findPhoto(deps: Deps, id: string): Promise<Photo> {
-  const photo = (await deps.repo.listRecords('photos')).find((p) => p.id === id);
+  const photo = await deps.repo.getRecord('photos', id);
   if (!photo) throw new NettleError('unknown_photo', id);
   return photo;
 }

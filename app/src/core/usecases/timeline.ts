@@ -49,7 +49,7 @@ export async function areaTimeline(deps: Deps, areaId: string): Promise<Timeline
     days.set(day, cur);
     return cur;
   };
-  for (const entry of await deps.repo.listSkinEntries()) {
+  for (const entry of await deps.repo.listRecords('skinEntries')) {
     if (entry.areaId === areaId)
       dayOf(localDay(entry.at.utc, entry.at.tz, deps.dayStart.get())).entries.push({
         kind: 'skin',
@@ -68,7 +68,7 @@ export async function areaTimeline(deps: Deps, areaId: string): Promise<Timeline
       });
   }
   const threshold = flareRule(await getPreferences(deps));
-  const skin = (await deps.repo.listSkinEntries()).filter((e) => e.areaId === areaId);
+  const skin = (await deps.repo.listRecords('skinEntries')).filter((e) => e.areaId === areaId);
   for (const f of deriveFlares(skin, threshold)) {
     dayOf(localDay(f.start.utc, f.start.tz, deps.dayStart.get())).flares.push({ id: `start-${f.start.utc}`, kind: 'start', at: f.start });
     if (f.end) dayOf(localDay(f.end.utc, f.end.tz, deps.dayStart.get())).flares.push({ id: `end-${f.end.utc}`, kind: 'end', at: f.end });
@@ -117,7 +117,7 @@ export interface AreaSummary {
 /** SK-8: the areas that have skin or nail entries, the most recently logged first (archived ones too: history stays). */
 export async function areasWithEntries(deps: Deps): Promise<AreaSummary[]> {
   const byArea = new Map<string, { entries: number; last: string; lastDay: LocalDay }>();
-  for (const e of [...(await deps.repo.listSkinEntries()), ...(await deps.repo.listRecords('nailEntries'))]) {
+  for (const e of [...(await deps.repo.listRecords('skinEntries')), ...(await deps.repo.listRecords('nailEntries'))]) {
     const cur = byArea.get(e.areaId) ?? { entries: 0, last: '', lastDay: '' };
     cur.entries++;
     if (e.at.utc > cur.last) Object.assign(cur, { last: e.at.utc, lastDay: localDay(e.at.utc, e.at.tz, deps.dayStart.get()) });
@@ -182,7 +182,7 @@ export interface AreaOverviewRow {
  */
 export async function areaOverview(deps: Deps): Promise<{ skin: AreaOverviewRow[]; nails: AreaOverviewRow[] }> {
   const start = deps.dayStart.get();
-  const skin = await deps.repo.listSkinEntries();
+  const skin = await deps.repo.listRecords('skinEntries');
   const nails = await deps.repo.listRecords('nailEntries');
   const flaring = new Set((await openFlare(deps))?.areaIds ?? []);
   const row = (area: SkinArea): AreaOverviewRow & { last: string } => {

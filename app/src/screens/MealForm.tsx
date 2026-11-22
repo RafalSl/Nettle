@@ -125,7 +125,7 @@ export default function MealScreen() {
 
   const load = useCallback(() => {
     (async () => {
-      setMeals(mealHistory(await deps.repo.listMeals()));
+      setMeals(mealHistory(await deps.repo.listRecords('meals')));
       setPrefs(await getPreferences(deps));
       setNames(await ingredientNameHistory(deps));
     })().catch((e) => showError(e));

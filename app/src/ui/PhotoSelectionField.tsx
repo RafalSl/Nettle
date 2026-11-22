@@ -35,7 +35,7 @@ export function PhotoSelectionField({ onChange }: { onChange: (selection: PhotoS
       setAreas(all);
       // EX-7: single photos are listed by area and time, sensitive ones marked.
       const areaOf = new Map(
-        [...(await deps.repo.listSkinEntries()), ...(await deps.repo.listRecords('nailEntries'))].map((e) => [
+        [...(await deps.repo.listRecords('skinEntries')), ...(await deps.repo.listRecords('nailEntries'))].map((e) => [
           e.id,
           all.find((a) => a.id === e.areaId),
         ]),

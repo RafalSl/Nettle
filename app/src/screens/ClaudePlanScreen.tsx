@@ -44,7 +44,7 @@ export default function ClaudePlanScreen() {
       (async () => {
         const areas = new Map((await deps.repo.listAreas()).map((a) => [a.id, a]));
         const entryArea = new Map(
-          [...(await deps.repo.listSkinEntries()), ...(await deps.repo.listRecords('nailEntries'))].map((e) => [e.id, e.areaId]),
+          [...(await deps.repo.listRecords('skinEntries')), ...(await deps.repo.listRecords('nailEntries'))].map((e) => [e.id, e.areaId]),
         );
         setPhotos(
           (await deps.repo.listRecords('photos'))

@@ -105,7 +105,7 @@ describe('the mark "fill later with AI" (IN-20)', () => {
       const target = makeDeps(await make());
       const parsed = await previewImport(target, zip);
       await applyImport(target, parsed, { mode: 'replace', parts: { records: true, settings: true } });
-      expect((await target.repo.listMeals()).filter((m) => m.fillLater).map((m) => m.id)).toEqual([meal.id]);
+      expect((await target.repo.listRecords('meals')).filter((m) => m.fillLater).map((m) => m.id)).toEqual([meal.id]);
       expect((await target.repo.listRecords('drinks'))[0]).toMatchObject({ id: drink.id, fillLater: true });
     }
   });
@@ -216,7 +216,11 @@ describe('the result (LL-15)', () => {
   it('LL-15, LL-7, IN-20 an import stores the analysis and the summary as manual objects, queues the fills, and changes no entry', async () => {
     const { repo, deps, pancakes, smoothie } = await diary();
     const { packId } = await buildPack(deps, sel);
-    const before = JSON.stringify([await repo.listMeals(), await repo.listRecords('drinks'), await repo.listSkinEntries()]);
+    const before = JSON.stringify([
+      await repo.listRecords('meals'),
+      await repo.listRecords('drinks'),
+      await repo.listRecords('skinEntries'),
+    ]);
     const bytes = resultBytes(
       answer(packId, {
         fills: [
@@ -268,7 +272,9 @@ describe('the result (LL-15)', () => {
       ['meal', pancakes.id, ['wheat flour', 'milk', 'egg']],
       ['drink', smoothie.id, ['banana', 'milk']],
     ]);
-    expect(JSON.stringify([await repo.listMeals(), await repo.listRecords('drinks'), await repo.listSkinEntries()])).toBe(before); // no entry changed
+    expect(JSON.stringify([await repo.listRecords('meals'), await repo.listRecords('drinks'), await repo.listRecords('skinEntries')])).toBe(
+      before,
+    ); // no entry changed
   });
 
   it('LL-15 a result for another pack, for entries outside its pack, or an empty one is refused; one imported before is skipped', async () => {
@@ -387,7 +393,7 @@ describe('suggestions to review (IN-20)', () => {
       fillLater: true,
     }); // what the edit screen saves first
     await completeSuggestion(deps, suggestion.id, { edited: true, aiTags: true });
-    const [meal] = (await deps.repo.listMeals()).filter((m) => m.id === pancakes.id);
+    const [meal] = (await deps.repo.listRecords('meals')).filter((m) => m.id === pancakes.id);
     expect(meal).toMatchObject({
       ingredients: ['wheat flour', 'milk'],
       allergens: ['gluten'],
@@ -411,7 +417,7 @@ describe('suggestions to review (IN-20)', () => {
       fillLater: false,
     });
     await completeSuggestion(deps, suggestion.id, { edited: false, aiTags: false });
-    const meal = (await deps.repo.listMeals()).find((m) => m.id === pancakes.id)!;
+    const meal = (await deps.repo.listRecords('meals')).find((m) => m.id === pancakes.id)!;
     expect(meal.source).toMatchObject({ kind: 'name_estimate', llm: { model: 'Synthetic Model 9', manual: true } });
     expect(meal.fillLater).toBeUndefined();
     expect(await listSuggestions(deps)).toEqual([]);
@@ -425,12 +431,12 @@ describe('suggestions to review (IN-20)', () => {
       aiTags: false,
       llm: { model: 'm', at: '2026-01-03T00:00:00.000Z', promptVersion: 'label-1' },
     };
-    await deps.repo.putMeal({ ...(await deps.repo.listMeals()).find((m) => m.id === pancakes.id)!, source: scanned });
+    await deps.repo.putRecord('meals', { ...(await deps.repo.listRecords('meals')).find((m) => m.id === pancakes.id)!, source: scanned });
     await completeSuggestion(deps, suggestion.id, { edited: false, aiTags: false });
-    expect((await deps.repo.listMeals()).find((m) => m.id === pancakes.id)).toMatchObject({ source: scanned });
+    expect((await deps.repo.listRecords('meals')).find((m) => m.id === pancakes.id)).toMatchObject({ source: scanned });
     // a manual name estimate and an imported analysis round-trip through data.json
-    await deps.repo.putMeal({
-      ...(await deps.repo.listMeals()).find((m) => m.id === pancakes.id)!,
+    await deps.repo.putRecord('meals', {
+      ...(await deps.repo.listRecords('meals')).find((m) => m.id === pancakes.id)!,
       source: {
         kind: 'name_estimate',
         edited: false,
@@ -446,7 +452,7 @@ describe('suggestions to review (IN-20)', () => {
     const zip = await exportBundle(deps, { parts: { records: true, settings: true } });
     const target = makeDeps(new MemoryRepo());
     await applyImport(target, await previewImport(target, zip), { mode: 'replace', parts: { records: true, settings: true } });
-    expect((await target.repo.listMeals()).find((m) => m.id === pancakes.id)!.source.llm).toMatchObject({ manual: true });
+    expect((await target.repo.listRecords('meals')).find((m) => m.id === pancakes.id)!.source.llm).toMatchObject({ manual: true });
     expect((await target.repo.listRecords('analyses'))[0]).toMatchObject({ manual: true });
     expect((await target.repo.listRecords('reportSummaries'))[0]).toMatchObject({ manual: true });
   });

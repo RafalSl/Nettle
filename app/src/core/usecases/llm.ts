@@ -175,7 +175,7 @@ export async function knownIngredientNames(deps: Deps): Promise<string[]> {
 export async function ingredientNameHistory(deps: Deps, limit = 500): Promise<string[]> {
   const counts = new Map<string, { name: string; n: number }>();
   const lists = [
-    ...(await deps.repo.listMeals()).map((m) => m.ingredients),
+    ...(await deps.repo.listRecords('meals')).map((m) => m.ingredients),
     ...(await deps.repo.listRecords('drinks')).map((d) => d.ingredients),
   ];
   for (const list of lists) {

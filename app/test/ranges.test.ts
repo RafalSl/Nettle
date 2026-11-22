@@ -74,7 +74,7 @@ describe.each(repos)('export by local days (%s)', (_name, make) => {
       ['last', '2026-01-15T22:59:59.000Z'],
       ['after', '2026-01-15T23:00:00.000Z'],
     ] as const) {
-      await repo.addMeal(syntheticMeal(id, utc));
+      await repo.addRecord('meals', syntheticMeal(id, utc));
     }
     const zip = await exportBundle(makeDeps(repo), { days: { from: '2026-01-15', to: '2026-01-15' } });
     const json = JSON.parse(strFromU8(unzipSync(zip)['data.json']!));
@@ -107,7 +107,7 @@ describe('fast skin logging (SK-3, NF-2)', () => {
     await logSkinEntry(deps, { areaId: 'area-chin', scores, note: 'flaky', at: new Date('2026-01-10T08:00:00.000Z') });
     const again = await repeatSkinEntry(deps, 'area-chin', new Date('2026-01-11T08:00:00.000Z'));
     expect(again).toMatchObject({ areaId: 'area-chin', scores, note: null, at: { utc: '2026-01-11T08:00:00.000Z' } });
-    expect(await repo.listSkinEntries()).toHaveLength(2);
+    expect(await repo.listRecords('skinEntries')).toHaveLength(2);
   });
 
   it('SK-3 "no change" needs a previous entry and a loggable area', async () => {

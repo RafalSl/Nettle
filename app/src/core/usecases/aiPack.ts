@@ -90,7 +90,7 @@ export interface MarkedEntry extends MarkedRef {
 
 /** IN-20: the meals and drinks marked "fill later with AI", whatever their date, oldest first. */
 export async function markedEntries(deps: Deps): Promise<MarkedEntry[]> {
-  const meals = (await deps.repo.listMeals())
+  const meals = (await deps.repo.listRecords('meals'))
     .filter((m) => m.fillLater)
     .map((m): MarkedEntry => ({ kind: 'meal', id: m.id, text: m.description, entry: m }));
   const drinks = (await deps.repo.listRecords('drinks'))
@@ -412,8 +412,7 @@ export async function importResult(deps: Deps, bytes: Uint8Array): Promise<Resul
 /* ---------- suggestions (IN-20) ---------- */
 
 async function entryOf(deps: Deps, s: Pick<Suggestion, 'kind' | 'entryId'>): Promise<Meal | Drink | null> {
-  const list: (Meal | Drink)[] = s.kind === 'meal' ? await deps.repo.listMeals() : await deps.repo.listRecords('drinks');
-  return list.find((e) => e.id === s.entryId) ?? null;
+  return s.kind === 'meal' ? deps.repo.getRecord('meals', s.entryId) : deps.repo.getRecord('drinks', s.entryId);
 }
 
 /**
@@ -465,7 +464,7 @@ export async function completeSuggestion(deps: Deps, id: string, opts: { edited:
         }
       : { ...entry.source, aiTags: entry.source.aiTags || opts.aiTags };
   const { fillLater: _mark, ...rest } = entry;
-  if (s.kind === 'meal') await deps.repo.putMeal({ ...(rest as Meal), source });
+  if (s.kind === 'meal') await deps.repo.putRecord('meals', { ...(rest as Meal), source });
   else await deps.repo.putRecord('drinks', { ...(rest as Drink), source });
   await dismissSuggestion(deps, id);
 }

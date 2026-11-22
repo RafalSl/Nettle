@@ -160,7 +160,7 @@ describe('looking a product up (IN-2, IN-8)', () => {
     const deps = depsWith(new FakeBarcode({ '5900000000008': info }));
     const result = await lookupProduct(deps, ' 5900 0000 00008 ');
     expect(result).toEqual({ barcode: '5900000000008', inStore: false, product: info, incomplete: false, history: null });
-    expect(await deps.repo.listMeals()).toEqual([]);
+    expect(await deps.repo.listRecords('meals')).toEqual([]);
   });
 
   it('IN-2 a barcode the diary already knows is answered from the latest entry, without asking the source', async () => {

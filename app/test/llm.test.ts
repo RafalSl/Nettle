@@ -157,7 +157,7 @@ describe('ingredient estimate (LL-1, IN-3)', () => {
     const deps = makeDeps(repo, undefined, llm);
     await saveApiKey(deps, 'synthetic-test-key');
     expect(await code(estimateIngredients(deps, { image, language: 'en' }))).toBe('llm_rate_limited');
-    expect(await repo.listMeals()).toEqual([]);
+    expect(await repo.listRecords('meals')).toEqual([]);
   });
 
   it('LL-8 malformed answers are llm_bad_response', () => {

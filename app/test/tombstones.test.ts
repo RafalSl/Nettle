@@ -35,9 +35,9 @@ describe.each(repos)('tombstones in export and import (%s)', (_name, make) => {
     return { a, b, meal, reaction, entry, photo, backup };
   }
   const ids = async (repo: StorageRepository) => ({
-    meals: (await repo.listMeals()).map((m) => m.id),
+    meals: (await repo.listRecords('meals')).map((m) => m.id),
     reactions: (await repo.listRecords('reactions')).map((r) => r.id),
-    skin: (await repo.listSkinEntries()).map((e) => e.id),
+    skin: (await repo.listRecords('skinEntries')).map((e) => e.id),
     photos: (await repo.listRecords('photos')).map((p) => p.id),
   });
 

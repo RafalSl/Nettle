@@ -36,10 +36,10 @@ async function seeded(make: () => Promise<StorageRepository>) {
   await repo.upsertArea(custom);
   const chin = (await repo.listAreas()).find((a) => a.id === 'area-chin')!;
   await repo.upsertArea({ ...chin, nameOverride: 'Synthetic jaw' }); // SK-2 override must survive the round trip
-  await repo.addMeal({ ...syntheticMeal('m1', '2026-01-10T08:00:00.000Z'), allergens: ['milk', 'gluten'] }); // IN-10 survives the round trip
-  await repo.addMeal(syntheticMeal('m2', '2026-01-12T08:00:00.000Z', []));
-  await repo.addSkinEntry({ ...syntheticEntry('e1', '2026-01-10T09:00:00.000Z', 'area-penis'), cracks: true, sizeMm: 12 }); // SK-3 survives the round trip
-  await repo.addSkinEntry(syntheticEntry('e2', '2026-01-12T09:00:00.000Z', 'a-custom'));
+  await repo.addRecord('meals', { ...syntheticMeal('m1', '2026-01-10T08:00:00.000Z'), allergens: ['milk', 'gluten'] }); // IN-10 survives the round trip
+  await repo.addRecord('meals', syntheticMeal('m2', '2026-01-12T08:00:00.000Z', []));
+  await repo.addRecord('skinEntries', { ...syntheticEntry('e1', '2026-01-10T09:00:00.000Z', 'area-penis'), cracks: true, sizeMm: 12 }); // SK-3 survives the round trip
+  await repo.addRecord('skinEntries', syntheticEntry('e2', '2026-01-12T09:00:00.000Z', 'a-custom'));
   await repo.upsertArea({ ...custom, id: 'a-nail', kind: 'nail', name: 'Synthetic left thumb' });
   await repo.addRecord('nailEntries', syntheticNailEntry('n1', '2026-01-12T10:00:00.000Z', 'a-nail'));
   await repo.upsertItem('dailyItems', {
@@ -476,7 +476,7 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
     const source = await seeded(make);
     const zip = await exportBundle(makeDeps(source));
     const target = await make();
-    await target.addMeal(syntheticMeal('m1', '2026-01-10T08:00:00.000Z', ['kept']));
+    await target.addRecord('meals', syntheticMeal('m1', '2026-01-10T08:00:00.000Z', ['kept']));
     const deps = makeDeps(target);
 
     const parsed = await previewImport(deps, zip);
@@ -521,8 +521,8 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
       treatments: 1,
     });
     await applyImport(deps, parsed, { mode: 'merge', parts: BOTH });
-    expect((await target.listMeals()).find((m) => m.id === 'm1')?.ingredients).toEqual(['kept']);
-    expect(await target.listMeals()).toHaveLength(2);
+    expect((await target.listRecords('meals')).find((m) => m.id === 'm1')?.ingredients).toEqual(['kept']);
+    expect(await target.listRecords('meals')).toHaveLength(2);
   });
 
   it('EX-1 a range export leaves out a reaction whose meal is outside the range', async () => {
@@ -551,7 +551,7 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
     const parsed = await previewImport(deps, zip);
     expect(parsed.preview.has).toEqual(RECORDS);
     await applyImport(deps, parsed, { mode: 'replace', parts: BOTH });
-    expect((await target.listSkinEntries()).map((e) => e.id).sort()).toEqual(['e1', 'e2']);
+    expect((await target.listRecords('skinEntries')).map((e) => e.id).sort()).toEqual(['e1', 'e2']);
     expect((await target.listAreas()).find((a) => a.id === 'area-chin')?.nameOverride).toBeNull();
   });
 
@@ -559,11 +559,11 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
     const source = await seeded(make);
     const zip = await exportBundle(makeDeps(source), { parts: RECORDS });
     const target = await make();
-    await target.addMeal(syntheticMeal('keep', '2026-01-01T08:00:00.000Z'));
+    await target.addRecord('meals', syntheticMeal('keep', '2026-01-01T08:00:00.000Z'));
     const deps = makeDeps(target);
     const parsed = await previewImport(deps, zip);
     expect(await code(applyImport(deps, parsed, { mode: 'replace', parts: BOTH }))).toBe('import_unknown_area');
-    expect((await target.listMeals()).map((m) => m.id)).toEqual(['keep']);
+    expect((await target.listRecords('meals')).map((m) => m.id)).toEqual(['keep']);
   });
 
   it('EX-1 settings-only export carries all areas and no records', async () => {
@@ -581,25 +581,25 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
     const target = await make();
     const deps = makeDeps(target);
     await applyImport(deps, await previewImport(deps, zip), { mode: 'replace', parts: SETTINGS });
-    expect(await target.listMeals()).toEqual([]);
+    expect(await target.listRecords('meals')).toEqual([]);
     expect((await target.listAreas()).find((a) => a.id === 'area-chin')?.nameOverride).toBe('Synthetic jaw');
 
     await applyImport(deps, await previewImport(deps, zip), { mode: 'replace', parts: RECORDS });
-    expect(await target.listMeals()).toHaveLength(2);
+    expect(await target.listRecords('meals')).toHaveLength(2);
   });
 
   it('EX-10 replace records discards what was there and leaves settings alone', async () => {
     const source = await seeded(make);
     const zip = await exportBundle(makeDeps(source));
     const target = await make();
-    await target.addMeal(syntheticMeal('only-here', '2026-01-01T08:00:00.000Z'));
+    await target.addRecord('meals', syntheticMeal('only-here', '2026-01-01T08:00:00.000Z'));
     for (const a of (await source.listAreas()).filter((a) => a.id.startsWith('a-'))) await target.upsertArea(a);
     for (const k of ['dailyItems', 'treatments'] as const) {
       for (const i of await source.listItems(k)) await target.upsertItem(k, i);
     }
     const deps = makeDeps(target);
     await applyImport(deps, await previewImport(deps, zip), { mode: 'replace', parts: RECORDS });
-    expect((await target.listMeals()).map((m) => m.id).sort()).toEqual(['m1', 'm2']);
+    expect((await target.listRecords('meals')).map((m) => m.id).sort()).toEqual(['m1', 'm2']);
     expect((await target.listAreas()).find((a) => a.id === 'area-chin')?.nameOverride).toBeNull();
   });
 
@@ -690,7 +690,7 @@ describe('import validation', () => {
     const target = new MemoryRepo();
     const d = makeDeps(target);
     await code(previewImport(d, zipOf({ schema_version: 1, records: { meals: [], skin_entries: 5 } })));
-    expect(await target.listMeals()).toEqual([]);
+    expect(await target.listRecords('meals')).toEqual([]);
   });
 });
 
@@ -716,7 +716,7 @@ describe.each(repos)('password-protected export/import (%s)', (_name, make) => {
     const deps = makeDeps(target);
     expect(await code(previewImport(deps, zip))).toBe('import_password_required');
     expect(await code(previewImport(deps, zip, 'synthetic-wrong-pass'))).toBe('import_wrong_password');
-    expect(await target.listMeals()).toEqual([]);
+    expect(await target.listRecords('meals')).toEqual([]);
   });
 
   it('EX-6 a too-short password is rejected before anything is exported', async () => {

@@ -3,6 +3,7 @@ import { localDay, makeStamp } from '../model/time';
 import type { CheckIn, ListItem, LocalDay, StoolEntry } from '../model/types';
 import type { Deps } from './deps';
 import { isScore } from './skin';
+import { entryId, entryStamp, saveEntry, type EntryWrite } from './write';
 
 export interface CheckInInput {
   /** The moment the record is about (editable); decides its local day. Defaults to the existing entry's time, else now. */
@@ -23,7 +24,7 @@ export async function getCheckIn(deps: Deps, day: LocalDay): Promise<CheckIn | n
 /** SK-11: saving a day with no meals asks first, because the analysis discounts days without intake (LL-4). */
 async function assertDayHasMeals(deps: Deps, day: LocalDay, confirmed?: boolean): Promise<void> {
   if (confirmed) return;
-  const any = (await deps.repo.listMeals()).some((m) => localDay(m.at.utc, m.at.tz, deps.dayStart.get()) === day);
+  const any = (await deps.repo.listRecords('meals')).some((m) => localDay(m.at.utc, m.at.tz, deps.dayStart.get()) === day);
   if (!any) throw new NettleError('day_has_no_meals', day);
 }
 
@@ -74,16 +75,16 @@ export function askableValues(items: ListItem[], previous: CheckIn): Record<stri
 }
 
 /** SK-7: Bristol type 1-7, timestamped, several per day. */
-export async function logStool(deps: Deps, input: { bristol: number; at?: Date; note?: string }): Promise<StoolEntry> {
+export async function logStool(deps: Deps, input: { bristol: number; at?: Date; note?: string }, w: EntryWrite = {}): Promise<StoolEntry> {
   if (!Number.isInteger(input.bristol) || input.bristol < 1 || input.bristol > 7) {
     throw new NettleError('invalid_stool_type', String(input.bristol));
   }
   const entry: StoolEntry = {
-    id: deps.ids(),
-    at: makeStamp(deps.clock, input.at),
+    id: entryId(deps, w),
+    at: entryStamp(deps, input.at, w),
     bristol: input.bristol,
     note: input.note?.trim() || null,
   };
-  await deps.repo.addRecord('stoolEntries', entry);
+  await saveEntry(deps, 'stoolEntries', entry, w);
   return entry;
 }

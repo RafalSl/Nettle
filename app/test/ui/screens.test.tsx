@@ -356,7 +356,7 @@ describe('screen flows (NF-2, NF-3)', () => {
     await flush();
     await press(tree, en.skin.noChange);
     await flush();
-    const entries = await deps.repo.listSkinEntries();
+    const entries = await deps.repo.listRecords('skinEntries');
     expect(entries).toHaveLength(2);
     expect(entries.map((e) => e.scores)).toEqual([scores, scores]);
   });
@@ -547,7 +547,7 @@ describe('screen flows (NF-2, NF-3)', () => {
     expect(sheets[0]!.title).toBe(en.delete.confirmTitle);
     expect(fileShare.saveAndShare).toHaveBeenCalledTimes(1); // the export ran before anything was deleted
     expect(sheets[2]!.title).toBe(en.delete.secondTitle);
-    expect(await deps.repo.listMeals()).toEqual([]);
+    expect(await deps.repo.listRecords('meals')).toEqual([]);
     sheet.mockRestore();
   });
 
@@ -565,7 +565,7 @@ describe('screen flows (NF-2, NF-3)', () => {
       await press(tree, en.delete.groups.food);
       await press(tree, en.delete.button);
       await flush();
-      expect(await deps.repo.listMeals()).toHaveLength(1);
+      expect(await deps.repo.listRecords('meals')).toHaveLength(1);
       sheet.mockRestore();
     }
   });
@@ -912,7 +912,7 @@ describe('Today (UX-2, UX-5, EN-1, UX-9)', () => {
     expect(options.destructiveButtonIndex).toEqual([1]);
     expect(options.cancelButtonIndex).toBe(2);
     expect(options.message).toContain('1 reactions');
-    expect(await deps.repo.listMeals()).toEqual([]);
+    expect(await deps.repo.listRecords('meals')).toEqual([]);
     expect(await deps.repo.listRecords('reactions')).toEqual([]);
     expect((await deps.repo.listTombstones()).map((x) => x.id).sort()).toHaveLength(2);
     expect(hasText(tree, 'Synthetic oats')).toBe(false);
@@ -930,7 +930,7 @@ describe('Today (UX-2, UX-5, EN-1, UX-9)', () => {
         .props.accessibilityLabel,
     );
     await flush();
-    expect(await deps.repo.listMeals()).toHaveLength(1);
+    expect(await deps.repo.listRecords('meals')).toHaveLength(1);
     expect(await deps.repo.listTombstones()).toEqual([]);
   });
 
@@ -1029,7 +1029,7 @@ describe('Edit entry (EN-1, UX-3)', () => {
     );
     await flush();
     expect(mockRouter.push).toHaveBeenLastCalledWith({ pathname: '/form/edit', params: { kind: 'meals', id: meal.id } });
-    expect(await deps.repo.listMeals()).toHaveLength(1); // Edit deleted nothing
+    expect(await deps.repo.listRecords('meals')).toHaveLength(1); // Edit deleted nothing
   });
 
   it('EN-1, UX-3 editing a meal keeps its id, Save is disabled while the description is empty, and saving closes the form', async () => {
@@ -1047,7 +1047,7 @@ describe('Edit entry (EN-1, UX-3)', () => {
     await type(tree, en.meal.description, 'Synthetic porridge');
     await header('headerRight', en.common.save);
     await flush();
-    expect(await deps.repo.listMeals()).toMatchObject([{ id: meal.id, description: 'Synthetic porridge' }]);
+    expect(await deps.repo.listRecords('meals')).toMatchObject([{ id: meal.id, description: 'Synthetic porridge' }]);
     expect(mockRouter.back).toHaveBeenCalledTimes(1);
   });
 
@@ -1101,8 +1101,8 @@ describe('Edit entry (EN-1, UX-3)', () => {
       await flush();
       expect(mockRouter.back).toHaveBeenCalledTimes(1);
       const all = [
-        ...(await deps.repo.listMeals()),
-        ...(await deps.repo.listSkinEntries()),
+        ...(await deps.repo.listRecords('meals')),
+        ...(await deps.repo.listRecords('skinEntries')),
         ...(await deps.repo.listRecords('nailEntries')),
         ...(await deps.repo.listRecords('checkIns')),
         ...(await deps.repo.listRecords('stoolEntries')),
@@ -1171,14 +1171,14 @@ describe('Data and backup (EX-14, EX-10, EX-13)', () => {
     expect(hasText(tree, en.data.tombstoneSkipped.replace('{{n}}', '1'))).toBe(true);
     await press(tree, en.data.merge);
     await flush();
-    expect(await phoneB.repo.listMeals()).toEqual([]); // skipped
+    expect(await phoneB.repo.listRecords('meals')).toEqual([]); // skipped
 
     await press(tree, en.data.importButton);
     await flush();
     await toggle(tree, en.data.tombstoneRestore);
     await press(tree, en.data.merge);
     await flush();
-    expect((await phoneB.repo.listMeals()).map((m) => m.id)).toEqual([meal.id]);
+    expect((await phoneB.repo.listRecords('meals')).map((m) => m.id)).toEqual([meal.id]);
     expect(await phoneB.repo.listTombstones()).toEqual([]);
   });
 });
@@ -1211,7 +1211,7 @@ describe('Replace on import offers an export first (UX-6, UX-9)', () => {
       [en.delete.exportFirst, en.data.replace, en.common.cancel],
     ]);
     expect(fileShare.saveAndShare).toHaveBeenCalledTimes(1);
-    expect((await target.repo.listMeals()).map((m) => m.description)).toEqual(['Synthetic from file']);
+    expect((await target.repo.listRecords('meals')).map((m) => m.description)).toEqual(['Synthetic from file']);
   });
 });
 
@@ -1586,10 +1586,10 @@ describe('Meal form (IN-1, IN-7, IN-10, IN-14, UX-3)', () => {
     await type(tree, en.meal.description, 'Synthetic breakfast');
     await press(tree, en.meal.continue);
     await type(tree, en.meal.ingredientPlaceholder, 'Synthetic oats');
-    expect(await deps.repo.listMeals()).toEqual([]);
+    expect(await deps.repo.listRecords('meals')).toEqual([]);
     await header('headerRight', en.common.save);
     await flush();
-    expect(await deps.repo.listMeals()).toMatchObject([
+    expect(await deps.repo.listRecords('meals')).toMatchObject([
       { description: 'Synthetic breakfast', ingredients: ['Synthetic oats'], allergens: [] },
     ]);
     expect(mockRouter.back).toHaveBeenCalledTimes(1);
@@ -1613,7 +1613,7 @@ describe('Meal form (IN-1, IN-7, IN-10, IN-14, UX-3)', () => {
     expect(milk.props.accessibilityState.selected).toBe(true); // from the diary's history: visible and pre-selected
     await header('headerRight', en.common.save);
     await flush();
-    const saved = await deps.repo.listMeals();
+    const saved = await deps.repo.listRecords('meals');
     expect(saved).toHaveLength(3);
     const fresh = saved.find((m) => m.id !== old.id && m.description === 'Synthetic porridge')!;
     expect(fresh).toMatchObject({ ingredients: ['oats', 'milk'], allergens: ['milk'] });
@@ -1692,7 +1692,7 @@ describe('Meal form (IN-1, IN-7, IN-10, IN-14, UX-3)', () => {
     await press(tree, en.meal.continue);
     await header('headerRight', en.common.save);
     await flush();
-    const [saved] = await deps.repo.listMeals();
+    const [saved] = await deps.repo.listRecords('meals');
     expect(localDay(saved!.at.utc, saved!.at.tz)).toBe('2026-01-10');
   });
 });
@@ -1806,7 +1806,7 @@ describe('Photos in the Skin and Nails forms (SK-4)', () => {
     await press(tree, en.photos.library);
     await press(tree, `${en.photos.drop} 2`);
     await save();
-    const [entry] = await deps.repo.listSkinEntries();
+    const [entry] = await deps.repo.listRecords('skinEntries');
     const photos = await deps.repo.listRecords('photos');
     expect(photos).toMatchObject([{ entryKind: 'skinEntry', entryId: entry!.id }]);
     expect(photos[0]!.at.utc).toBe(entry!.at.utc);
@@ -1823,7 +1823,7 @@ describe('Photos in the Skin and Nails forms (SK-4)', () => {
     await press(tree, en.photos.library);
     await press(tree, en.skin.noChange);
     await flush();
-    const entries = await deps.repo.listSkinEntries();
+    const entries = await deps.repo.listRecords('skinEntries');
     expect(entries).toHaveLength(2);
     expect(entries[0]!.scores).toEqual(scores);
     expect(await deps.repo.listRecords('photos')).toMatchObject([{ entryKind: 'skinEntry', entryId: entries[0]!.id }]);
@@ -1836,7 +1836,7 @@ describe('Photos in the Skin and Nails forms (SK-4)', () => {
     await flush();
     await press(tree, en.photos.library);
     expect(await deps.repo.listRecords('photos')).toEqual([]);
-    expect(await deps.repo.listSkinEntries()).toEqual([]);
+    expect(await deps.repo.listRecords('skinEntries')).toEqual([]);
   });
 
   it('SK-4 the Nails form attaches photos to the nail entry too', async () => {
@@ -2459,7 +2459,7 @@ describe('Inline photo estimate (IN-3, LL-12, IN-10)', () => {
     await press(tree, en.meal.estimateCancel);
     expect(hasText(tree, en.meal.estimating)).toBe(false);
     expect(hasText(tree, en.meal.estimateSlow)).toBe(false);
-    expect(await deps.repo.listMeals()).toEqual([]);
+    expect(await deps.repo.listRecords('meals')).toEqual([]);
   });
 
   it('IN-3, LL-5 with "prefer my ingredient names" on, the confirmation says how many names go with the photo', async () => {
@@ -2508,7 +2508,7 @@ describe('Inline photo estimate (IN-3, LL-12, IN-10)', () => {
     await press(tree, en.meal.scanSelectTags);
     expect(selected(en.allergens.milk)).toBe(true);
     expect(selected(en.allergens.gluten)).toBe(true);
-    expect(await deps.repo.listMeals()).toEqual([]);
+    expect(await deps.repo.listRecords('meals')).toEqual([]);
     // asking again for the same ingredient needs no confirmation and no call
     alert.mockClear();
     await press(tree, en.meal.aiAllergens);
@@ -2630,9 +2630,9 @@ describe('Inline photo estimate (IN-3, LL-12, IN-10)', () => {
     const selected = (label: string) =>
       tree.root.findAll((n) => n.props.accessibilityLabel === label && n.props.accessibilityState)[0]!.props.accessibilityState.selected;
     expect(selected(en.allergens.milk)).toBe(false); // IN-10: the estimate never selects a tag
-    expect(await deps.repo.listMeals()).toEqual([]); // nothing saved until Save
+    expect(await deps.repo.listRecords('meals')).toEqual([]); // nothing saved until Save
     await saveMeal();
-    expect((await deps.repo.listMeals())[0]).toMatchObject({
+    expect((await deps.repo.listRecords('meals'))[0]).toMatchObject({
       description: 'Synthetic   pancakes with jam', // the entry keeps what was typed; only the sent text is tidied
       allergens: [],
       source: { kind: 'name_estimate', edited: false, llm: { model: 'fake-model', promptVersion: 'name-1' }, aiTags: false },
@@ -2664,7 +2664,7 @@ describe('Inline photo estimate (IN-3, LL-12, IN-10)', () => {
     });
     await flush();
     expect(hasText(tree, en.errors.llm_rate_limited)).toBe(true);
-    expect(await deps.repo.listMeals()).toEqual([]);
+    expect(await deps.repo.listRecords('meals')).toEqual([]);
     alert.mockClear();
     await press(tree, en.meal.estimateRetry); // no second confirmation: the same text was already confirmed
     await flush();
@@ -2775,7 +2775,7 @@ describe('Inline photo estimate (IN-3, LL-12, IN-10)', () => {
     await press(tree, en.meal.scanSelectTags);
     expect(selected(en.allergens.milk)).toBe(true);
     expect(selected(en.allergens.peanuts)).toBe(true);
-    expect(await deps.repo.listMeals()).toEqual([]); // nothing saved by the scan
+    expect(await deps.repo.listRecords('meals')).toEqual([]); // nothing saved by the scan
     let rendered!: ReactTestRenderer;
     await act(async () => {
       rendered = lastTree();
@@ -2786,7 +2786,7 @@ describe('Inline photo estimate (IN-3, LL-12, IN-10)', () => {
         .props.onPress();
     });
     await flush();
-    const saved = (await deps.repo.listMeals())[0]!;
+    const saved = (await deps.repo.listRecords('meals'))[0]!;
     expect(saved).toMatchObject({
       ingredients: ['mleko (3,2%)', 'cukier'],
       allergens: ['milk', 'peanuts'],
@@ -2820,7 +2820,7 @@ describe('Inline photo estimate (IN-3, LL-12, IN-10)', () => {
     await flush();
     await press(tree, en.meal.estimateDismiss);
     expect(hasText(tree, en.meal.estimateAddAll)).toBe(false);
-    expect(await deps.repo.listMeals()).toEqual([]);
+    expect(await deps.repo.listRecords('meals')).toEqual([]);
   });
 
   it('IN-15, IN-4 a drink can be filled from a label scan too', async () => {
@@ -2891,7 +2891,7 @@ describe('Inline photo estimate (IN-3, LL-12, IN-10)', () => {
         .props.onPress();
     });
     await flush();
-    expect(await deps.repo.listMeals()).toMatchObject([{ barcode: '5900000000008', source: { kind: 'label_scan' } }]);
+    expect(await deps.repo.listRecords('meals')).toMatchObject([{ barcode: '5900000000008', source: { kind: 'label_scan' } }]);
     const { lookupProduct } = require('@/core/usecases/barcode');
     expect(await lookupProduct(deps, '5900000000008')).toMatchObject({
       history: { name: 'Synthetic yoghurt', source: { kind: 'label_scan' } },
@@ -2917,7 +2917,7 @@ describe('Inline photo estimate (IN-3, LL-12, IN-10)', () => {
       await save.props.onPress();
     });
     expect(aborted).toBe(true);
-    expect(await deps.repo.listMeals()).toMatchObject([{ description: 'Synthetic dinner', ingredients: ['my own rice'] }]);
+    expect(await deps.repo.listRecords('meals')).toMatchObject([{ description: 'Synthetic dinner', ingredients: ['my own rice'] }]);
   });
 });
 
@@ -2972,12 +2972,12 @@ describe('Barcode in the meal form (IN-2, IN-8, IN-9, IN-10)', () => {
         .selected;
     expect(milk()).toBe(false);
     expect(hasText(tree, en.meal.scanTagsHint.replace('{{list}}', en.allergens.milk))).toBe(true);
-    expect(await deps.repo.listMeals()).toEqual([]); // nothing saved by a lookup
+    expect(await deps.repo.listRecords('meals')).toEqual([]); // nothing saved by a lookup
     await press(tree, en.meal.scanSelectTags);
     expect(milk()).toBe(true);
     await header();
     await flush();
-    expect(await deps.repo.listMeals()).toMatchObject([
+    expect(await deps.repo.listRecords('meals')).toMatchObject([
       {
         description: 'Synthetic yoghurt',
         ingredients: ['milk', 'cultures'],
@@ -3033,7 +3033,7 @@ describe('Barcode in the meal form (IN-2, IN-8, IN-9, IN-10)', () => {
     await press(again.tree, 'Synthetic yoghurt');
     await header();
     await flush();
-    expect(await deps.repo.listMeals()).toMatchObject([
+    expect(await deps.repo.listRecords('meals')).toMatchObject([
       { description: 'Synthetic yoghurt', barcode: '5900000000008', source: { kind: 'open_food_facts', edited: true } },
     ]);
   });
@@ -3047,7 +3047,7 @@ describe('Barcode in the meal form (IN-2, IN-8, IN-9, IN-10)', () => {
     await type(tree, en.meal.ingredientPlaceholder, 'oat milk');
     await header();
     await flush();
-    expect((await deps.repo.listMeals())[0]!.source).toEqual({ kind: 'open_food_facts', edited: true, llm: null, aiTags: false });
+    expect((await deps.repo.listRecords('meals'))[0]!.source).toEqual({ kind: 'open_food_facts', edited: true, llm: null, aiTags: false });
   });
 
   it('IN-2 a code the diary already knows is filled from history without asking the database', async () => {
@@ -3324,7 +3324,7 @@ describe('Area timeline (SK-8)', () => {
     sheet.mockImplementation((_o, cb) => cb(1)); // Delete
     await act(async () => entries()[0]!.props.onPress());
     await flush();
-    expect((await deps.repo.listSkinEntries()).map((e) => e.id)).toEqual([keep.id]);
+    expect((await deps.repo.listRecords('skinEntries')).map((e) => e.id)).toEqual([keep.id]);
     expect((await deps.repo.listTombstones()).map((x) => x.id)).toContain(doomed.id);
     expect(hasText(tree, '2026-01-12')).toBe(false); // the timeline reloaded
     expect(entries()).toHaveLength(1);
@@ -3633,11 +3633,11 @@ describe('Create forms on the unified modal (UX-3)', () => {
     await press(tree, `${en.common.increase} ${en.skin.scores.itch}`);
     await headerSave();
     await flush();
-    expect(await deps.repo.listSkinEntries()).toMatchObject([{ areaId: 'area-behind-ears', scores: { itch: 1 } }]);
+    expect(await deps.repo.listRecords('skinEntries')).toMatchObject([{ areaId: 'area-behind-ears', scores: { itch: 1 } }]);
     mockRouter.back.mockClear();
     await press(tree, en.skin.noChangeAll);
     await flush();
-    expect(await deps.repo.listSkinEntries()).toHaveLength(2); // only the area that had an entry
+    expect(await deps.repo.listRecords('skinEntries')).toHaveLength(2); // only the area that had an entry
     expect(mockRouter.back).toHaveBeenCalledTimes(1);
   });
 
@@ -3731,10 +3731,10 @@ describe('Cracks and size on a skin entry (SK-3, SK-8, EN-1)', () => {
     expect(hasText(tree, en.errors.invalid_size)).toBe(true);
     expect(hasText(tree, en.edit.missing.replace('{{what}}', en.skin.sizeMissing))).toBe(true);
     expect((await headerSave())?.disabled).toBe(true);
-    expect(await deps.repo.listSkinEntries()).toEqual([]); // even a forced press saves nothing: an invalid size is an error, not "no size"
+    expect(await deps.repo.listRecords('skinEntries')).toEqual([]); // even a forced press saves nothing: an invalid size is an error, not "no size"
     await type(tree, en.skin.sizeMm, '14');
     await headerSave();
-    expect(await deps.repo.listSkinEntries()).toMatchObject([{ cracks: true, sizeMm: 14 }]);
+    expect(await deps.repo.listRecords('skinEntries')).toMatchObject([{ cracks: true, sizeMm: 14 }]);
     expect(mockRouter.back).toHaveBeenCalledTimes(1);
   });
 
@@ -3743,7 +3743,7 @@ describe('Cracks and size on a skin entry (SK-3, SK-8, EN-1)', () => {
     await mount(() => require('@/app/form/skin'), deps);
     await flush();
     await headerSave();
-    expect(await deps.repo.listSkinEntries()).toMatchObject([{ cracks: false, sizeMm: null }]);
+    expect(await deps.repo.listRecords('skinEntries')).toMatchObject([{ cracks: false, sizeMm: null }]);
   });
 
   it('SK-3 an area with an earlier size opens Details by itself, prefills both, and "No change" carries them', async () => {
@@ -3757,7 +3757,7 @@ describe('Cracks and size on a skin entry (SK-3, SK-8, EN-1)', () => {
     expect(sizeInput(tree)[0]!.props.value).toBe('22'); // Details opened without a tap
     await press(tree, en.skin.noChange);
     await flush();
-    expect(await deps.repo.listSkinEntries()).toMatchObject([
+    expect(await deps.repo.listRecords('skinEntries')).toMatchObject([
       { cracks: true, sizeMm: 22 },
       { cracks: true, sizeMm: 22 },
     ]);
@@ -3784,7 +3784,7 @@ describe('Cracks and size on a skin entry (SK-3, SK-8, EN-1)', () => {
     await act(async () => switchOf(tree, en.skin.cracks).props.onValueChange(false));
     await type(tree, en.skin.sizeMm, '');
     await headerSave();
-    expect(await deps.repo.listSkinEntries()).toMatchObject([{ id: entry.id, cracks: false, sizeMm: null }]);
+    expect(await deps.repo.listRecords('skinEntries')).toMatchObject([{ id: entry.id, cracks: false, sizeMm: null }]);
   });
 
   it('SK-8, UX-2 the timeline line and the day log row say cracks and size, and the chart gets a Size choice only where a size is logged', async () => {
@@ -4081,7 +4081,9 @@ describe('Fill later with AI and My Claude plan (IN-20, LL-15)', () => {
     await act(async () => switchOf(meal.tree, en.fillLater.title).props.onValueChange(true));
     expect(hasText(meal.tree, en.fillLater.hint)).toBe(true);
     await headerSave();
-    expect(await deps.repo.listMeals()).toMatchObject([{ description: 'Synthetic pancakes with jam', ingredients: [], fillLater: true }]);
+    expect(await deps.repo.listRecords('meals')).toMatchObject([
+      { description: 'Synthetic pancakes with jam', ingredients: [], fillLater: true },
+    ]);
     mockScreen.options = undefined;
     const drink = await mount(() => require('@/app/form/drink'), deps);
     await type(drink.tree, en.more.drinkName, 'Synthetic smoothie');
@@ -4108,7 +4110,7 @@ describe('Fill later with AI and My Claude plan (IN-20, LL-15)', () => {
     expect(switchOf(tree, en.fillLater.title).props.value).toBe(true);
     await act(async () => switchOf(tree, en.fillLater.title).props.onValueChange(false));
     await headerSave();
-    expect((await deps.repo.listMeals())[0]!.fillLater).toBeUndefined();
+    expect((await deps.repo.listRecords('meals'))[0]!.fillLater).toBeUndefined();
   });
 
   it('IN-20 Today counts the suggestions and opens the list, whose rows open the entry with the suggestion', async () => {
@@ -4174,12 +4176,12 @@ describe('Fill later with AI and My Claude plan (IN-20, LL-15)', () => {
     await press(tree, en.meal.scanSelectTags);
     expect(selected(en.allergens.gluten)).toBe(true);
     await headerSave();
-    expect((await deps.repo.listMeals())[0]).toMatchObject({
+    expect((await deps.repo.listRecords('meals'))[0]).toMatchObject({
       ingredients: ['my own jam', 'wheat flour', 'milk'],
       allergens: ['gluten', 'milk'],
       source: { kind: 'name_estimate', edited: false, aiTags: true, llm: { model: 'Synthetic Model 9', manual: true } },
     });
-    expect((await deps.repo.listMeals())[0]!.fillLater).toBeUndefined();
+    expect((await deps.repo.listRecords('meals'))[0]!.fillLater).toBeUndefined();
     expect(await listSuggestions(deps)).toEqual([]);
   });
 
@@ -4206,7 +4208,7 @@ describe('Fill later with AI and My Claude plan (IN-20, LL-15)', () => {
     await press(a.tree, en.fillLater.dismiss);
     expect(hasText(a.tree, en.fillLater.panelIntro.replace('{{model}}', 'Synthetic Model 9'))).toBe(false);
     expect((await listSuggestions(deps)).map((x) => x.id)).toEqual([second!.id]);
-    expect((await deps.repo.listMeals())[0]!.fillLater).toBe(true);
+    expect((await deps.repo.listRecords('meals'))[0]!.fillLater).toBe(true);
     mockParams.current = { kind: 'drinks', id: drink.id, suggestion: second!.id };
     mockScreen.options = undefined;
     const b = await mount(() => require('@/app/form/edit'), deps);

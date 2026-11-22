@@ -33,12 +33,12 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
     it('SK-3 stores the cracks flag and the size of a skin entry, and an edit changes them', async () => {
       const plain = syntheticEntry('e1', '2026-01-15T08:00:00.000Z');
       const patch = { ...syntheticEntry('e2', '2026-01-15T09:00:00.000Z'), cracks: true, sizeMm: 25 };
-      await repo.addSkinEntry(plain);
-      await repo.addSkinEntry(patch);
-      expect(await repo.listSkinEntries()).toEqual([patch, plain]); // newest first; defaults are no cracks and no size
-      await repo.putSkinEntry({ ...patch, cracks: false, sizeMm: null });
-      await repo.putSkinEntry({ ...plain, sizeMm: 3 });
-      expect(await repo.listSkinEntries()).toEqual([
+      await repo.addRecord('skinEntries', plain);
+      await repo.addRecord('skinEntries', patch);
+      expect(await repo.listRecords('skinEntries')).toEqual([patch, plain]); // newest first; defaults are no cracks and no size
+      await repo.putRecord('skinEntries', { ...patch, cracks: false, sizeMm: null });
+      await repo.putRecord('skinEntries', { ...plain, sizeMm: 3 });
+      expect(await repo.listRecords('skinEntries')).toEqual([
         { ...patch, cracks: false, sizeMm: null },
         { ...plain, sizeMm: 3 },
       ]);
@@ -46,27 +46,27 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
 
     it('IN-1 stores a meal with ordered ingredients and UTC + timezone', async () => {
       const meal = syntheticMeal('m1', '2026-01-15T08:00:00.000Z', ['b', 'a', 'c']);
-      await repo.addMeal(meal);
-      expect(await repo.listMeals()).toEqual([meal]);
+      await repo.addRecord('meals', meal);
+      expect(await repo.listRecords('meals')).toEqual([meal]);
     });
 
     it('IN-1 lists meals newest first and filters by inclusive range', async () => {
-      await repo.addMeal(syntheticMeal('m1', '2026-01-10T08:00:00.000Z'));
-      await repo.addMeal(syntheticMeal('m2', '2026-01-12T08:00:00.000Z'));
-      await repo.addMeal(syntheticMeal('m3', '2026-01-14T08:00:00.000Z'));
-      expect((await repo.listMeals()).map((m) => m.id)).toEqual(['m3', 'm2', 'm1']);
-      const ranged = await repo.listMeals({ from: '2026-01-12T08:00:00.000Z', to: '2026-01-14T08:00:00.000Z' });
+      await repo.addRecord('meals', syntheticMeal('m1', '2026-01-10T08:00:00.000Z'));
+      await repo.addRecord('meals', syntheticMeal('m2', '2026-01-12T08:00:00.000Z'));
+      await repo.addRecord('meals', syntheticMeal('m3', '2026-01-14T08:00:00.000Z'));
+      expect((await repo.listRecords('meals')).map((m) => m.id)).toEqual(['m3', 'm2', 'm1']);
+      const ranged = await repo.listRecords('meals', { from: '2026-01-12T08:00:00.000Z', to: '2026-01-14T08:00:00.000Z' });
       expect(ranged.map((m) => m.id)).toEqual(['m3', 'm2']);
     });
 
     it('SK-3 stores separate 0-10 scores per area entry', async () => {
       const entry = syntheticEntry('e1', '2026-01-15T08:00:00.000Z', 'area-neck');
-      await repo.addSkinEntry(entry);
-      expect(await repo.listSkinEntries()).toEqual([entry]);
+      await repo.addRecord('skinEntries', entry);
+      expect(await repo.listRecords('skinEntries')).toEqual([entry]);
     });
 
     it('SK-3 rejects an entry for an unknown area', async () => {
-      await expect(repo.addSkinEntry(syntheticEntry('e1', '2026-01-15T08:00:00.000Z', 'nope'))).rejects.toThrow();
+      await expect(repo.addRecord('skinEntries', syntheticEntry('e1', '2026-01-15T08:00:00.000Z', 'nope'))).rejects.toThrow();
     });
 
     const nailArea = {
@@ -167,8 +167,8 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
 
     it('IN-10 stores allergen tags on a meal', async () => {
       const meal = { ...syntheticMeal('m1', '2026-01-15T08:00:00.000Z'), allergens: ['milk' as const, 'sesame' as const] };
-      await repo.addMeal(meal);
-      expect(await repo.listMeals()).toEqual([meal]);
+      await repo.addRecord('meals', meal);
+      expect(await repo.listRecords('meals')).toEqual([meal]);
     });
 
     it('IN-11 stores a treatment list and applications with several areas', async () => {
@@ -210,7 +210,7 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
     });
 
     it('IN-13 stores a reaction linked to its meal and refuses an unknown meal', async () => {
-      await repo.addMeal(syntheticMeal('m1', '2026-01-15T12:00:00.000Z'));
+      await repo.addRecord('meals', syntheticMeal('m1', '2026-01-15T12:00:00.000Z'));
       const r = {
         id: 'r1',
         at: { utc: '2026-01-15T13:00:00.000Z', tz: 'UTC' },
@@ -224,7 +224,7 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
     });
 
     it('EX-10 replace records wipes reactions together with their meals', async () => {
-      await repo.addMeal(syntheticMeal('m1', '2026-01-15T12:00:00.000Z'));
+      await repo.addRecord('meals', syntheticMeal('m1', '2026-01-15T12:00:00.000Z'));
       await repo.addRecord('reactions', {
         id: 'r1',
         at: { utc: '2026-01-15T13:00:00.000Z', tz: 'UTC' },
@@ -237,7 +237,7 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
         'replace',
       );
       expect(await repo.listRecords('reactions')).toEqual([]);
-      expect((await repo.listMeals()).map((m) => m.id)).toEqual(['m9']);
+      expect((await repo.listRecords('meals')).map((m) => m.id)).toEqual(['m9']);
     });
 
     it('EX-10 replace settings keeps a treatment that an application uses', async () => {
@@ -314,7 +314,7 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
     };
 
     it('EX-10 merge adds new rows and skips ids that already exist', async () => {
-      await repo.addMeal(syntheticMeal('m1', '2026-01-10T08:00:00.000Z', ['original']));
+      await repo.addRecord('meals', syntheticMeal('m1', '2026-01-10T08:00:00.000Z', ['original']));
       const payload = {
         records: {
           meals: [syntheticMeal('m1', '2026-01-10T08:00:00.000Z', ['changed', 'extra']), syntheticMeal('m2', '2026-01-11T08:00:00.000Z')],
@@ -325,15 +325,15 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
       };
       await repo.importData(payload, 'merge');
       await repo.importData(payload, 'merge'); // idempotent
-      const meals = await repo.listMeals();
+      const meals = await repo.listRecords('meals');
       expect(meals.map((m) => m.id)).toEqual(['m2', 'm1']);
       expect(meals.find((m) => m.id === 'm1')?.ingredients).toEqual(['original']);
-      expect(await repo.listSkinEntries()).toHaveLength(1);
+      expect(await repo.listRecords('skinEntries')).toHaveLength(1);
     });
 
     it('EX-10 merge leaves an existing meal without ingredients as it is', async () => {
-      await repo.addMeal(syntheticMeal('m1', '2026-01-10T08:00:00.000Z', []));
-      await repo.addMeal(syntheticMeal('m2', '2026-01-11T08:00:00.000Z', ['kept', 'order']));
+      await repo.addRecord('meals', syntheticMeal('m1', '2026-01-10T08:00:00.000Z', []));
+      await repo.addRecord('meals', syntheticMeal('m2', '2026-01-11T08:00:00.000Z', ['kept', 'order']));
       const payload = {
         records: {
           meals: [syntheticMeal('m1', '2026-01-10T08:00:00.000Z', ['from file']), syntheticMeal('m3', '2026-01-12T08:00:00.000Z', ['new'])],
@@ -343,34 +343,34 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
         settings: { skinAreas: await repo.listAreas(), ...noItems },
       };
       await repo.importData(payload, 'merge');
-      const byId = new Map((await repo.listMeals()).map((m) => [m.id, m.ingredients]));
+      const byId = new Map((await repo.listRecords('meals')).map((m) => [m.id, m.ingredients]));
       expect(byId.get('m1')).toEqual([]);
       expect(byId.get('m3')).toEqual(['new']);
-      const ranged = await repo.listMeals({ from: '2026-01-11T00:00:00.000Z', to: '2026-01-11T23:59:59.000Z' });
+      const ranged = await repo.listRecords('meals', { from: '2026-01-11T00:00:00.000Z', to: '2026-01-11T23:59:59.000Z' });
       expect(ranged.map((m) => [m.id, m.ingredients])).toEqual([['m2', ['kept', 'order']]]);
     });
 
     it('EX-10 replace records wipes meals and entries but leaves areas untouched', async () => {
       await repo.upsertArea(custom);
-      await repo.addMeal(syntheticMeal('old', '2026-01-01T08:00:00.000Z'));
-      await repo.addSkinEntry(syntheticEntry('old-e', '2026-01-01T09:00:00.000Z', 'a-custom'));
+      await repo.addRecord('meals', syntheticMeal('old', '2026-01-01T08:00:00.000Z'));
+      await repo.addRecord('skinEntries', syntheticEntry('old-e', '2026-01-01T09:00:00.000Z', 'a-custom'));
       await repo.importData(
         { records: { meals: [syntheticMeal('new', '2026-01-02T08:00:00.000Z')], skinEntries: [], ...noExtra } },
         'replace',
       );
-      expect((await repo.listMeals()).map((m) => m.id)).toEqual(['new']);
-      expect(await repo.listSkinEntries()).toEqual([]);
+      expect((await repo.listRecords('meals')).map((m) => m.id)).toEqual(['new']);
+      expect(await repo.listRecords('skinEntries')).toEqual([]);
       expect((await repo.listAreas()).some((a) => a.id === 'a-custom')).toBe(true);
     });
 
     it('EX-10 replace settings leaves records alone and overwrites areas by id', async () => {
-      await repo.addMeal(syntheticMeal('keep', '2026-01-01T08:00:00.000Z'));
+      await repo.addRecord('meals', syntheticMeal('keep', '2026-01-01T08:00:00.000Z'));
       const chin = (await repo.listAreas()).find((a) => a.id === 'area-chin')!;
       await repo.importData(
         { settings: { skinAreas: [{ ...chin, nameOverride: 'Synthetic jaw', archived: true }], ...noItems } },
         'replace',
       );
-      expect((await repo.listMeals()).map((m) => m.id)).toEqual(['keep']);
+      expect((await repo.listRecords('meals')).map((m) => m.id)).toEqual(['keep']);
       expect((await repo.listAreas()).find((a) => a.id === 'area-chin')).toMatchObject({
         nameOverride: 'Synthetic jaw',
         archived: true,
@@ -380,7 +380,7 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
     it('EX-10 replace settings drops unused user areas, keeps used ones and all predefined', async () => {
       await repo.upsertArea(custom);
       await repo.upsertArea({ ...custom, id: 'a-unused', name: 'Synthetic wrist' });
-      await repo.addSkinEntry(syntheticEntry('e1', '2026-01-01T09:00:00.000Z', 'a-custom'));
+      await repo.addRecord('skinEntries', syntheticEntry('e1', '2026-01-01T09:00:00.000Z', 'a-custom'));
       await repo.importData({ settings: { skinAreas: [], ...noItems } }, 'replace');
       const ids = (await repo.listAreas()).map((a) => a.id);
       expect(ids).toContain('a-custom'); // still referenced by e1
@@ -398,7 +398,7 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
     });
 
     it('EX-10 import is atomic: a bad row leaves the store unchanged', async () => {
-      await repo.addMeal(syntheticMeal('keep', '2026-01-01T08:00:00.000Z'));
+      await repo.addRecord('meals', syntheticMeal('keep', '2026-01-01T08:00:00.000Z'));
       const broken = {
         records: {
           meals: [syntheticMeal('new', '2026-01-02T08:00:00.000Z')],
@@ -407,49 +407,64 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
         },
       };
       await expect(repo.importData(broken, 'replace')).rejects.toThrow();
-      expect((await repo.listMeals()).map((m) => m.id)).toEqual(['keep']);
+      expect((await repo.listRecords('meals')).map((m) => m.id)).toEqual(['keep']);
     });
 
-    it('EN-1 putMeal replaces description, time, tags and ingredients in order, keeping the id', async () => {
-      await repo.addMeal(syntheticMeal('m1', '2026-01-15T08:00:00.000Z', ['a', 'b', 'c']));
+    it('EN-1 putRecord replaces a meal: description, time, tags and ingredients in order, keeping the id', async () => {
+      await repo.addRecord('meals', syntheticMeal('m1', '2026-01-15T08:00:00.000Z', ['a', 'b', 'c']));
       const edited = {
         ...syntheticMeal('m1', '2026-01-15T09:30:00.000Z', ['z', 'a']),
         description: 'Synthetic edited meal',
         allergens: ['milk' as const],
         note: 'edited',
       };
-      await repo.putMeal(edited);
-      expect(await repo.listMeals()).toEqual([edited]);
+      await repo.putRecord('meals', edited);
+      expect(await repo.listRecords('meals')).toEqual([edited]);
     });
 
-    it('EN-1 putMeal and putSkinEntry refuse an id that does not exist', async () => {
-      await expect(repo.putMeal(syntheticMeal('nope', '2026-01-15T08:00:00.000Z'))).rejects.toThrow();
-      await expect(repo.putSkinEntry(syntheticEntry('nope', '2026-01-15T08:00:00.000Z'))).rejects.toThrow();
+    it('EN-1 putRecord inserts a meal or skin entry whose id is new, and a skin entry still needs a known area', async () => {
+      await repo.putRecord('meals', syntheticMeal('m-new', '2026-01-15T08:00:00.000Z', ['b', 'a']));
+      await repo.putRecord('skinEntries', syntheticEntry('e-new', '2026-01-15T08:00:00.000Z'));
+      expect((await repo.listRecords('meals')).map((m) => [m.id, m.ingredients])).toEqual([['m-new', ['b', 'a']]]);
+      expect((await repo.listRecords('skinEntries')).map((e) => e.id)).toEqual(['e-new']);
+      await expect(repo.putRecord('skinEntries', syntheticEntry('e-x', '2026-01-15T08:00:00.000Z', 'nope'))).rejects.toThrow();
     });
 
-    it('EN-1 putSkinEntry replaces scores, area and time, and refuses an unknown area', async () => {
-      await repo.addSkinEntry(syntheticEntry('e1', '2026-01-15T08:00:00.000Z', 'area-neck'));
+    it('EN-1 getRecord finds one record of any kind by id, with its child rows, and null for an unknown id', async () => {
+      await repo.addRecord('meals', syntheticMeal('m1', '2026-01-15T08:00:00.000Z', ['c', 'a']));
+      await repo.addRecord('meals', syntheticMeal('m2', '2026-01-15T09:00:00.000Z', ['z']));
+      await repo.addRecord('skinEntries', syntheticEntry('e1', '2026-01-15T08:00:00.000Z'));
+      await repo.addRecord('stoolEntries', syntheticStool('s1', '2026-01-15T08:00:00.000Z'));
+      expect(await repo.getRecord('meals', 'm1')).toEqual(syntheticMeal('m1', '2026-01-15T08:00:00.000Z', ['c', 'a']));
+      expect((await repo.getRecord('skinEntries', 'e1'))?.id).toBe('e1');
+      expect((await repo.getRecord('stoolEntries', 's1'))?.id).toBe('s1');
+      expect(await repo.getRecord('meals', 'nope')).toBeNull();
+      expect(await repo.getRecord('stoolEntries', 'm1')).toBeNull();
+    });
+
+    it('EN-1 putRecord replaces a skin entry: scores, area and time, and refuses an unknown area', async () => {
+      await repo.addRecord('skinEntries', syntheticEntry('e1', '2026-01-15T08:00:00.000Z', 'area-neck'));
       const edited = {
         ...syntheticEntry('e1', '2026-01-15T10:00:00.000Z', 'area-chin'),
         scores: { severity: 1, itch: 2, pain: 3, dryness: 4, scaling: 5 },
         note: 'edited',
       };
-      await repo.putSkinEntry(edited);
-      expect(await repo.listSkinEntries()).toEqual([edited]);
-      await expect(repo.putSkinEntry({ ...edited, areaId: 'nope' })).rejects.toThrow();
-      expect(await repo.listSkinEntries()).toEqual([edited]);
+      await repo.putRecord('skinEntries', edited);
+      expect(await repo.listRecords('skinEntries')).toEqual([edited]);
+      await expect(repo.putRecord('skinEntries', { ...edited, areaId: 'nope' })).rejects.toThrow();
+      expect(await repo.listRecords('skinEntries')).toEqual([edited]);
     });
 
     const at = { utc: '2026-03-01T12:00:00.000Z', tz: 'Europe/Warsaw' };
 
     it('EX-13 deleteWithTombstones removes the records and stores id, kind and time of each', async () => {
-      await repo.addMeal(syntheticMeal('m1', '2026-01-15T08:00:00.000Z'));
-      await repo.addSkinEntry(syntheticEntry('e1', '2026-01-15T08:00:00.000Z'));
+      await repo.addRecord('meals', syntheticMeal('m1', '2026-01-15T08:00:00.000Z'));
+      await repo.addRecord('skinEntries', syntheticEntry('e1', '2026-01-15T08:00:00.000Z'));
       await repo.addRecord('stoolEntries', syntheticStool('s1', '2026-01-15T09:00:00.000Z'));
       await repo.deleteWithTombstones({ meals: ['m1'], stoolEntries: ['s1'] }, at);
-      expect(await repo.listMeals()).toEqual([]);
+      expect(await repo.listRecords('meals')).toEqual([]);
       expect(await repo.listRecords('stoolEntries')).toEqual([]);
-      expect((await repo.listSkinEntries()).map((e) => e.id)).toEqual(['e1']);
+      expect((await repo.listRecords('skinEntries')).map((e) => e.id)).toEqual(['e1']);
       expect(await repo.listTombstones()).toEqual([
         { id: 'm1', kind: 'meals', deletedAt: at },
         { id: 's1', kind: 'stoolEntries', deletedAt: at },
@@ -457,21 +472,21 @@ export function storageContract(name: string, make: () => Promise<StorageReposit
     });
 
     it('EX-13 ids that do not exist get no tombstone, and deleting twice stores one', async () => {
-      await repo.addMeal(syntheticMeal('m1', '2026-01-15T08:00:00.000Z'));
+      await repo.addRecord('meals', syntheticMeal('m1', '2026-01-15T08:00:00.000Z'));
       await repo.deleteWithTombstones({ meals: ['m1', 'ghost'] }, at);
       await repo.deleteWithTombstones({ meals: ['m1'] }, { ...at, utc: '2026-03-02T12:00:00.000Z' });
       expect(await repo.listTombstones()).toEqual([{ id: 'm1', kind: 'meals', deletedAt: at }]);
     });
 
     it('SE-9, EX-13 bulk delete leaves no tombstones', async () => {
-      await repo.addMeal(syntheticMeal('m1', '2026-01-15T08:00:00.000Z'));
+      await repo.addRecord('meals', syntheticMeal('m1', '2026-01-15T08:00:00.000Z'));
       await repo.deleteRecords({ meals: ['m1'] });
       expect(await repo.listTombstones()).toEqual([]);
     });
 
     it('EX-1 snapshot filters entries by range but always includes all areas', async () => {
-      await repo.addMeal(syntheticMeal('m1', '2026-01-01T08:00:00.000Z'));
-      await repo.addMeal(syntheticMeal('m2', '2026-02-01T08:00:00.000Z'));
+      await repo.addRecord('meals', syntheticMeal('m1', '2026-01-01T08:00:00.000Z'));
+      await repo.addRecord('meals', syntheticMeal('m2', '2026-02-01T08:00:00.000Z'));
       const snap = await repo.snapshot({ from: '2026-01-15T00:00:00.000Z' });
       expect(snap.meals.map((m) => m.id)).toEqual(['m2']);
       expect(snap.skinAreas).toHaveLength(PREDEFINED_AREAS.length);

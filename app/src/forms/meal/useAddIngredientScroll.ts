@@ -35,9 +35,26 @@ export function useAddIngredientScroll(count: number) {
       sub.remove();
     };
   }, [count, windowHeight]);
+  // Tapping a field while the keyboard is hidden: the automatic inset usually lifts it; if it is still under the keyboard once the keyboard is up, scroll the difference.
+  const scrollY = useRef(0);
+  const onScrollY = (y: number) => {
+    scrollY.current = y;
+  };
+  const revealField = (field: { measureInWindow: (cb: (x: number, y: number, w: number, h: number) => void) => void }) => {
+    if (Keyboard.isVisible()) return;
+    const sub = Keyboard.addListener('keyboardDidShow', (e) => {
+      sub.remove();
+      field.measureInWindow((_x, y, _w, h) => {
+        const limit = windowHeight - e.endCoordinates.height - 120; // the floating Save and some air
+        const over = y + h - limit;
+        if (over > 0) scrollRef.current?.scrollTo({ y: scrollY.current + over, animated: true });
+      });
+    });
+    setTimeout(() => sub.remove(), 2000);
+  };
   /** Where Add ingredient sits in the form, from its onLayout. */
   const onAddLayout = (y: number) => {
     addBottom.current = y;
   };
-  return { scrollRef, onAddLayout, focusNew, setFocusNew };
+  return { scrollRef, onScrollY, revealField, onAddLayout, focusNew, setFocusNew };
 }

@@ -13,10 +13,13 @@ import { color } from '@/ui/theme';
 export function Screen({
   children,
   scrollRef,
+  onScrollY,
   floating,
 }: {
   children: ReactNode;
   scrollRef?: Ref<ScrollViewInstance>;
+  /** The current scroll offset, for a form that corrects its own scroll (UX-3). */
+  onScrollY?: (y: number) => void;
   floating?: ReactNode;
 }) {
   const tabInset = useBottomInset(); // room under the floating tab bar on the tab screens
@@ -31,6 +34,8 @@ export function Screen({
         contentInsetAdjustmentBehavior="automatic"
         automaticallyAdjustKeyboardInsets
         keyboardShouldPersistTaps="handled"
+        onScroll={onScrollY ? (e) => onScrollY(e.nativeEvent.contentOffset.y) : undefined}
+        scrollEventThrottle={onScrollY ? 16 : undefined}
       >
         {children}
       </ScrollView>

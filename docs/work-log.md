@@ -712,3 +712,8 @@ On iOS 26 the system draws its own glass capsule behind a custom header view, so
 - **Fix:** `app/docker-entrypoint.sh` takes a shared lock (in the shared `/tmp` volume, since `npm ci` deletes everything in `node_modules`) for as long as its command runs; a reinstall needs the lock for itself and otherwise stops with a message. Checked with a running container: the second one refused and `node_modules` stayed intact. CLAUDE.md and README say to stop the dev server before a dependency change and restart it with `--clear`.
 - **Re-checked the maintainability pass:** typecheck, lint, format check, 881 tests, iOS export, a dev-mode Metro bundle on a spare port; i18n files and JSON configs unchanged apart from the TypeScript flag; the lockfile only gained Prettier.
 - **Next:** restart the dev server (`./run.sh npx expo start --clear`), then the in-depth review on the phone.
+
+## 2026-11-22: ingredient field under the keyboard on first tap (branch feature/ingredient-focus-scroll)
+- **Report:** in the Polish app, tapping the first ingredient field with the keyboard hidden left the field under the keyboard. The code has nothing language-specific; the only thing doing the lift was the automatic keyboard inset (UX-3), which is not reliable on its own.
+- **Fix:** `useAddIngredientScroll` now also has `revealField`: on focus with the keyboard hidden, once the keyboard is up (`keyboardDidShow`) it measures the field and scrolls the missing distance (needs the scroll offset, so `Screen` and `FormModal` take `onScrollY`). If the automatic inset already lifted the field, nothing moves. 881 tests pass; not seen on a phone.
+- **Next:** phone check in Polish and English: tap the first ingredient field, then a field further down.

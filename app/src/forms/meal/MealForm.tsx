@@ -71,7 +71,7 @@ export default function MealScreen() {
   const { description, setDescription, ingredients, setIngredients, allergens, setAllergens, note, setNote, fillLater, setFillLater } =
     draft;
   const { at, setAt, edited, setEdited, origin, setOrigin, dateHint, setDateHint, touch, setIngredient, saveFields } = draft;
-  const { scrollRef, onAddLayout, focusNew, setFocusNew } = useAddIngredientScroll(ingredients.length);
+  const { scrollRef, onScrollY, revealField, onAddLayout, focusNew, setFocusNew } = useAddIngredientScroll(ingredients.length);
   const ingredientRun = useIngredientRun();
   // IN-10: the AI's allergen suggestion lands as a hint with a select button; nothing is selected by itself.
   const allergenAi = useAllergenAi((tags, note) =>
@@ -248,6 +248,7 @@ export default function MealScreen() {
   return (
     <FormModal
       scrollRef={scrollRef}
+      onScrollY={onScrollY}
       dirty={phase === 'review' ? edited : description.trim().length > 0}
       missing={missing}
       hideSave={phase !== 'review'}
@@ -360,7 +361,11 @@ export default function MealScreen() {
                   value={value}
                   autoFocus={focusNew === i}
                   onChangeText={(v) => setIngredient(i, v)}
-                  onFocus={() => setFocused(i)}
+                  onFocus={(e) => {
+                    setFocused(i);
+                    const target = e?.currentTarget;
+                    if (target && typeof target !== 'number') revealField(target);
+                  }}
                   onBlur={() => setFocused((f) => (f === i ? null : f))}
                 />
                 {/* IN-1: names from the diary that match what is being typed; a tap fills the row. */}

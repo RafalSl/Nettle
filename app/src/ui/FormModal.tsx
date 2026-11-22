@@ -36,6 +36,7 @@ export function FormModal({
   hideSave = false,
   banner,
   scrollRef,
+  onScrollY,
   children,
 }: {
   dirty: boolean;
@@ -49,6 +50,7 @@ export function FormModal({
   banner?: ReactNode;
   /** Lets a form scroll itself (the meal form keeps Add ingredient above the keyboard). */
   scrollRef?: Ref<ScrollViewInstance>;
+  onScrollY?: (y: number) => void;
   children: ReactNode;
 }) {
   const router = useRouter();
@@ -112,7 +114,9 @@ export function FormModal({
         </View>
       )}
       <BottomInset.Provider value={hideSave ? 24 : SAVE_INSET}>
-        <Screen scrollRef={scrollRef}>{children}</Screen>
+        <Screen scrollRef={scrollRef} onScrollY={onScrollY}>
+          {children}
+        </Screen>
       </BottomInset.Provider>
       {hideSave ? null : <FloatingSave disabled={missing !== null} missing={missing} onPress={() => void save()} />}
     </>

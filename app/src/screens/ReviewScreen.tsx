@@ -8,6 +8,7 @@ import { localDay } from '@/core/model/time';
 import { areaOverview, type AreaOverviewRow } from '@/core/usecases/timeline';
 import { areaLabel, errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
+import { useNow } from '@/ui/useNow';
 import { GearButton } from '@/ui/GearButton';
 import { GlassSurface } from '@/ui/GlassSurface';
 import type { IconName } from '@/ui/Icon';
@@ -104,7 +105,8 @@ export default function ReviewScreen() {
   const { view: viewParam, month: monthParam } = useLocalSearchParams<{ view?: string; month?: string }>();
   const [pick, setPick] = useState<'days' | 'areas' | null>(null);
   const view = pick ?? (viewParam === 'areas' ? 'areas' : 'days');
-  const currentMonth = monthOf(localDay(deps.clock.now().toISOString(), deps.clock.timeZone(), deps.dayStart.get()));
+  const now = useNow(deps); // NF-7: a mounted tab still moves on to the new month
+  const currentMonth = monthOf(localDay(now.toISOString(), deps.clock.timeZone(), deps.dayStart.get()));
   const [month, setMonth] = useState(typeof monthParam === 'string' && /^\d{4}-\d{2}$/.test(monthParam) ? monthParam : currentMonth);
   const [picking, setPicking] = useState(false);
   const [incompleteOnly, setIncompleteOnly] = useState(false);
@@ -179,7 +181,7 @@ export default function ReviewScreen() {
               mode="date"
               display="inline"
               value={new Date(`${month}-15T12:00:00`)}
-              maximumDate={deps.clock.now()}
+              maximumDate={now}
               onValueChange={(_e, d) => {
                 setMonth(monthOf(localDay(d.toISOString(), deps.clock.timeZone())));
                 setPicking(false);

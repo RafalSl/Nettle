@@ -42,7 +42,6 @@ export async function setFlareThreshold(deps: Deps, threshold: number): Promise<
   return (await change(deps, (p) => void (p.flareThreshold = threshold))).flareThreshold;
 }
 
-/** IN-14, UX-6: a favorite removed in Settings (the key is the suggestion identity). */
 /** SK-8: "all" uses one threshold for every area; "perArea" lets each area have its own (areas without one use the common value). */
 export async function setFlareScope(deps: Deps, scope: FlareScope): Promise<FlareScope> {
   if (!FLARE_SCOPES.includes(scope)) throw new NettleError('invalid_value', 'flareScope');
@@ -69,6 +68,7 @@ export async function setAreaFlareThreshold(deps: Deps, areaId: string, threshol
   ).flareThresholdByArea;
 }
 
+/** IN-14, UX-6: a favorite removed in Settings (the key is the suggestion identity). */
 export async function removeFavorite(deps: Deps, kind: 'meals' | 'drinks' | 'medications', key: string): Promise<void> {
   await change(deps, (p) => {
     p.favorites[kind] = (p.favorites[kind] as { key: string }[]).filter((f) => f.key !== key) as never;

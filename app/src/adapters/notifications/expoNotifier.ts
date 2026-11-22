@@ -2,6 +2,8 @@ import * as Notifications from 'expo-notifications';
 import type { Notifier, ReminderSpec, ReminderStatus, ReminderTap } from '@/core/ports/notifier';
 
 const LOG_ACTION = 'log';
+/** SK-9: the one-off test notification; `replaceAll` leaves it alone so a settings change does not cancel it. */
+const TEST_ID = 'test-reminder';
 
 // A reminder that fires while the app is open is shown as a banner, without sound.
 Notifications.setNotificationHandler({
@@ -38,7 +40,7 @@ export const expoNotifier: Notifier = {
 
   async sendTest(title, body) {
     await Notifications.scheduleNotificationAsync({
-      identifier: 'test-reminder',
+      identifier: TEST_ID,
       content: { title, body },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 5 },
     });
@@ -74,7 +76,9 @@ export const expoNotifier: Notifier = {
   },
 
   async replaceAll(specs) {
-    await Notifications.cancelAllScheduledNotificationsAsync();
+    for (const n of await Notifications.getAllScheduledNotificationsAsync()) {
+      if (n.identifier !== TEST_ID) await Notifications.cancelScheduledNotificationAsync(n.identifier);
+    }
     for (const s of specs) {
       // IN-17: the one action button (Taken, Applied); it opens the app, which logs the item when the tap is handled.
       let categoryIdentifier: string | undefined;

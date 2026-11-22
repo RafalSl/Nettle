@@ -5,6 +5,7 @@ import { deleteEntry, previewEntryDelete } from '@/core/usecases/entries';
 import { errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
 import { chooseAction } from '@/ui/actionSheet';
+import { rescheduleReminders } from '@/ui/rescheduleReminders';
 
 /** What else goes with an entry, as one line (a meal's reactions, an entry's photos), or undefined. */
 async function alsoLine(deps: Parameters<typeof previewEntryDelete>[0], kind: RecordKind, id: string): Promise<string | undefined> {
@@ -26,6 +27,7 @@ export function useEntryDelete(onChanged: () => void) {
       const choice = await chooseAction({ title, message: await alsoLine(deps, kind, id), actions: [{ label: t('log.deleteAction'), destructive: true }] });
       if (choice === 0) {
         await deleteEntry(deps, kind, id);
+        if (kind === 'checkIns') await rescheduleReminders(deps); // SK-9: a day without its record gets its reminder back
         onChanged();
       }
     } catch (e) {
@@ -52,6 +54,7 @@ export function useEntryActions(onChanged: () => void) {
       if (choice === 0) router.push({ pathname: '/form/edit', params: { kind, id } });
       else if (choice === 1) {
         await deleteEntry(deps, kind, id);
+        if (kind === 'checkIns') await rescheduleReminders(deps); // SK-9: a day without its record gets its reminder back
         onChanged();
       }
     } catch (e) {

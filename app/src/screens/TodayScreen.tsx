@@ -1,7 +1,7 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, AppState, Pressable, View } from 'react-native';
+import { Alert, Pressable, View } from 'react-native';
 import { Text } from '@/ui/themed';
 import { addDays, atOnDay, localDateTime, localDay } from '@/core/model/time';
 import type { ListItem, SkinArea } from '@/core/model/types';
@@ -15,6 +15,7 @@ import { arcPosition, ringDots, type RingDot } from '@/core/model/ring';
 import { todayContext, type TodayContext } from '@/core/usecases/today';
 import { areaLabel, dayParts, errorMessage, itemLabel, t } from '@/i18n';
 import { useServices } from '@/services';
+import { useNow } from '@/ui/useNow';
 import { DayLog, TODAY_LOG_LIMIT } from '@/ui/DayLog';
 import { ENTRY_ROUTE } from '@/ui/entryTypes';
 import { Button, Screen, styles } from '@/ui/components';
@@ -79,20 +80,8 @@ export default function TodayScreen() {
   const [merged, setMerged] = useState<LogRow[] | null>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
-  // After midnight an unchosen day moves on by itself. The clock is state, not a call in the render body: with the
-  // React Compiler a `deps.clock.now()` there is cached and the screen would keep yesterday until it is reloaded.
-  // It is read again on focus, when the app comes back to the foreground and every minute.
-  const [now, setNow] = useState(() => deps.clock.now());
-  const refreshNow = useCallback(() => setNow(deps.clock.now()), [deps]);
-  useFocusEffect(refreshNow);
-  useEffect(() => {
-    const sub = AppState.addEventListener('change', (state) => state === 'active' && refreshNow());
-    const timer = setInterval(refreshNow, 60_000);
-    return () => {
-      sub.remove();
-      clearInterval(timer);
-    };
-  }, [refreshNow]);
+  // After midnight an unchosen day moves on by itself: the clock is state (`useNow`), not a call in the render body.
+  const now = useNow(deps);
   const today = localDay(now.toISOString(), deps.clock.timeZone(), deps.dayStart.get());
   const day = chosen && chosen < today ? chosen : today; // a chosen day is never in the future
   const isToday = day === today;

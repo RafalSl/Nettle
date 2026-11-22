@@ -11,6 +11,7 @@ import { confirmDestructive } from '@/ui/actionSheet';
 import { confirmWithExport, exportEverything } from '@/ui/exportFirst';
 import { Button, Chips, Heading, Hint, Label, styles } from '@/ui/components';
 import { SwitchRow } from '@/ui/SwitchRow';
+import { rescheduleReminders } from '@/ui/rescheduleReminders';
 
 /** SE-9: delete by entry type and date range, with a confirmation that lists the counts and offers an export first. */
 export function DeleteSection() {
@@ -49,6 +50,7 @@ export function DeleteSection() {
       if (!go) return;
       if (!(await confirmDestructive({ title: t('delete.secondTitle'), message: t('delete.secondBody'), action: t('delete.secondConfirm') }))) return;
       await deleteData(deps, sel);
+      await rescheduleReminders(deps); // SK-9: today's Daily health record may be gone
       setGroups(new Set());
       Alert.alert(t('delete.done'));
     } catch (e) {

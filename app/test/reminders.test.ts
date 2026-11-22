@@ -268,7 +268,17 @@ describe('regular items (IN-17, SK-9)', () => {
     expect(await deps.repo.listRecords('medicationEntries')).toHaveLength(1);
     expect(await resolveReminderTap(deps, tap(`regular-${med.id}-0`, med.id, 'log'), { hasUnsavedForm: false })).toBeNull(); // handled once
     expect(await resolveReminderTap(deps, tap(`regular-${tr.id}-0`, tr.id, null), { hasUnsavedForm: false })).toEqual({ route: { pathname: '/today', params: { sheet: 'treatment' } }, viaToday: false });
-    expect(await resolveReminderTap(deps, tap('regular-x-0', 'gone', 'log'), { hasUnsavedForm: false })).toEqual({ route: { pathname: '/today' }, viaToday: false }); // a stopped item: nothing logged, no crash
+    expect(await resolveReminderTap(deps, tap('regular-x-0', 'gone', 'log'), { hasUnsavedForm: false })).toEqual({ route: { pathname: '/today' }, viaToday: false, notLogged: true }); // a stopped item: nothing logged, no crash, and it says so
+  });
+
+  it('IN-17, SK-9 without a delivery time, Taken on the same daily reminder logs once per day, not once ever', async () => {
+    const { deps, med } = await setup();
+    const tap = { id: `regular-${med.id}-0`, target: 'regular', itemId: med.id, action: 'log' as const, deliveredAt: null };
+    await resolveReminderTap(deps, tap, { hasUnsavedForm: false });
+    expect(await resolveReminderTap(deps, tap, { hasUnsavedForm: false })).toBeNull(); // the same response again at launch
+    const nextDay = { ...deps, clock: { ...deps.clock, now: () => new Date('2026-01-16T10:00:00.000Z') } };
+    expect(await resolveReminderTap(nextDay, tap, { hasUnsavedForm: false })).toEqual({ route: { pathname: '/today' }, viaToday: false });
+    expect(await deps.repo.listRecords('medicationEntries')).toHaveLength(2);
   });
 
   it('EX-10, IN-17 after an import the reminders are rebuilt and permission is asked again; a refusal keeps the items', async () => {

@@ -9,6 +9,7 @@ import { SCORE_KEYS, type Photo, type SkinArea } from '@/core/model/types';
 import { localDateTime, localDay } from '@/core/model/time';
 import { areaLabel, errorMessage, itemLabel, t } from '@/i18n';
 import { useServices } from '@/services';
+import { useNow } from '@/ui/useNow';
 import { PhotoCompare } from '@/ui/PhotoCompare';
 import { PhotoThumbs } from '@/ui/PhotoThumbs';
 import { TrendChart } from '@/ui/TrendChart';
@@ -33,6 +34,7 @@ export default function AreaTimelineScreen() {
   const [comparing, setComparing] = useState(false);
   const [picked, setPicked] = useState<Photo[]>([]);
   const [picking, setPicking] = useState(false);
+  const now = useNow(deps);
   const [pickerMax, setPickerMax] = useState(() => deps.clock.now());
   const [jump, setJump] = useState<{ target: JumpTarget; picked: string } | null>(null);
   const scrollRef = useRef<ScrollViewInstance>(null);
@@ -112,7 +114,7 @@ export default function AreaTimelineScreen() {
         <>
           <Heading>{t('review.trend')}</Heading>
           {!isNail && <Chips items={keys.map((k) => ({ id: k, label: k === 'size' ? t('review.sizeChip') : t(`skin.scores.${k}`) }))} selected={new Set([key])} onToggle={(id) => setTrend(id as TrendKey)} />}
-          <TrendChart points={limitTrend(trendPoints(days, key), range, localDay(deps.clock.now().toISOString(), deps.clock.timeZone(), deps.dayStart.get()))} max={key === 'extent' ? 3 : key === 'size' ? Math.max(1, ...trendPoints(days, 'size').map((p) => p.value)) : 10} range={range} onRange={setRange} label={key === 'extent' ? t('review.extent') : key === 'size' ? t('review.sizeChip') : t(`skin.scores.${key}`)} />
+          <TrendChart points={limitTrend(trendPoints(days, key), range, localDay(now.toISOString(), deps.clock.timeZone(), deps.dayStart.get()))} max={key === 'extent' ? 3 : key === 'size' ? Math.max(1, ...trendPoints(days, 'size').map((p) => p.value)) : 10} range={range} onRange={setRange} label={key === 'extent' ? t('review.extent') : key === 'size' ? t('review.sizeChip') : t(`skin.scores.${key}`)} />
         </>
       )}
       {allPhotos.length >= 2 && (

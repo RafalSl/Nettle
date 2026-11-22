@@ -1141,6 +1141,7 @@
     "stopTitle": "Stop this regular item?",
     "stopBody": "Its reminders end and it leaves the quick sheet. Entries already logged stay.",
     "denied": "Notifications are turned off for this app, so reminders cannot be shown.",
+    "notLogged": "Nothing was logged: this regular item could not be logged from the reminder. Log it from Today.",
     "openSystem": "Open system settings",
     "areas": "Areas: {{list}}",
     "noneTitle": "Nothing regular yet"

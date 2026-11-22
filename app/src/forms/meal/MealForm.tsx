@@ -8,7 +8,7 @@ import { defaultPreferences, type Preferences } from '@/core/model/preferences';
 import { mealHistory, rankSuggestions, type Suggestion } from '@/core/model/suggestions';
 import { atOnDay, DAY_MS, dayParam, localDay } from '@/core/model/time';
 import { afterEdit, sameIngredients, typedSource, type IngredientSource } from '@/core/model/source';
-import { ALLERGENS, type Allergen } from '@/core/model/types';
+import { type Allergen } from '@/core/model/types';
 import { lookupProduct } from '@/core/usecases/barcode';
 import { ingredientNameHistory } from '@/core/usecases/llm';
 import { logMeal } from '@/core/usecases/logMeal';
@@ -27,7 +27,7 @@ import { Icon } from '@/ui/Icon';
 import { Sheet, SheetRow } from '@/ui/Sheet';
 import { color } from '@/ui/theme';
 import { showError } from '@/ui/showError';
-import { toggled } from '@/ui/sets';
+import { AllergenChips } from '@/forms/AllergenChips';
 
 /** What a pick fills into the review form: the latest use of the meal, or a favorite's snapshot. */
 interface MealDraft {
@@ -450,11 +450,7 @@ export default function MealScreen() {
           </View>
 
           <Label>{t('meal.allergens')}</Label>
-          <Chips
-            items={ALLERGENS.map((a) => ({ id: a, label: t(`allergens.${a}`) }))}
-            selected={allergens}
-            onToggle={(id) => touch(setAllergens)(toggled(allergens, id))}
-          />
+          <AllergenChips selected={allergens} onChange={touch(setAllergens)} />
           {fromCode && fromCode.tags.some((a) => !allergens.has(a)) && (
             <>
               <Hint>{t(fromCode.hintKey ?? 'meal.scanTagsHint', { list: fromCode.tags.map((a) => t(`allergens.${a}`)).join(', ') })}</Hint>

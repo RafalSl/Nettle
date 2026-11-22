@@ -1,13 +1,13 @@
 import { TextInput } from '@/ui/themed';
 import { joinIngredients, matchIngredientNames, splitIngredients } from '@/core/model/allergens';
 import { afterEdit, sameIngredients, typedSource, type IngredientSource } from '@/core/model/source';
-import { ALLERGENS, type Allergen } from '@/core/model/types';
+import { type Allergen } from '@/core/model/types';
 import type { DrinkSnapshot } from '@/core/usecases/preferences';
 import { t } from '@/i18n';
 import { Chips, Label, styles } from '@/ui/components';
 import { FillLaterSwitch } from '@/forms/FillLaterSwitch';
 import { SwitchRow } from '@/ui/SwitchRow';
-import { toggled } from '@/ui/sets';
+import { AllergenChips } from '@/forms/AllergenChips';
 
 /** The editable part of a drink (IN-4, IN-10) as form state: amount as text, ingredients as a comma list. */
 export interface DrinkDraft {
@@ -121,11 +121,7 @@ export function DrinkFields({
         }
       />
       <Label>{t('more.drinkAllergens')}</Label>
-      <Chips
-        items={ALLERGENS.map((a) => ({ id: a, label: t(`allergens.${a}`) }))}
-        selected={draft.allergens}
-        onToggle={(id) => set('allergens', toggled(draft.allergens, id))}
-      />
+      <AllergenChips selected={draft.allergens} onChange={(next) => set('allergens', next)} />
       <FillLaterSwitch value={draft.fillLater} onChange={(v) => set('fillLater', v)} />
     </>
   );

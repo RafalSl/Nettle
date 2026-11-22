@@ -1,8 +1,8 @@
 import { useRouter } from 'expo-router';
 import { Pressable } from 'react-native';
-import { Text, TextInput } from '@/ui/themed';
+import { Text } from '@/ui/themed';
 import { medicationHistory, normalizeText, rankSuggestions } from '@/core/model/suggestions';
-import { MEDICATION_CATEGORIES, type MedicationCategory } from '@/core/model/types';
+import { type MedicationCategory } from '@/core/model/types';
 import { logMedication } from '@/core/usecases/intake';
 import { addRegularMedication } from '@/core/usecases/regular';
 import { toggleFavoriteMedication } from '@/core/usecases/preferences';
@@ -10,10 +10,11 @@ import { t } from '@/i18n';
 import { useServices } from '@/services';
 import { FormModal, useField, useForm } from '@/ui/FormModal';
 import { useFormTime } from '@/forms/useFormTime';
-import { Button, Chips, Label, TimeField, styles } from '@/ui/components';
+import { Button, Label, TimeField, styles } from '@/ui/components';
 import { SwitchRow } from '@/ui/SwitchRow';
 import { showError } from '@/ui/showError';
 import { rowText, useSuggestions } from '@/forms/intakeSuggestions';
+import { MedicationFields } from '@/forms/medication/MedicationFields';
 
 /** IN-5: a medication or supplement with an optional dose. */
 export default function MedicationForm() {
@@ -79,28 +80,7 @@ export default function MedicationForm() {
           <Text style={styles.rowText}>{rowText(s)}</Text>
         </Pressable>
       ))}
-      <Chips
-        items={MEDICATION_CATEGORIES.map((k) => ({
-          id: k,
-          label: t(k === 'medication' ? 'more.medKindMedication' : 'more.medKindSupplement'),
-        }))}
-        selected={new Set([category])}
-        onToggle={(id) => setCategory(id as MedicationCategory)}
-      />
-      <TextInput
-        style={styles.input}
-        accessibilityLabel={t('more.medName')}
-        placeholder={t('more.medName')}
-        value={name}
-        onChangeText={setName}
-      />
-      <TextInput
-        style={styles.input}
-        accessibilityLabel={t('more.medDose')}
-        placeholder={t('more.medDose')}
-        value={dose}
-        onChangeText={setDose}
-      />
+      <MedicationFields category={category} onCategory={setCategory} name={name} onName={setName} dose={dose} onDose={setDose} />
       <Button
         kind="secondary"
         title={

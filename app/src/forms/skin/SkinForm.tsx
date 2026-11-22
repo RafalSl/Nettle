@@ -2,17 +2,18 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert } from 'react-native';
 import { TextInput } from '@/ui/themed';
-import { SCORE_KEYS, type SkinArea, type SkinScores } from '@/core/model/types';
+import { type SkinArea, type SkinScores } from '@/core/model/types';
 import { attachPhotos } from '@/core/usecases/photos';
 import { lastSkinValues, listActiveAreas, logSkinEntry, repeatAllAreas, repeatSkinEntry } from '@/core/usecases/skin';
 import { areaLabel, t } from '@/i18n';
 import { useServices } from '@/services';
 import { FormModal, useField, useForm } from '@/ui/FormModal';
 import { PendingPhotos } from '@/ui/PendingPhotos';
-import { parseSizeText, sizeToSave, SkinExtraFields } from '@/forms/skin/SkinExtraFields';
+import { parseSizeText, sizeToSave } from '@/forms/skin/SkinExtraFields';
 import { useFormTime } from '@/forms/useFormTime';
-import { Button, Chips, Hint, Label, ScoreInput, TimeField, styles } from '@/ui/components';
+import { Button, Chips, Hint, Label, TimeField, styles } from '@/ui/components';
 import { showError } from '@/ui/showError';
+import { SkinScoreFields } from '@/forms/skin/SkinScoreFields';
 
 const ZERO: SkinScores = { severity: 0, itch: 0, pain: 0, dryness: 0, scaling: 0 };
 
@@ -128,21 +129,15 @@ export default function SkinForm() {
       <Button kind="secondary" title={t('skin.noChangeAll')} onPress={() => void noChangeAll()} />
       <Hint>{t('skin.scale')}</Hint>
       {hasLast && <Hint>{t('skin.prefilled')}</Hint>}
-      {SCORE_KEYS.map((k) => (
-        <ScoreInput
-          key={k}
-          label={t(`skin.scores.${k}`)}
-          value={scores[k]}
-          onChange={(v) => (f.touch(), setScores((s) => ({ ...s, [k]: v })))}
-        />
-      ))}
-      <SkinExtraFields
+      <SkinScoreFields
+        scores={scores}
+        onScores={(v) => (f.touch(), setScores(v))}
         cracks={cracks}
         onCracks={(v) => (f.touch(), setCracks(v))}
         sizeText={sizeText}
         onSizeText={(v) => (f.touch(), setSizeText(v))}
-        open={detailsOpen}
-        onToggleOpen={() => setDetailsOpen((o) => !o)}
+        detailsOpen={detailsOpen}
+        onToggleDetails={() => setDetailsOpen((o) => !o)}
       />
       <PendingPhotos uris={photos} onChange={setPhotos} />
       <TimeField value={time.value} onChange={time.set} />

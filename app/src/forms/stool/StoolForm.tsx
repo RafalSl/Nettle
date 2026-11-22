@@ -4,7 +4,8 @@ import { t } from '@/i18n';
 import { useServices } from '@/services';
 import { FormModal, useField, useForm } from '@/ui/FormModal';
 import { useFormTime } from '@/forms/useFormTime';
-import { Chips, Hint, TimeField, styles } from '@/ui/components';
+import { Hint, TimeField, styles } from '@/ui/components';
+import { BristolChips } from '@/forms/stool/StoolFields';
 
 /** SK-7: the full stool form behind "Earlier…" on the quick sheet: Bristol type 1 to 7, a time and a note. */
 export default function StoolForm() {
@@ -20,11 +21,7 @@ export default function StoolForm() {
       onSave={async () => void (await logStool(deps, { bristol: Number(type), note, at: time.atForSave }))}
     >
       <Hint>{t('today.stoolHint')}</Hint>
-      <Chips
-        items={[1, 2, 3, 4, 5, 6, 7].map((n) => ({ id: String(n), label: String(n) }))}
-        selected={new Set(type ? [type] : [])}
-        onToggle={setType}
-      />
+      <BristolChips value={type} onChange={setType} />
       <TimeField value={time.value} onChange={time.set} />
       <TextInput
         style={styles.input}

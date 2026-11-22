@@ -2,7 +2,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, View } from 'react-native';
 import { TextInput } from '@/ui/themed';
-import { NAIL_EXTENTS, NAIL_STAGES, type NailExtent, type NailStage, type SkinArea } from '@/core/model/types';
+import { type NailExtent, type NailStage, type SkinArea } from '@/core/model/types';
 import { addArea, listActiveAreas, logNailEntry, repeatNailEntry } from '@/core/usecases/skin';
 import { attachPhotos } from '@/core/usecases/photos';
 import { applyReminders } from '@/core/usecases/reminders';
@@ -11,8 +11,9 @@ import { useServices } from '@/services';
 import { FormModal, useField, useForm } from '@/ui/FormModal';
 import { PendingPhotos } from '@/ui/PendingPhotos';
 import { useFormTime } from '@/forms/useFormTime';
-import { Button, Chips, Hint, Label, TimeField, styles } from '@/ui/components';
+import { Button, Chips, Hint, TimeField, styles } from '@/ui/components';
 import { showError } from '@/ui/showError';
+import { NailFields } from '@/forms/nails/NailFields';
 
 /**
  * SK-10, SK-3: one nail area per affected nail; an entry has a stage and a rough extent instead of scores.
@@ -89,18 +90,7 @@ export default function NailForm() {
             onToggle={setAreaId}
           />
           <Button kind="secondary" title={t('skin.noChange')} onPress={noChange} />
-          <Label>{t('more.nailStage')}</Label>
-          <Chips
-            items={NAIL_STAGES.map((s) => ({ id: s, label: t(`nail.stages.${s}`) }))}
-            selected={new Set(stage ? [stage] : [])}
-            onToggle={(id) => setStage(id as NailStage)}
-          />
-          <Label>{t('more.nailExtent')}</Label>
-          <Chips
-            items={NAIL_EXTENTS.map((s) => ({ id: s, label: t(`nail.extents.${s}`) }))}
-            selected={new Set(extent ? [extent] : [])}
-            onToggle={(id) => setExtent(id as NailExtent)}
-          />
+          <NailFields stage={stage} onStage={setStage} extent={extent} onExtent={setExtent} />
           <PendingPhotos uris={photos} onChange={setPhotos} />
           <TimeField value={time.value} onChange={time.set} />
         </>

@@ -2,7 +2,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/ui/themed';
-import { SYMPTOMS, type Meal, type Symptom } from '@/core/model/types';
+import { type Meal, type Symptom } from '@/core/model/types';
 import { logReaction } from '@/core/usecases/events';
 import { t } from '@/i18n';
 import { useServices } from '@/services';
@@ -11,7 +11,7 @@ import { useFormTime } from '@/forms/useFormTime';
 import { Button, Chips, Hint, Label, TimeField } from '@/ui/components';
 import { color } from '@/ui/theme';
 import { showError } from '@/ui/showError';
-import { toggled } from '@/ui/sets';
+import { SymptomChips } from '@/forms/reaction/SymptomChips';
 
 /** IN-13: symptoms within about two hours of a meal, linked to that meal. Always shows the urgent-care advice. */
 export default function ReactionForm() {
@@ -20,7 +20,7 @@ export default function ReactionForm() {
   const f = useForm();
   const [meals, setMeals] = useState<Meal[]>([]);
   const [mealId, setMealId] = useField<string | null>(null, f.touch);
-  const [symptoms, setSymptoms] = useField<Set<string>>(new Set(), f.touch);
+  const [symptoms, setSymptoms] = useField<Set<Symptom>>(new Set(), f.touch);
   const time = useFormTime(f.touch);
 
   const reload = useCallback(() => {
@@ -54,7 +54,7 @@ export default function ReactionForm() {
         </View>
       }
       onSave={async () => {
-        await logReaction(deps, { mealId: selected!, symptoms: [...symptoms] as Symptom[], at: time.atForSave });
+        await logReaction(deps, { mealId: selected!, symptoms: [...symptoms], at: time.atForSave });
       }}
     >
       {meals.length === 0 ? (
@@ -72,11 +72,7 @@ export default function ReactionForm() {
             onToggle={setMealId}
           />
           <Label>{t('more.reactionSymptoms')}</Label>
-          <Chips
-            items={SYMPTOMS.map((s) => ({ id: s, label: t(`symptoms.${s}`) }))}
-            selected={symptoms}
-            onToggle={(id) => setSymptoms(toggled(symptoms, id))}
-          />
+          <SymptomChips selected={symptoms} onChange={setSymptoms} />
           <Label>{t('more.reactionOnset')}</Label>
           <TimeField value={time.value} onChange={time.set} />
         </>

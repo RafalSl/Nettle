@@ -7,14 +7,14 @@ import { applyTreatment } from '@/core/usecases/events';
 import { addListItem, listActiveItems } from '@/core/usecases/lists';
 import { addRegularTreatment } from '@/core/usecases/regular';
 import { listActiveAreas } from '@/core/usecases/skin';
-import { areaLabel, itemDescription, itemLabel, t } from '@/i18n';
+import { t } from '@/i18n';
 import { useServices } from '@/services';
 import { FormModal, useField, useForm } from '@/ui/FormModal';
 import { useFormTime } from '@/forms/useFormTime';
-import { Button, Chips, Hint, Label, TimeField, styles } from '@/ui/components';
+import { Button, Hint, TimeField, styles } from '@/ui/components';
 import { SwitchRow } from '@/ui/SwitchRow';
 import { showError } from '@/ui/showError';
-import { toggled } from '@/ui/sets';
+import { TreatmentFields } from '@/forms/treatment/TreatmentFields';
 
 /** IN-11: a saved list of treatments; applying one to one or more areas is timestamped (now, or the chosen day). */
 export default function TreatmentForm() {
@@ -34,7 +34,6 @@ export default function TreatmentForm() {
   }, [deps]);
   useFocusEffect(reload);
   const selected = treatmentId && treatments.some((x) => x.id === treatmentId) ? treatmentId : (treatments[0]?.id ?? null);
-  const chosen = treatments.find((x) => x.id === selected);
 
   async function addTreatment() {
     try {
@@ -65,17 +64,13 @@ export default function TreatmentForm() {
         <Hint>{t('more.treatmentNone')}</Hint>
       ) : (
         <>
-          <Chips
-            items={treatments.map((i) => ({ id: i.id, label: itemLabel(i) }))}
-            selected={new Set(selected ? [selected] : [])}
-            onToggle={setTreatmentId}
-          />
-          {chosen && itemDescription(chosen) ? <Hint>{itemDescription(chosen)}</Hint> : null}
-          <Label>{t('more.treatmentAreas')}</Label>
-          <Chips
-            items={areas.map((a) => ({ id: a.id, label: areaLabel(a) }))}
-            selected={areaIds}
-            onToggle={(id) => setAreaIds(toggled(areaIds, id))}
+          <TreatmentFields
+            treatments={treatments}
+            treatmentId={selected}
+            onTreatment={setTreatmentId}
+            areas={areas}
+            areaIds={areaIds}
+            onAreaIds={setAreaIds}
           />
           <SwitchRow
             title={t('regular.switch')}

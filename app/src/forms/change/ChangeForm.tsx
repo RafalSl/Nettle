@@ -1,18 +1,17 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { View } from 'react-native';
-import { TextInput } from '@/ui/themed';
-import { CHANGE_ACTIONS, type ChangeAction, type ListItem } from '@/core/model/types';
+import { type ChangeAction, type ListItem } from '@/core/model/types';
 import { itemsInUse, logChangeEvent, type InUseItem } from '@/core/usecases/events';
 import { listActiveItems } from '@/core/usecases/lists';
 import { itemDescription, itemLabel, t } from '@/i18n';
 import { useServices } from '@/services';
 import { FormModal, useField, useForm } from '@/ui/FormModal';
 import { useFormTime } from '@/forms/useFormTime';
-import { Chips, Hint, Label, TimeField, styles } from '@/ui/components';
-import { SwitchRow } from '@/ui/SwitchRow';
+import { Hint, Label, TimeField } from '@/ui/components';
 import { RadioRow } from '@/ui/RadioRow';
 import { showError } from '@/ui/showError';
+import { ChangeFields } from '@/forms/change/ChangeFields';
 
 /**
  * IN-12: a routine change: a product or diet started or stopped, on a date. "Stopped" offers what is in use now;
@@ -47,45 +46,45 @@ export default function ChangeForm() {
         await logChangeEvent(deps, { action, category, name, ...(known ? { dateUnknown: true } : { at: time.atForSave }) });
       }}
     >
-      <Chips
-        items={CHANGE_ACTIONS.map((a) => ({ id: a, label: t(`change.actions.${a}`) }))}
-        selected={new Set([action])}
-        onToggle={(id) => setAction(id as ChangeAction)}
-      />
-      <Chips items={categories.map((c) => ({ id: c.id, label: itemLabel(c) }))} selected={new Set([category])} onToggle={setCategory} />
-      {description ? <Hint>{description}</Hint> : null}
-      {action === 'stopped' && (
-        <>
-          <Label>{t('change.inUse')}</Label>
-          {inUse.length === 0 ? (
-            <Hint>{t('change.inUseNone')}</Hint>
-          ) : (
-            <View style={{ gap: 8 }}>
-              {inUse.map((i) => (
-                <RadioRow
-                  key={`${i.category}|${i.name}`}
-                  icon="change"
-                  title={i.name}
-                  detail={categories.find((c) => c.id === i.category) ? itemLabel(categories.find((c) => c.id === i.category)!) : undefined}
-                  selected={i.name === name && i.category === category}
-                  onPress={() => {
-                    setName(i.name);
-                    setCategory(i.category);
-                  }}
-                />
-              ))}
-            </View>
-          )}
-        </>
-      )}
-      <TextInput
-        style={styles.input}
-        accessibilityLabel={t('more.changeName')}
-        placeholder={t('more.changeName')}
-        value={name}
-        onChangeText={setName}
-      />
-      {action === 'started' && <SwitchRow title={t('change.dateUnknown')} value={unknown} onChange={setUnknown} />}
+      <ChangeFields
+        action={action}
+        onAction={setAction}
+        categories={categories}
+        category={category}
+        onCategory={setCategory}
+        name={name}
+        onName={setName}
+        dateUnknown={unknown}
+        onDateUnknown={setUnknown}
+      >
+        {description ? <Hint>{description}</Hint> : null}
+        {action === 'stopped' && (
+          <>
+            <Label>{t('change.inUse')}</Label>
+            {inUse.length === 0 ? (
+              <Hint>{t('change.inUseNone')}</Hint>
+            ) : (
+              <View style={{ gap: 8 }}>
+                {inUse.map((i) => (
+                  <RadioRow
+                    key={`${i.category}|${i.name}`}
+                    icon="change"
+                    title={i.name}
+                    detail={
+                      categories.find((c) => c.id === i.category) ? itemLabel(categories.find((c) => c.id === i.category)!) : undefined
+                    }
+                    selected={i.name === name && i.category === category}
+                    onPress={() => {
+                      setName(i.name);
+                      setCategory(i.category);
+                    }}
+                  />
+                ))}
+              </View>
+            )}
+          </>
+        )}
+      </ChangeFields>
       {!known && <TimeField value={time.value} onChange={time.set} />}
       {known && <Hint>{t('change.dateUnknownHint')}</Hint>}
     </FormModal>

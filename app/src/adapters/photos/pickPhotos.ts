@@ -7,9 +7,7 @@ import { NettleError } from '@/core/model/errors';
  */
 export async function pickPhotoUris(source: 'camera' | 'library'): Promise<string[]> {
   const permission =
-    source === 'camera'
-      ? await ImagePicker.requestCameraPermissionsAsync()
-      : await ImagePicker.requestMediaLibraryPermissionsAsync();
+    source === 'camera' ? await ImagePicker.requestCameraPermissionsAsync() : await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (!permission.granted) throw new NettleError('photo_permission_denied');
   const result =
     source === 'camera'

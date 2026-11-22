@@ -19,7 +19,10 @@ export default function LanguageScreen() {
   const { deps } = useServices();
   const [choice, setChoice] = useState<LanguagePreference | null>(null);
   useEffect(() => {
-    getPreferences(deps).then((p) => setChoice(p.language), () => setChoice('system'));
+    getPreferences(deps).then(
+      (p) => setChoice(p.language),
+      () => setChoice('system'),
+    );
   }, [deps]);
 
   async function pick(next: LanguagePreference) {
@@ -38,7 +41,11 @@ export default function LanguageScreen() {
     en: t('settings.languageEnglishDetail'),
     pl: t('settings.languagePolishDetail'),
   };
-  const title: Record<LanguagePreference, string> = { system: t('settings.languageDevice'), en: languageName('en'), pl: languageName('pl') };
+  const title: Record<LanguagePreference, string> = {
+    system: t('settings.languageDevice'),
+    en: languageName('en'),
+    pl: languageName('pl'),
+  };
   return (
     <Screen>
       <View style={{ gap: 8 }}>

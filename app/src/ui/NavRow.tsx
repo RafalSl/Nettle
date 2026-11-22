@@ -28,7 +28,11 @@ export function NavRow({
       accessibilityRole="button"
       accessibilityLabel={title}
       onPress={onPress}
-      style={({ pressed }) => [{ paddingVertical: 12, minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 12 }, pressed && { opacity: 0.6 }]}>
+      style={({ pressed }) => [
+        { paddingVertical: 12, minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 12 },
+        pressed && { opacity: 0.6 },
+      ]}
+    >
       {icon ? <IconCircle name={icon} size={34} alert={danger} /> : null}
       <View style={{ flex: 1 }}>
         <Text style={{ fontSize: 16, fontWeight: '600', color: danger ? color.alert : color.text }}>{title}</Text>

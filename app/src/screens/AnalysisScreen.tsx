@@ -99,7 +99,12 @@ export default function AnalysisScreen() {
     const lines = [
       t('analysis.confirmIntro'),
       '',
-      t('analysis.range', { from: prepared.dayFrom, to: prepared.dayTo, days: prepared.counts.days ?? 0, complete: prepared.counts.completeDays ?? 0 }),
+      t('analysis.range', {
+        from: prepared.dayFrom,
+        to: prepared.dayTo,
+        days: prepared.counts.days ?? 0,
+        complete: prepared.counts.completeDays ?? 0,
+      }),
       ...RECORD_KINDS.filter((k) => (prepared.counts[k] ?? 0) > 0).map((k) => `• ${t(`delete.line.${k}`, { n: prepared.counts[k] ?? 0 })}`),
       ...(prepared.counts.lookbackDays ? [t('analysis.lookback', { n: prepared.counts.lookbackDays })] : []),
       ...prepared.photos.map((p) => `• ${t(p.sensitive ? 'analysis.photoLineSensitive' : 'analysis.photoLine', { label: p.label })}`),
@@ -128,7 +133,15 @@ export default function AnalysisScreen() {
   }
 
   return (
-    <Screen floating={run.status === 'running' ? undefined : run.status === 'interrupted' || run.status === 'failed' ? <FloatingAction title={t('analysis.retry')} icon="sparkle" onPress={() => confirm(run.prepared, () => void runner.retry())} /> : <FloatingAction title={t('analysis.review')} icon="sparkle" onPress={review} />}>
+    <Screen
+      floating={
+        run.status === 'running' ? undefined : run.status === 'interrupted' || run.status === 'failed' ? (
+          <FloatingAction title={t('analysis.retry')} icon="sparkle" onPress={() => confirm(run.prepared, () => void runner.retry())} />
+        ) : (
+          <FloatingAction title={t('analysis.review')} icon="sparkle" onPress={review} />
+        )
+      }
+    >
       <Heading>{t('analysis.title')}</Heading>
       <Hint>{t('analysis.disclaimer')}</Hint>
       <NavRow title={t('plan.link')} subtitle={t('plan.linkHint')} onPress={() => router.push('/review/pack')} />
@@ -147,7 +160,12 @@ export default function AnalysisScreen() {
         <Hint>{t('analysis.photosNone')}</Hint>
       ) : (
         <PhotoGrid
-          items={photos.map(({ photo, label }) => ({ id: photo.id, file: photo.file, sensitive: photo.sensitive, label: photo.sensitive ? `${label} (${t('analysis.sensitiveMark')})` : label }))}
+          items={photos.map(({ photo, label }) => ({
+            id: photo.id,
+            file: photo.file,
+            sensitive: photo.sensitive,
+            label: photo.sensitive ? `${label} (${t('analysis.sensitiveMark')})` : label,
+          }))}
           selected={chosen}
           onToggle={toggle}
           onAll={() => setChosen(new Set(photos.filter((p) => !p.photo.sensitive).map((p) => p.photo.id)))}
@@ -170,7 +188,16 @@ export default function AnalysisScreen() {
         <>
           {run.status === 'interrupted' && <Hint>{t('analysis.interrupted')}</Hint>}
           {run.status === 'failed' && (
-            <View style={{ padding: 14, borderRadius: 22, gap: 2, backgroundColor: color.alertSoft, borderWidth: 1, borderColor: color.alertLine }}>
+            <View
+              style={{
+                padding: 14,
+                borderRadius: 22,
+                gap: 2,
+                backgroundColor: color.alertSoft,
+                borderWidth: 1,
+                borderColor: color.alertLine,
+              }}
+            >
               <Text style={{ color: color.alert, fontWeight: '700', fontSize: 14.5 }}>{errorMessage(run.error)}</Text>
               <Text style={{ color: color.soft, fontSize: 13.5 }}>{t('analysis.failedNote')}</Text>
             </View>

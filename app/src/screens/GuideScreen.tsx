@@ -35,7 +35,12 @@ export default function GuideScreen() {
     <Screen>
       <Hint>{t('guide.intro')}</Hint>
       {GUIDE.map((g) => (
-        <NavRow key={g.id} title={t(`guide.items.${g.id}`)} subtitle={`${entryTitle(g.entry)}${t(`guide.notes.${g.id}`, { defaultValue: '' }) ? ` · ${t(`guide.notes.${g.id}`)}` : ''}`} onPress={() => router.push(ENTRY_ROUTE[g.entry])} />
+        <NavRow
+          key={g.id}
+          title={t(`guide.items.${g.id}`)}
+          subtitle={`${entryTitle(g.entry)}${t(`guide.notes.${g.id}`, { defaultValue: '' }) ? ` · ${t(`guide.notes.${g.id}`)}` : ''}`}
+          onPress={() => router.push(ENTRY_ROUTE[g.entry])}
+        />
       ))}
     </Screen>
   );

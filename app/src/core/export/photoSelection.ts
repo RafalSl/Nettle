@@ -56,10 +56,7 @@ export function filterPhotoIds(
  * stay readable even in an encrypted ZIP, so they reveal little: predefined areas use their short id, user
  * areas and nails a generic word, and sensitive photos only "private".
  */
-export function planPhotoNames(
-  photos: readonly Photo[],
-  areaOfPhoto: (photo: Photo) => SkinArea | undefined,
-): Map<string, string> {
+export function planPhotoNames(photos: readonly Photo[], areaOfPhoto: (photo: Photo) => SkinArea | undefined): Map<string, string> {
   const label = (p: Photo) => {
     if (p.sensitive) return 'private';
     const area = areaOfPhoto(p);

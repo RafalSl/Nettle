@@ -24,7 +24,9 @@ export function DeleteSection() {
   const tz = deps.clock.timeZone();
   const selection = () => ({
     kinds: [...groups].flatMap((g) => DELETE_GROUPS[g as DeleteGroup] as readonly RecordKind[]),
-    range: limit ? (localDaysToRange(localDay(from.toISOString(), tz), localDay(to.toISOString(), tz), tz, deps.dayStart.get()) ?? undefined) : undefined,
+    range: limit
+      ? (localDaysToRange(localDay(from.toISOString(), tz), localDay(to.toISOString(), tz), tz, deps.dayStart.get()) ?? undefined)
+      : undefined,
   });
 
   async function review() {
@@ -48,7 +50,10 @@ export function DeleteSection() {
         onExportError: (e) => Alert.alert(errorMessage(e)),
       });
       if (!go) return;
-      if (!(await confirmDestructive({ title: t('delete.secondTitle'), message: t('delete.secondBody'), action: t('delete.secondConfirm') }))) return;
+      if (
+        !(await confirmDestructive({ title: t('delete.secondTitle'), message: t('delete.secondBody'), action: t('delete.secondConfirm') }))
+      )
+        return;
       await deleteData(deps, sel);
       await rescheduleReminders(deps); // SK-9: today's Daily health record may be gone
       setGroups(new Set());

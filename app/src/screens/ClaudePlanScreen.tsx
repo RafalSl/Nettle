@@ -3,7 +3,15 @@ import { useCallback, useState } from 'react';
 import { Alert } from 'react-native';
 import { localDateTime, localDay } from '@/core/model/time';
 import { RECORD_KINDS, type Photo } from '@/core/model/types';
-import { buildPack, importResult, markedEntries, preparePack, previewResult, type MarkedEntry, type ResultPreview } from '@/core/usecases/aiPack';
+import {
+  buildPack,
+  importResult,
+  markedEntries,
+  preparePack,
+  previewResult,
+  type MarkedEntry,
+  type ResultPreview,
+} from '@/core/usecases/aiPack';
 import { areaLabel, currentLanguage, errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
 import { DayRangePickers, pickedDay } from '@/ui/DayRangePickers';
@@ -33,10 +41,15 @@ export default function ClaudePlanScreen() {
     useCallback(() => {
       (async () => {
         const areas = new Map((await deps.repo.listAreas()).map((a) => [a.id, a]));
-        const entryArea = new Map([...(await deps.repo.listSkinEntries()), ...(await deps.repo.listRecords('nailEntries'))].map((e) => [e.id, e.areaId]));
+        const entryArea = new Map(
+          [...(await deps.repo.listSkinEntries()), ...(await deps.repo.listRecords('nailEntries'))].map((e) => [e.id, e.areaId]),
+        );
         setPhotos(
           (await deps.repo.listRecords('photos'))
-            .filter((p) => localDay(p.at.utc, p.at.tz, deps.dayStart.get()) >= dayFrom && localDay(p.at.utc, p.at.tz, deps.dayStart.get()) <= dayTo)
+            .filter(
+              (p) =>
+                localDay(p.at.utc, p.at.tz, deps.dayStart.get()) >= dayFrom && localDay(p.at.utc, p.at.tz, deps.dayStart.get()) <= dayTo,
+            )
             .map((photo) => {
               const area = areas.get(entryArea.get(photo.entryId) ?? '');
               return { photo, label: `${area ? areaLabel(area) : ''} ${localDateTime(photo.at.utc, photo.at.tz)}`.trim() };
@@ -63,8 +76,15 @@ export default function ClaudePlanScreen() {
       const lines = [
         t('plan.confirmIntro'),
         '',
-        t('analysis.range', { from: prepared.dayFrom, to: prepared.dayTo, days: prepared.counts.days ?? 0, complete: prepared.counts.completeDays ?? 0 }),
-        ...RECORD_KINDS.filter((k) => (prepared.counts[k] ?? 0) > 0).map((k) => `• ${t(`delete.line.${k}`, { n: prepared.counts[k] ?? 0 })}`),
+        t('analysis.range', {
+          from: prepared.dayFrom,
+          to: prepared.dayTo,
+          days: prepared.counts.days ?? 0,
+          complete: prepared.counts.completeDays ?? 0,
+        }),
+        ...RECORD_KINDS.filter((k) => (prepared.counts[k] ?? 0) > 0).map(
+          (k) => `• ${t(`delete.line.${k}`, { n: prepared.counts[k] ?? 0 })}`,
+        ),
         ...(prepared.counts.lookbackDays ? [t('analysis.lookback', { n: prepared.counts.lookbackDays })] : []),
         ...prepared.marked.map((m) => `• ${t('plan.markedLine', { text: m.text })}`),
         ...prepared.photos.map((p) => `• ${t(p.sensitive ? 'analysis.photoLineSensitive' : 'analysis.photoLine', { label: p.label })}`),
@@ -137,7 +157,18 @@ export default function ClaudePlanScreen() {
       {photos.length === 0 ? (
         <Hint>{t('analysis.photosNone')}</Hint>
       ) : (
-        <PhotoGrid items={photos.map(({ photo, label }) => ({ id: photo.id, file: photo.file, sensitive: photo.sensitive, label: photo.sensitive ? `${label} (${t('analysis.sensitiveMark')})` : label }))} selected={chosen} onToggle={toggle} onAll={() => setChosen(new Set(photos.filter((p) => !p.photo.sensitive).map((p) => p.photo.id)))} onNone={() => setChosen(new Set())} />
+        <PhotoGrid
+          items={photos.map(({ photo, label }) => ({
+            id: photo.id,
+            file: photo.file,
+            sensitive: photo.sensitive,
+            label: photo.sensitive ? `${label} (${t('analysis.sensitiveMark')})` : label,
+          }))}
+          selected={chosen}
+          onToggle={toggle}
+          onAll={() => setChosen(new Set(photos.filter((p) => !p.photo.sensitive).map((p) => p.photo.id)))}
+          onNone={() => setChosen(new Set())}
+        />
       )}
       <Hint>{t('plan.markedCount', { n: marked.length })}</Hint>
       <Hint>{t('plan.prepareHint')}</Hint>

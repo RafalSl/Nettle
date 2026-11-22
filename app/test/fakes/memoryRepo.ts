@@ -21,8 +21,7 @@ import {
 } from '@/core/model/types';
 import type { ExistingIds, ImportMode, ImportTombstones, StorageRepository } from '@/core/ports/storage';
 
-const inRange = (utc: string, r?: DateRange) =>
-  (!r?.from || utc >= r.from) && (!r?.to || utc <= r.to);
+const inRange = (utc: string, r?: DateRange) => (!r?.from || utc >= r.from) && (!r?.to || utc <= r.to);
 const newestFirst = <T extends { at: { utc: string }; id: string }>(a: T, b: T) =>
   b.at.utc.localeCompare(a.at.utc) || a.id.localeCompare(b.id);
 const clone = <T>(v: T): T => structuredClone(v);
@@ -42,10 +41,7 @@ export class MemoryRepo implements StorageRepository {
     this.seed();
   }
 
-  private items = Object.fromEntries(LIST_KINDS.map((k) => [k, new Map<string, ListItem>()])) as Record<
-    ListKind,
-    Map<string, ListItem>
-  >;
+  private items = Object.fromEntries(LIST_KINDS.map((k) => [k, new Map<string, ListItem>()])) as Record<ListKind, Map<string, ListItem>>;
 
   private seed(items = this.items) {
     for (const a of PREDEFINED_AREAS) if (!this.areas.has(a.id)) this.areas.set(a.id, clone(a));
@@ -64,7 +60,10 @@ export class MemoryRepo implements StorageRepository {
     this.meals.set(meal.id, clone(meal));
   }
   async listMeals(range?: DateRange) {
-    return [...this.meals.values()].filter((m) => inRange(m.at.utc, range)).sort(newestFirst).map(clone);
+    return [...this.meals.values()]
+      .filter((m) => inRange(m.at.utc, range))
+      .sort(newestFirst)
+      .map(clone);
   }
   async upsertArea(area: SkinArea) {
     this.areas.set(area.id, clone(area));
@@ -78,7 +77,10 @@ export class MemoryRepo implements StorageRepository {
     this.entries.set(entry.id, clone(entry));
   }
   async listSkinEntries(range?: DateRange) {
-    return [...this.entries.values()].filter((e) => inRange(e.at.utc, range)).sort(newestFirst).map(clone);
+    return [...this.entries.values()]
+      .filter((e) => inRange(e.at.utc, range))
+      .sort(newestFirst)
+      .map(clone);
   }
   async addRecord<K extends ExtraKind>(kind: K, record: Records[K][number]) {
     if (this.extra[kind].has(record.id)) throw new Error('duplicate id');

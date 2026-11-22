@@ -31,8 +31,18 @@ describe.each(repos)('photos (%s)', (_name, make) => {
   it('SK-4 attaches several photos to one skin entry, in the order they were added', async () => {
     const { deps, store } = await setup();
     const entry = await logSkinEntry(deps, { areaId: 'area-chin', scores });
-    const a = await addPhoto(deps, { entryKind: 'skinEntry', entryId: entry.id, sourceUri: 'one', at: new Date('2026-01-15T10:00:00.000Z') });
-    const b = await addPhoto(deps, { entryKind: 'skinEntry', entryId: entry.id, sourceUri: 'two', at: new Date('2026-01-15T10:05:00.000Z') });
+    const a = await addPhoto(deps, {
+      entryKind: 'skinEntry',
+      entryId: entry.id,
+      sourceUri: 'one',
+      at: new Date('2026-01-15T10:00:00.000Z'),
+    });
+    const b = await addPhoto(deps, {
+      entryKind: 'skinEntry',
+      entryId: entry.id,
+      sourceUri: 'two',
+      at: new Date('2026-01-15T10:05:00.000Z'),
+    });
     expect((await listPhotos(deps, 'skinEntry', entry.id)).map((p) => p.id)).toEqual([a.id, b.id]);
     expect(new TextDecoder().decode(await store.read(a.file))).toBe('one');
     expect(await listPhotos(deps, 'nailEntry', entry.id)).toEqual([]);

@@ -7,7 +7,17 @@ import { color } from '@/ui/theme';
 export function EmptyState({ title, body, action, onAction }: { title: string; body: string; action?: string; onAction?: () => void }) {
   return (
     <View style={{ alignItems: 'center', gap: 12, paddingVertical: 40, paddingHorizontal: 20 }}>
-      <View style={{ width: 120, height: 120, borderRadius: 60, borderWidth: 2, borderStyle: 'dashed', borderColor: color.control, backgroundColor: color.glassFill }} />
+      <View
+        style={{
+          width: 120,
+          height: 120,
+          borderRadius: 60,
+          borderWidth: 2,
+          borderStyle: 'dashed',
+          borderColor: color.control,
+          backgroundColor: color.glassFill,
+        }}
+      />
       <Text style={{ fontSize: 22, fontWeight: '800', letterSpacing: -0.5 }}>{title}</Text>
       <Text style={{ fontSize: 15, color: color.soft, textAlign: 'center' }}>{body}</Text>
       {action && onAction ? <Button title={action} onPress={onAction} /> : null}

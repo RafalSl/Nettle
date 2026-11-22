@@ -20,7 +20,16 @@ import type {
 import type { StorageRepository } from '../ports/storage';
 import { cleanValues, logStool, type CheckInInput } from './checkin';
 import type { Deps } from './deps';
-import { applyTreatment, logChangeEvent, logMedicalEvent, logReaction, type ApplyTreatmentInput, type ChangeEventInput, type MedicalEventInput, type ReactionInput } from './events';
+import {
+  applyTreatment,
+  logChangeEvent,
+  logMedicalEvent,
+  logReaction,
+  type ApplyTreatmentInput,
+  type ChangeEventInput,
+  type MedicalEventInput,
+  type ReactionInput,
+} from './events';
 import { afterEdit, sameIngredients } from '../model/source';
 import { logDrink, logMedication, type LogDrinkInput } from './intake';
 import { logMeal, type LogMealInput } from './logMeal';
@@ -85,7 +94,11 @@ export async function editMeal(deps: Deps, id: string, input: LogMealInput): Pro
     if (r.mealId === id && r.at.utc < at.utc) throw new NettleError('meal_after_reaction', id);
   }
   const changed = !sameIngredients(orig, { ingredients: cleanList(input.ingredients), allergens: input.allergens ?? [] });
-  return logMeal(editing(deps, id, { at: keepAt(orig, input.at) }), { ...input, barcode: orig.barcode, source: afterEdit(orig.source, changed) });
+  return logMeal(editing(deps, id, { at: keepAt(orig, input.at) }), {
+    ...input,
+    barcode: orig.barcode,
+    source: afterEdit(orig.source, changed),
+  });
 }
 
 export async function editSkinEntry(deps: Deps, id: string, input: LogSkinEntryInput): Promise<SkinEntry> {
@@ -103,35 +116,24 @@ export async function editStool(deps: Deps, id: string, input: { bristol: number
   return logStool(editing(deps, id, { at: keepAt(orig, input.at) }), input);
 }
 
-export async function editDrink(
-  deps: Deps,
-  id: string,
-  input: LogDrinkInput,
-): Promise<Drink> {
+export async function editDrink(deps: Deps, id: string, input: LogDrinkInput): Promise<Drink> {
   const orig = (await getEntry(deps, 'drinks', id)) as Drink;
   const changed = !sameIngredients(orig, { ingredients: cleanList(input.ingredients ?? []), allergens: input.allergens ?? [] });
-  return logDrink(editing(deps, id, { at: keepAt(orig, input.at) }), { ...input, barcode: orig.barcode, source: afterEdit(orig.source, changed) });
+  return logDrink(editing(deps, id, { at: keepAt(orig, input.at) }), {
+    ...input,
+    barcode: orig.barcode,
+    source: afterEdit(orig.source, changed),
+  });
 }
 
-export async function editMedication(
-  deps: Deps,
-  id: string,
-  input: Parameters<typeof logMedication>[1],
-): Promise<MedicationEntry> {
+export async function editMedication(deps: Deps, id: string, input: Parameters<typeof logMedication>[1]): Promise<MedicationEntry> {
   const orig = (await getEntry(deps, 'medicationEntries', id)) as MedicationEntry;
   return logMedication(editing(deps, id, { at: keepAt(orig, input.at) }), input);
 }
 
-export async function editTreatmentApplication(
-  deps: Deps,
-  id: string,
-  input: ApplyTreatmentInput,
-): Promise<TreatmentApplication> {
+export async function editTreatmentApplication(deps: Deps, id: string, input: ApplyTreatmentInput): Promise<TreatmentApplication> {
   const orig = (await getEntry(deps, 'treatmentApplications', id)) as TreatmentApplication;
-  return applyTreatment(
-    editing(deps, id, { at: keepAt(orig, input.at), used: [orig.treatmentId, ...orig.areaIds] }),
-    input,
-  );
+  return applyTreatment(editing(deps, id, { at: keepAt(orig, input.at), used: [orig.treatmentId, ...orig.areaIds] }), input);
 }
 
 export async function editMedicalEvent(deps: Deps, id: string, input: MedicalEventInput): Promise<MedicalEvent> {

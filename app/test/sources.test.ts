@@ -14,14 +14,26 @@ describe('source of ingredients (IN-16)', () => {
     const deps = makeDeps(new MemoryRepo());
     expect((await logMeal(deps, { description: 'Synthetic', ingredients: [] })).source).toEqual(typedSource());
     const bad = (s: object) => logMeal(deps, { description: 'x', ingredients: [], source: s as never });
-    for (const s of [{ kind: 'photo_estimate', edited: false, llm: null, aiTags: false }, { kind: 'name_estimate', edited: false, llm: null, aiTags: false }, { kind: 'typed', edited: false, llm }, { kind: 'typed', edited: true, llm: null, aiTags: false }, { kind: 'gps', edited: false, llm: null, aiTags: false }]) {
+    for (const s of [
+      { kind: 'photo_estimate', edited: false, llm: null, aiTags: false },
+      { kind: 'name_estimate', edited: false, llm: null, aiTags: false },
+      { kind: 'typed', edited: false, llm },
+      { kind: 'typed', edited: true, llm: null, aiTags: false },
+      { kind: 'gps', edited: false, llm: null, aiTags: false },
+    ]) {
       await expect(bad(s)).rejects.toBeInstanceOf(NettleError);
     }
   });
 
   it('IN-16 editing the ingredients or tags of a filled entry marks it edited; editing the note or a typed entry does not', async () => {
     const deps = makeDeps(new MemoryRepo());
-    const meal = await logMeal(deps, { description: 'Synthetic', ingredients: ['rice', 'oil'], allergens: ['milk'], source: photo, barcode: '5900000000008' });
+    const meal = await logMeal(deps, {
+      description: 'Synthetic',
+      ingredients: ['rice', 'oil'],
+      allergens: ['milk'],
+      source: photo,
+      barcode: '5900000000008',
+    });
     const same = await editMeal(deps, meal.id, { description: 'Renamed', ingredients: [' rice', 'oil '], allergens: ['milk'], note: 'n' });
     expect(same.source).toEqual(photo);
     expect(same.barcode).toBe('5900000000008');
@@ -29,12 +41,25 @@ describe('source of ingredients (IN-16)', () => {
     expect(changed.source).toEqual({ ...photo, edited: true });
     const typed = await logMeal(deps, { description: 'Typed', ingredients: ['a'] });
     expect((await editMeal(deps, typed.id, { description: 'Typed', ingredients: ['b'] })).source).toEqual(typedSource());
-    const drink = await logDrink(deps, { name: 'Synthetic tea', amountMl: 200, allergens: [], source: { kind: 'open_food_facts', edited: false, llm: null, aiTags: false }, barcode: '5900000000008' });
-    expect((await editDrink(deps, drink.id, { name: 'Synthetic tea', amountMl: 200, allergens: ['milk'] })).source).toEqual({ kind: 'open_food_facts', edited: true, llm: null, aiTags: false });
+    const drink = await logDrink(deps, {
+      name: 'Synthetic tea',
+      amountMl: 200,
+      allergens: [],
+      source: { kind: 'open_food_facts', edited: false, llm: null, aiTags: false },
+      barcode: '5900000000008',
+    });
+    expect((await editDrink(deps, drink.id, { name: 'Synthetic tea', amountMl: 200, allergens: ['milk'] })).source).toEqual({
+      kind: 'open_food_facts',
+      edited: true,
+      llm: null,
+      aiTags: false,
+    });
   });
 
   it('IN-16 helpers: tag order does not matter, ingredient order does', () => {
-    expect(sameIngredients({ ingredients: ['a', 'b'], allergens: ['milk', 'eggs'] }, { ingredients: ['a', 'b'], allergens: ['eggs', 'milk'] })).toBe(true);
+    expect(
+      sameIngredients({ ingredients: ['a', 'b'], allergens: ['milk', 'eggs'] }, { ingredients: ['a', 'b'], allergens: ['eggs', 'milk'] }),
+    ).toBe(true);
     expect(sameIngredients({ ingredients: ['a', 'b'], allergens: [] }, { ingredients: ['b', 'a'], allergens: [] })).toBe(false);
     expect(afterEdit(typedSource(), true)).toEqual(typedSource());
     expect(() => assertSource({ kind: 'label_scan', edited: false, llm, aiTags: false })).not.toThrow();

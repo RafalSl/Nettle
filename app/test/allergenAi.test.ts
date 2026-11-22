@@ -18,9 +18,20 @@ const answer = (items: object[], note: string | null = null) => JSON.stringify({
 
 describe('AI allergen suggestion (IN-10, LL-9)', () => {
   it('IN-10 drops unknown ids and duplicates; a wrong shape is llm_bad_response', () => {
-    expect(parseAllergenSuggestion(answer([{ name: ' butter ', allergens: ['milk', 'gold', 'milk', ' eggs '] }], ' vague '))).toEqual({ items: [{ name: 'butter', allergens: ['milk', 'eggs'] }], note: 'vague' });
+    expect(parseAllergenSuggestion(answer([{ name: ' butter ', allergens: ['milk', 'gold', 'milk', ' eggs '] }], ' vague '))).toEqual({
+      items: [{ name: 'butter', allergens: ['milk', 'eggs'] }],
+      note: 'vague',
+    });
     expect(parseAllergenSuggestion(answer([]))).toEqual({ items: [], note: null });
-    for (const bad of ['no', '{}', '{"items":"x"}', answer([{ name: 1, allergens: [] }]), answer([{ name: 'a', allergens: [1] }]), answer([{ name: 'a' }]), '{"items":[],"note":4}']) {
+    for (const bad of [
+      'no',
+      '{}',
+      '{"items":"x"}',
+      answer([{ name: 1, allergens: [] }]),
+      answer([{ name: 'a', allergens: [1] }]),
+      answer([{ name: 'a' }]),
+      '{"items":[],"note":4}',
+    ]) {
       expect(() => parseAllergenSuggestion(bad)).toThrow(NettleError);
     }
   });
@@ -44,7 +55,12 @@ describe('AI allergen suggestion (IN-10, LL-9)', () => {
   }
 
   it('IN-10, LL-9 sends text only with the allergen_suggest model and stores nothing on any entry', async () => {
-    const { llm, repo, deps } = await setup([answer([{ name: 'butter', allergens: ['milk'] }, { name: 'flour', allergens: ['gluten'] }])]);
+    const { llm, repo, deps } = await setup([
+      answer([
+        { name: 'butter', allergens: ['milk'] },
+        { name: 'flour', allergens: ['gluten'] },
+      ]),
+    ]);
     const seen: string[] = [];
     const spy = { ...deps, llmFor: (c: { model: string }) => (seen.push(c.model), { completeJson: (r: never) => llm.completeJson(r) }) };
     await setModel(spy, 'allergen_suggest', 'claude-sonnet-5-5');
@@ -58,7 +74,10 @@ describe('AI allergen suggestion (IN-10, LL-9)', () => {
 
   it('IN-10 answers are saved per ingredient: a name asked before is not sent again, and a full hit makes no call', async () => {
     const { llm, deps } = await setup([
-      answer([{ name: 'butter', allergens: ['milk'] }, { name: 'rice', allergens: [] }]),
+      answer([
+        { name: 'butter', allergens: ['milk'] },
+        { name: 'rice', allergens: [] },
+      ]),
       answer([{ name: 'oat flour', allergens: ['gluten'] }]),
     ]);
     await suggestAllergensWithAi(deps, { ingredients: ['butter', 'rice'], language: 'en' });

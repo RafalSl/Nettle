@@ -14,7 +14,9 @@ export default function SuggestionSettingsScreen() {
   const { deps } = useServices();
   const [s, setS] = useState<SuggestionSettings>(defaultPreferences().suggestions);
   const load = useCallback(() => {
-    getPreferences(deps).then((p) => setS(p.suggestions)).catch((e) => Alert.alert(errorMessage(e)));
+    getPreferences(deps)
+      .then((p) => setS(p.suggestions))
+      .catch((e) => Alert.alert(errorMessage(e)));
   }, [deps]);
   useFocusEffect(load);
 
@@ -31,9 +33,21 @@ export default function SuggestionSettingsScreen() {
       <Hint>{t('sugg.hint')}</Hint>
       <Label>{t('sugg.rows')}</Label>
       <View style={styles.stepperRow}>
-        <Button kind="secondary" title="−" accessibilityLabel={t('sugg.fewer')} disabled={s.rows <= 1} onPress={() => void change({ rows: s.rows - 1 })} />
+        <Button
+          kind="secondary"
+          title="−"
+          accessibilityLabel={t('sugg.fewer')}
+          disabled={s.rows <= 1}
+          onPress={() => void change({ rows: s.rows - 1 })}
+        />
         <Text style={styles.stepValue}>{s.rows}</Text>
-        <Button kind="secondary" title="+" accessibilityLabel={t('sugg.more')} disabled={s.rows >= MAX_SUGGESTION_ROWS} onPress={() => void change({ rows: s.rows + 1 })} />
+        <Button
+          kind="secondary"
+          title="+"
+          accessibilityLabel={t('sugg.more')}
+          disabled={s.rows >= MAX_SUGGESTION_ROWS}
+          onPress={() => void change({ rows: s.rows + 1 })}
+        />
       </View>
       <Label>{t('sugg.window')}</Label>
       <Chips
@@ -41,8 +55,18 @@ export default function SuggestionSettingsScreen() {
         selected={new Set([String(s.windowDays)])}
         onToggle={(id) => void change({ windowDays: Number(id) as SuggestionSettings['windowDays'] })}
       />
-      <SwitchRow title={t('sugg.saveOnTap')} hint={t('sugg.saveOnTapHint')} value={s.saveOnTap} onChange={(saveOnTap) => void change({ saveOnTap })} />
-      <SwitchRow title={t('sugg.knownNames')} hint={t('sugg.knownNamesHint')} value={s.knownNames} onChange={(knownNames) => void change({ knownNames })} />
+      <SwitchRow
+        title={t('sugg.saveOnTap')}
+        hint={t('sugg.saveOnTapHint')}
+        value={s.saveOnTap}
+        onChange={(saveOnTap) => void change({ saveOnTap })}
+      />
+      <SwitchRow
+        title={t('sugg.knownNames')}
+        hint={t('sugg.knownNamesHint')}
+        value={s.knownNames}
+        onChange={(knownNames) => void change({ knownNames })}
+      />
     </Screen>
   );
 }

@@ -58,7 +58,11 @@ describe('photo selection and names (EX-2, EX-7)', () => {
     sensitive,
     file: id + '.jpg',
   });
-  const photos = [photo('a', '2026-01-10T08:00:00.000Z'), photo('b', '2026-01-10T09:00:00.000Z', true), photo('c', '2026-02-01T09:00:00.000Z')];
+  const photos = [
+    photo('a', '2026-01-10T08:00:00.000Z'),
+    photo('b', '2026-01-10T09:00:00.000Z', true),
+    photo('c', '2026-02-01T09:00:00.000Z'),
+  ];
 
   it('EX-7 selects all, none, non-sensitive or an explicit list', () => {
     expect(selectPhotos(photos, { mode: 'all' }).map((p) => p.id)).toEqual(['a', 'b', 'c']);
@@ -133,7 +137,12 @@ describe.each(repos)('export and import with photos (%s)', (_name, make) => {
   it('EX-1 a date range keeps only photos of entries in the range; a settings-only export has none', async () => {
     const { deps } = await seeded(make);
     const jan10 = await exportBundle(deps, { days: { from: '2026-01-10', to: '2026-01-10' }, photos: { mode: 'all' } });
-    expect(names(jan10)).toEqual(['data.json', 'photos/2026-01-10_chin_01.jpg', 'photos/2026-01-10_chin_02.jpg', 'photos/2026-01-10_private_01.jpg']);
+    expect(names(jan10)).toEqual([
+      'data.json',
+      'photos/2026-01-10_chin_01.jpg',
+      'photos/2026-01-10_chin_02.jpg',
+      'photos/2026-01-10_private_01.jpg',
+    ]);
     const settings = await exportBundle(deps, { parts: { records: false, settings: true }, photos: { mode: 'all' } });
     expect(names(settings)).toEqual(['data.json']);
   });
@@ -210,7 +219,9 @@ describe.each(repos)('export and import with photos (%s)', (_name, make) => {
       const json = JSON.parse(strFromU8(files['data.json']!));
       json.records.photos[0].file = bad;
       const target = makeDeps(await make());
-      expect(await code(previewImport(target, zipSync({ ...files, 'data.json': strToU8(JSON.stringify(json)) })))).toBe('import_invalid_data');
+      expect(await code(previewImport(target, zipSync({ ...files, 'data.json': strToU8(JSON.stringify(json)) })))).toBe(
+        'import_invalid_data',
+      );
     }
   });
 
@@ -220,7 +231,14 @@ describe.each(repos)('export and import with photos (%s)', (_name, make) => {
     await deps.photos.saveBytes(big); // not referenced; just check the writer through a direct export below
     const entry = (await deps.repo.listSkinEntries())[0]!;
     const key = await deps.photos.saveBytes(big);
-    await deps.repo.addRecord('photos', { id: 'big', at: { utc: '2026-01-10T08:05:00.000Z', tz: 'Europe/Warsaw' }, entryKind: 'skinEntry', entryId: entry.id, sensitive: false, file: key });
+    await deps.repo.addRecord('photos', {
+      id: 'big',
+      at: { utc: '2026-01-10T08:05:00.000Z', tz: 'Europe/Warsaw' },
+      entryKind: 'skinEntry',
+      entryId: entry.id,
+      sensitive: false,
+      file: key,
+    });
     const zip = await exportBundle(deps);
     expect(zip.length).toBeGreaterThan(big.length);
     expect(zip.length).toBeLessThan(big.length + 4000);

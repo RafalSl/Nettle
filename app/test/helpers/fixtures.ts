@@ -91,7 +91,13 @@ export const syntheticCheckIn = (id: string, utc: string, day: string, tags: str
   id,
   at: { utc, tz: TZ },
   day,
-  values: { 'item-wellbeing': 6, 'item-sleep': 4, 'item-abdominal-pain': 0, 'item-bloating': true, ...Object.fromEntries(tags.map((t) => [t, true])) },
+  values: {
+    'item-wellbeing': 6,
+    'item-sleep': 4,
+    'item-abdominal-pain': 0,
+    'item-bloating': true,
+    ...Object.fromEntries(tags.map((t) => [t, true])),
+  },
   note: 'synthetic note',
 });
 

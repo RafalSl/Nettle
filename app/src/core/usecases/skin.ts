@@ -26,8 +26,7 @@ export interface LogSkinEntryInput {
   note?: string;
 }
 
-export const isScore = (n: unknown): n is number =>
-  typeof n === 'number' && Number.isInteger(n) && n >= 0 && n <= 10;
+export const isScore = (n: unknown): n is number => typeof n === 'number' && Number.isInteger(n) && n >= 0 && n <= 10;
 
 /** SK-3: a size is whole millimetres from 1 to 500. */
 export const isSizeMm = (n: unknown): n is number => typeof n === 'number' && Number.isInteger(n) && n >= 1 && n <= MAX_SIZE_MM;
@@ -100,9 +99,7 @@ export async function renameSkinArea(deps: Deps, id: string, name: string): Prom
   if (!trimmed) throw new NettleError('empty_area_name');
   const area = await findArea(deps, id);
   if (!area.archived) await assertNameFree(deps, trimmed, id);
-  await deps.repo.upsertArea(
-    area.predefined ? { ...area, nameOverride: trimmed } : { ...area, name: trimmed },
-  );
+  await deps.repo.upsertArea(area.predefined ? { ...area, nameOverride: trimmed } : { ...area, name: trimmed });
 }
 
 /** Back to the localized default name for a predefined area. */
@@ -197,9 +194,7 @@ export async function repeatAllAreas(deps: Deps, at?: Date): Promise<RepeatAllRe
   const when = at ?? deps.clock.now();
   for (const area of await listActiveAreas(deps)) {
     try {
-      result.saved.push(
-        area.kind === 'nail' ? await repeatNailEntry(deps, area.id, when) : await repeatSkinEntry(deps, area.id, when),
-      );
+      result.saved.push(area.kind === 'nail' ? await repeatNailEntry(deps, area.id, when) : await repeatSkinEntry(deps, area.id, when));
     } catch (e) {
       if (e instanceof NettleError && e.code === 'no_previous_entry') result.needFirstEntry.push(area);
       else throw e;

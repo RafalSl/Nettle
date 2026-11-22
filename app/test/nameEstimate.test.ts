@@ -63,7 +63,10 @@ describe('meal name estimate (IN-19)', () => {
     const llm = new FakeLlm(['{"ingredients":[],"uncertainty":"\\"Lunch\\" names no dish."}']);
     const deps = makeDeps(new MemoryRepo(), undefined, llm);
     await saveApiKey(deps, 'synthetic-test-key');
-    expect(await estimateIngredientsFromName(deps, { description: 'lunch', language: 'en' })).toMatchObject({ names: [], uncertainty: '"Lunch" names no dish.' });
+    expect(await estimateIngredientsFromName(deps, { description: 'lunch', language: 'en' })).toMatchObject({
+      names: [],
+      uncertainty: '"Lunch" names no dish.',
+    });
   });
 
   it('IN-19 no description and no key send nothing; a malformed answer is llm_bad_response', async () => {

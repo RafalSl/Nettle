@@ -1,14 +1,7 @@
 import { NettleError } from '../model/errors';
 import { assertSource, typedSource, type IngredientSource } from '../model/source';
 import { makeStamp } from '../model/time';
-import {
-  ALLERGENS,
-  MEDICATION_CATEGORIES,
-  type Allergen,
-  type Drink,
-  type MedicationCategory,
-  type MedicationEntry,
-} from '../model/types';
+import { ALLERGENS, MEDICATION_CATEGORIES, type Allergen, type Drink, type MedicationCategory, type MedicationEntry } from '../model/types';
 import type { Deps } from './deps';
 import { refreshFavoriteDrink } from './preferences';
 

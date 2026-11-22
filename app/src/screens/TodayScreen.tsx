@@ -41,7 +41,9 @@ const SHORTCUT_LOCK_MS = 3000;
 /** A "YYYY-MM-DD" route parameter, or null. */
 const validDay = (v: unknown): string | null => (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null);
 
-const Card = ({ children }: { children: React.ReactNode }) => <GlassSurface style={{ borderRadius: 26, padding: 16, gap: 10 }}>{children}</GlassSurface>;
+const Card = ({ children }: { children: React.ReactNode }) => (
+  <GlassSurface style={{ borderRadius: 26, padding: 16, gap: 10 }}>{children}</GlassSurface>
+);
 
 /**
  * UX-2: the start screen. A day switcher, quick actions (each opens a modal form), one-tap treatment shortcuts,
@@ -58,7 +60,11 @@ export default function TodayScreen() {
   const chosen = pick && pick.param === dayParam ? pick.day : validDay(dayParam);
   const setChosen = (d: string | null) => setPick({ param: dayParam, day: d });
   const [rows, setRows] = useState<LogRow[]>([]);
-  const [ctx, setCtx] = useState<{ areas: SkinArea[]; treatments: ListItem[]; categories: ListItem[] }>({ areas: [], treatments: [], categories: [] });
+  const [ctx, setCtx] = useState<{ areas: SkinArea[]; treatments: ListItem[]; categories: ListItem[] }>({
+    areas: [],
+    treatments: [],
+    categories: [],
+  });
   const [shortcuts, setShortcuts] = useState<TreatmentShortcut[]>([]);
   const [context, setContext] = useState<TodayContext>({ isToday: true, firstRun: false, pills: [] });
   const [stoolOpen, setStoolOpen] = useState(false);
@@ -66,7 +72,8 @@ export default function TodayScreen() {
   /** IN-17: the quick sheet of regular items that is open, if any. */
   const [sheetPick, setSheet] = useState<'medication' | 'treatment' | null | undefined>(undefined);
   // SK-9: a tap on a regular item's reminder opens Today with its quick sheet (until the user opens or closes one).
-  const fromParam = sheetParam === 'medication' || sheetParam === 'treatment' ? (regular.some((r) => r.kind === sheetParam) ? sheetParam : null) : null;
+  const fromParam =
+    sheetParam === 'medication' || sheetParam === 'treatment' ? (regular.some((r) => r.kind === sheetParam) ? sheetParam : null) : null;
   const sheet = sheetPick === undefined ? fromParam : sheetPick;
   const [highlight, setHighlight] = useState<Set<string>>(new Set());
   const seenIds = useRef<{ day: string; ids: Set<string>; loaded: boolean }>({ day: '', ids: new Set(), loaded: false });
@@ -104,7 +111,11 @@ export default function TodayScreen() {
       }
       seenIds.current = { day, ids: new Set(next.map((r) => r.id)), loaded: true };
       setRows(next);
-      setCtx({ areas: await deps.repo.listAreas(), treatments: await deps.repo.listItems('treatments'), categories: await deps.repo.listItems('changeCategories') });
+      setCtx({
+        areas: await deps.repo.listAreas(),
+        treatments: await deps.repo.listItems('treatments'),
+        categories: await deps.repo.listItems('changeCategories'),
+      });
       setShortcuts(await treatmentShortcuts(deps));
       setContext(await todayContext(deps, day));
       const prefs = await getPreferences(deps);
@@ -113,10 +124,13 @@ export default function TodayScreen() {
     })().catch((e) => Alert.alert(errorMessage(e)));
   }, [deps, day]);
   useFocusEffect(load);
-  useEffect(() => () => {
-    timers.current.forEach(clearTimeout);
-    clearTimeout(highlightTimer.current);
-  }, []);
+  useEffect(
+    () => () => {
+      timers.current.forEach(clearTimeout);
+      clearTimeout(highlightTimer.current);
+    },
+    [],
+  );
 
   async function run(action: () => Promise<unknown>) {
     try {
@@ -134,16 +148,15 @@ export default function TodayScreen() {
 
   function lockShortcut(key: string) {
     setLocked((l) => new Set(l).add(key));
-    timers.current.push(
-      setTimeout(() => setLocked((l) => new Set([...l].filter((k) => k !== key))), SHORTCUT_LOCK_MS),
-    );
+    timers.current.push(setTimeout(() => setLocked((l) => new Set([...l].filter((k) => k !== key))), SHORTCUT_LOCK_MS));
   }
 
   /** UX-2: a pinned tile opens its form; Stool opens its quick sheet while it is pinned (from More it opens the full form). */
   const open = (id: EntryType) => () => {
     if (id === 'stool') return setStoolOpen((o) => !o);
     // IN-17: Medication and Treatment open the quick sheet of regular items; without any they open the full form.
-    if ((id === 'medication' || id === 'treatment') && (regular.some((r) => r.kind === id) || (id === 'treatment' && shortcuts.length > 0))) return setSheet(sheet === id ? null : id);
+    if ((id === 'medication' || id === 'treatment') && (regular.some((r) => r.kind === id) || (id === 'treatment' && shortcuts.length > 0)))
+      return setSheet(sheet === id ? null : id);
     router.push(isToday ? ENTRY_ROUTE[id] : { pathname: ENTRY_ROUTE[id], params: { day } });
   };
 
@@ -156,7 +169,9 @@ export default function TodayScreen() {
   /** UX-3: the second line of a regular item's row: its dose and reminder times. */
   const regularDetail = (r: RegularItem) => {
     const times = r.times.map((x) => `${String(x.hour).padStart(2, '0')}:${String(x.minute).padStart(2, '0')}`).join(', ');
-    return [r.kind === 'medication' ? r.dose : null, times ? t('sheet.reminderAt', { times }) : null].filter(Boolean).join(' · ') || undefined;
+    return (
+      [r.kind === 'medication' ? r.dose : null, times ? t('sheet.reminderAt', { times }) : null].filter(Boolean).join(' · ') || undefined
+    );
   };
 
   const areaName = (id: string) => {
@@ -244,7 +259,10 @@ export default function TodayScreen() {
 
       {merged && (
         // UX-2: a merged dot lists its entries first; a tap opens that entry's Edit and Delete sheet.
-        <Sheet title={t('sheet.entriesTitle', { time: localDateTime(merged[0]!.at.utc, merged[0]!.at.tz).slice(11) })} onClose={() => setMerged(null)}>
+        <Sheet
+          title={t('sheet.entriesTitle', { time: localDateTime(merged[0]!.at.utc, merged[0]!.at.tz).slice(11) })}
+          onClose={() => setMerged(null)}
+        >
           {merged.map((r) => (
             <SheetRow
               key={r.id}
@@ -262,7 +280,14 @@ export default function TodayScreen() {
 
       {stoolOpen && (
         // UX-3, NF-2: the seven Bristol types in two columns; a tap saves at once and the tile turns into "Saved 14:20".
-        <Sheet title={t('day.stoolTitle')} subtitle={t('sheet.stoolHint')} onClose={() => { setStoolOpen(false); setDone({}); }}>
+        <Sheet
+          title={t('day.stoolTitle')}
+          subtitle={t('sheet.stoolHint')}
+          onClose={() => {
+            setStoolOpen(false);
+            setDone({});
+          }}
+        >
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {[1, 2, 3, 4, 5, 6, 7].map((n) => {
               const saved = done[`stool-${n}`];
@@ -278,9 +303,31 @@ export default function TodayScreen() {
                     setDone((d) => ({ ...d, [`stool-${n}`]: localDateTime(at.toISOString(), deps.clock.timeZone()).slice(11) }));
                     void run(() => logStool(deps, { bristol: n, at }));
                   }}
-                  style={{ width: '48.5%' }}>
-                  <GlassSurface raised style={{ height: 52, borderRadius: 999, flexDirection: 'row', alignItems: 'center', gap: 10, paddingLeft: 6, paddingRight: 12, ...(saved ? { borderColor: color.accent, backgroundColor: color.accentSoft } : {}) }}>
-                    <View style={{ width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: saved ? color.accent : color.glassFillRaised }}>
+                  style={{ width: '48.5%' }}
+                >
+                  <GlassSurface
+                    raised
+                    style={{
+                      height: 52,
+                      borderRadius: 999,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 10,
+                      paddingLeft: 6,
+                      paddingRight: 12,
+                      ...(saved ? { borderColor: color.accent, backgroundColor: color.accentSoft } : {}),
+                    }}
+                  >
+                    <View
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 20,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: saved ? color.accent : color.glassFillRaised,
+                      }}
+                    >
                       <Text style={{ fontSize: 17, fontWeight: '800', color: saved ? color.onAccent : color.text }}>{n}</Text>
                     </View>
                     <Text style={{ flex: 1, fontSize: 14, fontWeight: saved ? '700' : '600' }} numberOfLines={1}>
@@ -290,8 +337,19 @@ export default function TodayScreen() {
                 </Pressable>
               );
             })}
-            <Pressable accessibilityRole="button" accessibilityLabel={t('day.stoolEarlier')} onPress={() => { setStoolOpen(false); router.push(isToday ? '/form/stool' : { pathname: '/form/stool', params: { day } }); }} style={{ width: '48.5%' }}>
-              <GlassSurface raised style={{ height: 52, borderRadius: 999, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('day.stoolEarlier')}
+              onPress={() => {
+                setStoolOpen(false);
+                router.push(isToday ? '/form/stool' : { pathname: '/form/stool', params: { day } });
+              }}
+              style={{ width: '48.5%' }}
+            >
+              <GlassSurface
+                raised
+                style={{ height: 52, borderRadius: 999, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+              >
                 <Icon name="clock" size={18} wash={false} />
                 <Text style={{ fontSize: 14.5, fontWeight: '600' }}>{t('day.stoolEarlier')}</Text>
               </GlassSurface>
@@ -302,7 +360,14 @@ export default function TodayScreen() {
 
       {sheet && (
         // IN-17, UX-3: one tap logs one regular item or one often-used treatment at the current time; the row is locked for 3 seconds against a double tap.
-        <Sheet title={t(sheet === 'medication' ? 'regular.sheetMedication' : 'regular.sheetTreatment')} subtitle={t('sheet.logTapHint')} onClose={() => { setSheet(null); setDone({}); }}>
+        <Sheet
+          title={t(sheet === 'medication' ? 'regular.sheetMedication' : 'regular.sheetTreatment')}
+          subtitle={t('sheet.logTapHint')}
+          onClose={() => {
+            setSheet(null);
+            setDone({});
+          }}
+        >
           {regular.some((r) => r.kind === sheet) && sheet === 'treatment' ? <SheetLabel>{t('sheet.regular')}</SheetLabel> : null}
           {regular
             .filter((r) => r.kind === sheet)
@@ -311,7 +376,9 @@ export default function TodayScreen() {
                 key={r.id}
                 icon={ENTRY_ICON[sheet]}
                 title={regularLabel(r)}
-                detail={done[r.id] ? t(r.kind === 'medication' ? 'sheet.taken' : 'sheet.appliedAt', { time: done[r.id]! }) : regularDetail(r)}
+                detail={
+                  done[r.id] ? t(r.kind === 'medication' ? 'sheet.taken' : 'sheet.appliedAt', { time: done[r.id]! }) : regularDetail(r)
+                }
                 locked={locked.has(r.id)}
                 onPress={() => {
                   lockShortcut(r.id);
@@ -342,12 +409,26 @@ export default function TodayScreen() {
                 />
               );
             })}
-          <SheetRow outline title={t('regular.other')} onPress={() => { setSheet(null); router.push(isToday ? ENTRY_ROUTE[sheet] : { pathname: ENTRY_ROUTE[sheet], params: { day } }); }} />
+          <SheetRow
+            outline
+            title={t('regular.other')}
+            onPress={() => {
+              setSheet(null);
+              router.push(isToday ? ENTRY_ROUTE[sheet] : { pathname: ENTRY_ROUTE[sheet], params: { day } });
+            }}
+          />
         </Sheet>
       )}
 
       <Rise order={3} style={{ gap: 8 }}>
-        <DayLog rows={rows} ctx={ctx} onChanged={load} limit={TODAY_LOG_LIMIT} highlight={highlight} onShowAll={() => router.navigate({ pathname: '/review/day', params: { day } })} />
+        <DayLog
+          rows={rows}
+          ctx={ctx}
+          onChanged={load}
+          limit={TODAY_LOG_LIMIT}
+          highlight={highlight}
+          onShowAll={() => router.navigate({ pathname: '/review/day', params: { day } })}
+        />
       </Rise>
     </Screen>
   );

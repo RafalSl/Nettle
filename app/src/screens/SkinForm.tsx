@@ -76,7 +76,10 @@ export default function SkinForm() {
     try {
       const result = await repeatAllAreas(deps, time.atForSave);
       if (result.needFirstEntry.length > 0) {
-        Alert.alert(t('skin.noChangeAllDone', { n: result.saved.length }), t('skin.noChangeAllNeed', { list: result.needFirstEntry.map(areaLabel).join(', ') }));
+        Alert.alert(
+          t('skin.noChangeAllDone', { n: result.saved.length }),
+          t('skin.noChangeAllNeed', { list: result.needFirstEntry.map(areaLabel).join(', ') }),
+        );
       }
       router.back();
     } catch (e) {
@@ -89,14 +92,29 @@ export default function SkinForm() {
       dirty={f.dirty}
       missing={!selected ? t('edit.area') : size.ok ? null : t('skin.sizeMissing')}
       onSave={async () => {
-        const entry = await logSkinEntry(deps, { areaId: selected!, scores, cracks, sizeMm: sizeToSave(sizeText), note, at: time.atForSave });
+        const entry = await logSkinEntry(deps, {
+          areaId: selected!,
+          scores,
+          cracks,
+          sizeMm: sizeToSave(sizeText),
+          note,
+          at: time.atForSave,
+        });
         await attach(entry.id, entry.at.utc);
-      }}>
+      }}
+    >
       <Label>{t('skin.area')}</Label>
-      <Chips items={areas.map((a) => ({ id: a.id, label: areaLabel(a) }))} selected={new Set(selected ? [selected] : [])} onToggle={setAreaId} />
+      <Chips
+        items={areas.map((a) => ({ id: a.id, label: areaLabel(a) }))}
+        selected={new Set(selected ? [selected] : [])}
+        onToggle={setAreaId}
+      />
       {hasLast && (
         <>
-          <Button kind="secondary" title={t('skin.noChange')} onPress={() =>
+          <Button
+            kind="secondary"
+            title={t('skin.noChange')}
+            onPress={() =>
               void act(async () => {
                 const entry = await repeatSkinEntry(deps, selected!, time.atForSave); // SK-4: "No change" plus a photo is a photo-only update
                 await attach(entry.id, entry.at.utc);
@@ -110,7 +128,12 @@ export default function SkinForm() {
       <Hint>{t('skin.scale')}</Hint>
       {hasLast && <Hint>{t('skin.prefilled')}</Hint>}
       {SCORE_KEYS.map((k) => (
-        <ScoreInput key={k} label={t(`skin.scores.${k}`)} value={scores[k]} onChange={(v) => (f.touch(), setScores((s) => ({ ...s, [k]: v })))} />
+        <ScoreInput
+          key={k}
+          label={t(`skin.scores.${k}`)}
+          value={scores[k]}
+          onChange={(v) => (f.touch(), setScores((s) => ({ ...s, [k]: v })))}
+        />
       ))}
       <SkinExtraFields
         cracks={cracks}

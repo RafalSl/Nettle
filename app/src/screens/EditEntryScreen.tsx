@@ -3,8 +3,26 @@ import { useEffect, useState } from 'react';
 import { TextInput } from '@/ui/themed';
 import { addIngredients, joinIngredients, splitIngredients } from '@/core/model/allergens';
 import { completeSuggestion } from '@/core/usecases/aiPack';
-import { ALLERGENS, CHANGE_ACTIONS, MEDICATION_CATEGORIES, NAIL_EXTENTS, NAIL_STAGES, SCORE_KEYS, SYMPTOMS, TREATMENT_REACTIONS } from '@/core/model/types';
-import type { Allergen, ListItem, LocalDay, MedicalKind, MedicationCategory, RecordKind, SkinArea, TreatmentReaction } from '@/core/model/types';
+import {
+  ALLERGENS,
+  CHANGE_ACTIONS,
+  MEDICATION_CATEGORIES,
+  NAIL_EXTENTS,
+  NAIL_STAGES,
+  SCORE_KEYS,
+  SYMPTOMS,
+  TREATMENT_REACTIONS,
+} from '@/core/model/types';
+import type {
+  Allergen,
+  ListItem,
+  LocalDay,
+  MedicalKind,
+  MedicationCategory,
+  RecordKind,
+  SkinArea,
+  TreatmentReaction,
+} from '@/core/model/types';
 import {
   editDrink,
   editChangeEvent,
@@ -101,8 +119,13 @@ function MealFields({ r, suggestionId }: { r: Rec<'meals'>; suggestionId: string
           at: c.at ?? undefined,
         });
         // IN-20: names were added from a suggestion: the mark clears and the source reads name estimate (manual).
-        if (suggestionId && sug.baseline) await completeSuggestion(deps, suggestionId, { edited: !sameList(sug.baseline, splitIngredients(ingredients)), aiTags: sug.aiTags });
-      }}>
+        if (suggestionId && sug.baseline)
+          await completeSuggestion(deps, suggestionId, {
+            edited: !sameList(sug.baseline, splitIngredients(ingredients)),
+            aiTags: sug.aiTags,
+          });
+      }}
+    >
       <Label>{t('meal.description')}</Label>
       <TextInput style={styles.input} accessibilityLabel={t('meal.description')} value={description} onChangeText={setDescription} />
       {suggestionId && sug.open && (
@@ -124,7 +147,11 @@ function MealFields({ r, suggestionId }: { r: Rec<'meals'>; suggestionId: string
       <TextInput style={styles.input} accessibilityLabel={t('meal.ingredients')} value={ingredients} onChangeText={setIngredients} />
       <Hint>{t('edit.ingredientsHint')}</Hint>
       <Label>{t('meal.allergens')}</Label>
-      <Chips items={ALLERGENS.map((a) => ({ id: a, label: t(`allergens.${a}`) }))} selected={allergens} onToggle={(id) => setAllergens(toggled(allergens, id))} />
+      <Chips
+        items={ALLERGENS.map((a) => ({ id: a, label: t(`allergens.${a}`) }))}
+        selected={allergens}
+        onToggle={(id) => setAllergens(toggled(allergens, id))}
+      />
       <FillLaterSwitch value={fillLater} onChange={setFillLater} />
       <CommonFields c={c} original={r.at.utc} />
     </FormModal>
@@ -142,13 +169,37 @@ function SkinFields({ r, areas }: { r: Rec<'skinEntries'>; areas: SkinArea[] }) 
   const [detailsOpen, setDetailsOpen] = useState(r.sizeMm !== null);
   const size = parseSizeText(sizeText);
   return (
-    <FormModal dirty={f.dirty} missing={size.ok ? null : t('skin.sizeMissing')} onSave={async () => void (await editSkinEntry(deps, r.id, { areaId, scores, cracks, sizeMm: sizeToSave(sizeText), note: c.note, at: c.at ?? undefined }))}>
-      <Chips items={areas.filter((a) => a.kind === 'skin').map((a) => ({ id: a.id, label: areaLabel(a) }))} selected={one(areaId)} onToggle={setAreaId} />
+    <FormModal
+      dirty={f.dirty}
+      missing={size.ok ? null : t('skin.sizeMissing')}
+      onSave={async () =>
+        void (await editSkinEntry(deps, r.id, {
+          areaId,
+          scores,
+          cracks,
+          sizeMm: sizeToSave(sizeText),
+          note: c.note,
+          at: c.at ?? undefined,
+        }))
+      }
+    >
+      <Chips
+        items={areas.filter((a) => a.kind === 'skin').map((a) => ({ id: a.id, label: areaLabel(a) }))}
+        selected={one(areaId)}
+        onToggle={setAreaId}
+      />
       <Label>{t('edit.scores')}</Label>
       {SCORE_KEYS.map((k) => (
         <ScoreInput key={k} label={t(`skin.scores.${k}`)} value={scores[k]} onChange={(v) => setScores({ ...scores, [k]: v })} />
       ))}
-      <SkinExtraFields cracks={cracks} onCracks={setCracks} sizeText={sizeText} onSizeText={setSizeText} open={detailsOpen} onToggleOpen={() => setDetailsOpen((o) => !o)} />
+      <SkinExtraFields
+        cracks={cracks}
+        onCracks={setCracks}
+        sizeText={sizeText}
+        onSizeText={setSizeText}
+        open={detailsOpen}
+        onToggleOpen={() => setDetailsOpen((o) => !o)}
+      />
       <CommonFields c={c} original={r.at.utc} />
       <Label>{t('edit.photos')}</Label>
       <PhotoStrip entryKind="skinEntry" entryId={r.id} />
@@ -168,9 +219,20 @@ function NailFields({ r, areas }: { r: Rec<'nailEntries'>; areas: SkinArea[] }) 
       dirty={f.dirty}
       missing={null}
       onSave={async () =>
-        void (await editNailEntry(deps, r.id, { areaId, stage: stage as (typeof NAIL_STAGES)[number], extent: extent as (typeof NAIL_EXTENTS)[number], note: c.note, at: c.at ?? undefined }))
-      }>
-      <Chips items={areas.filter((a) => a.kind === 'nail').map((a) => ({ id: a.id, label: areaLabel(a) }))} selected={one(areaId)} onToggle={setAreaId} />
+        void (await editNailEntry(deps, r.id, {
+          areaId,
+          stage: stage as (typeof NAIL_STAGES)[number],
+          extent: extent as (typeof NAIL_EXTENTS)[number],
+          note: c.note,
+          at: c.at ?? undefined,
+        }))
+      }
+    >
+      <Chips
+        items={areas.filter((a) => a.kind === 'nail').map((a) => ({ id: a.id, label: areaLabel(a) }))}
+        selected={one(areaId)}
+        onToggle={setAreaId}
+      />
       <Label>{t('more.nailStage')}</Label>
       <Chips items={NAIL_STAGES.map((s) => ({ id: s, label: t(`nail.stages.${s}`) }))} selected={one(stage)} onToggle={setStage} />
       <Label>{t('more.nailExtent')}</Label>
@@ -188,10 +250,14 @@ function CheckInFields({ r, items }: { r: Rec<'checkIns'>; items: ListItem[] }) 
   const c = useCommon(r.note, f.touch);
   const [values, setValues] = useField<DailyValues>({ ...r.values }, f.touch);
   return (
-    <FormModal dirty={f.dirty} missing={null} onSave={async () => {
+    <FormModal
+      dirty={f.dirty}
+      missing={null}
+      onSave={async () => {
         await editCheckIn(deps, r.id, { values, note: c.note, at: c.at ?? undefined });
         await rescheduleReminders(deps); // SK-9: a record moved to another day changes which day is skipped
-      }}>
+      }}
+    >
       <DailyHealthFields items={items} values={values} onChange={setValues} />
       <CommonFields c={c} original={r.at.utc} />
     </FormModal>
@@ -204,7 +270,11 @@ function StoolFields({ r }: { r: Rec<'stoolEntries'> }) {
   const c = useCommon(r.note, f.touch);
   const [type, setType] = useField(String(r.bristol), f.touch);
   return (
-    <FormModal dirty={f.dirty} missing={null} onSave={async () => void (await editStool(deps, r.id, { bristol: Number(type), note: c.note, at: c.at ?? undefined }))}>
+    <FormModal
+      dirty={f.dirty}
+      missing={null}
+      onSave={async () => void (await editStool(deps, r.id, { bristol: Number(type), note: c.note, at: c.at ?? undefined }))}
+    >
       <Chips items={[1, 2, 3, 4, 5, 6, 7].map((n) => ({ id: String(n), label: String(n) }))} selected={one(type)} onToggle={setType} />
       <CommonFields c={c} original={r.at.utc} />
     </FormModal>
@@ -222,13 +292,30 @@ function TreatmentFields({ r, areas, treatments }: { r: Rec<'treatmentApplicatio
     <FormModal
       dirty={f.dirty}
       missing={areaIds.size === 0 ? t('edit.areas') : null}
-      onSave={async () => void (await editTreatmentApplication(deps, r.id, { treatmentId, areaIds: [...areaIds], reaction, note: c.note, at: c.at ?? undefined }))}>
+      onSave={async () =>
+        void (await editTreatmentApplication(deps, r.id, {
+          treatmentId,
+          areaIds: [...areaIds],
+          reaction,
+          note: c.note,
+          at: c.at ?? undefined,
+        }))
+      }
+    >
       <Chips items={treatments.map((x) => ({ id: x.id, label: itemLabel(x) }))} selected={one(treatmentId)} onToggle={setTreatmentId} />
       <Label>{t('more.treatmentAreas')}</Label>
-      <Chips items={areas.map((a) => ({ id: a.id, label: areaLabel(a) }))} selected={areaIds} onToggle={(id) => setAreaIds(toggled(areaIds, id))} />
+      <Chips
+        items={areas.map((a) => ({ id: a.id, label: areaLabel(a) }))}
+        selected={areaIds}
+        onToggle={(id) => setAreaIds(toggled(areaIds, id))}
+      />
       {/* IN-11: what the skin did after applying; a tap on the chosen one clears it, because empty means not recorded. */}
       <Label>{t('treatmentReaction.title')}</Label>
-      <Segmented items={TREATMENT_REACTIONS.map((x) => ({ id: x, label: t(`treatmentReaction.${x}`) }))} value={reaction ?? ''} onChange={(id) => setReaction(id === reaction ? null : (id as TreatmentReaction))} />
+      <Segmented
+        items={TREATMENT_REACTIONS.map((x) => ({ id: x, label: t(`treatmentReaction.${x}`) }))}
+        value={reaction ?? ''}
+        onChange={(id) => setReaction(id === reaction ? null : (id as TreatmentReaction))}
+      />
       <Hint>{t('treatmentReaction.hint')}</Hint>
       <CommonFields c={c} original={r.at.utc} />
     </FormModal>
@@ -246,7 +333,16 @@ function MedicalEditFields({ r }: { r: Rec<'medicalEvents'> }) {
     <FormModal
       dirty={f.dirty}
       missing={title.trim() ? null : t('edit.titleMissing')}
-      onSave={async () => void (await editMedicalEvent(deps, r.id, { kind, title, ...(kind === 'illness' ? { endDay } : {}), note: c.note, at: c.at ?? undefined }))}>
+      onSave={async () =>
+        void (await editMedicalEvent(deps, r.id, {
+          kind,
+          title,
+          ...(kind === 'illness' ? { endDay } : {}),
+          note: c.note,
+          at: c.at ?? undefined,
+        }))
+      }
+    >
       <MedicalFields kind={kind} onKind={setKind} title={title} onTitle={setTitle} endDay={endDay} onEndDay={setEndDay} />
       <CommonFields c={c} original={r.at.utc} />
     </FormModal>
@@ -274,13 +370,12 @@ function ChangeFields({ r, categories }: { r: Rec<'changeEvents'>; categories: L
           note: c.note,
           at: c.at ?? undefined,
         }))
-      }>
+      }
+    >
       <Chips items={CHANGE_ACTIONS.map((a) => ({ id: a, label: t(`change.actions.${a}`) }))} selected={one(action)} onToggle={setAction} />
       <Chips items={categories.map((a) => ({ id: a.id, label: itemLabel(a) }))} selected={one(category)} onToggle={setCategory} />
       <TextInput style={styles.input} placeholder={t('more.changeName')} value={name} onChangeText={setName} />
-      {action === 'started' && (
-        <SwitchRow title={t('change.dateUnknown')} value={unknown} onChange={setUnknown} />
-      )}
+      {action === 'started' && <SwitchRow title={t('change.dateUnknown')} value={unknown} onChange={setUnknown} />}
       <CommonFields c={c} original={r.at.utc} />
     </FormModal>
   );
@@ -295,9 +390,21 @@ function ReactionFields({ r }: { r: Rec<'reactions'> }) {
     <FormModal
       dirty={f.dirty}
       missing={symptoms.size === 0 ? t('edit.symptoms') : null}
-      onSave={async () => void (await editReaction(deps, r.id, { mealId: r.mealId, symptoms: [...symptoms] as (typeof SYMPTOMS)[number][], note: c.note, at: c.at ?? undefined }))}>
+      onSave={async () =>
+        void (await editReaction(deps, r.id, {
+          mealId: r.mealId,
+          symptoms: [...symptoms] as (typeof SYMPTOMS)[number][],
+          note: c.note,
+          at: c.at ?? undefined,
+        }))
+      }
+    >
       <Hint>{t('more.reactionUrgent')}</Hint>
-      <Chips items={SYMPTOMS.map((s) => ({ id: s, label: t(`symptoms.${s}`) }))} selected={symptoms} onToggle={(id) => setSymptoms(toggled(symptoms, id))} />
+      <Chips
+        items={SYMPTOMS.map((s) => ({ id: s, label: t(`symptoms.${s}`) }))}
+        selected={symptoms}
+        onToggle={(id) => setSymptoms(toggled(symptoms, id))}
+      />
       <CommonFields c={c} original={r.at.utc} />
     </FormModal>
   );
@@ -315,8 +422,13 @@ function DrinkEdit({ r, suggestionId }: { r: Rec<'drinks'>; suggestionId: string
       missing={drinkMissing(draft)}
       onSave={async () => {
         await editDrink(deps, r.id, { ...drinkInput(draft), note: c.note, at: c.at ?? undefined });
-        if (suggestionId && sug.baseline) await completeSuggestion(deps, suggestionId, { edited: !sameList(sug.baseline, splitIngredients(draft.ingredients)), aiTags: sug.aiTags });
-      }}>
+        if (suggestionId && sug.baseline)
+          await completeSuggestion(deps, suggestionId, {
+            edited: !sameList(sug.baseline, splitIngredients(draft.ingredients)),
+            aiTags: sug.aiTags,
+          });
+      }}
+    >
       {suggestionId && sug.open && (
         <SuggestionPanel
           suggestionId={suggestionId}
@@ -349,9 +461,21 @@ function MedicationFields({ r }: { r: Rec<'medicationEntries'> }) {
     <FormModal
       dirty={f.dirty}
       missing={name.trim() ? null : t('edit.name')}
-      onSave={async () => void (await editMedication(deps, r.id, { category: category as MedicationCategory, name, dose, note: c.note, at: c.at ?? undefined }))}>
+      onSave={async () =>
+        void (await editMedication(deps, r.id, {
+          category: category as MedicationCategory,
+          name,
+          dose,
+          note: c.note,
+          at: c.at ?? undefined,
+        }))
+      }
+    >
       <Chips
-        items={MEDICATION_CATEGORIES.map((k) => ({ id: k, label: t(k === 'medication' ? 'more.medKindMedication' : 'more.medKindSupplement') }))}
+        items={MEDICATION_CATEGORIES.map((k) => ({
+          id: k,
+          label: t(k === 'medication' ? 'more.medKindMedication' : 'more.medKindSupplement'),
+        }))}
         selected={one(category)}
         onToggle={setCategory}
       />
@@ -371,7 +495,9 @@ export default function EditEntryScreen() {
   const { deps } = useServices();
   const { kind, id, suggestion } = useLocalSearchParams<{ kind: string; id: string; suggestion?: string }>();
   const suggestionId = typeof suggestion === 'string' && suggestion ? suggestion : null; // IN-20: opened from "Suggestions to review"
-  const [state, setState] = useState<{ row: LogRow; areas: SkinArea[]; treatments: ListItem[]; tags: ListItem[]; categories: ListItem[] } | 'missing' | null>(null);
+  const [state, setState] = useState<
+    { row: LogRow; areas: SkinArea[]; treatments: ListItem[]; tags: ListItem[]; categories: ListItem[] } | 'missing' | null
+  >(null);
 
   useEffect(() => {
     (async () => {
@@ -391,19 +517,36 @@ export default function EditEntryScreen() {
   if (state === 'missing') return <Hint>{t('edit.unavailable')}</Hint>;
   const { row, areas, treatments, tags } = state;
   // Areas and items that are archived stay listed only when the entry already uses them.
-  const usable = <T extends { id: string; archived: boolean }>(l: T[], used: string[]) => l.filter((x) => !x.archived || used.includes(x.id));
+  const usable = <T extends { id: string; archived: boolean }>(l: T[], used: string[]) =>
+    l.filter((x) => !x.archived || used.includes(x.id));
   switch (row.kind) {
-    case 'meals': return <MealFields r={row.record} suggestionId={suggestionId} />;
-    case 'skinEntries': return <SkinFields r={row.record} areas={usable(areas, [row.record.areaId])} />;
-    case 'nailEntries': return <NailFields r={row.record} areas={usable(areas, [row.record.areaId])} />;
-    case 'checkIns': return <CheckInFields r={row.record} items={tags.filter((i) => !i.archived)} />;
-    case 'stoolEntries': return <StoolFields r={row.record} />;
+    case 'meals':
+      return <MealFields r={row.record} suggestionId={suggestionId} />;
+    case 'skinEntries':
+      return <SkinFields r={row.record} areas={usable(areas, [row.record.areaId])} />;
+    case 'nailEntries':
+      return <NailFields r={row.record} areas={usable(areas, [row.record.areaId])} />;
+    case 'checkIns':
+      return <CheckInFields r={row.record} items={tags.filter((i) => !i.archived)} />;
+    case 'stoolEntries':
+      return <StoolFields r={row.record} />;
     case 'treatmentApplications':
-      return <TreatmentFields r={row.record} areas={usable(areas, row.record.areaIds)} treatments={usable(treatments, [row.record.treatmentId])} />;
-    case 'changeEvents': return <ChangeFields r={row.record} categories={state.categories} />;
-    case 'medicalEvents': return <MedicalEditFields r={row.record} />;
-    case 'reactions': return <ReactionFields r={row.record} />;
-    case 'drinks': return <DrinkEdit r={row.record} suggestionId={suggestionId} />;
-    case 'medicationEntries': return <MedicationFields r={row.record} />;
+      return (
+        <TreatmentFields
+          r={row.record}
+          areas={usable(areas, row.record.areaIds)}
+          treatments={usable(treatments, [row.record.treatmentId])}
+        />
+      );
+    case 'changeEvents':
+      return <ChangeFields r={row.record} categories={state.categories} />;
+    case 'medicalEvents':
+      return <MedicalEditFields r={row.record} />;
+    case 'reactions':
+      return <ReactionFields r={row.record} />;
+    case 'drinks':
+      return <DrinkEdit r={row.record} suggestionId={suggestionId} />;
+    case 'medicationEntries':
+      return <MedicationFields r={row.record} />;
   }
 }

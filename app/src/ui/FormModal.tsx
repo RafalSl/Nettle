@@ -94,7 +94,19 @@ export function FormModal({
       />
       {banner}
       {error !== null && (
-        <View accessibilityRole="alert" style={{ marginHorizontal: 20, marginTop: 4, padding: 14, borderRadius: 22, gap: 2, backgroundColor: color.alertSoft, borderWidth: 1, borderColor: color.alertLine }}>
+        <View
+          accessibilityRole="alert"
+          style={{
+            marginHorizontal: 20,
+            marginTop: 4,
+            padding: 14,
+            borderRadius: 22,
+            gap: 2,
+            backgroundColor: color.alertSoft,
+            borderWidth: 1,
+            borderColor: color.alertLine,
+          }}
+        >
           <Text style={{ color: color.alert, fontWeight: '700', fontSize: 14.5 }}>{error}</Text>
           <Text style={{ color: color.soft, fontSize: 13.5 }}>{t('edit.keptOpen')}</Text>
         </View>

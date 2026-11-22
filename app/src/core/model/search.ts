@@ -10,14 +10,7 @@ export interface SearchItem<T> {
 
 /** Lower case, no accents, single spaces, so "Skóra" matches "skora" and case never matters. */
 export function normalize(text: string): string {
-  return text
-    .normalize('NFD')
-    .replace(/\p{M}/gu, '')
-    .replace(/ł/g, 'l')
-    .replace(/Ł/g, 'l')
-    .toLowerCase()
-    .replace(/\s+/g, ' ')
-    .trim();
+  return text.normalize('NFD').replace(/\p{M}/gu, '').replace(/ł/g, 'l').replace(/Ł/g, 'l').toLowerCase().replace(/\s+/g, ' ').trim();
 }
 
 /**

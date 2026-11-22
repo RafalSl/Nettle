@@ -23,7 +23,12 @@ export function parseSource(o: Obj, where: string): IngredientSource {
     if (!isObj(s.llm)) return bad(`${w}.llm`);
     const at = str(s.llm, 'at', `${w}.llm`);
     if (!CANONICAL_UTC.test(at)) return bad(`${w}.llm.at`);
-    llm = { model: str(s.llm, 'model', `${w}.llm`), at, promptVersion: str(s.llm, 'prompt_version', `${w}.llm`), ...(s.llm.manual === undefined ? {} : bool(s.llm, 'manual', `${w}.llm`) ? { manual: true as const } : {}) };
+    llm = {
+      model: str(s.llm, 'model', `${w}.llm`),
+      at,
+      promptVersion: str(s.llm, 'prompt_version', `${w}.llm`),
+      ...(s.llm.manual === undefined ? {} : bool(s.llm, 'manual', `${w}.llm`) ? { manual: true as const } : {}),
+    };
   } else if (s.llm !== null && s.llm !== undefined) return bad(`${w}.llm`);
   if (kind === 'typed' && edited) return bad(`${w}.edited`);
   const aiTags = s.ai_tags === undefined ? false : bool(s, 'ai_tags', w);

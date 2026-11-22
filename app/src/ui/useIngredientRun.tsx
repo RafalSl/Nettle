@@ -4,7 +4,14 @@ import { pickPhotoUris } from '@/adapters/photos/pickPhotos';
 import { NettleError } from '@/core/model/errors';
 import type { LlmProvenance, SourceKind } from '@/core/model/source';
 import type { Allergen } from '@/core/model/types';
-import { estimateIngredients, estimateIngredientsFromName, getModelLabel, knownIngredientNames, nameEstimateText, scanLabel } from '@/core/usecases/llm';
+import {
+  estimateIngredients,
+  estimateIngredientsFromName,
+  getModelLabel,
+  knownIngredientNames,
+  nameEstimateText,
+  scanLabel,
+} from '@/core/usecases/llm';
 import { currentLanguage, errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
 import { formatElapsed } from '@/core/usecases/analysisRunner';
@@ -23,7 +30,9 @@ export type RunKind = 'photo' | 'label' | 'name';
 export const SOURCE_OF: Record<RunKind, SourceKind> = { photo: 'photo_estimate', label: 'label_scan', name: 'name_estimate' };
 
 /** What a run was started with, kept for the one-tap retry: a temporary photo, or the text of a name estimate. */
-type Job = { kind: 'photo' | 'label'; uri: string; knownNames: readonly string[] } | { kind: 'name'; description: string; knownNames: readonly string[] };
+type Job =
+  | { kind: 'photo' | 'label'; uri: string; knownNames: readonly string[] }
+  | { kind: 'name'; description: string; knownNames: readonly string[] };
 
 export type Run =
   | { status: 'idle' }
@@ -87,8 +96,21 @@ export function useIngredientRun() {
       const language = currentLanguage();
       let answer: Run;
       if (next.kind === 'name') {
-        const r = await estimateIngredientsFromName(deps, { description: next.description, language, signal: controller.signal, knownNames: next.knownNames });
-        answer = { status: 'ready', kind, names: r.names, picked: new Set(), uncertainty: r.uncertainty, provenance: r.provenance, label: null };
+        const r = await estimateIngredientsFromName(deps, {
+          description: next.description,
+          language,
+          signal: controller.signal,
+          knownNames: next.knownNames,
+        });
+        answer = {
+          status: 'ready',
+          kind,
+          names: r.names,
+          picked: new Set(),
+          uncertainty: r.uncertainty,
+          provenance: r.provenance,
+          label: null,
+        };
       } else {
         const data = await deps.photos.compress(next.uri, next.kind === 'label' ? 1600 : 1024);
         const input = { image: { mimeType: 'image/jpeg' as const, data }, language, signal: controller.signal };
@@ -98,7 +120,15 @@ export function useIngredientRun() {
           answer = { status: 'ready', kind, names: r.ingredients, picked: new Set(), uncertainty: r.note, provenance: r.provenance, label };
         } else {
           const r = await estimateIngredients(deps, { ...input, knownNames: next.knownNames });
-          answer = { status: 'ready', kind, names: r.names, picked: new Set(), uncertainty: r.uncertainty, provenance: r.provenance, label: null };
+          answer = {
+            status: 'ready',
+            kind,
+            names: r.names,
+            picked: new Set(),
+            uncertainty: r.uncertainty,
+            provenance: r.provenance,
+            label: null,
+          };
         }
       }
       if (controller.signal.aborted) return;
@@ -209,7 +239,9 @@ function WaitCard({ run, onCancel }: { run: Extract<Run, { status: 'running' }>;
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
         <WaitArc />
         <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 15, fontWeight: '600' }}>{run.slow ? t('meal.estimateSlow') : t(run.kind === 'name' ? 'meal.estimatingName' : 'meal.estimating')}</Text>
+          <Text style={{ fontSize: 15, fontWeight: '600' }}>
+            {run.slow ? t('meal.estimateSlow') : t(run.kind === 'name' ? 'meal.estimatingName' : 'meal.estimating')}
+          </Text>
           <Text style={{ fontSize: 13, color: color.muted }}>{formatElapsed(seconds)}</Text>
         </View>
       </View>
@@ -234,13 +266,32 @@ export function IngredientRunPanel({
   if (run.status === 'ready') {
     return (
       <GlassSurface style={{ borderRadius: 26, padding: 14, gap: 10 }}>
-        <Hint>{t(run.kind === 'label' ? 'meal.labelSuggested' : run.kind === 'name' ? (run.names.length === 0 ? 'meal.nameEmpty' : 'meal.nameSuggested') : 'meal.suggested')}</Hint>
+        <Hint>
+          {t(
+            run.kind === 'label'
+              ? 'meal.labelSuggested'
+              : run.kind === 'name'
+                ? run.names.length === 0
+                  ? 'meal.nameEmpty'
+                  : 'meal.nameSuggested'
+                : 'meal.suggested',
+          )}
+        </Hint>
         {run.label && run.label.textRead !== '' && <Hint>{t('meal.labelRead', { text: run.label.textRead })}</Hint>}
         {run.uncertainty !== null && <Hint>{t(run.kind === 'label' ? 'meal.labelNote' : 'meal.unsure', { text: run.uncertainty })}</Hint>}
         <Chips items={run.names.map((n) => ({ id: n, label: n }))} selected={run.picked} onToggle={hook.toggle} />
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-          {(run.kind !== 'name' || run.names.length > 0) && <Button kind="outline" title={t('meal.estimateAddAll')} onPress={() => onAdd(run.names, run)} />}
-          {run.names.length > 0 && <Button kind="secondary" title={t('meal.estimateAddPicked')} disabled={run.picked.size === 0} onPress={() => onAdd([...run.picked], run)} />}
+          {(run.kind !== 'name' || run.names.length > 0) && (
+            <Button kind="outline" title={t('meal.estimateAddAll')} onPress={() => onAdd(run.names, run)} />
+          )}
+          {run.names.length > 0 && (
+            <Button
+              kind="secondary"
+              title={t('meal.estimateAddPicked')}
+              disabled={run.picked.size === 0}
+              onPress={() => onAdd([...run.picked], run)}
+            />
+          )}
           <Button kind="secondary" title={t('meal.estimateDismiss')} onPress={hook.dismiss} />
         </View>
       </GlassSurface>

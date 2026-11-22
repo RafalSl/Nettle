@@ -95,7 +95,15 @@ const stool: Codec<StoolEntry> = {
 
 const treatmentApplication: Codec<TreatmentApplication> = {
   key: 'treatment_applications',
-  toJson: (a) => ({ id: a.id, utc: a.at.utc, tz: a.at.tz, treatment_id: a.treatmentId, area_ids: [...a.areaIds], reaction: a.reaction, note: a.note }),
+  toJson: (a) => ({
+    id: a.id,
+    utc: a.at.utc,
+    tz: a.at.tz,
+    treatment_id: a.treatmentId,
+    area_ids: [...a.areaIds],
+    reaction: a.reaction,
+    note: a.note,
+  }),
   parse: (o, w) => {
     const areaIds = stringList(o, 'area_ids', w);
     if (areaIds.length === 0) bad(`${w}.area_ids`);
@@ -112,7 +120,16 @@ const treatmentApplication: Codec<TreatmentApplication> = {
 
 const changeEvent: Codec<ChangeEvent> = {
   key: 'change_events',
-  toJson: (e) => ({ id: e.id, utc: e.at.utc, tz: e.at.tz, action: e.action, category: e.category, name: e.name, date_unknown: e.dateUnknown, note: e.note }),
+  toJson: (e) => ({
+    id: e.id,
+    utc: e.at.utc,
+    tz: e.at.tz,
+    action: e.action,
+    category: e.category,
+    name: e.name,
+    date_unknown: e.dateUnknown,
+    note: e.note,
+  }),
   parse: (o, w) => ({
     id: str(o, 'id', w),
     at: { utc: utc(o, w), tz: tz(o, w) },
@@ -295,7 +312,8 @@ const reportSummary: Codec<ReportSummary> = {
   }),
   parse: (o, w) => {
     const counts = o.counts;
-    if (typeof counts !== 'object' || counts === null || Array.isArray(counts) || Object.values(counts).some((n) => typeof n !== 'number')) bad(`${w}.counts`);
+    if (typeof counts !== 'object' || counts === null || Array.isArray(counts) || Object.values(counts).some((n) => typeof n !== 'number'))
+      bad(`${w}.counts`);
     const day = (k: string) => {
       const v = str(o, k, w);
       return /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(Date.parse(v)) ? v : bad(`${w}.${k}`);

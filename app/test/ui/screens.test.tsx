@@ -18,7 +18,13 @@ import { addPhoto } from '@/core/usecases/photos';
 import { applyImport, exportBundle, previewImport } from '@/core/usecases/exchange';
 import { deleteEntry } from '@/core/usecases/entries';
 import { addRegularMedication, setRegularTimes } from '@/core/usecases/regular';
-import { pinEntryType, unpinEntryType, toggleFavoriteDrink, toggleFavoriteMeal, updateSuggestionSettings } from '@/core/usecases/preferences';
+import {
+  pinEntryType,
+  unpinEntryType,
+  toggleFavoriteDrink,
+  toggleFavoriteMeal,
+  updateSuggestionSettings,
+} from '@/core/usecases/preferences';
 import { buildPack, importResult, listSuggestions } from '@/core/usecases/aiPack';
 import { applyTreatment, logChangeEvent, logMedicalEvent, logReaction } from '@/core/usecases/events';
 import { addListItem, archiveListItem } from '@/core/usecases/lists';
@@ -48,7 +54,6 @@ afterEach(() => {
   }
 });
 
-
 const mockRouter = { push: jest.fn(), back: jest.fn(), navigate: jest.fn(), replace: jest.fn(), canGoBack: jest.fn(() => true) };
 const mockCamera: { props?: { onBarcodeScanned?: (e: { data: string }) => void } } = {};
 const mockPermission: { current: { granted: boolean; canAskAgain: boolean } | null } = { current: { granted: true, canAskAgain: true } };
@@ -74,7 +79,9 @@ jest.mock('expo-router', () => {
       Screen: ({ name, options }: { name?: string; options?: unknown }) => {
         // A left header item (hidesSharedBackground, iOS 26) is exposed as headerLeft so tests press it the same way.
         const o = options as { unstable_headerLeftItems?: () => { element: React.ReactElement }[] } | undefined;
-        const seen = (o?.unstable_headerLeftItems ? { ...o, headerLeft: () => o.unstable_headerLeftItems!()[0]!.element } : options) as MockScreenOptions;
+        const seen = (
+          o?.unstable_headerLeftItems ? { ...o, headerLeft: () => o.unstable_headerLeftItems!()[0]!.element } : options
+        ) as MockScreenOptions;
         mockScreen.options = seen;
         if (name) mockScreen.byName[name] = seen;
         return null;
@@ -88,7 +95,10 @@ jest.mock('@react-native-community/datetimepicker', () => (props: MockPickerProp
   return null;
 });
 jest.mock('expo-font', () => ({ useFonts: () => [true, null] }));
-jest.mock('expo-splash-screen', () => ({ preventAutoHideAsync: jest.fn(async () => undefined), hideAsync: jest.fn(async () => undefined) }));
+jest.mock('expo-splash-screen', () => ({
+  preventAutoHideAsync: jest.fn(async () => undefined),
+  hideAsync: jest.fn(async () => undefined),
+}));
 jest.mock('expo-camera', () => ({
   CameraView: (props: typeof mockCamera.props) => {
     mockCamera.props = props;
@@ -97,7 +107,10 @@ jest.mock('expo-camera', () => ({
   useCameraPermissions: () => [mockPermission.current, jest.fn()],
 }));
 jest.mock('expo-constants', () => ({ __esModule: true, default: { expoConfig: { version: '9.9.9' } } }));
-jest.mock('expo-keep-awake', () => ({ activateKeepAwakeAsync: jest.fn(async () => undefined), deactivateKeepAwake: jest.fn(async () => undefined) }));
+jest.mock('expo-keep-awake', () => ({
+  activateKeepAwakeAsync: jest.fn(async () => undefined),
+  deactivateKeepAwake: jest.fn(async () => undefined),
+}));
 jest.mock('expo-image-picker', () => ({}));
 jest.mock('@/adapters/photos/pickPhotos', () => ({ pickPhotoUris: jest.fn(async () => []) }));
 jest.mock('@/services', () => {
@@ -178,7 +191,11 @@ describe('screens render without crashing (NF-3)', () => {
 type Deps = ReturnType<typeof makeDeps>;
 const scores = { severity: 1, itch: 2, pain: 3, dryness: 4, scaling: 5 };
 
-async function mount(load: () => { default: React.ComponentType }, deps: Deps, fileShare = { saveAndShare: jest.fn(async () => undefined), pickFile: jest.fn(async () => null) }) {
+async function mount(
+  load: () => { default: React.ComponentType },
+  deps: Deps,
+  fileShare = { saveAndShare: jest.fn(async () => undefined), pickFile: jest.fn(async () => null) },
+) {
   services.__state.current = { deps, fileShare, analysisRunner: new AnalysisRunner(deps), appLock: new AppLock(deps) };
   let tree!: ReactTestRenderer;
   await act(async () => {
@@ -198,7 +215,11 @@ const press = async (tree: ReactTestRenderer, label: string) => {
   });
 };
 const type = async (tree: ReactTestRenderer, placeholderOrLabel: string, value: string) => {
-  const node = tree.root.findAll((n) => (n.props.placeholder === placeholderOrLabel || n.props.accessibilityLabel === placeholderOrLabel) && typeof n.props.onChangeText === 'function')[0];
+  const node = tree.root.findAll(
+    (n) =>
+      (n.props.placeholder === placeholderOrLabel || n.props.accessibilityLabel === placeholderOrLabel) &&
+      typeof n.props.onChangeText === 'function',
+  )[0];
   if (!node) throw new Error(`no input "${placeholderOrLabel}"`);
   await act(async () => node.props.onChangeText(value));
 };
@@ -214,7 +235,22 @@ const flush = () => act(async () => new Promise((r) => setTimeout(r, 0)));
 
 // Only the date is pinned (to midday), so a test that logs an entry "3 hours ago" does not land on yesterday when the
 // suite runs between midnight and 03:00. Timers stay real.
-const DATE_ONLY = ['hrtime', 'nextTick', 'performance', 'queueMicrotask', 'requestAnimationFrame', 'cancelAnimationFrame', 'requestIdleCallback', 'cancelIdleCallback', 'setImmediate', 'clearImmediate', 'setInterval', 'clearInterval', 'setTimeout', 'clearTimeout'] as const;
+const DATE_ONLY = [
+  'hrtime',
+  'nextTick',
+  'performance',
+  'queueMicrotask',
+  'requestAnimationFrame',
+  'cancelAnimationFrame',
+  'requestIdleCallback',
+  'cancelIdleCallback',
+  'setImmediate',
+  'clearImmediate',
+  'setInterval',
+  'clearInterval',
+  'setTimeout',
+  'clearTimeout',
+] as const;
 beforeEach(() => {
   jest.useFakeTimers({ now: new Date('2026-06-15T10:00:00.000Z'), doNotFake: [...DATE_ONLY] });
 });
@@ -276,16 +312,23 @@ describe('screen flows (NF-2, NF-3)', () => {
   it('SK-7 "Same as yesterday" is an explicit button, and nothing is filled in silently', async () => {
     const deps = nowDeps();
     const yesterday = new Date(Date.now() - 86_400_000);
-    await saveCheckIn(deps, { at: yesterday, values: { 'item-wellbeing': 7, 'item-stress': 2, 'item-bloating': true }, confirmEmptyDay: true });
+    await saveCheckIn(deps, {
+      at: yesterday,
+      values: { 'item-wellbeing': 7, 'item-stress': 2, 'item-bloating': true },
+      confirmEmptyDay: true,
+    });
     const { tree } = await mount(() => require('@/app/form/checkin'), deps);
     await flush();
-    const shown = () => tree.root.findAll((n) => n.props.accessibilityLabel === `${en.common.increase} ${en.tags['item-wellbeing']}`).length;
+    const shown = () =>
+      tree.root.findAll((n) => n.props.accessibilityLabel === `${en.common.increase} ${en.tags['item-wellbeing']}`).length;
     expect(shown()).toBeGreaterThan(0);
     const showsValue = (v: string) => tree.root.findAll((n) => (n.type as unknown) === 'Text' && String(n.props.children) === v).length > 0;
     expect(showsValue('7')).toBe(false); // today's form starts empty
     await press(tree, en.today.sameAsYesterday);
     expect(showsValue('7')).toBe(true);
-    const bloating = tree.root.findAll((n) => n.props.accessibilityLabel === en.tags['item-bloating'] && typeof n.props.onPress === 'function')[0]!;
+    const bloating = tree.root.findAll(
+      (n) => n.props.accessibilityLabel === en.tags['item-bloating'] && typeof n.props.onPress === 'function',
+    )[0]!;
     expect(bloating.props.accessibilityState.selected).toBe(true);
   });
 
@@ -298,7 +341,9 @@ describe('screen flows (NF-2, NF-3)', () => {
       rendered = lastTree();
     });
     await act(async () => {
-      await rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!.props.onPress();
+      await rendered.root
+        .findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!
+        .props.onPress();
     });
     await flush();
     expect((await deps.repo.listRecords('stoolEntries')).map((x) => x.bristol)).toEqual([5]);
@@ -384,7 +429,10 @@ describe('screen flows (NF-2, NF-3)', () => {
     const { tree } = await mount(() => require('@/app/settings/areas'), deps);
     await flush();
     await press(tree, 'Behind the ears');
-    const sw = () => tree.root.findAll((n) => n.props.accessibilityLabel === en.settings.sensitiveDefault && typeof n.props.onValueChange === 'function')[0]!;
+    const sw = () =>
+      tree.root.findAll(
+        (n) => n.props.accessibilityLabel === en.settings.sensitiveDefault && typeof n.props.onValueChange === 'function',
+      )[0]!;
     expect(sw().props.value).toBe(false);
     await act(async () => {
       sw().props.onValueChange(true);
@@ -404,8 +452,22 @@ describe('screen flows (NF-2, NF-3)', () => {
 
   it('IN-14, UX-6 Settings lists the favorites and removes one with a tap', async () => {
     const deps = nowDeps();
-    await toggleFavoriteMeal(deps, { description: 'Synthetic rice', ingredients: [], allergens: [], barcode: null, source: { kind: 'typed', edited: false, llm: null, aiTags: false } });
-    await toggleFavoriteDrink(deps, { name: 'Synthetic tea', amountMl: 200, alcohol: false, ingredients: [], allergens: [], barcode: null, source: { kind: 'typed', edited: false, llm: null, aiTags: false } });
+    await toggleFavoriteMeal(deps, {
+      description: 'Synthetic rice',
+      ingredients: [],
+      allergens: [],
+      barcode: null,
+      source: { kind: 'typed', edited: false, llm: null, aiTags: false },
+    });
+    await toggleFavoriteDrink(deps, {
+      name: 'Synthetic tea',
+      amountMl: 200,
+      alcohol: false,
+      ingredients: [],
+      allergens: [],
+      barcode: null,
+      source: { kind: 'typed', edited: false, llm: null, aiTags: false },
+    });
     const { tree } = await mount(() => require('@/app/settings/favorites'), deps);
     await flush();
     expect(hasText(tree, '★ Synthetic rice')).toBe(true);
@@ -435,7 +497,11 @@ describe('screen flows (NF-2, NF-3)', () => {
     await flush();
     expect(hasText(tree, en.llm.group.estimates)).toBe(true);
     expect(hasText(tree, en.llm.group.analysis)).toBe(true);
-    const selected = () => tree.root.findAll((n) => n.props.accessibilityLabel === 'Haiku' && n.props.accessibilityState?.selected === true && typeof n.props.onPress === 'function');
+    const selected = () =>
+      tree.root.findAll(
+        (n) =>
+          n.props.accessibilityLabel === 'Haiku' && n.props.accessibilityState?.selected === true && typeof n.props.onPress === 'function',
+      );
     expect(selected()).toHaveLength(2);
     await press(tree, 'Sonnet'); // the first "Sonnet" chip belongs to the estimates group
     await flush();
@@ -518,7 +584,9 @@ describe('screen flows (NF-2, NF-3)', () => {
     await press(tree, en.data.exportButton);
     await flush();
     const files = unzipSync((fileShare.saveAndShare.mock.calls[0] as unknown as [string, Uint8Array])[1]);
-    const meals = JSON.parse(new TextDecoder().decode(files['data.json']!)).records.meals.map((m: { description: string }) => m.description);
+    const meals = JSON.parse(new TextDecoder().decode(files['data.json']!)).records.meals.map(
+      (m: { description: string }) => m.description,
+    );
     expect(meals).toEqual(['Synthetic inside']);
     const [from2] = mockPicker.all.slice(-2);
     await act(async () => {
@@ -545,7 +613,9 @@ describe('screen flows (NF-2, NF-3)', () => {
     await press(tree, en.doctor.button);
     await flush();
     const files = unzipSync((fileShare.saveAndShare.mock.calls[0] as unknown as [string, Uint8Array])[1]);
-    expect(JSON.parse(new TextDecoder().decode(files['data.json']!)).records.meals.map((m: { description: string }) => m.description)).toEqual(['Synthetic inside']);
+    expect(
+      JSON.parse(new TextDecoder().decode(files['data.json']!)).records.meals.map((m: { description: string }) => m.description),
+    ).toEqual(['Synthetic inside']);
   });
 
   it('EX-1, EX-9 the Data screen exports a ZIP with data.json and hands it to the share sheet', async () => {
@@ -652,7 +722,9 @@ describe('screen flows (NF-2, NF-3)', () => {
     await toggle(tree, en.reminders.checkIn);
     await flush();
     expect((deps.notifier as unknown as { scheduled: { id: string }[] }).scheduled.every((s) => s.id.startsWith('checkin-'))).toBe(true); // one per day ahead
-    expect(tree.root.findAll((n) => n.props.accessibilityLabel === en.reminders.checkIn && n.props.value === true).length).toBeGreaterThan(0);
+    expect(tree.root.findAll((n) => n.props.accessibilityLabel === en.reminders.checkIn && n.props.value === true).length).toBeGreaterThan(
+      0,
+    );
 
     const refused = nowDeps();
     (refused.notifier as unknown as { granted: boolean }).granted = false;
@@ -744,7 +816,8 @@ describe('navigation shell (UX-1, UX-2, UX-3, UX-6)', () => {
     const fs = require('fs') as typeof import('fs');
     const path = require('path') as typeof import('path');
     const root = path.join(__dirname, '../../src/app');
-    for (const screen of ['TodayScreen', 'ReviewScreen']) expect(fs.readFileSync(path.join(root, `../screens/${screen}.tsx`), 'utf8')).toContain('GearButton'); // both tabs draw their own header (UX-12)
+    for (const screen of ['TodayScreen', 'ReviewScreen'])
+      expect(fs.readFileSync(path.join(root, `../screens/${screen}.tsx`), 'utf8')).toContain('GearButton'); // both tabs draw their own header (UX-12)
     expect(fs.readFileSync(path.join(root, '_layout.tsx'), 'utf8')).toContain('name="settings"'); // above the tabs, so the tab bar is hidden inside
     const { tree } = await mount(() => ({ default: require('@/ui/GearButton').GearButton }), nowDeps());
     await press(tree, en.nav.gear);
@@ -776,13 +849,32 @@ describe('navigation shell (UX-1, UX-2, UX-3, UX-6)', () => {
     const layouts = ['_layout.tsx', '(tabs)/_layout.tsx', '(tabs)/today/_layout.tsx', '(tabs)/review/_layout.tsx', 'settings/_layout.tsx'];
     for (const layout of layouts) {
       const dir = path.dirname(path.join(root, layout));
-      const names = [...fs.readFileSync(path.join(root, layout), 'utf8').matchAll(/<(?:Stack|Tabs)\.Screen name="([^"]+)"/g)].map((m) => m[1]!);
+      const names = [...fs.readFileSync(path.join(root, layout), 'utf8').matchAll(/<(?:Stack|Tabs)\.Screen name="([^"]+)"/g)].map(
+        (m) => m[1]!,
+      );
       for (const name of names) {
-        const ok = ['.tsx', '/index.tsx'].some((ext) => fs.existsSync(path.join(dir, name + ext))) || fs.existsSync(path.join(dir, name, '_layout.tsx'));
+        const ok =
+          ['.tsx', '/index.tsx'].some((ext) => fs.existsSync(path.join(dir, name + ext))) ||
+          fs.existsSync(path.join(dir, name, '_layout.tsx'));
         expect(`${layout}: ${name} ${ok}`).toBe(`${layout}: ${name} true`);
       }
     }
-    for (const key of ['settings', 'more', 'meal', 'skin', 'checkin', 'intake', 'treatment', 'nails', 'reaction', 'change', 'logging', 'reminders', 'ai', 'data'] as const) {
+    for (const key of [
+      'settings',
+      'more',
+      'meal',
+      'skin',
+      'checkin',
+      'intake',
+      'treatment',
+      'nails',
+      'reaction',
+      'change',
+      'logging',
+      'reminders',
+      'ai',
+      'data',
+    ] as const) {
       expect(en.nav[key].length).toBeLessThan(15);
     }
     expect(Object.keys(en.tabs)).toEqual(['today', 'review']);
@@ -805,10 +897,17 @@ describe('Today (UX-2, UX-5, EN-1, UX-9)', () => {
     const { tree } = await mount(today, deps);
     await flush();
     expect(hasText(tree, 'Synthetic oats')).toBe(true);
-    const row = tree.root.findAll((n) => typeof n.props.accessibilityLabel === 'string' && n.props.accessibilityLabel.includes('Synthetic oats') && typeof n.props.onPress === 'function')[0]!;
+    const row = tree.root.findAll(
+      (n) =>
+        typeof n.props.accessibilityLabel === 'string' &&
+        n.props.accessibilityLabel.includes('Synthetic oats') &&
+        typeof n.props.onPress === 'function',
+    )[0]!;
     await act(async () => row.props.onPress());
     await flush();
-    const [options] = sheet.mock.calls[0] as [{ options: string[]; destructiveButtonIndex: number[]; cancelButtonIndex: number; message: string }];
+    const [options] = sheet.mock.calls[0] as [
+      { options: string[]; destructiveButtonIndex: number[]; cancelButtonIndex: number; message: string },
+    ];
     expect(options.options).toEqual([en.log.editAction, en.log.deleteAction, en.common.cancel]); // Cancel last
     expect(options.destructiveButtonIndex).toEqual([1]);
     expect(options.cancelButtonIndex).toBe(2);
@@ -825,7 +924,11 @@ describe('Today (UX-2, UX-5, EN-1, UX-9)', () => {
     sheet.mockImplementation((_o, cb) => cb(2)); // Cancel
     const { tree } = await mount(today, deps);
     await flush();
-    await press(tree, tree.root.findAll((n) => typeof n.props.accessibilityLabel === 'string' && n.props.accessibilityLabel.includes('Synthetic oats'))[0]!.props.accessibilityLabel);
+    await press(
+      tree,
+      tree.root.findAll((n) => typeof n.props.accessibilityLabel === 'string' && n.props.accessibilityLabel.includes('Synthetic oats'))[0]!
+        .props.accessibilityLabel,
+    );
     await flush();
     expect(await deps.repo.listMeals()).toHaveLength(1);
     expect(await deps.repo.listTombstones()).toEqual([]);
@@ -844,7 +947,8 @@ describe('Today (UX-2, UX-5, EN-1, UX-9)', () => {
   it('IN-11, NF-2 a treatment shortcut logs in one tap and is disabled right after', async () => {
     const deps = nowDeps();
     const cream = await addListItem(deps, 'treatments', 'Synthetic cream');
-    for (const h of [5, 4]) await applyTreatment(deps, { treatmentId: cream.id, areaIds: ['area-chin'], at: new Date(Date.now() - h * 3600_000) });
+    for (const h of [5, 4])
+      await applyTreatment(deps, { treatmentId: cream.id, areaIds: ['area-chin'], at: new Date(Date.now() - h * 3600_000) });
     const { tree } = await mount(today, deps);
     await flush();
     const label = 'Synthetic cream: ' + en.areas['area-chin'];
@@ -874,7 +978,11 @@ describe('Today (UX-2, UX-5, EN-1, UX-9)', () => {
 
   it('SK-6, UX-2 an open derived flare shows one card that opens Review, and Daily health is offered for a day with no record', async () => {
     const deps = nowDeps();
-    await logSkinEntry(deps, { areaId: 'area-chin', scores: { severity: 9, itch: 0, pain: 0, dryness: 0, scaling: 0 }, at: new Date(Date.now() - 3600_000) });
+    await logSkinEntry(deps, {
+      areaId: 'area-chin',
+      scores: { severity: 9, itch: 0, pain: 0, dryness: 0, scaling: 0 },
+      at: new Date(Date.now() - 3600_000),
+    });
     const { tree } = await mount(today, deps);
     await flush();
     expect(hasText(tree, en.cards.noExport)).toBe(true); // before the Daily health time (21:00 by default) the pills are the flare and the backup
@@ -914,7 +1022,11 @@ describe('Edit entry (EN-1, UX-3)', () => {
     const meal = await logMeal(deps, { description: 'Synthetic oats', ingredients: [], at: new Date(Date.now() - 3600_000) });
     const { tree } = await mount(() => require('@/app/(tabs)/today/index'), deps);
     await flush();
-    await press(tree, tree.root.findAll((n) => typeof n.props.accessibilityLabel === 'string' && n.props.accessibilityLabel.includes('Synthetic oats'))[0]!.props.accessibilityLabel);
+    await press(
+      tree,
+      tree.root.findAll((n) => typeof n.props.accessibilityLabel === 'string' && n.props.accessibilityLabel.includes('Synthetic oats'))[0]!
+        .props.accessibilityLabel,
+    );
     await flush();
     expect(mockRouter.push).toHaveBeenLastCalledWith({ pathname: '/form/edit', params: { kind: 'meals', id: meal.id } });
     expect(await deps.repo.listMeals()).toHaveLength(1); // Edit deleted nothing
@@ -941,7 +1053,9 @@ describe('Edit entry (EN-1, UX-3)', () => {
 
   it('UX-3, UX-9 Cancel after a change asks before discarding; without a change it just closes', async () => {
     const deps = nowDeps();
-    const stool = await deps.repo.addRecord('stoolEntries', { id: 'st1', at: { utc: new Date().toISOString(), tz: 'Europe/Warsaw' }, bristol: 4, note: null }).then(() => 'st1');
+    const stool = await deps.repo
+      .addRecord('stoolEntries', { id: 'st1', at: { utc: new Date().toISOString(), tz: 'Europe/Warsaw' }, bristol: 4, note: null })
+      .then(() => 'st1');
     mockParams.current = { kind: 'stoolEntries', id: stool };
     const { tree } = await mount(edit, deps);
     await flush();
@@ -986,7 +1100,18 @@ describe('Edit entry (EN-1, UX-3)', () => {
       await header('headerRight', en.common.save);
       await flush();
       expect(mockRouter.back).toHaveBeenCalledTimes(1);
-      const all = [...(await deps.repo.listMeals()), ...(await deps.repo.listSkinEntries()), ...(await deps.repo.listRecords('nailEntries')), ...(await deps.repo.listRecords('checkIns')), ...(await deps.repo.listRecords('stoolEntries')), ...(await deps.repo.listRecords('treatmentApplications')), ...(await deps.repo.listRecords('changeEvents')), ...(await deps.repo.listRecords('reactions')), ...(await deps.repo.listRecords('drinks')), ...(await deps.repo.listRecords('medicationEntries'))];
+      const all = [
+        ...(await deps.repo.listMeals()),
+        ...(await deps.repo.listSkinEntries()),
+        ...(await deps.repo.listRecords('nailEntries')),
+        ...(await deps.repo.listRecords('checkIns')),
+        ...(await deps.repo.listRecords('stoolEntries')),
+        ...(await deps.repo.listRecords('treatmentApplications')),
+        ...(await deps.repo.listRecords('changeEvents')),
+        ...(await deps.repo.listRecords('reactions')),
+        ...(await deps.repo.listRecords('drinks')),
+        ...(await deps.repo.listRecords('medicationEntries')),
+      ];
       expect(all.filter((r) => r.id === id)).toHaveLength(1);
       expect(all).toHaveLength(ids.length);
     }
@@ -1037,7 +1162,10 @@ describe('Data and backup (EX-14, EX-10, EX-13)', () => {
     const phoneB = nowDeps();
     await applyImport(phoneB, await previewImport(phoneB, backup), { mode: 'replace', parts: { records: true, settings: true } });
     await deleteEntry(phoneB, 'meals', meal.id);
-    const { tree } = await mount(data, phoneB, { saveAndShare: jest.fn(async () => undefined), pickFile: jest.fn(async () => backup as unknown as null) });
+    const { tree } = await mount(data, phoneB, {
+      saveAndShare: jest.fn(async () => undefined),
+      pickFile: jest.fn(async () => backup as unknown as null),
+    });
     await press(tree, en.data.importButton);
     await flush();
     expect(hasText(tree, en.data.tombstoneSkipped.replace('{{n}}', '1'))).toBe(true);
@@ -1070,12 +1198,18 @@ describe('Replace on import offers an export first (UX-6, UX-9)', () => {
       seen.push(o.options);
       cb(script.shift() ?? o.options.length - 1);
     });
-    const { tree, fileShare } = await mount(() => require('@/app/settings/data'), target, { saveAndShare: jest.fn(async () => undefined), pickFile: jest.fn(async () => backup as unknown as null) });
+    const { tree, fileShare } = await mount(() => require('@/app/settings/data'), target, {
+      saveAndShare: jest.fn(async () => undefined),
+      pickFile: jest.fn(async () => backup as unknown as null),
+    });
     await press(tree, en.data.importButton);
     await flush();
     await press(tree, en.data.replace);
     await flush();
-    expect(seen).toEqual([[en.delete.exportFirst, en.data.replace, en.common.cancel], [en.delete.exportFirst, en.data.replace, en.common.cancel]]);
+    expect(seen).toEqual([
+      [en.delete.exportFirst, en.data.replace, en.common.cancel],
+      [en.delete.exportFirst, en.data.replace, en.common.cancel],
+    ]);
     expect(fileShare.saveAndShare).toHaveBeenCalledTimes(1);
     expect((await target.repo.listMeals()).map((m) => m.description)).toEqual(['Synthetic from file']);
   });
@@ -1111,20 +1245,33 @@ describe('Review (UX-1, EX-14)', () => {
     await logMeal(deps, { description: 'Synthetic oats', ingredients: [], at: new Date('2026-01-10T08:00:00.000Z') });
     await logMeal(deps, { description: 'Synthetic soup', ingredients: [], at: new Date('2026-01-12T08:00:00.000Z') });
     await saveCheckIn(deps, { at: new Date('2026-01-12T20:00:00.000Z') });
-    await logSkinEntry(deps, { areaId: 'area-chin', scores: { severity: 9, itch: 0, pain: 0, dryness: 0, scaling: 0 }, at: new Date('2026-01-11T08:00:00.000Z') });
-    await logSkinEntry(deps, { areaId: 'area-chin', scores: { severity: 2, itch: 0, pain: 0, dryness: 0, scaling: 0 }, at: new Date('2026-01-14T08:00:00.000Z') });
+    await logSkinEntry(deps, {
+      areaId: 'area-chin',
+      scores: { severity: 9, itch: 0, pain: 0, dryness: 0, scaling: 0 },
+      at: new Date('2026-01-11T08:00:00.000Z'),
+    });
+    await logSkinEntry(deps, {
+      areaId: 'area-chin',
+      scores: { severity: 2, itch: 0, pain: 0, dryness: 0, scaling: 0 },
+      at: new Date('2026-01-14T08:00:00.000Z'),
+    });
     mockParams.current = { month: '2026-01' };
     const { tree } = await mount(() => require('@/app/(tabs)/review/index'), deps);
     await flush();
     const cell = (day: string, n: number, health: boolean, flare: boolean) =>
-      en.review.calendarDay.replace('{{day}}', day).replace('{{n}}', String(n)).replace('{{health}}', health ? en.review.yes : en.review.no).replace('{{flare}}', flare ? en.review.yes : en.review.no);
+      en.review.calendarDay
+        .replace('{{day}}', day)
+        .replace('{{n}}', String(n))
+        .replace('{{health}}', health ? en.review.yes : en.review.no)
+        .replace('{{flare}}', flare ? en.review.yes : en.review.no);
     await press(tree, cell('2026-01-10', 1, false, false));
     expect(mockRouter.navigate).toHaveBeenLastCalledWith({ pathname: '/review/day', params: { day: '2026-01-10' } });
     expect(tree.root.findAll((n) => n.props.accessibilityLabel === cell('2026-01-12', 2, true, true)).length).toBeGreaterThan(0); // flare 11th to 13th, 14th is the end entry
     expect(tree.root.findAll((n) => n.props.accessibilityLabel === cell('2026-01-14', 1, false, false)).length).toBeGreaterThan(0);
     // the incomplete filter lists days with entries and no Daily health record
     await toggle(tree, en.review.incomplete);
-    const listRow = (label: string) => tree.root.findAll((n) => n.props.accessibilityLabel === label && typeof n.props.onPress === 'function').length;
+    const listRow = (label: string) =>
+      tree.root.findAll((n) => n.props.accessibilityLabel === label && typeof n.props.onPress === 'function').length;
     expect(listRow(en.review.dayRow.replace('{{day}}', '2026-01-10').replace('{{n}}', '1'))).toBeGreaterThan(0);
     expect(listRow(`${en.review.dayRow.replace('{{day}}', '2026-01-12').replace('{{n}}', '2')}, ${en.review.dayComplete}`)).toBe(0);
     // arrows move by month; the next arrow stops at the current month
@@ -1241,7 +1388,8 @@ describe('Review (UX-1, EX-14)', () => {
   it('UX-2 Today shows the 8 newest entries of the day and "Show all (n)" opens the full log in Review', async () => {
     const deps = nowDeps();
     const base = Date.now() - 3 * 3600_000;
-    for (let i = 0; i < 10; i++) await logMeal(deps, { description: `Synthetic meal ${i}`, ingredients: [], at: new Date(base + i * 60_000) });
+    for (let i = 0; i < 10; i++)
+      await logMeal(deps, { description: `Synthetic meal ${i}`, ingredients: [], at: new Date(base + i * 60_000) });
     const { tree } = await mount(() => require('@/app/(tabs)/today/index'), deps);
     await flush();
     expect(hasText(tree, 'Synthetic meal 9')).toBe(true); // newest on top
@@ -1250,7 +1398,10 @@ describe('Review (UX-1, EX-14)', () => {
     expect(hasText(tree, 'Synthetic meal 0')).toBe(false);
     const today = new Date().toISOString().slice(0, 10);
     await press(tree, en.day.showAll.replace('{{n}}', '10'));
-    expect(mockRouter.navigate).toHaveBeenLastCalledWith({ pathname: '/review/day', params: { day: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/) } });
+    expect(mockRouter.navigate).toHaveBeenLastCalledWith({
+      pathname: '/review/day',
+      params: { day: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/) },
+    });
     mockParams.current = { day: (mockRouter.navigate.mock.calls.at(-1)![0] as { params: { day: string } }).params.day };
     const full = await mount(() => require('@/app/(tabs)/review/day'), deps);
     await flush();
@@ -1260,7 +1411,8 @@ describe('Review (UX-1, EX-14)', () => {
 
   it('UX-2 a day with 8 entries or fewer has no "Show all" row', async () => {
     const deps = nowDeps();
-    for (let i = 0; i < 8; i++) await logMeal(deps, { description: `Synthetic meal ${i}`, ingredients: [], at: new Date(Date.now() - 3600_000 + i * 60_000) });
+    for (let i = 0; i < 8; i++)
+      await logMeal(deps, { description: `Synthetic meal ${i}`, ingredients: [], at: new Date(Date.now() - 3600_000 + i * 60_000) });
     const { tree } = await mount(() => require('@/app/(tabs)/today/index'), deps);
     await flush();
     expect(JSON.stringify(tree.toJSON())).not.toContain(en.day.showAll.replace(' ({{n}})', ''));
@@ -1295,7 +1447,9 @@ describe('Review (UX-1, EX-14)', () => {
     });
     await flush();
     expect(hasText(tree, en.doctor.summaryReview)).toBe(true);
-    const field = tree.root.findAll((n) => n.props.accessibilityLabel === en.doctor.summaryField && typeof n.props.onChangeText === 'function')[0]!;
+    const field = tree.root.findAll(
+      (n) => n.props.accessibilityLabel === en.doctor.summaryField && typeof n.props.onChangeText === 'function',
+    )[0]!;
     expect(field.props.value).toBe('Synthetic AI narrative.');
     expect(await deps.repo.listRecords('reportSummaries')).toEqual([]); // nothing stored before the person keeps it
     await act(async () => {
@@ -1304,7 +1458,9 @@ describe('Review (UX-1, EX-14)', () => {
     await press(tree, en.doctor.summaryUse);
     await flush();
     expect(hasText(tree, en.doctor.summaryIncluded)).toBe(true);
-    expect(await deps.repo.listRecords('reportSummaries')).toMatchObject([{ generated: 'Synthetic AI narrative.', text: 'Synthetic AI narrative, corrected.' }]);
+    expect(await deps.repo.listRecords('reportSummaries')).toMatchObject([
+      { generated: 'Synthetic AI narrative.', text: 'Synthetic AI narrative, corrected.' },
+    ]);
     await press(tree, en.doctor.button);
     await flush();
     const [, bytes] = fileShare.saveAndShare.mock.calls[0] as unknown as [string, Uint8Array];
@@ -1376,7 +1532,9 @@ describe('Review (UX-1, EX-14)', () => {
     await press(tree, en.photos.selectAll);
     await press(tree, en.doctor.button);
     await flush();
-    const some = Object.keys(unzipSync((fileShare.saveAndShare.mock.calls[1] as unknown as [string, Uint8Array])[1])).filter((f) => f.startsWith('photos/'));
+    const some = Object.keys(unzipSync((fileShare.saveAndShare.mock.calls[1] as unknown as [string, Uint8Array])[1])).filter((f) =>
+      f.startsWith('photos/'),
+    );
     expect(some).toHaveLength(1); // the plain one only
   });
 
@@ -1391,7 +1549,9 @@ describe('Review (UX-1, EX-14)', () => {
     await deps.settings.set('lastExportAt', new Date().toISOString());
     const again = await mount(() => require('@/app/(tabs)/review/report'), deps);
     await flush();
-    expect(again.tree.root.findAll((n) => n.props.accessibilityLabel === en.doctor.since && n.props.accessibilityState?.selected)).not.toHaveLength(0);
+    expect(
+      again.tree.root.findAll((n) => n.props.accessibilityLabel === en.doctor.since && n.props.accessibilityState?.selected),
+    ).not.toHaveLength(0);
   });
 });
 
@@ -1429,13 +1589,20 @@ describe('Meal form (IN-1, IN-7, IN-10, IN-14, UX-3)', () => {
     expect(await deps.repo.listMeals()).toEqual([]);
     await header('headerRight', en.common.save);
     await flush();
-    expect(await deps.repo.listMeals()).toMatchObject([{ description: 'Synthetic breakfast', ingredients: ['Synthetic oats'], allergens: [] }]);
+    expect(await deps.repo.listMeals()).toMatchObject([
+      { description: 'Synthetic breakfast', ingredients: ['Synthetic oats'], allergens: [] },
+    ]);
     expect(mockRouter.back).toHaveBeenCalledTimes(1);
   });
 
   it('IN-7, IN-10, IN-14 a suggestion fills the review with its latest ingredients and tags and saves a new, independent entry', async () => {
     const deps = nowDeps();
-    const old = await logMeal(deps, { description: 'Synthetic porridge', ingredients: ['oats', 'milk'], allergens: ['milk'], at: new Date(Date.now() - 2 * 86_400_000) });
+    const old = await logMeal(deps, {
+      description: 'Synthetic porridge',
+      ingredients: ['oats', 'milk'],
+      allergens: ['milk'],
+      at: new Date(Date.now() - 2 * 86_400_000),
+    });
     await logMeal(deps, { description: 'Synthetic soup', ingredients: ['leeks'], at: new Date(Date.now() - 3 * 86_400_000) });
     const { tree } = await mount(meal, deps);
     await flush();
@@ -1458,10 +1625,27 @@ describe('Meal form (IN-1, IN-7, IN-10, IN-14, UX-3)', () => {
     for (const [i, name] of ['Synthetic eggs', 'Synthetic rice', 'Synthetic ricotta'].entries()) {
       await logMeal(deps, { description: name, ingredients: [], at: new Date(Date.now() - (i + 1) * 3600_000) });
     }
-    await toggleFavoriteMeal(deps, { description: 'Synthetic rice', ingredients: [], allergens: [], barcode: null, source: { kind: 'typed', edited: false, llm: null, aiTags: false } });
+    await toggleFavoriteMeal(deps, {
+      description: 'Synthetic rice',
+      ingredients: [],
+      allergens: [],
+      barcode: null,
+      source: { kind: 'typed', edited: false, llm: null, aiTags: false },
+    });
     const { tree } = await mount(meal, deps);
     await flush();
-    const labels = () => [...new Set(tree.root.findAll((n) => n.props.accessibilityRole === 'button' && typeof n.props.accessibilityLabel === 'string' && n.props.accessibilityLabel.startsWith('Synthetic')).map((n) => n.props.accessibilityLabel as string))];
+    const labels = () => [
+      ...new Set(
+        tree.root
+          .findAll(
+            (n) =>
+              n.props.accessibilityRole === 'button' &&
+              typeof n.props.accessibilityLabel === 'string' &&
+              n.props.accessibilityLabel.startsWith('Synthetic'),
+          )
+          .map((n) => n.props.accessibilityLabel as string),
+      ),
+    ];
     expect(labels()[0]).toBe('Synthetic rice');
     await type(tree, en.meal.description, 'ric');
     expect(labels()).toEqual(['Synthetic rice', 'Synthetic ricotta']);
@@ -1494,7 +1678,9 @@ describe('Meal form (IN-1, IN-7, IN-10, IN-14, UX-3)', () => {
     await press(tree, en.meal.continue);
     await press(tree, en.meal.favorite);
     await flush();
-    expect((await deps.repo.getPreferences())!.favorites.meals).toMatchObject([{ key: 'synthetic breakfast', description: 'Synthetic breakfast' }]);
+    expect((await deps.repo.getPreferences())!.favorites.meals).toMatchObject([
+      { key: 'synthetic breakfast', description: 'Synthetic breakfast' },
+    ]);
     expect(hasText(tree, en.meal.unfavorite)).toBe(true);
   });
 
@@ -1534,7 +1720,16 @@ describe('Suggestion settings and quick-action layout (IN-14, UX-2, UX-6)', () =
     const { tree } = await mount(() => require('@/app/(tabs)/today/index'), deps);
     await flush();
     const e = en.entry;
-    const grid = () => tree.root.findAll((n) => n.props.accessibilityRole === 'button' && [e.meal.title, e.skin.title, e.treatment.title, e.checkin.title, e.stool.title, e.drink.title, en.home.more].includes(n.props.accessibilityLabel)).map((n) => n.props.accessibilityLabel as string);
+    const grid = () =>
+      tree.root
+        .findAll(
+          (n) =>
+            n.props.accessibilityRole === 'button' &&
+            [e.meal.title, e.skin.title, e.treatment.title, e.checkin.title, e.stool.title, e.drink.title, en.home.more].includes(
+              n.props.accessibilityLabel,
+            ),
+        )
+        .map((n) => n.props.accessibilityLabel as string);
     expect([...new Set(grid())]).toEqual([e.meal.title, e.skin.title, e.treatment.title, e.checkin.title, e.stool.title, en.home.more]);
     const edit = await mount(() => require('@/app/(tabs)/today/edit'), deps); // More > Edit Today
     await flush();
@@ -1544,7 +1739,16 @@ describe('Suggestion settings and quick-action layout (IN-14, UX-2, UX-6)', () =
     expect(edit.tree.root.findAll((n) => n.props.accessibilityLabel === `${en.home.unpin} ${en.home.more}`)).toHaveLength(0); // More cannot be unpinned
     const again = await mount(() => require('@/app/(tabs)/today/index'), deps);
     await flush();
-    const grid2 = () => again.tree.root.findAll((n) => n.props.accessibilityRole === 'button' && [e.meal.title, e.skin.title, e.treatment.title, e.checkin.title, e.stool.title, e.drink.title, en.home.more].includes(n.props.accessibilityLabel)).map((n) => n.props.accessibilityLabel as string);
+    const grid2 = () =>
+      again.tree.root
+        .findAll(
+          (n) =>
+            n.props.accessibilityRole === 'button' &&
+            [e.meal.title, e.skin.title, e.treatment.title, e.checkin.title, e.stool.title, e.drink.title, en.home.more].includes(
+              n.props.accessibilityLabel,
+            ),
+        )
+        .map((n) => n.props.accessibilityLabel as string);
     expect([...new Set(grid2())]).toEqual([e.meal.title, e.skin.title, e.checkin.title, e.treatment.title, e.drink.title, en.home.more]);
     expect((await deps.repo.getPreferences())!.quickActions.pinned).toEqual(['meal', 'skin', 'checkin', 'treatment', 'drink']);
     const more = await mount(() => require('@/app/(tabs)/today/more'), deps);
@@ -1587,7 +1791,9 @@ describe('Photos in the Skin and Nails forms (SK-4)', () => {
       rendered = lastTree();
     });
     await act(async () => {
-      await rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!.props.onPress();
+      await rendered.root
+        .findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!
+        .props.onPress();
     });
     await flush();
   };
@@ -1655,13 +1861,24 @@ describe('Daily health trends (SK-7, UX-1)', () => {
     const empty = await mount(() => require('@/app/(tabs)/review/health'), deps);
     await flush();
     expect(hasText(empty.tree, en.review.healthEmpty)).toBe(true);
-    await saveCheckIn(deps, { at: new Date('2026-01-10T20:00:00.000Z'), values: { 'item-stress': 2, 'item-sleep': 7 }, confirmEmptyDay: true });
+    await saveCheckIn(deps, {
+      at: new Date('2026-01-10T20:00:00.000Z'),
+      values: { 'item-stress': 2, 'item-sleep': 7 },
+      confirmEmptyDay: true,
+    });
     await saveCheckIn(deps, { at: new Date('2026-01-12T20:00:00.000Z'), values: { 'item-stress': 8 }, confirmEmptyDay: true });
     await archiveListItem(deps, 'dailyItems', 'item-stress');
     const { tree } = await mount(() => require('@/app/(tabs)/review/health'), deps);
     await flush();
     const summary = (label: string, first: number, last: number, min: number, max: number) =>
-      en.review.trendSummary.replace('{{label}}', label).replace('{{from}}', '2026-01-10').replace('{{to}}', '2026-01-12').replace('{{first}}', String(first)).replace('{{last}}', String(last)).replace('{{min}}', String(min)).replace('{{max}}', String(max));
+      en.review.trendSummary
+        .replace('{{label}}', label)
+        .replace('{{from}}', '2026-01-10')
+        .replace('{{to}}', '2026-01-12')
+        .replace('{{first}}', String(first))
+        .replace('{{last}}', String(last))
+        .replace('{{min}}', String(min))
+        .replace('{{max}}', String(max));
     expect(hasText(tree, summary(en.tags['item-sleep'], 7, 7, 7, 7).replace('2026-01-12', '2026-01-10'))).toBe(true); // sleep: one day
     await press(tree, en.tags['item-stress']);
     await flush();
@@ -1707,7 +1924,19 @@ describe('Guide (UX-11)', () => {
     const { GUIDE } = require('@/screens/GuideScreen') as { GUIDE: { id: string; entry: keyof typeof en.entry }[] };
     const { tree } = await mount(() => require('@/app/guide'), nowDeps());
     expect(GUIDE.length).toBeGreaterThanOrEqual(12);
-    const routes: Record<string, string> = { meal: '/form/meal', drink: '/form/drink', medication: '/form/medication', skin: '/form/skin', nails: '/form/nails', treatment: '/form/treatment', checkin: '/form/checkin', stool: '/form/stool', reaction: '/form/reaction', change: '/form/change', medical: '/form/medical' };
+    const routes: Record<string, string> = {
+      meal: '/form/meal',
+      drink: '/form/drink',
+      medication: '/form/medication',
+      skin: '/form/skin',
+      nails: '/form/nails',
+      treatment: '/form/treatment',
+      checkin: '/form/checkin',
+      stool: '/form/stool',
+      reaction: '/form/reaction',
+      change: '/form/change',
+      medical: '/form/medical',
+    };
     for (const g of GUIDE) {
       const label = (en.guide.items as Record<string, string>)[g.id]!;
       expect(label).toBeTruthy();
@@ -1752,7 +1981,9 @@ describe('Regular medication and treatment (IN-17)', () => {
       rendered = lastTree();
     });
     await act(async () => {
-      await rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!.props.onPress();
+      await rendered.root
+        .findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!
+        .props.onPress();
     });
     await flush();
   };
@@ -1858,7 +2089,9 @@ describe('Routine change form (IN-12, UX-11)', () => {
         rendered = lastTree();
       });
       await act(async () => {
-        await rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!.props.onPress();
+        await rendered.root
+          .findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!
+          .props.onPress();
       });
       await flush();
     };
@@ -1876,7 +2109,10 @@ describe('Routine change form (IN-12, UX-11)', () => {
     await press(stop.tree, 'Synthetic cream');
     await save();
     const events = await deps.repo.listRecords('changeEvents');
-    expect(events.map((e) => [e.action, e.name, e.dateUnknown]).sort()).toEqual([['started', 'Synthetic cream', true], ['stopped', 'Synthetic cream', false]]);
+    expect(events.map((e) => [e.action, e.name, e.dateUnknown]).sort()).toEqual([
+      ['started', 'Synthetic cream', true],
+      ['stopped', 'Synthetic cream', false],
+    ]);
   });
 });
 
@@ -1935,7 +2171,9 @@ describe('Alcohol and medication suggestions (IN-14, UX-5)', () => {
     await type(drink.tree, en.more.drinkIngredients, 'coffee, milk');
     await press(drink.tree, en.meal.favorite);
     await flush();
-    expect((await deps.repo.getPreferences())!.favorites.drinks).toMatchObject([{ name: 'Synthetic coffee', amountMl: 200, alcohol: false, ingredients: ['coffee', 'milk'] }]);
+    expect((await deps.repo.getPreferences())!.favorites.drinks).toMatchObject([
+      { name: 'Synthetic coffee', amountMl: 200, alcohol: false, ingredients: ['coffee', 'milk'] },
+    ]);
     expect(hasText(drink.tree, en.meal.unfavorite)).toBe(true);
     await press(drink.tree, en.meal.unfavorite);
     await flush();
@@ -1954,10 +2192,24 @@ describe('Alcohol and medication suggestions (IN-14, UX-5)', () => {
   it('IN-14 favorites come first, even without history', async () => {
     const deps = nowDeps();
     await logDrink(deps, { name: 'Synthetic beer', amountMl: 500, at: at(10) });
-    await toggleFavoriteDrink(deps, { name: 'Synthetic wine', amountMl: 150, alcohol: true, ingredients: [], allergens: [], barcode: null, source: { kind: 'typed', edited: false, llm: null, aiTags: false } });
+    await toggleFavoriteDrink(deps, {
+      name: 'Synthetic wine',
+      amountMl: 150,
+      alcohol: true,
+      ingredients: [],
+      allergens: [],
+      barcode: null,
+      source: { kind: 'typed', edited: false, llm: null, aiTags: false },
+    });
     const { tree } = await mount(alcohol, deps);
     await flush();
-    const labels = [...new Set(tree.root.findAll((n) => n.props.accessibilityRole === 'button' && /ml$/.test(n.props.accessibilityLabel ?? '')).map((n) => n.props.accessibilityLabel as string))];
+    const labels = [
+      ...new Set(
+        tree.root
+          .findAll((n) => n.props.accessibilityRole === 'button' && /ml$/.test(n.props.accessibilityLabel ?? ''))
+          .map((n) => n.props.accessibilityLabel as string),
+      ),
+    ];
     expect(labels).toEqual(['Synthetic wine 150 ml', 'Synthetic beer 500 ml']);
   });
 });
@@ -1972,7 +2224,12 @@ describe('Reminder taps (SK-9)', () => {
   afterEach(() => jest.restoreAllMocks());
 
   async function mountLayout(deps: Deps) {
-    services.__state.current = { deps, fileShare: { saveAndShare: jest.fn(), pickFile: jest.fn() }, analysisRunner: new AnalysisRunner(deps), appLock: new AppLock(deps) };
+    services.__state.current = {
+      deps,
+      fileShare: { saveAndShare: jest.fn(), pickFile: jest.fn() },
+      analysisRunner: new AnalysisRunner(deps),
+      appLock: new AppLock(deps),
+    };
     let tree!: ReactTestRenderer;
     await act(async () => {
       tree = create(React.createElement(require('@/app/_layout').default));
@@ -2026,11 +2283,22 @@ describe('Analysis running state (LL-12)', () => {
   });
   afterEach(() => jest.restoreAllMocks());
 
-  const answer = JSON.stringify({ summary: 'Synthetic summary', hypotheses: [], order_and_lag: 'none', data_limits: [], questions_for_doctor: [] });
+  const answer = JSON.stringify({
+    summary: 'Synthetic summary',
+    hypotheses: [],
+    order_and_lag: 'none',
+    data_limits: [],
+    questions_for_doctor: [],
+  });
   async function prepared(deps: Deps) {
     await saveApiKey(deps, 'sk-synthetic-secret');
     await logMeal(deps, { description: 'Synthetic meal', ingredients: [], at: new Date(Date.now() - 2 * 3600 * 1000) });
-    return prepareAnalysis(deps, { dayFrom: localDay(new Date(Date.now() - 86_400_000).toISOString(), deps.clock.timeZone()), dayTo: localDay(new Date().toISOString(), deps.clock.timeZone()), language: 'en', photoIds: [] });
+    return prepareAnalysis(deps, {
+      dayFrom: localDay(new Date(Date.now() - 86_400_000).toISOString(), deps.clock.timeZone()),
+      dayTo: localDay(new Date().toISOString(), deps.clock.timeZone()),
+      language: 'en',
+      photoIds: [],
+    });
   }
 
   it('LL-12 Review shows a running card and then a ready card for a run started anywhere, and the screen result clears it', async () => {
@@ -2039,7 +2307,12 @@ describe('Analysis running state (LL-12)', () => {
     const deps = nowDeps(llm);
     const prep = await prepared(deps);
     const runner = new AnalysisRunner(deps);
-    services.__state.current = { deps, fileShare: { saveAndShare: jest.fn(), pickFile: jest.fn() }, analysisRunner: runner, appLock: new AppLock(deps) };
+    services.__state.current = {
+      deps,
+      fileShare: { saveAndShare: jest.fn(), pickFile: jest.fn() },
+      analysisRunner: runner,
+      appLock: new AppLock(deps),
+    };
     let review!: ReactTestRenderer;
     await act(async () => {
       review = create(React.createElement(require('@/app/(tabs)/review/index').default));
@@ -2076,7 +2349,12 @@ describe('Analysis running state (LL-12)', () => {
     runner.markBackgrounded();
     await done;
     expect(runner.state.status).toBe('interrupted');
-    services.__state.current = { deps, fileShare: { saveAndShare: jest.fn(), pickFile: jest.fn() }, analysisRunner: runner, appLock: new AppLock(deps) };
+    services.__state.current = {
+      deps,
+      fileShare: { saveAndShare: jest.fn(), pickFile: jest.fn() },
+      analysisRunner: runner,
+      appLock: new AppLock(deps),
+    };
     let tree!: ReactTestRenderer;
     await act(async () => {
       tree = create(React.createElement(require('@/app/(tabs)/review/analysis').default));
@@ -2105,7 +2383,12 @@ describe('Analysis running state (LL-12)', () => {
     const deps = nowDeps({ completeJson: () => new Promise<{ text: string; model: string }>((resolve) => (release = resolve)) });
     const prep = await prepared(deps);
     const runner = new AnalysisRunner(deps);
-    services.__state.current = { deps, fileShare: { saveAndShare: jest.fn(), pickFile: jest.fn() }, analysisRunner: runner, appLock: new AppLock(deps) };
+    services.__state.current = {
+      deps,
+      fileShare: { saveAndShare: jest.fn(), pickFile: jest.fn() },
+      analysisRunner: runner,
+      appLock: new AppLock(deps),
+    };
     await act(async () => {
       create(React.createElement(require('@/app/_layout').default));
     });
@@ -2136,7 +2419,8 @@ describe('Inline photo estimate (IN-3, LL-12, IN-10)', () => {
     jest.restoreAllMocks();
   });
   const meal = () => require('@/app/form/meal');
-  const buttonOf = (name: string) => alert.mock.calls.at(-1)![2].find((b: { text: string }) => b.text === name) as { onPress: () => unknown };
+  const buttonOf = (name: string) =>
+    alert.mock.calls.at(-1)![2].find((b: { text: string }) => b.text === name) as { onPress: () => unknown };
 
   /** Opens a new meal in the review phase, then picks a photo and confirms sending it. */
   async function startEstimate(llm: LlmProvider) {
@@ -2156,7 +2440,10 @@ describe('Inline photo estimate (IN-3, LL-12, IN-10)', () => {
 
   it('IN-3, LL-12 the estimate runs inline with the form editable, Cancel is there from the start, the text changes after 30 seconds, and nothing is stored', async () => {
     jest.useFakeTimers({ doNotFake: ['setImmediate', 'nextTick'] }); // only this test needs to move the 30 second clock
-    const llm = { completeJson: (req: { signal?: AbortSignal }) => new Promise<never>((_r, reject) => req.signal?.addEventListener('abort', () => reject(new Error('aborted')))) };
+    const llm = {
+      completeJson: (req: { signal?: AbortSignal }) =>
+        new Promise<never>((_r, reject) => req.signal?.addEventListener('abort', () => reject(new Error('aborted')))),
+    };
     const { deps, tree } = await startEstimate(llm);
     await act(async () => {
       void buttonOf(en.meal.photoSend).onPress();
@@ -2214,7 +2501,8 @@ describe('Inline photo estimate (IN-3, LL-12, IN-10)', () => {
       void buttons.find((b) => b.text === en.meal.aiAllergensSend)!.onPress!();
     });
     await flush();
-    const selected = (label: string) => tree.root.findAll((n) => n.props.accessibilityLabel === label && n.props.accessibilityState)[0]!.props.accessibilityState.selected;
+    const selected = (label: string) =>
+      tree.root.findAll((n) => n.props.accessibilityLabel === label && n.props.accessibilityState)[0]!.props.accessibilityState.selected;
     expect(selected(en.allergens.milk)).toBe(false);
     expect(hasText(tree, en.meal.aiAllergensHint.replace('{{list}}', `${en.allergens.milk}, ${en.allergens.gluten}`))).toBe(true);
     await press(tree, en.meal.scanSelectTags);
@@ -2252,7 +2540,11 @@ describe('Inline photo estimate (IN-3, LL-12, IN-10)', () => {
     expect(hasText(tree, en.meal.unsure.replace('{{text}}', 'the sauce'))).toBe(true);
     await press(tree, 'soy sauce');
     await press(tree, en.meal.estimateAddPicked);
-    const values = () => tree.root.findAll((n) => n.props.placeholder === en.meal.ingredientPlaceholder).map((n) => n.props.value).filter((v, i, a) => a.indexOf(v) === i);
+    const values = () =>
+      tree.root
+        .findAll((n) => n.props.placeholder === en.meal.ingredientPlaceholder)
+        .map((n) => n.props.value)
+        .filter((v, i, a) => a.indexOf(v) === i);
     expect(values()).toEqual(['my own rice', 'soy sauce', '']); // typed text kept, only the picked name added
     const milk = tree.root.findAll((n) => n.props.accessibilityLabel === en.allergens.milk && n.props.accessibilityState)[0]!;
     expect(milk.props.accessibilityState.selected).toBe(false); // IN-10: LLM tags stay unselected
@@ -2293,7 +2585,9 @@ describe('Inline photo estimate (IN-3, LL-12, IN-10)', () => {
       rendered = lastTree();
     });
     await act(async () => {
-      await rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!.props.onPress();
+      await rendered.root
+        .findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!
+        .props.onPress();
     });
     await flush();
   };
@@ -2333,7 +2627,8 @@ describe('Inline photo estimate (IN-3, LL-12, IN-10)', () => {
     await press(tree, en.meal.estimateAddAll);
     const values = tree.root.findAll((n) => n.props.placeholder === en.meal.ingredientPlaceholder).map((n) => n.props.value);
     expect([...new Set(values)]).toEqual(['my own rice', 'wheat flour', 'milk', 'egg', 'jam', '']); // typed text kept, names added
-    const selected = (label: string) => tree.root.findAll((n) => n.props.accessibilityLabel === label && n.props.accessibilityState)[0]!.props.accessibilityState.selected;
+    const selected = (label: string) =>
+      tree.root.findAll((n) => n.props.accessibilityLabel === label && n.props.accessibilityState)[0]!.props.accessibilityState.selected;
     expect(selected(en.allergens.milk)).toBe(false); // IN-10: the estimate never selects a tag
     expect(await deps.repo.listMeals()).toEqual([]); // nothing saved until Save
     await saveMeal();
@@ -2382,7 +2677,12 @@ describe('Inline photo estimate (IN-3, LL-12, IN-10)', () => {
   it('IN-19, LL-12 the request is aborted when the form is left or the wait is cancelled after 30 seconds', async () => {
     jest.useFakeTimers({ doNotFake: ['setImmediate', 'nextTick'] });
     let signal: AbortSignal | undefined;
-    const llm = { completeJson: (req: { signal?: AbortSignal }) => new Promise<never>((_r, reject) => ((signal = req.signal), req.signal?.addEventListener('abort', () => reject(new Error('aborted'))))) };
+    const llm = {
+      completeJson: (req: { signal?: AbortSignal }) =>
+        new Promise<never>(
+          (_r, reject) => ((signal = req.signal), req.signal?.addEventListener('abort', () => reject(new Error('aborted')))),
+        ),
+    };
     const { tree } = await startNameEstimate(llm);
     await press(tree, en.meal.fromName);
     await act(async () => {
@@ -2431,10 +2731,20 @@ describe('Inline photo estimate (IN-3, LL-12, IN-10)', () => {
     await flush();
     await press(tree, en.meal.estimateAddAll);
     await saveMeal();
-    expect((await deps.repo.listRecords('drinks'))[0]).toMatchObject({ name: 'Synthetic banana smoothie', ingredients: ['milk', 'banana'], source: { kind: 'name_estimate', edited: false, llm: { promptVersion: 'name-1' } } });
+    expect((await deps.repo.listRecords('drinks'))[0]).toMatchObject({
+      name: 'Synthetic banana smoothie',
+      ingredients: ['milk', 'banana'],
+      source: { kind: 'name_estimate', edited: false, llm: { promptVersion: 'name-1' } },
+    });
   });
 
-  const LABEL = JSON.stringify({ ingredients: ['mleko (3,2%)', 'cukier'], allergens: ['milk'], traces: ['peanuts'], text_read: 'Składniki: mleko, cukier. Może zawierać orzeszki ziemne.', note: 'The last line is cut off.' });
+  const LABEL = JSON.stringify({
+    ingredients: ['mleko (3,2%)', 'cukier'],
+    allergens: ['milk'],
+    traces: ['peanuts'],
+    text_read: 'Składniki: mleko, cukier. Może zawierać orzeszki ziemne.',
+    note: 'The last line is cut off.',
+  });
 
   it('IN-15, LL-13, IN-16 a label scan shows the text read beside the list, suggests tags without selecting them, saves as a label_scan and deletes the photo', async () => {
     const llm = new FakeLlm([LABEL]);
@@ -2459,7 +2769,8 @@ describe('Inline photo estimate (IN-3, LL-12, IN-10)', () => {
     await press(tree, en.meal.estimateAddAll);
     const values = tree.root.findAll((n) => n.props.placeholder === en.meal.ingredientPlaceholder).map((n) => n.props.value);
     expect([...new Set(values)]).toEqual(['mleko (3,2%)', 'cukier', '']); // text keeps the label's language
-    const selected = (label: string) => tree.root.findAll((n) => n.props.accessibilityLabel === label && n.props.accessibilityState)[0]!.props.accessibilityState.selected;
+    const selected = (label: string) =>
+      tree.root.findAll((n) => n.props.accessibilityLabel === label && n.props.accessibilityState)[0]!.props.accessibilityState.selected;
     expect(selected(en.allergens.milk)).toBe(false);
     await press(tree, en.meal.scanSelectTags);
     expect(selected(en.allergens.milk)).toBe(true);
@@ -2470,11 +2781,17 @@ describe('Inline photo estimate (IN-3, LL-12, IN-10)', () => {
       rendered = lastTree();
     });
     await act(async () => {
-      await rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!.props.onPress();
+      await rendered.root
+        .findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!
+        .props.onPress();
     });
     await flush();
     const saved = (await deps.repo.listMeals())[0]!;
-    expect(saved).toMatchObject({ ingredients: ['mleko (3,2%)', 'cukier'], allergens: ['milk', 'peanuts'], source: { kind: 'label_scan', edited: false, llm: { model: 'fake-model', promptVersion: 'label-1' }, aiTags: true } });
+    expect(saved).toMatchObject({
+      ingredients: ['mleko (3,2%)', 'cukier'],
+      allergens: ['milk', 'peanuts'],
+      source: { kind: 'label_scan', edited: false, llm: { model: 'fake-model', promptVersion: 'label-1' }, aiTags: true },
+    });
   });
 
   it('IN-15, LL-12 cancelling the label scan, or dismissing its answer, deletes the temporary photo and stores nothing', async () => {
@@ -2527,11 +2844,19 @@ describe('Inline photo estimate (IN-3, LL-12, IN-10)', () => {
       rendered = lastTree();
     });
     await act(async () => {
-      await rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!.props.onPress();
+      await rendered.root
+        .findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!
+        .props.onPress();
     });
     await flush();
     expect(await deps.repo.listRecords('drinks')).toMatchObject([
-      { name: 'Synthetic kefir', amountMl: 250, ingredients: ['mleko (3,2%)', 'cukier'], allergens: ['milk', 'peanuts'], source: { kind: 'label_scan', edited: false } },
+      {
+        name: 'Synthetic kefir',
+        amountMl: 250,
+        ingredients: ['mleko (3,2%)', 'cukier'],
+        allergens: ['milk', 'peanuts'],
+        source: { kind: 'label_scan', edited: false },
+      },
     ]);
   });
 
@@ -2561,17 +2886,24 @@ describe('Inline photo estimate (IN-3, LL-12, IN-10)', () => {
       rendered = lastTree();
     });
     await act(async () => {
-      await rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!.props.onPress();
+      await rendered.root
+        .findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!
+        .props.onPress();
     });
     await flush();
     expect(await deps.repo.listMeals()).toMatchObject([{ barcode: '5900000000008', source: { kind: 'label_scan' } }]);
     const { lookupProduct } = require('@/core/usecases/barcode');
-    expect(await lookupProduct(deps, '5900000000008')).toMatchObject({ history: { name: 'Synthetic yoghurt', source: { kind: 'label_scan' } } });
+    expect(await lookupProduct(deps, '5900000000008')).toMatchObject({
+      history: { name: 'Synthetic yoghurt', source: { kind: 'label_scan' } },
+    });
   });
 
   it('IN-3, LL-12 saving while the estimate runs uses the fields as they are and aborts the request', async () => {
     let aborted = false;
-    const llm = { completeJson: (req: { signal?: AbortSignal }) => new Promise<never>((_r, reject) => req.signal?.addEventListener('abort', () => ((aborted = true), reject(new Error('aborted'))))) };
+    const llm = {
+      completeJson: (req: { signal?: AbortSignal }) =>
+        new Promise<never>((_r, reject) => req.signal?.addEventListener('abort', () => ((aborted = true), reject(new Error('aborted'))))),
+    };
     const { deps } = await startEstimate(llm);
     await act(async () => {
       void buttonOf(en.meal.photoSend).onPress();
@@ -2621,7 +2953,9 @@ describe('Barcode in the meal form (IN-2, IN-8, IN-9, IN-10)', () => {
     await press(tree, en.meal.scan);
     return { deps, tree, fake };
   }
-  const values = (tree: ReactTestRenderer) => [...new Set(tree.root.findAll((n) => n.props.placeholder === en.meal.ingredientPlaceholder).map((n) => n.props.value))];
+  const values = (tree: ReactTestRenderer) => [
+    ...new Set(tree.root.findAll((n) => n.props.placeholder === en.meal.ingredientPlaceholder).map((n) => n.props.value)),
+  ];
 
   it('IN-2, IN-10 a typed code fills the review form; the database allergens are only suggested until the user selects them', async () => {
     const { deps, tree } = await open();
@@ -2629,9 +2963,13 @@ describe('Barcode in the meal form (IN-2, IN-8, IN-9, IN-10)', () => {
     await press(tree, en.meal.scanLookup);
     await flush();
     expect(hasText(tree, en.meal.scanFromDb)).toBe(true);
-    expect(tree.root.findAll((n) => n.props.accessibilityLabel === en.meal.description && n.props.value === 'Synthetic yoghurt')).not.toHaveLength(0);
+    expect(
+      tree.root.findAll((n) => n.props.accessibilityLabel === en.meal.description && n.props.value === 'Synthetic yoghurt'),
+    ).not.toHaveLength(0);
     expect(values(tree)).toEqual(['milk', 'cultures']);
-    const milk = () => tree.root.findAll((n) => n.props.accessibilityLabel === en.allergens.milk && n.props.accessibilityState)[0]!.props.accessibilityState.selected;
+    const milk = () =>
+      tree.root.findAll((n) => n.props.accessibilityLabel === en.allergens.milk && n.props.accessibilityState)[0]!.props.accessibilityState
+        .selected;
     expect(milk()).toBe(false);
     expect(hasText(tree, en.meal.scanTagsHint.replace('{{list}}', en.allergens.milk))).toBe(true);
     expect(await deps.repo.listMeals()).toEqual([]); // nothing saved by a lookup
@@ -2639,7 +2977,15 @@ describe('Barcode in the meal form (IN-2, IN-8, IN-9, IN-10)', () => {
     expect(milk()).toBe(true);
     await header();
     await flush();
-    expect(await deps.repo.listMeals()).toMatchObject([{ description: 'Synthetic yoghurt', ingredients: ['milk', 'cultures'], allergens: ['milk'], barcode: '5900000000008', source: { kind: 'open_food_facts', edited: false, llm: null, aiTags: false } }]);
+    expect(await deps.repo.listMeals()).toMatchObject([
+      {
+        description: 'Synthetic yoghurt',
+        ingredients: ['milk', 'cultures'],
+        allergens: ['milk'],
+        barcode: '5900000000008',
+        source: { kind: 'open_food_facts', edited: false, llm: null, aiTags: false },
+      },
+    ]);
   });
 
   it('IN-2 a Polish translation from the database is shown with a warning to check it against the pack', async () => {
@@ -2653,12 +2999,17 @@ describe('Barcode in the meal form (IN-2, IN-8, IN-9, IN-10)', () => {
 
   it('IN-1 typing in an ingredient row offers names from the diary, and a tap fills the row', async () => {
     const deps = nowDeps();
-    await logMeal(deps, { description: 'Synthetic earlier', ingredients: ['oat milk', 'oat milk', 'rice'], at: new Date(Date.now() - 3600_000) });
+    await logMeal(deps, {
+      description: 'Synthetic earlier',
+      ingredients: ['oat milk', 'oat milk', 'rice'],
+      at: new Date(Date.now() - 3600_000),
+    });
     const { tree } = await mount(meal, deps);
     await flush();
     await type(tree, en.meal.description, 'Synthetic new');
     await press(tree, en.meal.continue);
-    const field = () => tree.root.findAll((n) => n.props.placeholder === en.meal.ingredientPlaceholder && typeof n.props.onFocus === 'function')[0]!;
+    const field = () =>
+      tree.root.findAll((n) => n.props.placeholder === en.meal.ingredientPlaceholder && typeof n.props.onFocus === 'function')[0]!;
     await act(async () => {
       field().props.onFocus();
     });
@@ -2674,13 +3025,17 @@ describe('Barcode in the meal form (IN-2, IN-8, IN-9, IN-10)', () => {
     await flush();
     await press(tree, en.meal.favorite);
     await flush();
-    expect((await deps.repo.getPreferences())!.favorites.meals).toMatchObject([{ description: 'Synthetic yoghurt', barcode: '5900000000008', source: { kind: 'open_food_facts' } }]);
+    expect((await deps.repo.getPreferences())!.favorites.meals).toMatchObject([
+      { description: 'Synthetic yoghurt', barcode: '5900000000008', source: { kind: 'open_food_facts' } },
+    ]);
     const again = await mount(meal, deps);
     await flush();
     await press(again.tree, 'Synthetic yoghurt');
     await header();
     await flush();
-    expect(await deps.repo.listMeals()).toMatchObject([{ description: 'Synthetic yoghurt', barcode: '5900000000008', source: { kind: 'open_food_facts', edited: true } }]);
+    expect(await deps.repo.listMeals()).toMatchObject([
+      { description: 'Synthetic yoghurt', barcode: '5900000000008', source: { kind: 'open_food_facts', edited: true } },
+    ]);
   });
 
   it('IN-16 changing a filled list before saving marks the entry edited', async () => {
@@ -2697,13 +3052,24 @@ describe('Barcode in the meal form (IN-2, IN-8, IN-9, IN-10)', () => {
 
   it('IN-2 a code the diary already knows is filled from history without asking the database', async () => {
     const { deps, tree, fake } = await open();
-    await logMeal(deps, { description: 'Synthetic kefir', ingredients: ['kefir'], allergens: ['milk'], barcode: '5900000000008', at: new Date(Date.now() - 86_400_000) });
+    await logMeal(deps, {
+      description: 'Synthetic kefir',
+      ingredients: ['kefir'],
+      allergens: ['milk'],
+      barcode: '5900000000008',
+      at: new Date(Date.now() - 86_400_000),
+    });
     await type(tree, en.meal.scanCode, '5900000000008');
     await press(tree, en.meal.scanLookup);
     await flush();
     expect(fake.lookups).toEqual([]);
-    expect(tree.root.findAll((n) => n.props.accessibilityLabel === en.meal.description && n.props.value === 'Synthetic kefir')).not.toHaveLength(0);
-    expect(tree.root.findAll((n) => n.props.accessibilityLabel === en.allergens.milk && n.props.accessibilityState)[0]!.props.accessibilityState.selected).toBe(true);
+    expect(
+      tree.root.findAll((n) => n.props.accessibilityLabel === en.meal.description && n.props.value === 'Synthetic kefir'),
+    ).not.toHaveLength(0);
+    expect(
+      tree.root.findAll((n) => n.props.accessibilityLabel === en.allergens.milk && n.props.accessibilityState)[0]!.props.accessibilityState
+        .selected,
+    ).toBe(true);
   });
 
   it('IN-4, IN-2 a scanned packaged drink is logged as a drink with its barcode and source', async () => {
@@ -2719,7 +3085,14 @@ describe('Barcode in the meal form (IN-2, IN-8, IN-9, IN-10)', () => {
     await header();
     await flush();
     expect(await deps.repo.listRecords('drinks')).toMatchObject([
-      { name: 'Synthetic yoghurt', amountMl: 250, alcohol: false, ingredients: ['milk', 'cultures'], barcode: '5900000000008', source: { kind: 'open_food_facts', edited: true } },
+      {
+        name: 'Synthetic yoghurt',
+        amountMl: 250,
+        alcohol: false,
+        ingredients: ['milk', 'cultures'],
+        barcode: '5900000000008',
+        source: { kind: 'open_food_facts', edited: true },
+      },
     ]);
   });
 
@@ -2815,17 +3188,46 @@ describe('Area timeline (SK-8)', () => {
 
   it('SK-8, UX-1 the timeline charts a score, switches score, and compares two photos side by side with the earlier one first', async () => {
     const deps = makeDeps(new MemoryRepo(), '2026-01-20T10:00:00.000Z');
-    const a = await logSkinEntry(deps, { areaId: 'area-chin', scores: { ...scores, severity: 2, itch: 9 }, at: new Date('2026-01-10T08:00:00.000Z') });
-    const b = await logSkinEntry(deps, { areaId: 'area-chin', scores: { ...scores, severity: 6, itch: 1 }, at: new Date('2026-01-12T08:00:00.000Z') });
-    const pa = await addPhoto(deps, { entryKind: 'skinEntry', entryId: a.id, sourceUri: 'first-photo', at: new Date('2026-01-10T08:05:00.000Z') });
-    const pb = await addPhoto(deps, { entryKind: 'skinEntry', entryId: b.id, sourceUri: 'second-photo', at: new Date('2026-01-12T08:05:00.000Z') });
+    const a = await logSkinEntry(deps, {
+      areaId: 'area-chin',
+      scores: { ...scores, severity: 2, itch: 9 },
+      at: new Date('2026-01-10T08:00:00.000Z'),
+    });
+    const b = await logSkinEntry(deps, {
+      areaId: 'area-chin',
+      scores: { ...scores, severity: 6, itch: 1 },
+      at: new Date('2026-01-12T08:00:00.000Z'),
+    });
+    const pa = await addPhoto(deps, {
+      entryKind: 'skinEntry',
+      entryId: a.id,
+      sourceUri: 'first-photo',
+      at: new Date('2026-01-10T08:05:00.000Z'),
+    });
+    const pb = await addPhoto(deps, {
+      entryKind: 'skinEntry',
+      entryId: b.id,
+      sourceUri: 'second-photo',
+      at: new Date('2026-01-12T08:05:00.000Z'),
+    });
     mockParams.current = { id: 'area-chin' };
     const { tree } = await mount(() => require('@/app/(tabs)/review/area'), deps);
     await flush();
-    const summary = (label: string) => en.review.trendSummary.replace('{{label}}', label).replace('{{from}}', '2026-01-10').replace('{{to}}', '2026-01-12');
-    expect(hasText(tree, summary(en.skin.scores.severity).replace('{{first}}', '2').replace('{{last}}', '6').replace('{{min}}', '2').replace('{{max}}', '6'))).toBe(true);
+    const summary = (label: string) =>
+      en.review.trendSummary.replace('{{label}}', label).replace('{{from}}', '2026-01-10').replace('{{to}}', '2026-01-12');
+    expect(
+      hasText(
+        tree,
+        summary(en.skin.scores.severity).replace('{{first}}', '2').replace('{{last}}', '6').replace('{{min}}', '2').replace('{{max}}', '6'),
+      ),
+    ).toBe(true);
     await press(tree, en.skin.scores.itch);
-    expect(hasText(tree, summary(en.skin.scores.itch).replace('{{first}}', '9').replace('{{last}}', '1').replace('{{min}}', '1').replace('{{max}}', '9'))).toBe(true);
+    expect(
+      hasText(
+        tree,
+        summary(en.skin.scores.itch).replace('{{first}}', '9').replace('{{last}}', '1').replace('{{min}}', '1').replace('{{max}}', '9'),
+      ),
+    ).toBe(true);
     await press(tree, en.review.compare);
     expect(hasText(tree, en.review.comparePick)).toBe(true);
     await press(tree, `${en.review.pick} ${pb.at.utc}`); // the later photo first: the comparison still puts the earlier one on the left
@@ -2866,7 +3268,9 @@ describe('Area timeline (SK-8)', () => {
     scrollTo.mockClear();
     const layoutOf = (day: string, y: number) =>
       act(async () => {
-        const node = tree.root.findAll((n) => typeof n.props.onLayout === 'function' && n.findAll((c) => c.children.includes(day)).length > 0)[0]!;
+        const node = tree.root.findAll(
+          (n) => typeof n.props.onLayout === 'function' && n.findAll((c) => c.children.includes(day)).length > 0,
+        )[0]!;
         node.props.onLayout({ nativeEvent: { layout: { y } } });
       });
     await layoutOf('2026-01-14', 40);
@@ -2895,17 +3299,24 @@ describe('Area timeline (SK-8)', () => {
   it('EN-1, SK-8 a tap on an entry opens the day log sheet naming its photos; Edit opens the form and Delete reloads the timeline', async () => {
     const deps = nowDeps();
     const keep = await logSkinEntry(deps, { areaId: 'area-chin', scores, at: new Date('2026-01-10T08:00:00.000Z') });
-    const doomed = await logSkinEntry(deps, { areaId: 'area-chin', scores: { ...scores, severity: 7 }, at: new Date('2026-01-12T08:00:00.000Z') });
+    const doomed = await logSkinEntry(deps, {
+      areaId: 'area-chin',
+      scores: { ...scores, severity: 7 },
+      at: new Date('2026-01-12T08:00:00.000Z'),
+    });
     await addPhoto(deps, { entryKind: 'skinEntry', entryId: doomed.id, sourceUri: 'doomed-photo' });
     mockParams.current = { id: 'area-chin' };
     const sheet = jest.spyOn(ActionSheetIOS, 'showActionSheetWithOptions').mockImplementation((_o, cb) => cb(0)); // Edit
     const { tree } = await mount(() => require('@/app/(tabs)/review/area'), deps);
     await flush();
-    const entries = () => tree.root.findAll((n) => n.props.accessibilityHint === en.review.entryHint && typeof n.props.onPress === 'function');
+    const entries = () =>
+      tree.root.findAll((n) => n.props.accessibilityHint === en.review.entryHint && typeof n.props.onPress === 'function');
     expect(entries()).toHaveLength(2); // flare lines are derived and have no tap target
     await act(async () => entries()[0]!.props.onPress()); // newest day first: the 12th
     await flush();
-    const [opts] = sheet.mock.calls[0] as unknown as [{ title: string; message: string; options: string[]; destructiveButtonIndex: number[] }];
+    const [opts] = sheet.mock.calls[0] as unknown as [
+      { title: string; message: string; options: string[]; destructiveButtonIndex: number[] },
+    ];
     expect(opts.title).toBe(`${en.log.skin}: ${en.areas['area-chin']}`);
     expect(opts.message).toContain(`1 ${en.log.kinds.photos}`);
     expect(opts.options).toEqual([en.log.editAction, en.log.deleteAction, en.common.cancel]);
@@ -2930,7 +3341,10 @@ describe('Area timeline (SK-8)', () => {
     mockParams.current = { id: 'area-chin' };
     const { tree } = await mount(() => require('@/app/(tabs)/review/area'), deps);
     await flush();
-    const disabled = () => tree.root.findAll((n) => n.props.accessibilityHint === en.review.entryHint && typeof n.props.onPress === 'function').map((n) => n.props.disabled);
+    const disabled = () =>
+      tree.root
+        .findAll((n) => n.props.accessibilityHint === en.review.entryHint && typeof n.props.onPress === 'function')
+        .map((n) => n.props.disabled);
     expect(disabled()).toEqual([false, false]);
     await press(tree, en.review.compare);
     expect(disabled()).toEqual([true, true]);
@@ -2965,7 +3379,18 @@ describe('Photo selection for an export (EX-7, EX-8)', () => {
     await flush();
     await press(tree, en.exportPhotos.custom);
     expect(hasText(tree, en.exportPhotos.customHint)).toBe(true);
-    const chips = () => [...new Set(tree.root.findAll((n) => typeof n.props.accessibilityLabel === 'string' && n.props.accessibilityState?.selected !== undefined && /\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(n.props.accessibilityLabel)).map((n) => n.props.accessibilityLabel as string))];
+    const chips = () => [
+      ...new Set(
+        tree.root
+          .findAll(
+            (n) =>
+              typeof n.props.accessibilityLabel === 'string' &&
+              n.props.accessibilityState?.selected !== undefined &&
+              /\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(n.props.accessibilityLabel),
+          )
+          .map((n) => n.props.accessibilityLabel as string),
+      ),
+    ];
     expect(chips()).toHaveLength(2); // the two chin photos share a label (same minute); the third is the sensitive one
     const sensitiveLabel = chips().find((l) => l.includes(en.analysis.sensitiveMark))!;
     expect(sensitiveLabel).toContain(en.areas['area-penis']);
@@ -2980,7 +3405,9 @@ describe('Photo selection for an export (EX-7, EX-8)', () => {
     await press(tree, sensitiveLabel);
     await press(tree, en.data.exportButton);
     await flush();
-    const second = Object.keys(unzipSync((fileShare.saveAndShare.mock.calls[1] as unknown as [string, Uint8Array])[1])).filter((f) => f.startsWith('photos/'));
+    const second = Object.keys(unzipSync((fileShare.saveAndShare.mock.calls[1] as unknown as [string, Uint8Array])[1])).filter((f) =>
+      f.startsWith('photos/'),
+    );
     expect(second).toHaveLength(2);
   });
 });
@@ -3001,7 +3428,12 @@ describe('App lock (SE-8)', () => {
   afterEach(() => jest.restoreAllMocks());
 
   async function mountLayout(deps: Deps, lock: AppLock) {
-    services.__state.current = { deps, fileShare: { saveAndShare: jest.fn(), pickFile: jest.fn() }, analysisRunner: new AnalysisRunner(deps), appLock: lock };
+    services.__state.current = {
+      deps,
+      fileShare: { saveAndShare: jest.fn(), pickFile: jest.fn() },
+      analysisRunner: new AnalysisRunner(deps),
+      appLock: lock,
+    };
     let tree!: ReactTestRenderer;
     await act(async () => {
       tree = create(React.createElement(require('@/app/_layout').default));
@@ -3014,7 +3446,12 @@ describe('App lock (SE-8)', () => {
     const deps = nowDeps();
     const lock = new AppLock(deps);
     await lock.init();
-    services.__state.current = { deps, fileShare: { saveAndShare: jest.fn(), pickFile: jest.fn() }, analysisRunner: new AnalysisRunner(deps), appLock: lock };
+    services.__state.current = {
+      deps,
+      fileShare: { saveAndShare: jest.fn(), pickFile: jest.fn() },
+      analysisRunner: new AnalysisRunner(deps),
+      appLock: lock,
+    };
     let tree!: ReactTestRenderer;
     await act(async () => {
       tree = create(React.createElement(require('@/app/settings/privacy').default));
@@ -3217,7 +3654,9 @@ describe('Create forms on the unified modal (UX-3)', () => {
       rendered = create(mockScreen.options!.headerLeft!());
     });
     await act(async () => {
-      await rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.cancel && typeof n.props.onPress === 'function')[0]!.props.onPress();
+      await rendered.root
+        .findAll((n) => n.props.accessibilityLabel === en.common.cancel && typeof n.props.onPress === 'function')[0]!
+        .props.onPress();
     });
     expect((sheet.mock.calls[0] as unknown as [{ options: string[] }])[0].options).toEqual([en.edit.discard, en.common.cancel]);
     expect(mockRouter.back).not.toHaveBeenCalled();
@@ -3267,8 +3706,10 @@ describe('Cracks and size on a skin entry (SK-3, SK-8, EN-1)', () => {
     await flush();
     return node.props.accessibilityState as { disabled?: boolean } | undefined;
   };
-  const switchOf = (tree: ReactTestRenderer, label: string) => tree.root.findAll((n) => n.props.accessibilityLabel === label && typeof n.props.onValueChange === 'function')[0]!;
-  const sizeInput = (tree: ReactTestRenderer) => tree.root.findAll((n) => n.props.accessibilityLabel === en.skin.sizeMm && typeof n.props.onChangeText === 'function');
+  const switchOf = (tree: ReactTestRenderer, label: string) =>
+    tree.root.findAll((n) => n.props.accessibilityLabel === label && typeof n.props.onValueChange === 'function')[0]!;
+  const sizeInput = (tree: ReactTestRenderer) =>
+    tree.root.findAll((n) => n.props.accessibilityLabel === en.skin.sizeMm && typeof n.props.onChangeText === 'function');
 
   it('SK-3, UX-4 the cracks switch is always there and the size sits behind Details, which stays closed for an area without a size', async () => {
     const deps = nowDeps();
@@ -3316,7 +3757,10 @@ describe('Cracks and size on a skin entry (SK-3, SK-8, EN-1)', () => {
     expect(sizeInput(tree)[0]!.props.value).toBe('22'); // Details opened without a tap
     await press(tree, en.skin.noChange);
     await flush();
-    expect(await deps.repo.listSkinEntries()).toMatchObject([{ cracks: true, sizeMm: 22 }, { cracks: true, sizeMm: 22 }]);
+    expect(await deps.repo.listSkinEntries()).toMatchObject([
+      { cracks: true, sizeMm: 22 },
+      { cracks: true, sizeMm: 22 },
+    ]);
     // another area without a size shows no Details content
     const { tree: second } = await mount(() => require('@/app/form/skin'), nowDeps());
     await flush();
@@ -3325,7 +3769,13 @@ describe('Cracks and size on a skin entry (SK-3, SK-8, EN-1)', () => {
 
   it('EN-1, SK-3 the edit form shows the saved flag and size, changes them, and clears the size with an empty field', async () => {
     const deps = nowDeps();
-    const entry = await logSkinEntry(deps, { areaId: 'area-chin', scores: sc, cracks: true, sizeMm: 30, at: new Date(Date.now() - 3600_000) });
+    const entry = await logSkinEntry(deps, {
+      areaId: 'area-chin',
+      scores: sc,
+      cracks: true,
+      sizeMm: 30,
+      at: new Date(Date.now() - 3600_000),
+    });
     mockParams.current = { kind: 'skinEntries', id: entry.id };
     const { tree } = await mount(() => require('@/app/form/edit'), deps);
     await flush();
@@ -3346,7 +3796,19 @@ describe('Cracks and size on a skin entry (SK-3, SK-8, EN-1)', () => {
     await flush();
     expect(hasText(chin.tree, `${en.log.cracks}, ${en.log.sizeMm.replace('{{n}}', '18')}`)).toBe(true);
     await press(chin.tree, en.review.sizeChip);
-    expect(hasText(chin.tree, en.review.trendSummary.replace('{{label}}', en.review.sizeChip).replace('{{first}}', '18').replace('{{last}}', '18').replace('{{min}}', '18').replace('{{max}}', '18').replace('{{from}}', localDay(new Date(Date.now() - 3 * 3600_000).toISOString(), 'Europe/Warsaw')).replace('{{to}}', localDay(new Date(Date.now() - 3 * 3600_000).toISOString(), 'Europe/Warsaw')))).toBe(true);
+    expect(
+      hasText(
+        chin.tree,
+        en.review.trendSummary
+          .replace('{{label}}', en.review.sizeChip)
+          .replace('{{first}}', '18')
+          .replace('{{last}}', '18')
+          .replace('{{min}}', '18')
+          .replace('{{max}}', '18')
+          .replace('{{from}}', localDay(new Date(Date.now() - 3 * 3600_000).toISOString(), 'Europe/Warsaw'))
+          .replace('{{to}}', localDay(new Date(Date.now() - 3 * 3600_000).toISOString(), 'Europe/Warsaw')),
+      ),
+    ).toBe(true);
     mockParams.current = { id: 'area-neck' };
     const neck = await mount(() => require('@/app/(tabs)/review/area'), deps);
     await flush();
@@ -3373,11 +3835,14 @@ describe('Reaction after applying a treatment, and the new tags (IN-11, IN-6)', 
       rendered = lastTree();
     });
     await act(async () => {
-      await rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!.props.onPress();
+      await rendered.root
+        .findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!
+        .props.onPress();
     });
     await flush();
   };
-  const selected = (tree: ReactTestRenderer, label: string) => tree.root.findAll((n) => n.props.accessibilityLabel === label && n.props.accessibilityState)[0]!.props.accessibilityState.selected;
+  const selected = (tree: ReactTestRenderer, label: string) =>
+    tree.root.findAll((n) => n.props.accessibilityLabel === label && n.props.accessibilityState)[0]!.props.accessibilityState.selected;
 
   it('IN-11 the edit screen sets the reaction afterwards, a second tap clears it, and an untouched application stays not recorded', async () => {
     const deps = nowDeps();
@@ -3434,7 +3899,12 @@ describe('Time since the last treatment on a photo (SK-4)', () => {
     const { tree } = await mount(() => require('@/app/(tabs)/review/area'), deps);
     await flush();
     expect(hasText(tree, en.derived.noTreatment)).toBe(true);
-    expect(hasText(tree, en.derived.sinceTreatment.replace('{{elapsed}}', en.derived.hours.replace('{{n}}', '14')).replace('{{name}}', 'Synthetic cream'))).toBe(true);
+    expect(
+      hasText(
+        tree,
+        en.derived.sinceTreatment.replace('{{elapsed}}', en.derived.hours.replace('{{n}}', '14')).replace('{{name}}', 'Synthetic cream'),
+      ),
+    ).toBe(true);
     mockParams.current = {};
   });
 });
@@ -3472,7 +3942,9 @@ describe('Medical events (IN-18, UX-2, UX-11, SK-8)', () => {
     await type(tree, en.medical.title, 'Synthetic dermatology visit');
     await type(tree, en.common.note, 'a cream was prescribed');
     await headerSave();
-    expect(await deps.repo.listRecords('medicalEvents')).toMatchObject([{ kind: 'visit', title: 'Synthetic dermatology visit', note: 'a cream was prescribed', endDay: null }]);
+    expect(await deps.repo.listRecords('medicalEvents')).toMatchObject([
+      { kind: 'visit', title: 'Synthetic dermatology visit', note: 'a cream was prescribed', endDay: null },
+    ]);
     expect(mockRouter.back).toHaveBeenCalledTimes(1);
   });
 
@@ -3499,15 +3971,25 @@ describe('Medical events (IN-18, UX-2, UX-11, SK-8)', () => {
     await press(second.tree, en.medical.endSet);
     await act(async () => mockPicker.last!.onValueChange({}, new Date(`${end}T12:00:00`)));
     await headerSave();
-    expect((await deps.repo.listRecords('medicalEvents')).find((e) => e.title === 'Synthetic flu')).toMatchObject({ kind: 'illness', endDay: end });
+    expect((await deps.repo.listRecords('medicalEvents')).find((e) => e.title === 'Synthetic flu')).toMatchObject({
+      kind: 'illness',
+      endDay: end,
+    });
   });
 
   it('IN-18, EN-1 a log row names the kind and title (and until when), and the edit form changes and clears the end date', async () => {
     const deps = nowDeps();
-    const e = await logMedicalEvent(deps, { kind: 'illness', title: 'Synthetic cold', at: new Date(Date.now() - 3600_000), endDay: dayOf(inDays(2)) });
+    const e = await logMedicalEvent(deps, {
+      kind: 'illness',
+      title: 'Synthetic cold',
+      at: new Date(Date.now() - 3600_000),
+      endDay: dayOf(inDays(2)),
+    });
     const today = await mount(() => require('@/app/(tabs)/today/index'), deps);
     await flush();
-    expect(hasText(today.tree, en.log.medical.replace('{{kind}}', en.medical.kinds.illness).replace('{{title}}', 'Synthetic cold'))).toBe(true);
+    expect(hasText(today.tree, en.log.medical.replace('{{kind}}', en.medical.kinds.illness).replace('{{title}}', 'Synthetic cold'))).toBe(
+      true,
+    );
     expect(hasText(today.tree, en.log.medicalUntil.replace('{{day}}', dayOf(inDays(2))))).toBe(true);
     mockParams.current = { kind: 'medicalEvents', id: e.id };
     const { tree } = await mount(() => require('@/app/form/edit'), deps);
@@ -3538,11 +4020,18 @@ describe('Medical events (IN-18, UX-2, UX-11, SK-8)', () => {
   it('SK-8 an area timeline shows the medical event markers next to the entries', async () => {
     const deps = nowDeps();
     await logSkinEntry(deps, { areaId: 'area-chin', scores, at: new Date('2026-01-12T08:00:00.000Z') });
-    await logMedicalEvent(deps, { kind: 'illness', title: 'Synthetic cold', at: new Date('2026-01-12T07:00:00.000Z'), endDay: '2026-01-14' });
+    await logMedicalEvent(deps, {
+      kind: 'illness',
+      title: 'Synthetic cold',
+      at: new Date('2026-01-12T07:00:00.000Z'),
+      endDay: '2026-01-14',
+    });
     mockParams.current = { id: 'area-chin' };
     const { tree } = await mount(() => require('@/app/(tabs)/review/area'), deps);
     await flush();
-    expect(hasText(tree, en.review.medicalStart.replace('{{kind}}', en.medical.kinds.illness).replace('{{title}}', 'Synthetic cold'))).toBe(true);
+    expect(hasText(tree, en.review.medicalStart.replace('{{kind}}', en.medical.kinds.illness).replace('{{title}}', 'Synthetic cold'))).toBe(
+      true,
+    );
     expect(hasText(tree, en.review.medicalEnd.replace('{{title}}', 'Synthetic cold'))).toBe(true);
     mockParams.current = {};
   });
@@ -3564,16 +4053,24 @@ describe('Fill later with AI and My Claude plan (IN-20, LL-15)', () => {
       rendered = lastTree();
     });
     await act(async () => {
-      await rendered.root.findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!.props.onPress();
+      await rendered.root
+        .findAll((n) => n.props.accessibilityLabel === en.common.save && typeof n.props.onPress === 'function')[0]!
+        .props.onPress();
     });
     await flush();
   };
-  const switchOf = (tree: ReactTestRenderer, label: string) => tree.root.findAll((n) => n.props.accessibilityLabel === label && typeof n.props.onValueChange === 'function')[0]!;
-  const buttonOf = (name: string) => alert.mock.calls.at(-1)![2].find((b: { text: string }) => b.text === name) as { onPress: () => unknown };
+  const switchOf = (tree: ReactTestRenderer, label: string) =>
+    tree.root.findAll((n) => n.props.accessibilityLabel === label && typeof n.props.onValueChange === 'function')[0]!;
+  const buttonOf = (name: string) =>
+    alert.mock.calls.at(-1)![2].find((b: { text: string }) => b.text === name) as { onPress: () => unknown };
   const bytesOf = (o: object) => new TextEncoder().encode(JSON.stringify(o));
   const answer = (packId: string, over: object = {}) => ({ pack_id: packId, model: 'Synthetic Model 9', ...over });
   const longAgo = new Date('2026-06-12T10:00:00.000Z'); // three days before the pinned test date
-  const days = () => ({ dayFrom: localDay(longAgo.toISOString(), 'Europe/Warsaw'), dayTo: localDay(new Date().toISOString(), 'Europe/Warsaw'), language: 'en' as const });
+  const days = () => ({
+    dayFrom: localDay(longAgo.toISOString(), 'Europe/Warsaw'),
+    dayTo: localDay(new Date().toISOString(), 'Europe/Warsaw'),
+    language: 'en' as const,
+  });
 
   it('IN-20 the meal and drink forms have the switch; the entry is saved as typed and its log row says it waits for AI', async () => {
     const deps = nowDeps();
@@ -3599,7 +4096,12 @@ describe('Fill later with AI and My Claude plan (IN-20, LL-15)', () => {
 
   it('IN-20 the edit screen sets and clears the mark', async () => {
     const deps = nowDeps();
-    const meal = await logMeal(deps, { description: 'Synthetic pancakes', ingredients: [], fillLater: true, at: new Date(Date.now() - 3600_000) });
+    const meal = await logMeal(deps, {
+      description: 'Synthetic pancakes',
+      ingredients: [],
+      fillLater: true,
+      at: new Date(Date.now() - 3600_000),
+    });
     mockParams.current = { kind: 'meals', id: meal.id };
     const { tree } = await mount(() => require('@/app/form/edit'), deps);
     await flush();
@@ -3613,7 +4115,12 @@ describe('Fill later with AI and My Claude plan (IN-20, LL-15)', () => {
     const deps = nowDeps();
     const meal = await logMeal(deps, { description: 'Synthetic pancakes', ingredients: [], fillLater: true, at: longAgo });
     const { packId } = await buildPack(deps, days());
-    await importResult(deps, bytesOf(answer(packId, { fills: [{ kind: 'meal', id: meal.id, ingredients: ['wheat flour', 'milk'], allergens: ['milk'], note: null }] })));
+    await importResult(
+      deps,
+      bytesOf(
+        answer(packId, { fills: [{ kind: 'meal', id: meal.id, ingredients: ['wheat flour', 'milk'], allergens: ['milk'], note: null }] }),
+      ),
+    );
     const today = await mount(() => require('@/app/(tabs)/today/index'), deps);
     await flush();
     expect(hasText(today.tree, en.cards.suggestions.replace('{{n}}', '1'))).toBe(true);
@@ -3634,22 +4141,44 @@ describe('Fill later with AI and My Claude plan (IN-20, LL-15)', () => {
     const deps = nowDeps();
     const meal = await logMeal(deps, { description: 'Synthetic pancakes', ingredients: ['my own jam'], fillLater: true, at: longAgo });
     const { packId } = await buildPack(deps, days());
-    await importResult(deps, bytesOf(answer(packId, { fills: [{ kind: 'meal', id: meal.id, ingredients: ['wheat flour', 'milk', 'my own jam'], allergens: ['gluten', 'milk'], note: 'Recipes differ.' }] })));
+    await importResult(
+      deps,
+      bytesOf(
+        answer(packId, {
+          fills: [
+            {
+              kind: 'meal',
+              id: meal.id,
+              ingredients: ['wheat flour', 'milk', 'my own jam'],
+              allergens: ['gluten', 'milk'],
+              note: 'Recipes differ.',
+            },
+          ],
+        }),
+      ),
+    );
     const [s] = await listSuggestions(deps);
     mockParams.current = { kind: 'meals', id: meal.id, suggestion: s!.id };
     const { tree } = await mount(() => require('@/app/form/edit'), deps);
     await flush();
     expect(hasText(tree, en.fillLater.panelIntro.replace('{{model}}', 'Synthetic Model 9'))).toBe(true);
     expect(hasText(tree, en.meal.unsure.replace('{{text}}', 'Recipes differ.'))).toBe(true);
-    const selected = (label: string) => tree.root.findAll((n) => n.props.accessibilityLabel === label && n.props.accessibilityState)[0]!.props.accessibilityState.selected;
+    const selected = (label: string) =>
+      tree.root.findAll((n) => n.props.accessibilityLabel === label && n.props.accessibilityState)[0]!.props.accessibilityState.selected;
     expect(selected(en.allergens.milk)).toBe(false);
     await press(tree, en.meal.estimateAddAll);
-    const field = () => tree.root.findAll((n) => n.props.accessibilityLabel === en.meal.ingredients && typeof n.props.onChangeText === 'function')[0]!.props.value;
+    const field = () =>
+      tree.root.findAll((n) => n.props.accessibilityLabel === en.meal.ingredients && typeof n.props.onChangeText === 'function')[0]!.props
+        .value;
     expect(field()).toBe('my own jam, wheat flour, milk, '); // typed text stays, a repeated name is not added twice
     await press(tree, en.meal.scanSelectTags);
     expect(selected(en.allergens.gluten)).toBe(true);
     await headerSave();
-    expect((await deps.repo.listMeals())[0]).toMatchObject({ ingredients: ['my own jam', 'wheat flour', 'milk'], allergens: ['gluten', 'milk'], source: { kind: 'name_estimate', edited: false, aiTags: true, llm: { model: 'Synthetic Model 9', manual: true } } });
+    expect((await deps.repo.listMeals())[0]).toMatchObject({
+      ingredients: ['my own jam', 'wheat flour', 'milk'],
+      allergens: ['gluten', 'milk'],
+      source: { kind: 'name_estimate', edited: false, aiTags: true, llm: { model: 'Synthetic Model 9', manual: true } },
+    });
     expect((await deps.repo.listMeals())[0]!.fillLater).toBeUndefined();
     expect(await listSuggestions(deps)).toEqual([]);
   });
@@ -3659,7 +4188,17 @@ describe('Fill later with AI and My Claude plan (IN-20, LL-15)', () => {
     const meal = await logMeal(deps, { description: 'Synthetic pancakes', ingredients: [], fillLater: true, at: longAgo });
     const drink = await logDrink(deps, { name: 'Synthetic smoothie', amountMl: 300, fillLater: true, at: longAgo });
     const { packId } = await buildPack(deps, days());
-    await importResult(deps, bytesOf(answer(packId, { fills: [{ kind: 'meal', id: meal.id, ingredients: ['flour'], allergens: [], note: null }, { kind: 'drink', id: drink.id, ingredients: ['banana', 'milk'], allergens: [], note: null }] })));
+    await importResult(
+      deps,
+      bytesOf(
+        answer(packId, {
+          fills: [
+            { kind: 'meal', id: meal.id, ingredients: ['flour'], allergens: [], note: null },
+            { kind: 'drink', id: drink.id, ingredients: ['banana', 'milk'], allergens: [], note: null },
+          ],
+        }),
+      ),
+    );
     const [first, second] = await listSuggestions(deps);
     mockParams.current = { kind: 'meals', id: meal.id, suggestion: first!.id };
     const a = await mount(() => require('@/app/form/edit'), deps);
@@ -3676,7 +4215,10 @@ describe('Fill later with AI and My Claude plan (IN-20, LL-15)', () => {
     await press(b.tree, en.meal.estimateAddPicked);
     await type(b.tree, en.more.drinkIngredients, 'banana, oat milk'); // changed after the names were added
     await headerSave();
-    expect((await deps.repo.listRecords('drinks'))[0]).toMatchObject({ ingredients: ['banana', 'oat milk'], source: { kind: 'name_estimate', edited: true, llm: { manual: true } } });
+    expect((await deps.repo.listRecords('drinks'))[0]).toMatchObject({
+      ingredients: ['banana', 'oat milk'],
+      source: { kind: 'name_estimate', edited: true, llm: { manual: true } },
+    });
     expect((await deps.repo.listRecords('drinks'))[0]!.fillLater).toBeUndefined();
   });
 
@@ -3693,7 +4235,13 @@ describe('Fill later with AI and My Claude plan (IN-20, LL-15)', () => {
     await press(tree, en.plan.prepare);
     const [title, body] = alert.mock.calls.at(-1) as unknown as [string, string];
     expect(title).toBe(en.plan.confirmTitle);
-    for (const line of [en.plan.noteLeaves, en.plan.noteTerms, en.plan.noteBilling, en.plan.markedLine.replace('{{text}}', 'Synthetic pancakes')]) expect(body).toContain(line);
+    for (const line of [
+      en.plan.noteLeaves,
+      en.plan.noteTerms,
+      en.plan.noteBilling,
+      en.plan.markedLine.replace('{{text}}', 'Synthetic pancakes'),
+    ])
+      expect(body).toContain(line);
     expect(fileShare.saveAndShare).not.toHaveBeenCalled(); // nothing is written or shared before the confirmation
     await act(async () => {
       await buttonOf(en.plan.prepare).onPress();
@@ -3711,7 +4259,12 @@ describe('Fill later with AI and My Claude plan (IN-20, LL-15)', () => {
     await logSkinEntry(deps, { areaId: 'area-chin', scores, at: longAgo });
     const meal = await logMeal(deps, { description: 'Synthetic pancakes', ingredients: [], fillLater: true, at: longAgo });
     const { packId } = await buildPack(deps, days());
-    const result = bytesOf(answer(packId, { analysis: { summary: 'Synthetic summary', hypotheses: [], order_and_lag: 'none', data_limits: [], questions_for_doctor: [] }, fills: [{ kind: 'meal', id: meal.id, ingredients: ['flour'], allergens: [], note: null }] }));
+    const result = bytesOf(
+      answer(packId, {
+        analysis: { summary: 'Synthetic summary', hypotheses: [], order_and_lag: 'none', data_limits: [], questions_for_doctor: [] },
+        fills: [{ kind: 'meal', id: meal.id, ingredients: ['flour'], allergens: [], note: null }],
+      }),
+    );
     const pick = { saveAndShare: jest.fn(async () => undefined), pickFile: jest.fn(async () => result as unknown as null) };
     const { tree } = await mount(() => require('@/app/(tabs)/review/pack'), deps, pick);
     await press(tree, en.plan.import);
@@ -3719,7 +4272,13 @@ describe('Fill later with AI and My Claude plan (IN-20, LL-15)', () => {
     expect(pick.pickFile).toHaveBeenCalledWith('json');
     const [title, body] = alert.mock.calls.at(-1) as unknown as [string, string];
     expect(title).toBe(en.plan.previewTitle);
-    for (const line of [en.plan.previewModel.replace('{{model}}', 'Synthetic Model 9'), en.plan.previewAnalysis, en.plan.previewFills.replace('{{n}}', '1').replace('{{skipped}}', '0'), en.plan.previewNoChange]) expect(body).toContain(line);
+    for (const line of [
+      en.plan.previewModel.replace('{{model}}', 'Synthetic Model 9'),
+      en.plan.previewAnalysis,
+      en.plan.previewFills.replace('{{n}}', '1').replace('{{skipped}}', '0'),
+      en.plan.previewNoChange,
+    ])
+      expect(body).toContain(line);
     expect(await deps.repo.listRecords('analyses')).toEqual([]);
     await act(async () => {
       await buttonOf(en.plan.import).onPress();
@@ -3742,7 +4301,10 @@ describe('Fill later with AI and My Claude plan (IN-20, LL-15)', () => {
     const deps = nowDeps();
     await logSkinEntry(deps, { areaId: 'area-chin', scores, at: longAgo });
     await buildPack(deps, days());
-    const wrong = { saveAndShare: jest.fn(async () => undefined), pickFile: jest.fn(async () => bytesOf(answer('pack-aaaaaaaaaaaa', { report_summary: 'x' })) as unknown as null) };
+    const wrong = {
+      saveAndShare: jest.fn(async () => undefined),
+      pickFile: jest.fn(async () => bytesOf(answer('pack-aaaaaaaaaaaa', { report_summary: 'x' })) as unknown as null),
+    };
     const { tree } = await mount(() => require('@/app/(tabs)/review/pack'), deps, wrong);
     await press(tree, en.plan.import);
     await flush();
@@ -3762,7 +4324,11 @@ describe('Fill later with AI and My Claude plan (IN-20, LL-15)', () => {
   it('LL-15 the Doctor report offers an imported summary for the same period and language', async () => {
     const deps = nowDeps();
     await logSkinEntry(deps, { areaId: 'area-chin', scores, at: longAgo });
-    const { packId } = await buildPack(deps, { dayFrom: localDay(longAgo.toISOString(), 'Europe/Warsaw'), dayTo: localDay(new Date().toISOString(), 'Europe/Warsaw'), language: 'en' });
+    const { packId } = await buildPack(deps, {
+      dayFrom: localDay(longAgo.toISOString(), 'Europe/Warsaw'),
+      dayTo: localDay(new Date().toISOString(), 'Europe/Warsaw'),
+      language: 'en',
+    });
     await importResult(deps, bytesOf(answer(packId, { report_summary: 'Synthetic narrative for the doctor.' })));
     const { tree } = await mount(() => require('@/app/(tabs)/review/report'), deps);
     await flush();
@@ -3783,9 +4349,15 @@ describe('Today: ring, quick actions and rows (UX-2, UX-12)', () => {
   });
   afterEach(() => jest.restoreAllMocks());
   const today = () => require('@/app/(tabs)/today/index');
-  const dotButtons = (tree: ReactTestRenderer) => tree.root.findAll((n) => n.props.accessibilityRole === 'button' && /entries on the ring/.test(String(n.props.accessibilityLabel)) && typeof n.props.onPress === 'function');
+  const dotButtons = (tree: ReactTestRenderer) =>
+    tree.root.findAll(
+      (n) =>
+        n.props.accessibilityRole === 'button' &&
+        /entries on the ring/.test(String(n.props.accessibilityLabel)) &&
+        typeof n.props.onPress === 'function',
+    );
 
-  it('UX-2 an entry is a dot on the ring and a tap on the dot opens that entry\'s action sheet; close entries merge', async () => {
+  it("UX-2 an entry is a dot on the ring and a tap on the dot opens that entry's action sheet; close entries merge", async () => {
     const deps = nowDeps();
     await logMeal(deps, { description: 'Synthetic oats', ingredients: [], at: new Date(Date.now() - 3 * 3600_000) });
     await logStool(deps, { bristol: 4, at: new Date(Date.now() - 2 * 3600_000) });
@@ -3800,13 +4372,18 @@ describe('Today: ring, quick actions and rows (UX-2, UX-12)', () => {
     const again = await mount(today, deps);
     await flush();
     expect(dotButtons(again.tree)).toHaveLength(2); // the drink merged into the meal's dot
-    expect(hasText(again.tree, '2 entries on the ring') || dotButtons(again.tree).some((n) => n.props.accessibilityLabel === '2 entries on the ring')).toBe(true);
+    expect(
+      hasText(again.tree, '2 entries on the ring') ||
+        dotButtons(again.tree).some((n) => n.props.accessibilityLabel === '2 entries on the ring'),
+    ).toBe(true);
   });
 
   it('UX-2 a long press on a quick action opens its full form, also for the stool tile that opens a sheet on a tap', async () => {
     const { tree } = await mount(today, nowDeps());
     await flush();
-    const tile = tree.root.findAll((n) => n.props.accessibilityLabel === en.entry.stool.title && typeof n.props.onLongPress === 'function')[0]!;
+    const tile = tree.root.findAll(
+      (n) => n.props.accessibilityLabel === en.entry.stool.title && typeof n.props.onLongPress === 'function',
+    )[0]!;
     await act(async () => tile.props.onLongPress());
     expect(mockRouter.push).toHaveBeenLastCalledWith('/form/stool');
   });
@@ -3814,7 +4391,9 @@ describe('Today: ring, quick actions and rows (UX-2, UX-12)', () => {
   it('UX-2 Pin to Today is disabled at five pins', async () => {
     const edit = await mount(() => require('@/app/(tabs)/today/edit'), nowDeps());
     await flush();
-    const pins = edit.tree.root.findAll((n) => n.props.accessibilityLabel === `${en.home.pin} ${en.entry.drink.title}` && n.props.accessibilityState !== undefined);
+    const pins = edit.tree.root.findAll(
+      (n) => n.props.accessibilityLabel === `${en.home.pin} ${en.entry.drink.title}` && n.props.accessibilityState !== undefined,
+    );
     expect(pins.length).toBeGreaterThan(0);
     expect(pins.every((n) => n.props.accessibilityState.disabled === true)).toBe(true);
   });
@@ -3890,20 +4469,24 @@ describe('Today states (UX-2, UX-3)', () => {
   afterEach(() => jest.restoreAllMocks());
   const today = () => require('@/app/(tabs)/today/index');
 
-  it('UX-2 a merged dot lists its entries in a sheet; a tap on one opens that entry\'s Edit and Delete sheet', async () => {
+  it("UX-2 a merged dot lists its entries in a sheet; a tap on one opens that entry's Edit and Delete sheet", async () => {
     const deps = nowDeps();
     const at = Date.now() - 3 * 3600_000;
     await logMeal(deps, { description: 'Synthetic oats', ingredients: [], at: new Date(at) });
     await logDrink(deps, { name: 'Synthetic water', amountMl: 200, at: new Date(at + 600_000) });
     const { tree } = await mount(today, deps);
     await flush();
-    const dot = tree.root.findAll((n) => n.props.accessibilityLabel === en.day.dot.replace('{{n}}', '2') && typeof n.props.onPress === 'function')[0]!;
+    const dot = tree.root.findAll(
+      (n) => n.props.accessibilityLabel === en.day.dot.replace('{{n}}', '2') && typeof n.props.onPress === 'function',
+    )[0]!;
     await act(async () => dot.props.onPress());
     await flush();
     expect(ActionSheetIOS.showActionSheetWithOptions).not.toHaveBeenCalled(); // the list comes first
     expect(hasText(tree, 'Synthetic oats')).toBe(true);
     expect(hasText(tree, 'Synthetic water, 200 ml')).toBe(true);
-    const row = tree.root.findAll((n) => n.props.accessibilityLabel === 'Synthetic water, 200 ml' && typeof n.props.onPress === 'function')[0]!;
+    const row = tree.root.findAll(
+      (n) => n.props.accessibilityLabel === 'Synthetic water, 200 ml' && typeof n.props.onPress === 'function',
+    )[0]!;
     await act(async () => row.props.onPress());
     await flush();
     expect(ActionSheetIOS.showActionSheetWithOptions).toHaveBeenCalledTimes(1);
@@ -3958,7 +4541,12 @@ describe('Entry forms (IN-12, IN-13, IN-17, UX-3)', () => {
 
   it('IN-12 Stopped lists what is in use now as a single choice and fills the name', async () => {
     const deps = nowDeps();
-    await logChangeEvent(deps, { action: 'started', category: 'cat-product', name: 'Synthetic soap', at: new Date(Date.now() - 86_400_000) });
+    await logChangeEvent(deps, {
+      action: 'started',
+      category: 'cat-product',
+      name: 'Synthetic soap',
+      at: new Date(Date.now() - 86_400_000),
+    });
     const { tree } = await mount(() => require('@/app/form/change'), deps);
     await flush();
     await press(tree, en.change.actions.stopped);
@@ -3973,7 +4561,9 @@ describe('Entry forms (IN-12, IN-13, IN-17, UX-3)', () => {
     expect(hasText(tree, en.regular.switchHint)).toBe(false);
     await toggle(tree, en.regular.switch);
     expect(hasText(tree, en.regular.switchHint)).toBe(true);
-    expect(tree.root.findAll((n) => n.props.accessibilityRole === 'switch' && n.props.accessibilityLabel === en.regular.switch).length).toBeGreaterThan(0);
+    expect(
+      tree.root.findAll((n) => n.props.accessibilityRole === 'switch' && n.props.accessibilityLabel === en.regular.switch).length,
+    ).toBeGreaterThan(0);
   });
 });
 
@@ -3987,7 +4577,8 @@ describe('Meal extras: confirmations and results (IN-3, LL-5, LL-12)', () => {
     require('@/adapters/photos/pickPhotos').pickPhotoUris.mockResolvedValue([]);
     jest.restoreAllMocks();
   });
-  const buttonOf = (name: string) => alert.mock.calls.at(-1)![2].find((b: { text: string }) => b.text === name) as { onPress: () => unknown };
+  const buttonOf = (name: string) =>
+    alert.mock.calls.at(-1)![2].find((b: { text: string }) => b.text === name) as { onPress: () => unknown };
   const meal = () => require('@/app/form/meal');
 
   it('LL-5 every confirmation names the model that will be used', async () => {
@@ -4019,7 +4610,8 @@ describe('Meal extras: confirmations and results (IN-3, LL-5, LL-12)', () => {
       void buttonOf(en.meal.photoSend).onPress();
     });
     await flush();
-    const picked = () => tree.root.findAll((n) => n.props.accessibilityLabel === en.meal.estimateAddPicked && n.props.accessibilityState !== undefined);
+    const picked = () =>
+      tree.root.findAll((n) => n.props.accessibilityLabel === en.meal.estimateAddPicked && n.props.accessibilityState !== undefined);
     expect(picked().length).toBeGreaterThan(0);
     expect(picked().every((n) => n.props.accessibilityState.disabled === true)).toBe(true);
     await press(tree, 'soy sauce');
@@ -4050,7 +4642,15 @@ describe('Trend range switch (SK-7, SK-8)', () => {
     await saveCheckIn(deps, { at: new Date('2026-03-10T20:00:00.000Z'), values: { 'item-sleep': 5 }, confirmEmptyDay: true });
     const { tree } = await mount(() => require('@/app/(tabs)/review/health'), deps);
     await flush();
-    const summary = (from: string, first: number) => en.review.trendSummary.replace('{{label}}', en.tags['item-sleep']).replace('{{from}}', from).replace('{{to}}', '2026-03-10').replace('{{first}}', String(first)).replace('{{last}}', '5').replace('{{min}}', '5').replace('{{max}}', String(first === 5 ? 5 : 7));
+    const summary = (from: string, first: number) =>
+      en.review.trendSummary
+        .replace('{{label}}', en.tags['item-sleep'])
+        .replace('{{from}}', from)
+        .replace('{{to}}', '2026-03-10')
+        .replace('{{first}}', String(first))
+        .replace('{{last}}', '5')
+        .replace('{{min}}', '5')
+        .replace('{{max}}', String(first === 5 ? 5 : 7));
     expect(hasText(tree, summary('2026-01-10', 7))).toBe(true); // 90 days back from 20 March reaches 20 Dec: January is in
     await press(tree, en.review.range['30d']);
     expect(hasText(tree, summary('2026-03-10', 5))).toBe(true); // only the March point
@@ -4069,7 +4669,9 @@ describe('Settings additions (SK-8, NO-3, SE-9)', () => {
     const deps = nowDeps();
     const { tree } = await mount(() => require('@/app/settings/language'), deps);
     await flush();
-    const checked = (label: string) => tree.root.findAll((n) => n.props.accessibilityRole === 'radio' && n.props.accessibilityLabel === label)[0]?.props.accessibilityState.checked;
+    const checked = (label: string) =>
+      tree.root.findAll((n) => n.props.accessibilityRole === 'radio' && n.props.accessibilityLabel === label)[0]?.props.accessibilityState
+        .checked;
     expect(checked(en.settings.languageDevice)).toBe(true); // the default
     await press(tree, en.settings.languageNamePl);
     await flush();
@@ -4105,7 +4707,12 @@ describe('Settings additions (SK-8, NO-3, SE-9)', () => {
     await flush();
     expect(hasText(tree, en.regular.denied)).toBe(true);
     expect(hasText(tree, en.regular.openSystem)).toBe(true);
-    const sw = tree.root.findAll((n) => n.props.accessibilityRole === 'switch' && n.props.accessibilityLabel === en.reminders.checkIn && n.props.accessibilityState !== undefined);
+    const sw = tree.root.findAll(
+      (n) =>
+        n.props.accessibilityRole === 'switch' &&
+        n.props.accessibilityLabel === en.reminders.checkIn &&
+        n.props.accessibilityState !== undefined,
+    );
     expect(sw.length).toBeGreaterThan(0);
     expect(sw.every((n) => n.props.accessibilityState.disabled === true)).toBe(true);
   });
@@ -4129,7 +4736,12 @@ describe('Lock cover states (SE-8)', () => {
     const lock = new AppLock(deps);
     await lock.init();
     (deps.auth as unknown as FakeAuth).passes = true;
-    services.__state.current = { deps, fileShare: { saveAndShare: jest.fn(), pickFile: jest.fn() }, analysisRunner: new AnalysisRunner(deps), appLock: lock };
+    services.__state.current = {
+      deps,
+      fileShare: { saveAndShare: jest.fn(), pickFile: jest.fn() },
+      analysisRunner: new AnalysisRunner(deps),
+      appLock: lock,
+    };
     let tree!: ReactTestRenderer;
     await act(async () => {
       tree = create(React.createElement(require('@/ui/LockOverlay').LockOverlay));
@@ -4145,7 +4757,12 @@ describe('Lock cover states (SE-8)', () => {
     const lock = new AppLock(deps);
     await lock.init();
     (deps.auth as unknown as FakeAuth).passes = false;
-    services.__state.current = { deps, fileShare: { saveAndShare: jest.fn(), pickFile: jest.fn() }, analysisRunner: new AnalysisRunner(deps), appLock: lock };
+    services.__state.current = {
+      deps,
+      fileShare: { saveAndShare: jest.fn(), pickFile: jest.fn() },
+      analysisRunner: new AnalysisRunner(deps),
+      appLock: lock,
+    };
     let tree!: ReactTestRenderer;
     await act(async () => {
       tree = create(React.createElement(require('@/ui/LockOverlay').LockOverlay));

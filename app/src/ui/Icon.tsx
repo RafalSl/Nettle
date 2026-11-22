@@ -14,11 +14,30 @@ const GRADIENTS = {
  * UX-12: outline icons on a 24 grid, stroke 1.6, round caps, with the accent wash fading in towards the bottom of a
  * closed shape. `tint` is the stroke colour; the wash stays the accent (on the accent, pass `onAccent` and no wash).
  */
-export function Icon({ name, size = 24, tint = color.text, stroke = 1.6, wash = true }: { name: IconName; size?: number; tint?: string; stroke?: number; wash?: boolean }) {
+export function Icon({
+  name,
+  size = 24,
+  tint = color.text,
+  stroke = 1.6,
+  wash = true,
+}: {
+  name: IconName;
+  size?: number;
+  tint?: string;
+  stroke?: number;
+  wash?: boolean;
+}) {
   const shapes = ICON_SHAPES[name] ?? [];
   const ids = `${name}`;
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+    <Svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+    >
       <Defs>
         {(Object.keys(GRADIENTS) as (keyof typeof GRADIENTS)[]).map((g) => (
           <LinearGradient key={g} id={`${g}-${ids}`} gradientUnits="userSpaceOnUse" x1="0" y1={GRADIENTS[g].y1} x2="0" y2={GRADIENTS[g].y2}>

@@ -14,35 +14,76 @@ const MAX_BARS = 90;
  * `max`, a flare start is coral and a start or end is marked under its bar, and the accessibility label says the
  * same in words: first and last value and the range. More than 90 days are drawn as averages of several days.
  */
-export function TrendChart({ points, max, label, range, onRange }: { points: readonly TrendPoint[]; max: number; label: string; range?: TrendRange; onRange?: (r: TrendRange) => void }) {
+export function TrendChart({
+  points,
+  max,
+  label,
+  range,
+  onRange,
+}: {
+  points: readonly TrendPoint[];
+  max: number;
+  label: string;
+  range?: TrendRange;
+  onRange?: (r: TrendRange) => void;
+}) {
   const shown = downsample(points, MAX_BARS);
   const compressed = shown.length < points.length;
-  const sw = range && onRange ? <Segmented items={TREND_RANGES.map((r) => ({ id: r, label: t(`review.range.${r}`) }))} value={range} onChange={(id) => onRange(id as TrendRange)} /> : null;
-  if (shown.length === 0) return <View style={{ gap: 8 }}>{sw}<Hint>{t('review.trendEmpty')}</Hint></View>;
+  const sw =
+    range && onRange ? (
+      <Segmented
+        items={TREND_RANGES.map((r) => ({ id: r, label: t(`review.range.${r}`) }))}
+        value={range}
+        onChange={(id) => onRange(id as TrendRange)}
+      />
+    ) : null;
+  if (shown.length === 0)
+    return (
+      <View style={{ gap: 8 }}>
+        {sw}
+        <Hint>{t('review.trendEmpty')}</Hint>
+      </View>
+    );
   const first = points[0]!;
   const last = points[points.length - 1]!;
   const values = points.map((p) => p.value);
-  const summary = t('review.trendSummary', { label, from: first.day, to: last.day, first: first.value, last: last.value, min: Math.min(...values), max: Math.max(...values) });
+  const summary = t('review.trendSummary', {
+    label,
+    from: first.day,
+    to: last.day,
+    first: first.value,
+    last: last.value,
+    min: Math.min(...values),
+    max: Math.max(...values),
+  });
   const HEIGHT = 80;
   return (
     <GlassSurface style={{ borderRadius: 28, padding: 14, gap: 10 }}>
-    {sw}
-    <View accessible accessibilityLabel={summary} style={{ gap: 4 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'flex-end', height: HEIGHT, gap: 2 }}>
-        {shown.map((p) => (
-          <View key={p.day} style={{ flex: 1, height: Math.max(2, (p.value / max) * HEIGHT), backgroundColor: p.flare === 'start' ? color.alert : color.accent, borderRadius: 2 }} />
-        ))}
+      {sw}
+      <View accessible accessibilityLabel={summary} style={{ gap: 4 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end', height: HEIGHT, gap: 2 }}>
+          {shown.map((p) => (
+            <View
+              key={p.day}
+              style={{
+                flex: 1,
+                height: Math.max(2, (p.value / max) * HEIGHT),
+                backgroundColor: p.flare === 'start' ? color.alert : color.accent,
+                borderRadius: 2,
+              }}
+            />
+          ))}
+        </View>
+        <View style={{ flexDirection: 'row', gap: 2 }}>
+          {shown.map((p) => (
+            <Text key={p.day} style={[styles.hint, { flex: 1, textAlign: 'center', fontSize: 9 }]}>
+              {p.flare === 'start' ? '▲' : p.flare === 'end' ? '▼' : ' '}
+            </Text>
+          ))}
+        </View>
+        <Hint>{summary}</Hint>
+        {compressed && <Hint>{t('review.trendCompressed')}</Hint>}
       </View>
-      <View style={{ flexDirection: 'row', gap: 2 }}>
-        {shown.map((p) => (
-          <Text key={p.day} style={[styles.hint, { flex: 1, textAlign: 'center', fontSize: 9 }]}>
-            {p.flare === 'start' ? '▲' : p.flare === 'end' ? '▼' : ' '}
-          </Text>
-        ))}
-      </View>
-      <Hint>{summary}</Hint>
-      {compressed && <Hint>{t('review.trendCompressed')}</Hint>}
-    </View>
     </GlassSurface>
   );
 }

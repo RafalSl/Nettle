@@ -41,7 +41,10 @@ describe('diary day with a start hour (NF-7)', () => {
   });
 
   it('NF-7 a day converts to the instants between its start hour and the next one', () => {
-    expect(localDaysToRange('2026-01-15', '2026-01-15', tz, 3)).toEqual({ from: '2026-01-15T02:00:00.000Z', to: '2026-01-16T01:59:59.999Z' });
+    expect(localDaysToRange('2026-01-15', '2026-01-15', tz, 3)).toEqual({
+      from: '2026-01-15T02:00:00.000Z',
+      to: '2026-01-16T01:59:59.999Z',
+    });
     expect(localDaysToRange('2026-01-15', '2026-01-15', tz)).toEqual({ from: '2026-01-14T23:00:00.000Z', to: '2026-01-15T22:59:59.999Z' });
     const r = localDaysToRange('2026-01-15', '2026-01-15', tz, 3)!;
     expect(localDay(r.from!, tz, 3)).toBe('2026-01-15');

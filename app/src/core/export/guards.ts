@@ -10,10 +10,8 @@ export const bad = (detail: string): never => {
 export const isObj = (v: unknown): v is Obj => typeof v === 'object' && v !== null && !Array.isArray(v);
 export const str = (o: Obj, k: string, where: string): string =>
   typeof o[k] === 'string' && (o[k] as string).length > 0 ? (o[k] as string) : bad(`${where}.${k}`);
-export const text = (o: Obj, k: string, where: string): string =>
-  typeof o[k] === 'string' ? (o[k] as string) : bad(`${where}.${k}`);
-export const bool = (o: Obj, k: string, where: string): boolean =>
-  typeof o[k] === 'boolean' ? (o[k] as boolean) : bad(`${where}.${k}`);
+export const text = (o: Obj, k: string, where: string): string => (typeof o[k] === 'string' ? (o[k] as string) : bad(`${where}.${k}`));
+export const bool = (o: Obj, k: string, where: string): boolean => (typeof o[k] === 'boolean' ? (o[k] as boolean) : bad(`${where}.${k}`));
 export const nullableText = (o: Obj, k: string, where: string): string | null =>
   o[k] === null || o[k] === undefined ? null : text(o, k, where);
 /** An IANA timezone the runtime knows: an unknown one would make every later day grouping throw. */
@@ -40,9 +38,7 @@ export const unique = (ids: string[], where: string) => {
 };
 
 export const oneOf = <T extends string>(o: Obj, k: string, allowed: readonly T[], where: string): T =>
-  typeof o[k] === 'string' && (allowed as readonly string[]).includes(o[k] as string)
-    ? (o[k] as T)
-    : bad(`${where}.${k}`);
+  typeof o[k] === 'string' && (allowed as readonly string[]).includes(o[k] as string) ? (o[k] as T) : bad(`${where}.${k}`);
 export const nullableScore = (o: Obj, k: string, where: string): number | null => {
   const v = o[k];
   if (v === null) return null;

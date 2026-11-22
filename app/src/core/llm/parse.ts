@@ -52,8 +52,11 @@ export function parseAllergenSuggestion(text: string): AllergenSuggestion {
   const note = o.note;
   if (note !== null && note !== undefined && typeof note !== 'string') return bad();
   const items = o.items.map((it) => {
-    if (!isObj(it) || typeof it.name !== 'string' || !Array.isArray(it.allergens) || it.allergens.some((x) => typeof x !== 'string')) return bad();
-    const allergens = [...new Set((it.allergens as string[]).map((s) => s.trim()))].filter((s): s is Allergen => (ALLERGENS as readonly string[]).includes(s));
+    if (!isObj(it) || typeof it.name !== 'string' || !Array.isArray(it.allergens) || it.allergens.some((x) => typeof x !== 'string'))
+      return bad();
+    const allergens = [...new Set((it.allergens as string[]).map((s) => s.trim()))].filter((s): s is Allergen =>
+      (ALLERGENS as readonly string[]).includes(s),
+    );
     return { name: it.name.trim(), allergens };
   });
   return { items, note: typeof note === 'string' && note.trim() ? note.trim() : null };
@@ -80,12 +83,24 @@ export function parseLabelScan(text: string): LabelScan {
     throw new NettleError('llm_bad_response');
   };
   if (!isObj(o)) return bad();
-  const tags = (v: unknown) => [...new Set(strings(v).map((s) => s.trim()).filter((s): s is Allergen => (ALLERGENS as readonly string[]).includes(s)))];
+  const tags = (v: unknown) => [
+    ...new Set(
+      strings(v)
+        .map((s) => s.trim())
+        .filter((s): s is Allergen => (ALLERGENS as readonly string[]).includes(s)),
+    ),
+  ];
   const note = o.note;
   if (note !== null && note !== undefined && typeof note !== 'string') return bad();
   if (typeof o.text_read !== 'string') return bad();
   return {
-    ingredients: [...new Set(strings(o.ingredients).map((s) => s.trim()).filter(Boolean))].slice(0, 80),
+    ingredients: [
+      ...new Set(
+        strings(o.ingredients)
+          .map((s) => s.trim())
+          .filter(Boolean),
+      ),
+    ].slice(0, 80),
     allergens: tags(o.allergens),
     traces: tags(o.traces),
     textRead: o.text_read.trim(),

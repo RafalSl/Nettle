@@ -145,14 +145,20 @@ export class SqliteRepo implements StorageRepository {
     }
     await this.db.run(
       'INSERT INTO meal (id, ts_utc, tz, description, allergens_json, barcode, source_json, fill_later, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [m.id, m.at.utc, m.at.tz, m.description, JSON.stringify(m.allergens), m.barcode, JSON.stringify(m.source), m.fillLater ? 1 : 0, m.note],
+      [
+        m.id,
+        m.at.utc,
+        m.at.tz,
+        m.description,
+        JSON.stringify(m.allergens),
+        m.barcode,
+        JSON.stringify(m.source),
+        m.fillLater ? 1 : 0,
+        m.note,
+      ],
     );
     for (const [i, name] of m.ingredients.entries()) {
-      await this.db.run('INSERT INTO meal_ingredient (meal_id, position, name) VALUES (?, ?, ?)', [
-        m.id,
-        i,
-        name,
-      ]);
+      await this.db.run('INSERT INTO meal_ingredient (meal_id, position, name) VALUES (?, ?, ?)', [m.id, i, name]);
     }
   }
 
@@ -197,7 +203,10 @@ export class SqliteRepo implements StorageRepository {
     const cols = ['id', 'ts_utc', 'tz', ...t.columns];
     await this.db.run(
       `INSERT INTO ${t.table} (${cols.join(', ')}) VALUES (${cols.map(() => '?').join(', ')})
-       ON CONFLICT(id) DO UPDATE SET ${cols.slice(1).map((c) => `${c} = excluded.${c}`).join(', ')}`,
+       ON CONFLICT(id) DO UPDATE SET ${cols
+         .slice(1)
+         .map((c) => `${c} = excluded.${c}`)
+         .join(', ')}`,
       [record.id, record.at.utc, record.at.tz, ...(t.toValues as (r: typeof record) => SqlValue[])(record)],
     );
   }
@@ -218,10 +227,7 @@ export class SqliteRepo implements StorageRepository {
 
   async listMeals(range?: DateRange): Promise<Meal[]> {
     const { sql, params } = rangeClause(range);
-    const rows = await this.db.all<MealRow>(
-      `SELECT * FROM meal ${sql} ORDER BY ts_utc DESC, id ASC`,
-      params,
-    );
+    const rows = await this.db.all<MealRow>(`SELECT * FROM meal ${sql} ORDER BY ts_utc DESC, id ASC`, params);
     // Only the ingredients of the meals in range, in one pass without copying arrays.
     const ing = await this.db.all<{ meal_id: string; name: string }>(
       `SELECT meal_id, name FROM meal_ingredient WHERE meal_id IN (SELECT id FROM meal ${sql}) ORDER BY meal_id, position`,
@@ -276,10 +282,7 @@ export class SqliteRepo implements StorageRepository {
 
   async listSkinEntries(range?: DateRange): Promise<SkinEntry[]> {
     const { sql, params } = rangeClause(range);
-    const rows = await this.db.all<EntryRow>(
-      `SELECT * FROM skin_entry ${sql} ORDER BY ts_utc DESC, id ASC`,
-      params,
-    );
+    const rows = await this.db.all<EntryRow>(`SELECT * FROM skin_entry ${sql} ORDER BY ts_utc DESC, id ASC`, params);
     return rows.map((r) => ({
       id: r.id,
       at: { utc: r.ts_utc, tz: r.tz },
@@ -303,15 +306,21 @@ export class SqliteRepo implements StorageRepository {
       if (!row?.n) throw new Error('unknown meal');
       await this.db.run(
         'UPDATE meal SET ts_utc = ?, tz = ?, description = ?, allergens_json = ?, barcode = ?, source_json = ?, fill_later = ?, note = ? WHERE id = ?',
-        [meal.at.utc, meal.at.tz, meal.description, JSON.stringify(meal.allergens), meal.barcode, JSON.stringify(meal.source), meal.fillLater ? 1 : 0, meal.note, meal.id],
+        [
+          meal.at.utc,
+          meal.at.tz,
+          meal.description,
+          JSON.stringify(meal.allergens),
+          meal.barcode,
+          JSON.stringify(meal.source),
+          meal.fillLater ? 1 : 0,
+          meal.note,
+          meal.id,
+        ],
       );
       await this.db.run('DELETE FROM meal_ingredient WHERE meal_id = ?', [meal.id]);
       for (const [i, name] of meal.ingredients.entries()) {
-        await this.db.run('INSERT INTO meal_ingredient (meal_id, position, name) VALUES (?, ?, ?)', [
-          meal.id,
-          i,
-          name,
-        ]);
+        await this.db.run('INSERT INTO meal_ingredient (meal_id, position, name) VALUES (?, ?, ?)', [meal.id, i, name]);
       }
     });
   }
@@ -344,11 +353,7 @@ export class SqliteRepo implements StorageRepository {
   /** Table and kind of every record collection, in delete order. */
   private deleteSteps(): [RecordKind, string][] {
     // Reactions point at meals, so flat record tables go first, meals last (their ingredients cascade).
-    return [
-      ...EXTRA_KINDS.map((k): [RecordKind, string] => [k, EXTRA_TABLES[k].table]),
-      ['skinEntries', 'skin_entry'],
-      ['meals', 'meal'],
-    ];
+    return [...EXTRA_KINDS.map((k): [RecordKind, string] => [k, EXTRA_TABLES[k].table]), ['skinEntries', 'skin_entry'], ['meals', 'meal']];
   }
 
   private async deleteIn(ids: Partial<Record<RecordKind, string[]>>) {
@@ -377,10 +382,12 @@ export class SqliteRepo implements StorageRepository {
             chunk,
           );
           for (const { id } of found) {
-            await this.db.run(
-              'INSERT OR REPLACE INTO tombstone (id, kind, deleted_utc, deleted_tz) VALUES (?, ?, ?, ?)',
-              [id, kind, at.utc, at.tz],
-            );
+            await this.db.run('INSERT OR REPLACE INTO tombstone (id, kind, deleted_utc, deleted_tz) VALUES (?, ?, ?, ?)', [
+              id,
+              kind,
+              at.utc,
+              at.tz,
+            ]);
           }
         }
       }
@@ -404,10 +411,9 @@ export class SqliteRepo implements StorageRepository {
   }
 
   async setPreferences(p: Preferences) {
-    await this.db.run(
-      'INSERT INTO preference (id, json) VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET json = excluded.json',
-      [JSON.stringify(p)],
-    );
+    await this.db.run('INSERT INTO preference (id, json) VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET json = excluded.json', [
+      JSON.stringify(p),
+    ]);
   }
 
   async listTombstones(): Promise<Tombstone[]> {
@@ -433,8 +439,7 @@ export class SqliteRepo implements StorageRepository {
   }
 
   async existingIds(): Promise<ExistingIds> {
-    const ids = async (table: string) =>
-      new Set((await this.db.all<{ id: string }>(`SELECT id FROM ${table}`)).map((r) => r.id));
+    const ids = async (table: string) => new Set((await this.db.all<{ id: string }>(`SELECT id FROM ${table}`)).map((r) => r.id));
     const result = {
       meals: await ids('meal'),
       skinAreas: await ids('skin_area'),

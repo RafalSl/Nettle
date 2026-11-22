@@ -38,9 +38,14 @@ export function RemindersSection() {
   const [status, setStatus] = useState<ReminderStatus | null>(null);
 
   const load = useCallback(() => {
-    loadReminderSettings(deps).then(setS).catch(() => undefined);
+    loadReminderSettings(deps)
+      .then(setS)
+      .catch(() => undefined);
     reminderStatus(deps).then(setStatus, () => setStatus(null));
-    listRegular(deps).then((r) => setRegular({ n: r.length, withReminders: r.filter((x) => x.times.length > 0).length }), () => undefined);
+    listRegular(deps).then(
+      (r) => setRegular({ n: r.length, withReminders: r.filter((x) => x.times.length > 0).length }),
+      () => undefined,
+    );
   }, [deps]);
   useFocusEffect(load);
 
@@ -69,7 +74,9 @@ export function RemindersSection() {
 
   // NO-3: with notifications blocked in iOS Settings the switches are off and disabled, and a coral banner says why.
   const blocked = status?.permission === 'denied';
-  const row = (label: string, value: boolean, onChange: (v: boolean) => void) => <SwitchRow title={label} value={value && !blocked} onChange={onChange} disabled={blocked} />;
+  const row = (label: string, value: boolean, onChange: (v: boolean) => void) => (
+    <SwitchRow title={label} value={value && !blocked} onChange={onChange} disabled={blocked} />
+  );
   const time = (hour: number, minute: number, onChange: (h: number, m: number) => void) => (
     <View style={styles.timeRow}>
       <Label>{t('reminders.time')}</Label>
@@ -82,17 +89,24 @@ export function RemindersSection() {
       <Heading>{t('reminders.title')}</Heading>
       <Hint>{t('reminders.hint')}</Hint>
       {(denied || blocked) && (
-        <View style={{ padding: 14, borderRadius: 22, gap: 10, backgroundColor: color.alertSoft, borderWidth: 1, borderColor: color.alertLine }}>
+        <View
+          style={{ padding: 14, borderRadius: 22, gap: 10, backgroundColor: color.alertSoft, borderWidth: 1, borderColor: color.alertLine }}
+        >
           <Text style={{ color: color.alert, fontWeight: '600', fontSize: 14.5 }}>{t('regular.denied')}</Text>
           <Button kind="secondary" title={t('regular.openSystem')} onPress={() => void Linking.openSettings()} />
         </View>
       )}
       {status && <Hint>{t(`reminders.status.${status.permission}`, { n: status.scheduled })}</Hint>}
       <Button kind="secondary" title={t('reminders.test.button')} onPress={() => void sendTest()} />
-      <NavRow title={t('regular.title')} subtitle={t('regular.summary', { n: regular.n, m: regular.withReminders })} onPress={() => router.push('/settings/regular')} />
+      <NavRow
+        title={t('regular.title')}
+        subtitle={t('regular.summary', { n: regular.n, m: regular.withReminders })}
+        onPress={() => router.push('/settings/regular')}
+      />
 
       {row(t('reminders.checkIn'), s.checkIn.enabled, (enabled) => change({ ...s, checkIn: { ...s.checkIn, enabled } }))}
-      {s.checkIn.enabled && time(s.checkIn.hour, s.checkIn.minute, (hour, minute) => change({ ...s, checkIn: { ...s.checkIn, hour, minute } }))}
+      {s.checkIn.enabled &&
+        time(s.checkIn.hour, s.checkIn.minute, (hour, minute) => change({ ...s, checkIn: { ...s.checkIn, hour, minute } }))}
 
       {row(t('reminders.nails'), s.nails.enabled, (enabled) => change({ ...s, nails: { ...s.nails, enabled } }))}
       {s.nails.enabled && (

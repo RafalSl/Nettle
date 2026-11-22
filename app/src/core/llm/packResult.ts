@@ -70,9 +70,19 @@ export function parsePackResult(bytes: Uint8Array): PackResult {
       if (!Array.isArray(f.ingredients) || f.ingredients.some((x) => typeof x !== 'string')) return bad();
       if (!Array.isArray(f.allergens) || f.allergens.some((x) => typeof x !== 'string')) return bad();
       if (f.note !== null && f.note !== undefined && typeof f.note !== 'string') return bad();
-      const ingredients = [...new Set((f.ingredients as string[]).map((s) => s.trim()).filter((s) => s && s.length <= MAX_FILL_NAME_CHARS))].slice(0, MAX_FILL_INGREDIENTS);
-      const allergens = [...new Set((f.allergens as string[]).map((s) => s.trim()))].filter((s): s is Allergen => (ALLERGENS as readonly string[]).includes(s));
-      fills.push({ kind: f.kind, id: f.id, ingredients, allergens, note: typeof f.note === 'string' && f.note.trim() ? f.note.trim() : null });
+      const ingredients = [
+        ...new Set((f.ingredients as string[]).map((s) => s.trim()).filter((s) => s && s.length <= MAX_FILL_NAME_CHARS)),
+      ].slice(0, MAX_FILL_INGREDIENTS);
+      const allergens = [...new Set((f.allergens as string[]).map((s) => s.trim()))].filter((s): s is Allergen =>
+        (ALLERGENS as readonly string[]).includes(s),
+      );
+      fills.push({
+        kind: f.kind,
+        id: f.id,
+        ingredients,
+        allergens,
+        note: typeof f.note === 'string' && f.note.trim() ? f.note.trim() : null,
+      });
     }
   }
   if (!analysis && !reportSummary && fills.length === 0) return bad(); // nothing to import

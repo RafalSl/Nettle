@@ -14,7 +14,14 @@ const code = async (p: Promise<unknown>) =>
   );
 const image = { mimeType: 'image/jpeg' as const, data: new Uint8Array([1, 2, 3]) };
 const answer = (over: object = {}) =>
-  JSON.stringify({ ingredients: ['mleko (3,2%)', ' cukier ', 'cukier', ''], allergens: ['milk', 'gold', 'milk'], traces: ['peanuts'], text_read: ' Składniki: mleko, cukier ', note: '  ', ...over });
+  JSON.stringify({
+    ingredients: ['mleko (3,2%)', ' cukier ', 'cukier', ''],
+    allergens: ['milk', 'gold', 'milk'],
+    traces: ['peanuts'],
+    text_read: ' Składniki: mleko, cukier ',
+    note: '  ',
+    ...over,
+  });
 
 describe('label scan (IN-15, LL-13)', () => {
   it('LL-13 keeps the label text as printed, drops unknown allergen ids and duplicates, and keeps traces apart', () => {
@@ -29,7 +36,14 @@ describe('label scan (IN-15, LL-13)', () => {
   });
 
   it('LL-13 an answer of the wrong shape is llm_bad_response, never a partial result', () => {
-    for (const text of ['not json', '[]', answer({ ingredients: 'milk' }), answer({ allergens: [1] }), answer({ text_read: null }), answer({ note: 5 })]) {
+    for (const text of [
+      'not json',
+      '[]',
+      answer({ ingredients: 'milk' }),
+      answer({ allergens: [1] }),
+      answer({ text_read: null }),
+      answer({ note: 5 }),
+    ]) {
       expect(() => parseLabelScan(text)).toThrow(NettleError);
     }
   });

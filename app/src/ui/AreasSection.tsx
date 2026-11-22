@@ -39,8 +39,18 @@ export function AreasSection({ kind }: { kind: AreaKind }) {
   return (
     <>
       <Heading>{t(kind === 'skin' ? 'settings.skinAreas' : 'settings.nailAreas')}</Heading>
-      <Chips items={active.map((a) => ({ id: a.id, label: areaLabel(a) }))} selected={new Set(selected ? [selected] : [])} onToggle={setSelected} />
-      <TextInput style={styles.input} accessibilityLabel={t(`settings.${kind}AreaName`)} placeholder={t(`settings.${kind}AreaName`)} value={name} onChangeText={setName} />
+      <Chips
+        items={active.map((a) => ({ id: a.id, label: areaLabel(a) }))}
+        selected={new Set(selected ? [selected] : [])}
+        onToggle={setSelected}
+      />
+      <TextInput
+        style={styles.input}
+        accessibilityLabel={t(`settings.${kind}AreaName`)}
+        placeholder={t(`settings.${kind}AreaName`)}
+        value={name}
+        onChangeText={setName}
+      />
       <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
         <Button kind="secondary" title={t('common.add')} onPress={() => run(() => addArea(deps, name, kind))} />
         {current && (
@@ -52,23 +62,33 @@ export function AreasSection({ kind }: { kind: AreaKind }) {
             <Button
               kind="secondary"
               title={t('more.archive')}
-              onPress={() => run(async () => {
-                await archiveSkinArea(deps, current.id);
-                setSelected(null);
-              })}
+              onPress={() =>
+                run(async () => {
+                  await archiveSkinArea(deps, current.id);
+                  setSelected(null);
+                })
+              }
             />
           </>
         )}
       </View>
       {current && (
         // SK-5: new photos of this area start as sensitive; a photo can still be changed one by one.
-        <SwitchRow title={t('settings.sensitiveDefault')} value={current.sensitiveDefault} onChange={(v) => run(() => setAreaSensitiveDefault(deps, current.id, v))} />
+        <SwitchRow
+          title={t('settings.sensitiveDefault')}
+          value={current.sensitiveDefault}
+          onChange={(v) => run(() => setAreaSensitiveDefault(deps, current.id, v))}
+        />
       )}
       {archived.length > 0 && (
         <>
           <Label>{t('more.archivedList')}</Label>
           <Hint>{t('more.restore')}</Hint>
-          <Chips items={archived.map((a) => ({ id: a.id, label: areaLabel(a) }))} selected={new Set()} onToggle={(id) => run(() => archiveSkinArea(deps, id, false))} />
+          <Chips
+            items={archived.map((a) => ({ id: a.id, label: areaLabel(a) }))}
+            selected={new Set()}
+            onToggle={(id) => run(() => archiveSkinArea(deps, id, false))}
+          />
         </>
       )}
     </>

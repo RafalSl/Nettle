@@ -39,8 +39,12 @@ describe('reaction after applying a treatment (IN-11)', () => {
     const { deps, cream } = await setup();
     const app = await applyTreatment(deps, { treatmentId: cream.id, areaIds: ['area-chin'], reaction: 'mild' });
     expect(app.reaction).toBe('mild');
-    expect(await code(applyTreatment(deps, { treatmentId: cream.id, areaIds: ['area-chin'], reaction: 'burning' as never }))).toBe('invalid_value');
-    expect(await code(editTreatmentApplication(deps, app.id, { treatmentId: cream.id, areaIds: ['area-chin'], reaction: 'severe' as never }))).toBe('invalid_value');
+    expect(await code(applyTreatment(deps, { treatmentId: cream.id, areaIds: ['area-chin'], reaction: 'burning' as never }))).toBe(
+      'invalid_value',
+    );
+    expect(
+      await code(editTreatmentApplication(deps, app.id, { treatmentId: cream.id, areaIds: ['area-chin'], reaction: 'severe' as never })),
+    ).toBe('invalid_value');
     expect((await deps.repo.listRecords('treatmentApplications')).map((a) => a.reaction)).toEqual(['mild']);
   });
 
@@ -48,7 +52,9 @@ describe('reaction after applying a treatment (IN-11)', () => {
     const db = createNodeSqliteDb();
     await SqliteRepo.open(db);
     await expect(
-      db.run(`INSERT INTO treatment_application (id, ts_utc, tz, treatment_id, area_ids_json, reaction) VALUES ('x', '2026-01-01T00:00:00.000Z', 'UTC', 't', '[]', 'severe')`),
+      db.run(
+        `INSERT INTO treatment_application (id, ts_utc, tz, treatment_id, area_ids_json, reaction) VALUES ('x', '2026-01-01T00:00:00.000Z', 'UTC', 't', '[]', 'severe')`,
+      ),
     ).rejects.toThrow();
   });
 
@@ -94,14 +100,17 @@ describe('reaction after applying a treatment (IN-11)', () => {
 describe('two more daily tags (IN-6)', () => {
   it('IN-6 the hot or long shower and friction in the intimate area are seeded yes/no items, after the other tags', () => {
     const items = PREDEFINED_ITEMS.dailyItems;
-    for (const id of ['tag-hot-shower', 'tag-intimate-friction']) expect(items.find((i) => i.id === id)).toMatchObject({ valueKind: 'yesno', predefined: true, archived: false });
+    for (const id of ['tag-hot-shower', 'tag-intimate-friction'])
+      expect(items.find((i) => i.id === id)).toMatchObject({ valueKind: 'yesno', predefined: true, archived: false });
     expect(items.map((i) => i.id).slice(-2)).toEqual(['tag-hot-shower', 'tag-intimate-friction']);
   });
 
   it('IN-6 a phone that already has the diary gets them on the next start, and a user rename survives', async () => {
     const db = createNodeSqliteDb();
     const first = await SqliteRepo.open(db);
-    expect((await first.listItems('dailyItems')).map((i) => i.id)).toEqual(expect.arrayContaining(['tag-hot-shower', 'tag-intimate-friction']));
+    expect((await first.listItems('dailyItems')).map((i) => i.id)).toEqual(
+      expect.arrayContaining(['tag-hot-shower', 'tag-intimate-friction']),
+    );
     await db.run(`DELETE FROM list_item WHERE id = 'tag-hot-shower'`); // as on a database made before IN-6 changed
     await db.run(`UPDATE list_item SET name_override = 'Friction' WHERE id = 'tag-intimate-friction'`);
     const again = await SqliteRepo.open(db);

@@ -53,7 +53,20 @@ export function LogRowView({
   return (
     <View>
       {onDelete ? (
-        <View style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: REVEAL, borderRadius: 999, backgroundColor: color.alertSoft, alignItems: 'flex-end', justifyContent: 'center', paddingRight: 22 }}>
+        <View
+          style={{
+            position: 'absolute',
+            right: 0,
+            top: 0,
+            bottom: 0,
+            width: REVEAL,
+            borderRadius: 999,
+            backgroundColor: color.alertSoft,
+            alignItems: 'flex-end',
+            justifyContent: 'center',
+            paddingRight: 22,
+          }}
+        >
           <Text style={{ fontSize: 14, fontWeight: '700', color: color.alert }}>{t('day.delete')}</Text>
         </View>
       ) : null}
@@ -70,7 +83,8 @@ export function LogRowView({
               gap: 12,
               minHeight: 56,
               ...(highlighted ? { borderColor: color.accent, backgroundColor: color.accentSoft } : {}),
-            }}>
+            }}
+          >
             <IconCircle name={icon} size={40} />
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 15.5, fontWeight: '600' }} numberOfLines={1}>

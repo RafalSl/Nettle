@@ -12,8 +12,14 @@ module.exports = defineConfig([
         'error',
         {
           patterns: [
-            { group: ['expo', 'expo-*', 'react-native', 'react', '@react-native*', 'node:*'], message: 'src/core must stay platform-free.' },
-            { group: ['@/adapters/*', '@/ui/*', '@/i18n', '@/i18n/*', '@/services'], message: 'src/core must not depend on adapters or UI.' },
+            {
+              group: ['expo', 'expo-*', 'react-native', 'react', '@react-native*', 'node:*'],
+              message: 'src/core must stay platform-free.',
+            },
+            {
+              group: ['@/adapters/*', '@/ui/*', '@/i18n', '@/i18n/*', '@/services'],
+              message: 'src/core must not depend on adapters or UI.',
+            },
           ],
         },
       ],

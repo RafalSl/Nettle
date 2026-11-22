@@ -46,7 +46,9 @@ const all: ReminderSettings = {
 };
 const notifier = (d: ReturnType<typeof makeDeps>) => d.notifier as FakeNotifier;
 /** The ids of the scheduled reminders; the Daily health ones (one per day) count once, as 'checkin'. */
-const ids = (d: ReturnType<typeof makeDeps>) => [...new Set(notifier(d).scheduled.map((s) => (s.id.startsWith('checkin-') ? 'checkin' : s.id)))];
+const ids = (d: ReturnType<typeof makeDeps>) => [
+  ...new Set(notifier(d).scheduled.map((s) => (s.id.startsWith('checkin-') ? 'checkin' : s.id))),
+];
 
 describe('reminders (SK-9)', () => {
   it('SK-9 everything is off by default and nothing is scheduled', async () => {
@@ -61,7 +63,14 @@ describe('reminders (SK-9)', () => {
     await saveReminderSettings(deps, { ...all, nails: { ...all.nails, enabled: false } }, texts);
     const checkins = notifier(deps).scheduled.filter((s) => s.id.startsWith('checkin-'));
     expect(checkins.length).toBeGreaterThanOrEqual(CHECKIN_REMINDER_DAYS - 1); // one per day ahead; today's is skipped when its time has passed
-    expect(checkins.every((s) => s.target === 'checkin' && s.when.type === 'at' && localDateTime(s.when.at.toISOString(), deps.clock.timeZone()).endsWith(' 20:30'))).toBe(true);
+    expect(
+      checkins.every(
+        (s) =>
+          s.target === 'checkin' &&
+          s.when.type === 'at' &&
+          localDateTime(s.when.at.toISOString(), deps.clock.timeZone()).endsWith(' 20:30'),
+      ),
+    ).toBe(true);
     expect(notifier(deps).scheduled.filter((s) => !s.id.startsWith('checkin-'))).toEqual([
       { id: 'backup', title: 'Backup', body: 'Export your diary', when: { type: 'monthly', day: 15, hour: 10, minute: 0 } },
     ]);
@@ -133,7 +142,8 @@ describe('reminders (SK-9)', () => {
     const deps = makeDeps(new MemoryRepo()); // clock 2026-01-15T10:00Z
     await saveReminderSettings(deps, { ...DEFAULT_REMINDERS, checkIn: { enabled: true, hour: 23, minute: 59 } }, texts); // 23:59 is still ahead today in any time zone near UTC
     const day = (s: { when: { type: string; at?: Date } }) => localDay(s.when.at!.toISOString(), deps.clock.timeZone());
-    const todayCount = () => notifier(deps).scheduled.filter((s) => day(s) === localDay(deps.clock.now().toISOString(), deps.clock.timeZone())).length;
+    const todayCount = () =>
+      notifier(deps).scheduled.filter((s) => day(s) === localDay(deps.clock.now().toISOString(), deps.clock.timeZone())).length;
     expect(todayCount()).toBe(1);
     await saveCheckIn(deps, { confirmEmptyDay: true });
     await applyReminders(deps, texts);
@@ -194,7 +204,11 @@ describe('reminder taps (SK-9)', () => {
 
   it('SK-9 the scheduled reminders carry only a target from the fixed list', async () => {
     const deps = makeDeps(new MemoryRepo());
-    await saveReminderSettings(deps, { ...DEFAULT_REMINDERS, checkIn: { enabled: true, hour: 21, minute: 0 }, backup: { enabled: true, day: 1, hour: 10, minute: 0 } }, texts);
+    await saveReminderSettings(
+      deps,
+      { ...DEFAULT_REMINDERS, checkIn: { enabled: true, hour: 21, minute: 0 }, backup: { enabled: true, day: 1, hour: 10, minute: 0 } },
+      texts,
+    );
     expect(ids(deps)).toEqual(['checkin', 'backup']);
     expect(notifier(deps).scheduled.every((s) => ['checkin', 'backup'].includes(s.target ?? s.id))).toBe(true);
   });
@@ -223,7 +237,16 @@ describe('regular items (IN-17, SK-9)', () => {
 
   it('IN-17 one reminder per time, with the name unless hidden, never a dose, and a Taken or Applied action', async () => {
     const { deps, med, tr } = await setup();
-    await saveRegularReminders(deps, med.id, [{ hour: 20, minute: 0 }, { hour: 8, minute: 30 }, { hour: 8, minute: 30 }], texts2);
+    await saveRegularReminders(
+      deps,
+      med.id,
+      [
+        { hour: 20, minute: 0 },
+        { hour: 8, minute: 30 },
+        { hour: 8, minute: 30 },
+      ],
+      texts2,
+    );
     await saveRegularReminders(deps, tr.id, [{ hour: 21, minute: 0 }], texts2);
     const regular = notifier(deps).scheduled.filter((s) => s.target === 'regular');
     expect(regular.map((s) => [s.itemId, s.title, s.actionLabel, s.when])).toEqual([
@@ -233,7 +256,11 @@ describe('regular items (IN-17, SK-9)', () => {
     ]);
     expect(JSON.stringify(regular)).not.toContain('5 mg'); // the dose is never in a notification
     await saveRegularHideName(deps, med.id, true, texts2);
-    expect(notifier(deps).scheduled.filter((s) => s.itemId === med.id).every((s) => s.title === 'Your medication')).toBe(true);
+    expect(
+      notifier(deps)
+        .scheduled.filter((s) => s.itemId === med.id)
+        .every((s) => s.title === 'Your medication'),
+    ).toBe(true);
     expect(JSON.stringify(notifier(deps).scheduled)).not.toContain('Synthetic pill');
   });
 
@@ -256,19 +283,40 @@ describe('regular items (IN-17, SK-9)', () => {
   it('IN-17 logging a regular item makes the entry at the given time', async () => {
     const { deps, med, tr } = await setup();
     const at = new Date('2026-01-14T07:00:00.000Z');
-    expect(await logRegular(deps, med.id, at)).toMatchObject({ name: 'Synthetic pill', dose: '5 mg', category: 'medication', at: { utc: at.toISOString() } });
+    expect(await logRegular(deps, med.id, at)).toMatchObject({
+      name: 'Synthetic pill',
+      dose: '5 mg',
+      category: 'medication',
+      at: { utc: at.toISOString() },
+    });
     expect(await logRegular(deps, tr.id)).toMatchObject({ areaIds: ['area-chin', 'area-neck'] });
     expect(await code(logRegular(deps, 'nope'))).toBe('unknown_item');
   });
 
   it('IN-17, SK-9 the action button logs the item and the plain tap opens the quick sheet of its kind', async () => {
     const { deps, med, tr } = await setup();
-    const tap = (id: string, itemId: string, action: 'log' | null) => ({ id, target: 'regular', itemId, action, deliveredAt: new Date('2026-01-15T08:00:00.000Z') });
-    expect(await resolveReminderTap(deps, tap(`regular-${med.id}-0`, med.id, 'log'), { hasUnsavedForm: true })).toEqual({ route: { pathname: '/today' }, viaToday: false }); // even with a form open
+    const tap = (id: string, itemId: string, action: 'log' | null) => ({
+      id,
+      target: 'regular',
+      itemId,
+      action,
+      deliveredAt: new Date('2026-01-15T08:00:00.000Z'),
+    });
+    expect(await resolveReminderTap(deps, tap(`regular-${med.id}-0`, med.id, 'log'), { hasUnsavedForm: true })).toEqual({
+      route: { pathname: '/today' },
+      viaToday: false,
+    }); // even with a form open
     expect(await deps.repo.listRecords('medicationEntries')).toHaveLength(1);
     expect(await resolveReminderTap(deps, tap(`regular-${med.id}-0`, med.id, 'log'), { hasUnsavedForm: false })).toBeNull(); // handled once
-    expect(await resolveReminderTap(deps, tap(`regular-${tr.id}-0`, tr.id, null), { hasUnsavedForm: false })).toEqual({ route: { pathname: '/today', params: { sheet: 'treatment' } }, viaToday: false });
-    expect(await resolveReminderTap(deps, tap('regular-x-0', 'gone', 'log'), { hasUnsavedForm: false })).toEqual({ route: { pathname: '/today' }, viaToday: false, notLogged: true }); // a stopped item: nothing logged, no crash, and it says so
+    expect(await resolveReminderTap(deps, tap(`regular-${tr.id}-0`, tr.id, null), { hasUnsavedForm: false })).toEqual({
+      route: { pathname: '/today', params: { sheet: 'treatment' } },
+      viaToday: false,
+    });
+    expect(await resolveReminderTap(deps, tap('regular-x-0', 'gone', 'log'), { hasUnsavedForm: false })).toEqual({
+      route: { pathname: '/today' },
+      viaToday: false,
+      notLogged: true,
+    }); // a stopped item: nothing logged, no crash, and it says so
   });
 
   it('IN-17, SK-9 without a delivery time, Taken on the same daily reminder logs once per day, not once ever', async () => {

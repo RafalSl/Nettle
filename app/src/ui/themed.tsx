@@ -1,4 +1,12 @@
-import { StyleSheet, Switch as RNSwitch, Text as RNText, TextInput as RNTextInput, type SwitchProps, type TextInputProps, type TextProps } from 'react-native';
+import {
+  StyleSheet,
+  Switch as RNSwitch,
+  Text as RNText,
+  TextInput as RNTextInput,
+  type SwitchProps,
+  type TextInputProps,
+  type TextProps,
+} from 'react-native';
 import { color, fontFamily } from '@/ui/theme';
 
 /**
@@ -7,7 +15,16 @@ import { color, fontFamily } from '@/ui/theme';
  */
 export function Text({ style, ...rest }: TextProps) {
   const flat = StyleSheet.flatten(style) ?? {};
-  return <RNText {...rest} style={[{ color: color.text, fontVariant: ['tabular-nums'] }, style, { fontFamily: flat.fontFamily ?? fontFamily(flat.fontWeight), fontWeight: undefined }]} />;
+  return (
+    <RNText
+      {...rest}
+      style={[
+        { color: color.text, fontVariant: ['tabular-nums'] },
+        style,
+        { fontFamily: flat.fontFamily ?? fontFamily(flat.fontWeight), fontWeight: undefined },
+      ]}
+    />
+  );
 }
 
 /** The app's TextInput: light text on glass, muted placeholder, accent caret, dark keyboard. */

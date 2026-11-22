@@ -43,7 +43,11 @@ describe('treatments (IN-11)', () => {
     const deps = makeDeps(repo);
     const cream = await addListItem(deps, 'treatments', 'Synthetic cream');
     const nail = await addArea(deps, 'Synthetic thumb', 'nail');
-    const app = await applyTreatment(deps, { treatmentId: cream.id, areaIds: ['area-chin', nail.id, 'area-chin'], at: new Date('2026-01-15T07:00:00.000Z') });
+    const app = await applyTreatment(deps, {
+      treatmentId: cream.id,
+      areaIds: ['area-chin', nail.id, 'area-chin'],
+      at: new Date('2026-01-15T07:00:00.000Z'),
+    });
     expect(app).toMatchObject({ treatmentId: cream.id, areaIds: ['area-chin', nail.id], at: { utc: '2026-01-15T07:00:00.000Z' } });
     expect(await repo.listRecords('treatmentApplications')).toEqual([app]);
   });
@@ -65,7 +69,12 @@ describe('routine changes (IN-12)', () => {
   it('IN-12 logs started and stopped events with a date, a category and a name', async () => {
     const repo = new MemoryRepo();
     const deps = makeDeps(repo);
-    const a = await logChangeEvent(deps, { action: 'started', category: 'cat-product', name: ' Synthetic soap ', at: new Date('2026-01-10T00:00:00.000Z') });
+    const a = await logChangeEvent(deps, {
+      action: 'started',
+      category: 'cat-product',
+      name: ' Synthetic soap ',
+      at: new Date('2026-01-10T00:00:00.000Z'),
+    });
     const b = await logChangeEvent(deps, { action: 'stopped', category: 'cat-diet', name: 'Synthetic diet', note: ' n ' });
     expect(a).toMatchObject({ action: 'started', category: 'cat-product', name: 'Synthetic soap', note: null, dateUnknown: false });
     expect(b.note).toBe('n');
@@ -86,7 +95,9 @@ describe('routine changes (IN-12)', () => {
     const deps = makeDeps(new MemoryRepo());
     const e = await logChangeEvent(deps, { action: 'started', category: 'cat-product', name: 'Synthetic cream', dateUnknown: true });
     expect(e.dateUnknown).toBe(true);
-    expect(await code(logChangeEvent(deps, { action: 'stopped', category: 'cat-product', name: 'x', dateUnknown: true }))).toBe('invalid_value');
+    expect(await code(logChangeEvent(deps, { action: 'stopped', category: 'cat-product', name: 'x', dateUnknown: true }))).toBe(
+      'invalid_value',
+    );
   });
 
   it('IN-12 "stopped" offers what is in use now: the latest event per category and name is a start', async () => {
@@ -119,7 +130,11 @@ describe('immediate reactions (IN-13)', () => {
     const repo = new MemoryRepo();
     const deps = makeDeps(repo);
     const meal = await logMeal(deps, { description: 'Synthetic lunch', ingredients: [], at: new Date('2026-01-15T12:00:00.000Z') });
-    const r = await logReaction(deps, { mealId: meal.id, symptoms: ['hives', 'hives', 'stomach'], at: new Date('2026-01-15T13:10:00.000Z') });
+    const r = await logReaction(deps, {
+      mealId: meal.id,
+      symptoms: ['hives', 'hives', 'stomach'],
+      at: new Date('2026-01-15T13:10:00.000Z'),
+    });
     expect(r).toMatchObject({ mealId: meal.id, symptoms: ['hives', 'stomach'], at: { utc: '2026-01-15T13:10:00.000Z' } });
     expect(await repo.listRecords('reactions')).toEqual([r]);
   });
@@ -151,7 +166,12 @@ describe('alcohol and medications (IN-4, IN-5)', () => {
   it('IN-4 and IN-10 a drink may be non-alcoholic and carry ingredients and allergen tags', async () => {
     const repo = new MemoryRepo();
     const deps = makeDeps(repo);
-    const coffee = await logDrink(deps, { name: 'Synthetic coffee', amountMl: 200, ingredients: [' coffee ', '', 'milk'], allergens: ['milk', 'milk'] });
+    const coffee = await logDrink(deps, {
+      name: 'Synthetic coffee',
+      amountMl: 200,
+      ingredients: [' coffee ', '', 'milk'],
+      allergens: ['milk', 'milk'],
+    });
     expect(coffee).toMatchObject({ alcohol: false, ingredients: ['coffee', 'milk'], allergens: ['milk'] });
     const beer = await logDrink(deps, { name: 'Synthetic beer', amountMl: 500, alcohol: true });
     expect(beer).toMatchObject({ alcohol: true, ingredients: [], allergens: [] });

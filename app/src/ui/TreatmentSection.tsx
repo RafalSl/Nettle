@@ -53,7 +53,8 @@ export function TreatmentSection() {
       onSave={async () => {
         await applyTreatment(deps, { treatmentId: selected!, areaIds: [...areaIds], at: time.atForSave });
         if (regular) await addRegularTreatment(deps, { treatmentId: selected!, areaIds: [...areaIds] }); // IN-17
-      }}>
+      }}
+    >
       <View style={{ flexDirection: 'row', gap: 8 }}>
         <TextInput style={[styles.input, { flex: 1 }]} placeholder={t('more.treatmentNew')} value={newName} onChangeText={setNewName} />
         <Button kind="secondary" title={t('common.add')} accessibilityLabel={t('more.treatmentAdd')} onPress={addTreatment} />
@@ -62,7 +63,11 @@ export function TreatmentSection() {
         <Hint>{t('more.treatmentNone')}</Hint>
       ) : (
         <>
-          <Chips items={treatments.map((i) => ({ id: i.id, label: itemLabel(i) }))} selected={new Set(selected ? [selected] : [])} onToggle={setTreatmentId} />
+          <Chips
+            items={treatments.map((i) => ({ id: i.id, label: itemLabel(i) }))}
+            selected={new Set(selected ? [selected] : [])}
+            onToggle={setTreatmentId}
+          />
           {chosen && itemDescription(chosen) ? <Hint>{itemDescription(chosen)}</Hint> : null}
           <Label>{t('more.treatmentAreas')}</Label>
           <Chips
@@ -74,7 +79,12 @@ export function TreatmentSection() {
               setAreaIds(next);
             }}
           />
-          <SwitchRow title={t('regular.switch')} hint={regular ? t('regular.switchHint') : undefined} value={regular} onChange={setRegular} />
+          <SwitchRow
+            title={t('regular.switch')}
+            hint={regular ? t('regular.switchHint') : undefined}
+            value={regular}
+            onChange={setRegular}
+          />
           <TimeField value={time.value} onChange={time.set} />
         </>
       )}

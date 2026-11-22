@@ -72,7 +72,8 @@ export function NailSection() {
       onSave={async () => {
         const entry = await logNailEntry(deps, { areaId: selected!, stage: stage!, extent: extent!, at: time.atForSave });
         await attach(entry.id, entry.at.utc);
-      }}>
+      }}
+    >
       <View style={{ flexDirection: 'row', gap: 8 }}>
         <TextInput style={[styles.input, { flex: 1 }]} placeholder={t('more.nailAreaName')} value={newName} onChangeText={setNewName} />
         <Button kind="secondary" title={t('common.add')} accessibilityLabel={t('more.nailAddArea')} onPress={addNail} />
@@ -81,12 +82,24 @@ export function NailSection() {
         <Hint>{t('more.nailNone')}</Hint>
       ) : (
         <>
-          <Chips items={areas.map((a) => ({ id: a.id, label: areaLabel(a) }))} selected={new Set(selected ? [selected] : [])} onToggle={setAreaId} />
+          <Chips
+            items={areas.map((a) => ({ id: a.id, label: areaLabel(a) }))}
+            selected={new Set(selected ? [selected] : [])}
+            onToggle={setAreaId}
+          />
           <Button kind="secondary" title={t('skin.noChange')} onPress={noChange} />
           <Label>{t('more.nailStage')}</Label>
-          <Chips items={NAIL_STAGES.map((s) => ({ id: s, label: t(`nail.stages.${s}`) }))} selected={new Set(stage ? [stage] : [])} onToggle={(id) => setStage(id as NailStage)} />
+          <Chips
+            items={NAIL_STAGES.map((s) => ({ id: s, label: t(`nail.stages.${s}`) }))}
+            selected={new Set(stage ? [stage] : [])}
+            onToggle={(id) => setStage(id as NailStage)}
+          />
           <Label>{t('more.nailExtent')}</Label>
-          <Chips items={NAIL_EXTENTS.map((s) => ({ id: s, label: t(`nail.extents.${s}`) }))} selected={new Set(extent ? [extent] : [])} onToggle={(id) => setExtent(id as NailExtent)} />
+          <Chips
+            items={NAIL_EXTENTS.map((s) => ({ id: s, label: t(`nail.extents.${s}`) }))}
+            selected={new Set(extent ? [extent] : [])}
+            onToggle={(id) => setExtent(id as NailExtent)}
+          />
           <PendingPhotos uris={photos} onChange={setPhotos} />
           <TimeField value={time.value} onChange={time.set} />
         </>

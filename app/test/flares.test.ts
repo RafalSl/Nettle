@@ -32,7 +32,14 @@ describe('derived flares (SK-6)', () => {
 
   it('SK-6 overlapping flares of different areas merge into one period listing the areas', () => {
     const flares = deriveFlares(
-      [when('10', 8), when('14', 3), when('12', 9, 'area-neck'), when('16', 4, 'area-neck'), when('20', 8, 'area-arm'), when('21', 1, 'area-arm')],
+      [
+        when('10', 8),
+        when('14', 3),
+        when('12', 9, 'area-neck'),
+        when('16', 4, 'area-neck'),
+        when('20', 8, 'area-arm'),
+        when('21', 1, 'area-arm'),
+      ],
       8,
     );
     expect(flares).toHaveLength(2);
@@ -41,7 +48,10 @@ describe('derived flares (SK-6)', () => {
   });
 
   it('SK-6 an open flare reaches only to its last entry: a later flare of another area is its own period', () => {
-    const flares = deriveFlares([when('01', 9), when('20', 9, 'area-neck'), when('22', 3, 'area-neck'), when('25', 8, 'area-arm'), when('26', 9, 'area-arm')], 8);
+    const flares = deriveFlares(
+      [when('01', 9), when('20', 9, 'area-neck'), when('22', 3, 'area-neck'), when('25', 8, 'area-arm'), when('26', 9, 'area-arm')],
+      8,
+    );
     expect(flares).toEqual([
       { start: at('01'), end: null, areaIds: ['area-chin'], lastEntryAt: at('01') },
       { start: at('20'), end: at('22'), areaIds: ['area-neck'], lastEntryAt: at('20') },

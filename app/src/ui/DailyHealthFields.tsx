@@ -8,7 +8,15 @@ export type DailyValues = Record<string, number | boolean>;
  * SK-7: the Daily health items as inputs, shared by the create form and the edit screen. Scores use the score
  * input (optional, so "not recorded" is possible); yes/no items are chips that record only a yes.
  */
-export function DailyHealthFields({ items, values, onChange }: { items: ListItem[]; values: DailyValues; onChange: (next: DailyValues) => void }) {
+export function DailyHealthFields({
+  items,
+  values,
+  onChange,
+}: {
+  items: ListItem[];
+  values: DailyValues;
+  onChange: (next: DailyValues) => void;
+}) {
   const set = (id: string, v: number | boolean | null) => {
     const next = { ...values };
     if (v === null || v === false) delete next[id];
@@ -37,7 +45,15 @@ export function DailyHealthFields({ items, values, onChange }: { items: ListItem
           onToggle={(id) => set(id, values[id] === true ? false : true)}
         />
       )}
-      {yesNo.some((i) => itemDescription(i)) && <Hint>{yesNo.filter((i) => values[i.id] === true).map((i) => itemDescription(i)).filter(Boolean).join(' ')}</Hint>}
+      {yesNo.some((i) => itemDescription(i)) && (
+        <Hint>
+          {yesNo
+            .filter((i) => values[i.id] === true)
+            .map((i) => itemDescription(i))
+            .filter(Boolean)
+            .join(' ')}
+        </Hint>
+      )}
     </>
   );
 }

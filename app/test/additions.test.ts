@@ -38,7 +38,8 @@ describe('trend ranges (SK-7, SK-8)', () => {
 });
 
 describe('chart downsampling (SK-8)', () => {
-  const pts = (n: number): TrendPoint[] => Array.from({ length: n }, (_, i) => ({ day: `2026-01-${String(i + 1).padStart(2, '0')}`, value: i % 2 === 0 ? 2 : 4, flare: null }));
+  const pts = (n: number): TrendPoint[] =>
+    Array.from({ length: n }, (_, i) => ({ day: `2026-01-${String(i + 1).padStart(2, '0')}`, value: i % 2 === 0 ? 2 : 4, flare: null }));
   it('SK-8 up to the maximum nothing changes; above it groups are averaged and keep a flare start before an end', () => {
     expect(downsample(pts(10), 10)).toEqual(pts(10));
     const many = pts(30).map((p, i) => (i === 7 ? { ...p, flare: 'end' as const } : i === 8 ? { ...p, flare: 'start' as const } : p));
@@ -50,7 +51,10 @@ describe('chart downsampling (SK-8)', () => {
 });
 
 describe('flare threshold scope (SK-8)', () => {
-  const e = (id: string, utc: string, areaId: string, severity: number) => ({ ...syntheticEntry(id, utc, areaId), scores: { severity, itch: 0, pain: 0, dryness: 0, scaling: 0 } });
+  const e = (id: string, utc: string, areaId: string, severity: number) => ({
+    ...syntheticEntry(id, utc, areaId),
+    scores: { severity, itch: 0, pain: 0, dryness: 0, scaling: 0 },
+  });
   const entries = [e('a1', '2026-01-10T10:00:00.000Z', 'area-chin', 6), e('b1', '2026-01-10T10:00:00.000Z', 'area-hands', 6)];
   it('SK-8 one threshold for every area is the default and works as before', () => {
     expect(deriveFlares(entries, 8)).toEqual([]);
@@ -69,7 +73,11 @@ describe('flare threshold scope (SK-8)', () => {
     const deps = makeDeps(new MemoryRepo());
     expect(flareRule(defaultPreferences())).toBe(8);
     await setAreaFlareThreshold(deps, 'area-chin', 5);
-    await logSkinEntry(deps, { areaId: 'area-chin', scores: { severity: 6, itch: 0, pain: 0, dryness: 0, scaling: 0 }, at: new Date('2026-01-14T10:00:00.000Z') });
+    await logSkinEntry(deps, {
+      areaId: 'area-chin',
+      scores: { severity: 6, itch: 0, pain: 0, dryness: 0, scaling: 0 },
+      at: new Date('2026-01-14T10:00:00.000Z'),
+    });
     expect(await flarePeriods(deps)).toEqual([]); // scope "all": the common threshold 8 applies
     expect(await setFlareScope(deps, 'perArea')).toBe('perArea');
     expect((await flarePeriods(deps)).map((f) => f.areaIds)).toEqual([['area-chin']]);
@@ -108,7 +116,8 @@ describe('model groups (LL-2, LL-9)', () => {
     await setGroupModel(deps, 'analysis', null);
     expect(await getGroupModel(deps, 'analysis')).toBe('claude-haiku-5-5');
     await setGroupModel(deps, 'estimates', 'claude-sonnet-5-5');
-    for (const a of ['label_scan', 'meal_photo', 'meal_name', 'allergen_suggest'] as const) expect(await getModel(deps, a)).toBe('claude-sonnet-5-5');
+    for (const a of ['label_scan', 'meal_photo', 'meal_name', 'allergen_suggest'] as const)
+      expect(await getModel(deps, a)).toBe('claude-sonnet-5-5');
     expect(await code(setGroupModel(deps, 'estimates', 'not-offered'))).toBe('invalid_value');
   });
 });

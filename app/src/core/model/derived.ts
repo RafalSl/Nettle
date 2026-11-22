@@ -23,7 +23,11 @@ export interface SinceTreatment {
  * "no treatment logged" in that window. The program computes it from the timestamps, so it is exact and repeatable;
  * nothing is stored, it is recomputed from the applications every time.
  */
-export function sinceLastTreatment(areaId: string, atUtc: string, applications: readonly Pick<TreatmentApplication, 'at' | 'areaIds' | 'treatmentId' | 'id'>[]): SinceTreatment | null {
+export function sinceLastTreatment(
+  areaId: string,
+  atUtc: string,
+  applications: readonly Pick<TreatmentApplication, 'at' | 'areaIds' | 'treatmentId' | 'id'>[],
+): SinceTreatment | null {
   const t = ms(atUtc);
   let best: (typeof applications)[number] | null = null;
   for (const a of applications) {
@@ -89,10 +93,15 @@ export function timeToRelapse(
   const rows: RelapseRow[] = [];
   const skinAreas = [...new Set(skinEntries.map((e) => e.areaId))].sort();
   for (const areaId of skinAreas) {
-    const flares = deriveFlares(skinEntries.filter((e) => e.areaId === areaId), threshold);
+    const flares = deriveFlares(
+      skinEntries.filter((e) => e.areaId === areaId),
+      threshold,
+    );
     const onArea = applications.filter((a) => a.areaIds.includes(areaId));
     for (const treatmentId of [...new Set(onArea.map((a) => a.treatmentId))].sort()) {
-      const mine = onArea.filter((a) => a.treatmentId === treatmentId).sort((a, b) => a.at.utc.localeCompare(b.at.utc) || a.id.localeCompare(b.id));
+      const mine = onArea
+        .filter((a) => a.treatmentId === treatmentId)
+        .sort((a, b) => a.at.utc.localeCompare(b.at.utc) || a.id.localeCompare(b.id));
       const courses: (typeof mine)[] = [];
       for (const a of mine) {
         const cur = courses[courses.length - 1];
@@ -104,7 +113,11 @@ export function timeToRelapse(
         if (ms(asOfUtc) - ms(end.utc) <= COURSE_GAP_DAYS * DAY) continue; // still running, or only just stopped
         const flare = flares.find((f) => f.start.utc > end.utc) ?? null;
         const until = flare ? flare.start.utc : asOfUtc;
-        const others = [...new Set(onArea.filter((a) => a.treatmentId !== treatmentId && a.at.utc > end.utc && a.at.utc <= until).map((a) => a.treatmentId))].sort();
+        const others = [
+          ...new Set(
+            onArea.filter((a) => a.treatmentId !== treatmentId && a.at.utc > end.utc && a.at.utc <= until).map((a) => a.treatmentId),
+          ),
+        ].sort();
         rows.push({
           areaId,
           treatmentId,

@@ -47,11 +47,28 @@ function Calendar({ month, days, onOpen }: { month: string; days: MonthDay[]; on
               <Pressable
                 key={c.day}
                 accessibilityRole="button"
-                accessibilityLabel={t('review.calendarDay', { day: c.day, n: c.entries, health: c.dailyHealth ? t('review.yes') : t('review.no'), flare: c.flare ? t('review.yes') : t('review.no') })}
+                accessibilityLabel={t('review.calendarDay', {
+                  day: c.day,
+                  n: c.entries,
+                  health: c.dailyHealth ? t('review.yes') : t('review.no'),
+                  flare: c.flare ? t('review.yes') : t('review.no'),
+                })}
                 onPress={() => onOpen(c.day)}
-                style={{ flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 14, backgroundColor: c.flare ? color.alertSoft : 'transparent', borderWidth: c.dailyHealth ? 1.5 : 0, borderColor: color.accentLine }}>
+                style={{
+                  flex: 1,
+                  minHeight: 44,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: 14,
+                  backgroundColor: c.flare ? color.alertSoft : 'transparent',
+                  borderWidth: c.dailyHealth ? 1.5 : 0,
+                  borderColor: color.accentLine,
+                }}
+              >
                 <Text style={[styles.rowText, { fontSize: 15 }]}>{Number(c.day.slice(8))}</Text>
-                <Text style={[styles.hint, { fontSize: 11, color: c.flare ? color.alert : color.muted }]}>{`${c.entries > 0 ? '•' : ''}${c.dailyHealth ? '✓' : ''}${c.flare ? '▲' : ''}` || ' '}</Text>
+                <Text style={[styles.hint, { fontSize: 11, color: c.flare ? color.alert : color.muted }]}>
+                  {`${c.entries > 0 ? '•' : ''}${c.dailyHealth ? '✓' : ''}${c.flare ? '▲' : ''}` || ' '}
+                </Text>
               </Pressable>
             ) : (
               <View key={`e${j}`} style={{ flex: 1 }} />
@@ -65,14 +82,33 @@ function Calendar({ month, days, onOpen }: { month: string; days: MonthDay[]; on
 }
 
 /** UX-12: an output card: an icon circle, a title and a status line (the Doctor report, the AI analysis). */
-function OutputCard({ icon, title, status, running = false, onPress }: { icon: IconName; title: string; status?: string; running?: boolean; onPress: () => void }) {
+function OutputCard({
+  icon,
+  title,
+  status,
+  running = false,
+  onPress,
+}: {
+  icon: IconName;
+  title: string;
+  status?: string;
+  running?: boolean;
+  onPress: () => void;
+}) {
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={title} onPress={onPress} style={{ flex: 1 }}>
-      <GlassSurface style={{ borderRadius: 26, padding: 14, gap: 10, minHeight: 112, ...(status ? { borderColor: color.accentLine } : {}) }}>
+      <GlassSurface
+        style={{ borderRadius: 26, padding: 14, gap: 10, minHeight: 112, ...(status ? { borderColor: color.accentLine } : {}) }}
+      >
         <IconCircle name={icon} size={40} />
         <View>
           <Text style={{ fontSize: 16, fontWeight: '700' }}>{title}</Text>
-          {status ? <Text style={{ fontSize: 13, color: color.accent }}>{running ? '● ' : ''}{status}</Text> : null}
+          {status ? (
+            <Text style={{ fontSize: 13, color: color.accent }}>
+              {running ? '● ' : ''}
+              {status}
+            </Text>
+          ) : null}
         </View>
       </GlassSurface>
     </Pressable>
@@ -81,7 +117,10 @@ function OutputCard({ icon, title, status, running = false, onPress }: { icon: I
 
 const areaLine = (a: AreaOverviewRow): string => {
   if (!a.lastDay) return t('review.areaNone');
-  const what = a.area.kind === 'nail' ? `${t(`nail.stages.${a.stage}`)}, ${t(`nail.extents.${a.extent}`)}` : t('review.areaSeverity', { n: a.severity ?? 0 });
+  const what =
+    a.area.kind === 'nail'
+      ? `${t(`nail.stages.${a.stage}`)}, ${t(`nail.extents.${a.extent}`)}`
+      : t('review.areaSeverity', { n: a.severity ?? 0 });
   return `${what} · ${a.lastDay}${a.flaring ? ` · ${t('review.areaFlaring')}` : ''}`;
 };
 
@@ -114,15 +153,26 @@ export default function ReviewScreen() {
   const [areas, setAreas] = useState<{ skin: AreaOverviewRow[]; nails: AreaOverviewRow[] }>({ skin: [], nails: [] });
 
   const load = useCallback(() => {
-    monthOverview(deps, month).then(setDays).catch((e) => Alert.alert(errorMessage(e)));
-    areaOverview(deps).then(setAreas).catch(() => setAreas({ skin: [], nails: [] }));
+    monthOverview(deps, month)
+      .then(setDays)
+      .catch((e) => Alert.alert(errorMessage(e)));
+    areaOverview(deps)
+      .then(setAreas)
+      .catch(() => setAreas({ skin: [], nails: [] }));
   }, [deps, month]);
   useFocusEffect(load);
 
   const open = (day: string) => router.navigate({ pathname: '/review/day', params: { day } });
   const listed = days.filter((d) => d.entries > 0 && (!incompleteOnly || !d.dailyHealth)).sort((a, b) => b.day.localeCompare(a.day));
   const areaRows = (rows: AreaOverviewRow[]) =>
-    rows.map((a) => <NavRow key={a.area.id} title={areaLabel(a.area)} subtitle={areaLine(a)} onPress={() => router.push({ pathname: '/review/area', params: { id: a.area.id } })} />);
+    rows.map((a) => (
+      <NavRow
+        key={a.area.id}
+        title={areaLabel(a.area)}
+        subtitle={areaLine(a)}
+        onPress={() => router.push({ pathname: '/review/area', params: { id: a.area.id } })}
+      />
+    ));
 
   return (
     <Screen>
@@ -138,7 +188,11 @@ export default function ReviewScreen() {
             icon="sparkle"
             title={t('review.analysis')}
             running={run.status === 'running'}
-            status={cardStatus ? `${t(cardStatus.state === 'running' ? 'review.runRunning' : cardStatus.state === 'ready' ? 'review.runReady' : cardStatus.state === 'interrupted' ? 'review.runInterrupted' : 'review.runFailed')}${cardStatus.state === 'running' ? ` ${formatElapsed(cardStatus.seconds)}` : ''}` : undefined}
+            status={
+              cardStatus
+                ? `${t(cardStatus.state === 'running' ? 'review.runRunning' : cardStatus.state === 'ready' ? 'review.runReady' : cardStatus.state === 'interrupted' ? 'review.runInterrupted' : 'review.runFailed')}${cardStatus.state === 'running' ? ` ${formatElapsed(cardStatus.seconds)}` : ''}`
+                : undefined
+            }
             onPress={() => router.push('/review/analysis')}
           />
         </View>
@@ -166,13 +220,28 @@ export default function ReviewScreen() {
       ) : (
         <>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Pressable accessibilityRole="button" accessibilityLabel={t('review.prevMonth')} onPress={() => setMonth(addMonths(month, -1))} hitSlop={12}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('review.prevMonth')}
+              onPress={() => setMonth(addMonths(month, -1))}
+              hitSlop={12}
+            >
               <Text style={styles.heading}>‹</Text>
             </Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel={t('review.jumpMonth')} onPress={() => setPicking((p) => !p)} hitSlop={8}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('review.jumpMonth')}
+              onPress={() => setPicking((p) => !p)}
+              hitSlop={8}
+            >
               <Heading>{month}</Heading>
             </Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel={t('review.nextMonth')} onPress={() => month < currentMonth && setMonth(addMonths(month, 1))} hitSlop={12}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('review.nextMonth')}
+              onPress={() => month < currentMonth && setMonth(addMonths(month, 1))}
+              hitSlop={12}
+            >
               <Text style={[styles.heading, month >= currentMonth && { opacity: 0.3 }]}>›</Text>
             </Pressable>
           </View>
@@ -194,7 +263,12 @@ export default function ReviewScreen() {
           {listed.length === 0 && incompleteOnly && <Hint>{t('review.noIncomplete')}</Hint>}
           {listed.length === 0 && !incompleteOnly && (
             // UX-1: an empty state is a short title, one sentence and at most one primary button.
-            <EmptyState title={t('review.noDays')} body={t('review.empty')} action={days.every((d) => d.entries === 0) ? t('review.goToday') : undefined} onAction={() => router.navigate('/today')} />
+            <EmptyState
+              title={t('review.noDays')}
+              body={t('review.empty')}
+              action={days.every((d) => d.entries === 0) ? t('review.goToday') : undefined}
+              onAction={() => router.navigate('/today')}
+            />
           )}
           {listed.length > 0 && (
             <NavGroup>

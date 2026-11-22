@@ -29,9 +29,7 @@ describe('logMeal', () => {
   });
 
   it('IN-1 rejects an empty description', async () => {
-    expect(await code(logMeal(makeDeps(new MemoryRepo()), { description: '  ', ingredients: [] }))).toBe(
-      'empty_description',
-    );
+    expect(await code(logMeal(makeDeps(new MemoryRepo()), { description: '  ', ingredients: [] }))).toBe('empty_description');
   });
 
   it('NF-4 stores UTC plus local timezone, and the timestamp is editable', async () => {
@@ -54,9 +52,7 @@ describe('logSkinEntry', () => {
 
   it.each([11, -1, 2.5, Number.NaN])('SK-3 rejects score %p', async (bad) => {
     const deps = makeDeps(new MemoryRepo());
-    expect(await code(logSkinEntry(deps, { areaId: 'area-chin', scores: { ...scores, itch: bad } }))).toBe(
-      'invalid_score',
-    );
+    expect(await code(logSkinEntry(deps, { areaId: 'area-chin', scores: { ...scores, itch: bad } }))).toBe('invalid_score');
   });
 
   it('SK-3 rejects unknown and archived areas', async () => {

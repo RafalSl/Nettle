@@ -1,11 +1,10 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { deviceLanguage } from '@/i18n';
+import { deviceLanguage, t } from '@/i18n';
 import type { LanguagePreference } from '@/core/model/language';
 import { getPreferences } from '@/core/usecases/preferences';
 import { useServices } from '@/services';
 import { languageName } from '@/screens/LanguageScreen';
-import { t } from '@/i18n';
 import { NavGroup } from '@/ui/NavGroup';
 import { NavRow } from '@/ui/NavRow';
 import { Screen } from '@/ui/components';
@@ -15,13 +14,33 @@ export default function SettingsScreen() {
   const router = useRouter();
   const { deps } = useServices();
   const [language, setLanguage] = useState<LanguagePreference>('system');
-  useFocusEffect(useCallback(() => void getPreferences(deps).then((p) => setLanguage(p.language), () => undefined), [deps]));
-  const languageValue = language === 'system' ? t('settings.languageValueDevice', { language: languageName(deviceLanguage()) }) : languageName(language);
+  useFocusEffect(
+    useCallback(
+      () =>
+        void getPreferences(deps).then(
+          (p) => setLanguage(p.language),
+          () => undefined,
+        ),
+      [deps],
+    ),
+  );
+  const languageValue =
+    language === 'system' ? t('settings.languageValueDevice', { language: languageName(deviceLanguage()) }) : languageName(language);
   return (
     <Screen>
       <NavGroup>
-        <NavRow icon="list" title={t('nav.logging')} subtitle={t('settings.loggingHint')} onPress={() => router.push('/settings/logging')} />
-        <NavRow icon="bell" title={t('nav.remindersPrivacy')} subtitle={t('settings.remindersPrivacyHint')} onPress={() => router.push('/settings/reminders')} />
+        <NavRow
+          icon="list"
+          title={t('nav.logging')}
+          subtitle={t('settings.loggingHint')}
+          onPress={() => router.push('/settings/logging')}
+        />
+        <NavRow
+          icon="bell"
+          title={t('nav.remindersPrivacy')}
+          subtitle={t('settings.remindersPrivacyHint')}
+          onPress={() => router.push('/settings/reminders')}
+        />
         <NavRow icon="sparkle" title={t('nav.ai')} subtitle={t('settings.aiHint')} onPress={() => router.push('/settings/ai')} />
         <NavRow icon="box" title={t('nav.data')} subtitle={t('settings.dataHint')} onPress={() => router.push('/settings/data')} />
       </NavGroup>

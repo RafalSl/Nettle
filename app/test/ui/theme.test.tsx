@@ -51,7 +51,11 @@ describe('theme (UX-12)', () => {
     const sw = tree.root.findAll((n) => n.props?.accessibilityRole === 'switch' && typeof n.props.onPress === 'function')[0]!;
     act(() => sw.props.onPress());
     expect(onChange).toHaveBeenCalledWith(true);
-    expect(tree.root.findAll((n) => n.props?.accessibilityRole === 'button' && n.props.accessibilityLabel).map((n) => n.props.accessibilityLabel)).toEqual(expect.arrayContaining(['Areas', 'Delete data']));
+    expect(
+      tree.root
+        .findAll((n) => n.props?.accessibilityRole === 'button' && n.props.accessibilityLabel)
+        .map((n) => n.props.accessibilityLabel),
+    ).toEqual(expect.arrayContaining(['Areas', 'Delete data']));
   });
 
   it('UX-12 no colour literals outside theme.ts (tokens only)', () => {
@@ -61,7 +65,8 @@ describe('theme (UX-12)', () => {
       for (const f of fs.readdirSync(dir, { withFileTypes: true })) {
         const p = path.join(dir, f.name);
         if (f.isDirectory()) walk(p);
-        else if (/\.(ts|tsx)$/.test(f.name) && !skip.has(f.name) && /#[0-9a-fA-F]{6}\b|rgba?\(/.test(fs.readFileSync(p, 'utf8'))) found.push(path.relative(process.cwd(), p));
+        else if (/\.(ts|tsx)$/.test(f.name) && !skip.has(f.name) && /#[0-9a-fA-F]{6}\b|rgba?\(/.test(fs.readFileSync(p, 'utf8')))
+          found.push(path.relative(process.cwd(), p));
       }
     };
     walk(path.join(process.cwd(), 'src'));

@@ -30,7 +30,10 @@ export interface IngredientSource {
 export const typedSource = (): IngredientSource => ({ kind: 'typed', edited: false, llm: null, aiTags: false });
 
 /** A saved source from before `aiTags` existed has none. */
-export const normalizeSource = (s: Omit<IngredientSource, 'aiTags'> & { aiTags?: boolean }): IngredientSource => ({ ...s, aiTags: s.aiTags === true });
+export const normalizeSource = (s: Omit<IngredientSource, 'aiTags'> & { aiTags?: boolean }): IngredientSource => ({
+  ...s,
+  aiTags: s.aiTags === true,
+});
 
 /** The label scan, the photo estimate and the name estimate are AI-derived (EX-4 marks them). */
 export const isAiSource = (s: IngredientSource): boolean => LLM_SOURCE_KINDS.includes(s.kind);

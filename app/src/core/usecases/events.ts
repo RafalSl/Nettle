@@ -150,7 +150,9 @@ export interface InUseItem {
  */
 export async function itemsInUse(deps: Deps): Promise<InUseItem[]> {
   const latest = new Map<string, ChangeEvent>();
-  for (const e of [...(await deps.repo.listRecords('changeEvents'))].sort((a, b) => a.at.utc.localeCompare(b.at.utc) || a.id.localeCompare(b.id))) {
+  for (const e of [...(await deps.repo.listRecords('changeEvents'))].sort(
+    (a, b) => a.at.utc.localeCompare(b.at.utc) || a.id.localeCompare(b.id),
+  )) {
     latest.set(`${e.category}|${e.name.trim().toLowerCase()}`, e);
   }
   return [...latest.values()]

@@ -2,7 +2,16 @@ import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, View } from 'react-native';
 import { TextInput } from '@/ui/themed';
-import { apiKeyTail, deleteApiKey, getGroupModel, modelChoices, saveApiKey, setGroupModel, testApiKey, type ModelGroup } from '@/core/usecases/llm';
+import {
+  apiKeyTail,
+  deleteApiKey,
+  getGroupModel,
+  modelChoices,
+  saveApiKey,
+  setGroupModel,
+  testApiKey,
+  type ModelGroup,
+} from '@/core/usecases/llm';
 import { errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
 import { Button, Chips, Heading, Hint, Label, styles } from '@/ui/components';

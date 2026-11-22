@@ -8,7 +8,16 @@ const labels = (s: { label: string }[]) => s.map((x) => x.label);
 
 describe('rankSuggestions (IN-14)', () => {
   it('IN-14 puts favorites first, then the most frequent in the window, then the most recent', () => {
-    const history = [h('Oats', 1), h('Oats', 2), h('Oats', 3), h('Soup', 1), h('Soup', 5), h('Eggs', 0.5), h('Old stew', 50), h('Older rice', 90)];
+    const history = [
+      h('Oats', 1),
+      h('Oats', 2),
+      h('Oats', 3),
+      h('Soup', 1),
+      h('Soup', 5),
+      h('Eggs', 0.5),
+      h('Old stew', 50),
+      h('Older rice', 90),
+    ];
     const favorites = [{ key: 'rice', label: 'Rice', payload: 'Rice' }];
     expect(labels(rankSuggestions(history, favorites, now, { rows: 5 }))).toEqual(['Rice', 'Oats', 'Soup', 'Eggs', 'Old stew']);
   });
@@ -62,7 +71,18 @@ describe('rankSuggestions (IN-14)', () => {
     expect(meals).toHaveLength(1);
     expect(meals[0]).toMatchObject({ count: 2 });
     expect(meals[0]!.payload.id).toBe('m2'); // the latest use fills the form
-    const beer = (id: string, ml: number) => ({ id, at: { utc: day(1), tz: 'Europe/Warsaw' }, name: 'Synthetic beer', amountMl: ml, alcohol: true, ingredients: [], allergens: [], barcode: null, source: { kind: 'typed' as const, edited: false, llm: null, aiTags: false }, note: null });
+    const beer = (id: string, ml: number) => ({
+      id,
+      at: { utc: day(1), tz: 'Europe/Warsaw' },
+      name: 'Synthetic beer',
+      amountMl: ml,
+      alcohol: true,
+      ingredients: [],
+      allergens: [],
+      barcode: null,
+      source: { kind: 'typed' as const, edited: false, llm: null, aiTags: false },
+      note: null,
+    });
     expect(rankSuggestions(drinkHistory([beer('a', 500), beer('b', 330), beer('c', 500)]), [], now).map((s) => s.count)).toEqual([2, 1]);
   });
 });

@@ -22,7 +22,10 @@ const API_VERSION = '2026-10-21';
 const MAX_RETRIES = 2;
 const TIMEOUT_MS = 10 * 60 * 1000;
 
-type FetchLike = (url: string, init: { method: string; headers: Record<string, string>; body: string; signal?: AbortSignal }) => Promise<{
+type FetchLike = (
+  url: string,
+  init: { method: string; headers: Record<string, string>; body: string; signal?: AbortSignal },
+) => Promise<{
   status: number;
   text(): Promise<string>;
 }>;

@@ -21,8 +21,18 @@ export function PhotoCompare({ photos }: { photos: readonly { photo: Photo; capt
         {ordered.map(({ photo, caption }) => {
           const hidden = photo.sensitive && !shown.has(photo.id);
           return (
-            <Pressable key={photo.id} style={{ flex: 1, gap: 4 }} accessibilityRole="button" accessibilityLabel={hidden ? t('photos.tapToShow') : `${localDateTime(photo.at.utc, photo.at.tz)} ${caption}`.trim()} onPress={() => setShown((s) => new Set(s).add(photo.id))}>
-              <Image source={{ uri: deps.photos.uri(photo.file) }} blurRadius={hidden ? 30 : 0} style={{ width: '100%', aspectRatio: 3 / 4, borderRadius: 8 }} />
+            <Pressable
+              key={photo.id}
+              style={{ flex: 1, gap: 4 }}
+              accessibilityRole="button"
+              accessibilityLabel={hidden ? t('photos.tapToShow') : `${localDateTime(photo.at.utc, photo.at.tz)} ${caption}`.trim()}
+              onPress={() => setShown((s) => new Set(s).add(photo.id))}
+            >
+              <Image
+                source={{ uri: deps.photos.uri(photo.file) }}
+                blurRadius={hidden ? 30 : 0}
+                style={{ width: '100%', aspectRatio: 3 / 4, borderRadius: 8 }}
+              />
               <Text style={styles.label}>{localDateTime(photo.at.utc, photo.at.tz)}</Text>
               {caption ? <Hint>{caption}</Hint> : null}
             </Pressable>

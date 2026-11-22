@@ -70,7 +70,9 @@ export const expoNotifier: Notifier = {
         await Notifications.clearLastNotificationResponseAsync();
       }
     };
-    void Notifications.getLastNotificationResponseAsync().then(handle).catch(() => undefined); // the tap that launched the app
+    void Notifications.getLastNotificationResponseAsync()
+      .then(handle)
+      .catch(() => undefined); // the tap that launched the app
     const sub = Notifications.addNotificationResponseReceivedListener((r) => void handle(r));
     return () => sub.remove();
   },
@@ -84,7 +86,9 @@ export const expoNotifier: Notifier = {
       let categoryIdentifier: string | undefined;
       if (s.actionLabel) {
         categoryIdentifier = `log-${s.actionLabel.replace(/\W/g, '_')}`;
-        await Notifications.setNotificationCategoryAsync(categoryIdentifier, [{ identifier: LOG_ACTION, buttonTitle: s.actionLabel, options: { opensAppToForeground: true } }]);
+        await Notifications.setNotificationCategoryAsync(categoryIdentifier, [
+          { identifier: LOG_ACTION, buttonTitle: s.actionLabel, options: { opensAppToForeground: true } },
+        ]);
       }
       await Notifications.scheduleNotificationAsync({
         identifier: s.id,

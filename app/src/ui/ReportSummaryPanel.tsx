@@ -44,7 +44,9 @@ export function ReportSummaryPanel({
     (async () => {
       const range = await summaryDays(deps, await days());
       const all = await listSummaries(deps);
-      setImported(range ? all.filter((s) => s.manual && s.dayFrom === range.dayFrom && s.dayTo === range.dayTo && s.language === language) : []);
+      setImported(
+        range ? all.filter((s) => s.manual && s.dayFrom === range.dayFrom && s.dayTo === range.dayTo && s.language === language) : [],
+      );
     })().catch(() => setImported([]));
   }, [deps, days, language]);
 
@@ -70,7 +72,12 @@ export function ReportSummaryPanel({
       const lines = [
         t('analysis.confirmIntro'),
         '',
-        t('analysis.range', { from: prepared.dayFrom, to: prepared.dayTo, days: prepared.counts.days ?? 0, complete: prepared.counts.completeDays ?? 0 }),
+        t('analysis.range', {
+          from: prepared.dayFrom,
+          to: prepared.dayTo,
+          days: prepared.counts.days ?? 0,
+          complete: prepared.counts.completeDays ?? 0,
+        }),
         ...(prepared.counts.lookbackDays ? [t('analysis.lookback', { n: prepared.counts.lookbackDays })] : []),
         t('doctor.summaryNoPhotos'),
         t('analysis.model', { model: prepared.model }),

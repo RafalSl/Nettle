@@ -41,7 +41,8 @@ describe('report summary (LL-14, EX-3, EX-4)', () => {
 
   it('LL-14 only a non-empty summary string is an answer', () => {
     expect(parseSummary(answer)).toBe('The skin flared twice in January.');
-    for (const bad of ['nope', '{}', '{"summary":""}', '{"summary":" "}', '{"summary":3}', '[]']) expect(() => parseSummary(bad)).toThrow(NettleError);
+    for (const bad of ['nope', '{}', '{"summary":""}', '{"summary":" "}', '{"summary":3}', '[]'])
+      expect(() => parseSummary(bad)).toThrow(NettleError);
   });
 
   it('LL-14, LL-5 preparing sends nothing, uses the report_summary model, and never includes photos', async () => {
@@ -62,7 +63,13 @@ describe('report summary (LL-14, EX-3, EX-4)', () => {
     expect(await listSummaries(deps)).toEqual([]);
     expect(await code(saveSummary(deps, draft, '  '))).toBe('summary_empty');
     const kept = await saveSummary(deps, draft, ' The skin flared twice; I added the nails. ');
-    expect(kept).toMatchObject({ generated: 'The skin flared twice in January.', text: 'The skin flared twice; I added the nails.', language: 'en', dayFrom: '2026-01-10', dayTo: '2026-01-14' });
+    expect(kept).toMatchObject({
+      generated: 'The skin flared twice in January.',
+      text: 'The skin flared twice; I added the nails.',
+      language: 'en',
+      dayFrom: '2026-01-10',
+      dayTo: '2026-01-14',
+    });
     expect(await listSummaries(deps)).toEqual([kept]);
   });
 
@@ -88,7 +95,13 @@ describe('report summary (LL-14, EX-3, EX-4)', () => {
     const draft = await runSummary(deps, await prepareSummary(deps, sel));
     const kept = await saveSummary(deps, draft, 'Edited text.\n\nSecond paragraph.');
     const report = (language: 'en' | 'pl') => ({ language, text: (k: string) => `[${k}]`, areaName: () => '', itemName: () => '' });
-    const options = (over: object) => ({ days: { from: '2026-01-10', to: '2026-01-14' }, parts: { records: true, settings: false }, report: report('en'), summaryId: kept.id, ...over });
+    const options = (over: object) => ({
+      days: { from: '2026-01-10', to: '2026-01-14' },
+      parts: { records: true, settings: false },
+      report: report('en'),
+      summaryId: kept.id,
+      ...over,
+    });
     const zip = unzipSync(await exportBundle(deps, options({})));
     expect(Object.keys(zip)).toContain('report.pdf');
     const html = strFromU8(zip['report.pdf']!);
@@ -106,8 +119,49 @@ describe('report summary (LL-14, EX-3, EX-4)', () => {
   });
 
   it('EX-4 the summary text is escaped and an unedited one carries no "edited" note', () => {
-    const base = { language: 'en' as const, text: (k: string) => `[${k}]`, areaName: () => '', itemName: () => '', records: Object.fromEntries(['meals', 'skinEntries', 'nailEntries', 'checkIns', 'stoolEntries', 'treatmentApplications', 'changeEvents', 'medicalEvents', 'reactions', 'drinks', 'medicationEntries', 'photos', 'analyses', 'reportSummaries'].map((k) => [k, []])) as never, skinAreas: [], dailyItems: [], changeCategories: [], treatments: [], photos: new Map(), range: { from: null, to: null }, exportedAt: { utc: '2026-01-20T10:00:00.000Z', tz: 'UTC' } };
-    const s = { id: 's', at: base.exportedAt, dayFrom: '2026-01-01', dayTo: '2026-01-02', language: 'en' as const, model: 'm', promptVersion: 'p', counts: {}, generated: '<b>x</b>', text: '<b>x</b>' };
+    const base = {
+      language: 'en' as const,
+      text: (k: string) => `[${k}]`,
+      areaName: () => '',
+      itemName: () => '',
+      records: Object.fromEntries(
+        [
+          'meals',
+          'skinEntries',
+          'nailEntries',
+          'checkIns',
+          'stoolEntries',
+          'treatmentApplications',
+          'changeEvents',
+          'medicalEvents',
+          'reactions',
+          'drinks',
+          'medicationEntries',
+          'photos',
+          'analyses',
+          'reportSummaries',
+        ].map((k) => [k, []]),
+      ) as never,
+      skinAreas: [],
+      dailyItems: [],
+      changeCategories: [],
+      treatments: [],
+      photos: new Map(),
+      range: { from: null, to: null },
+      exportedAt: { utc: '2026-01-20T10:00:00.000Z', tz: 'UTC' },
+    };
+    const s = {
+      id: 's',
+      at: base.exportedAt,
+      dayFrom: '2026-01-01',
+      dayTo: '2026-01-02',
+      language: 'en' as const,
+      model: 'm',
+      promptVersion: 'p',
+      counts: {},
+      generated: '<b>x</b>',
+      text: '<b>x</b>',
+    };
     const html = buildReportHtml({ ...base, summary: s });
     expect(html).toContain('&lt;b&gt;x&lt;/b&gt;');
     expect(html).not.toContain('<b>x</b>');

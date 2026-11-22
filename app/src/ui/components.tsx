@@ -10,33 +10,48 @@ import { color } from '@/ui/theme';
 
 /** `scrollRef` lets a screen scroll itself (the area timeline's date jump). */
 /** `floating` is the one primary action of the screen, drawn above the bottom edge (UX-3). */
-export function Screen({ children, scrollRef, floating }: { children: ReactNode; scrollRef?: Ref<ScrollViewInstance>; floating?: ReactNode }) {
+export function Screen({
+  children,
+  scrollRef,
+  floating,
+}: {
+  children: ReactNode;
+  scrollRef?: Ref<ScrollViewInstance>;
+  floating?: ReactNode;
+}) {
   const tabInset = useBottomInset(); // room under the floating tab bar on the tab screens
   const inset = floating ? Math.max(tabInset, 150) : tabInset; // or under the floating action
   return (
-  <View style={{ flex: 1, backgroundColor: color.ground }}>
-    <Aurora />
-    <ScrollView ref={scrollRef} style={{ flex: 1 }} contentContainerStyle={[styles.screen, { paddingBottom: inset }]} contentInsetAdjustmentBehavior="automatic" automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled">
-      {children}
-    </ScrollView>
-    {floating}
-  </View>
+    <View style={{ flex: 1, backgroundColor: color.ground }}>
+      <Aurora />
+      <ScrollView
+        ref={scrollRef}
+        style={{ flex: 1 }}
+        contentContainerStyle={[styles.screen, { paddingBottom: inset }]}
+        contentInsetAdjustmentBehavior="automatic"
+        automaticallyAdjustKeyboardInsets
+        keyboardShouldPersistTaps="handled"
+      >
+        {children}
+      </ScrollView>
+      {floating}
+    </View>
   );
 }
 
-export const Heading = ({ children }: { children: ReactNode }) => (
-  <Text style={styles.heading}>{children}</Text>
-);
+export const Heading = ({ children }: { children: ReactNode }) => <Text style={styles.heading}>{children}</Text>;
 
-export const Label = ({ children }: { children: ReactNode }) => (
-  <Text style={styles.label}>{children}</Text>
-);
+export const Label = ({ children }: { children: ReactNode }) => <Text style={styles.label}>{children}</Text>;
 
-export const Hint = ({ children }: { children: ReactNode }) => (
-  <Text style={styles.hint}>{children}</Text>
-);
+export const Hint = ({ children }: { children: ReactNode }) => <Text style={styles.hint}>{children}</Text>;
 
-const BUTTON_TEXT = { primary: color.onAccent, secondary: color.text, outline: color.accent, danger: color.alert, dangerSolid: color.onAlert } as const;
+const BUTTON_TEXT = {
+  primary: color.onAccent,
+  secondary: color.text,
+  outline: color.accent,
+  danger: color.alert,
+  dangerSolid: color.onAlert,
+} as const;
 
 export function Button({
   title,
@@ -57,7 +72,8 @@ export function Button({
       accessibilityLabel={accessibilityLabel ?? title}
       accessibilityState={{ disabled }}
       onPress={disabled ? undefined : onPress}
-      style={({ pressed }) => [styles.button, disabled ? styles.disabled : styles[kind], pressed && !disabled && { opacity: 0.7 }]}>
+      style={({ pressed }) => [styles.button, disabled ? styles.disabled : styles[kind], pressed && !disabled && { opacity: 0.7 }]}
+    >
       <Text style={[styles.buttonText, { color: disabled ? color.disabledText : BUTTON_TEXT[kind] }]}>{title}</Text>
     </Pressable>
   );
@@ -94,7 +110,8 @@ export function ScoreInput({
             accessibilityLabel={`${t('common.clear')} ${label}`}
             disabled={value === null}
             onPress={() => onChange(null)}
-            style={[styles.clearBtn, value === null && { opacity: 0.3 }]}>
+            style={[styles.clearBtn, value === null && { opacity: 0.3 }]}
+          >
             <Text style={styles.clearText}>{t('common.clear')}</Text>
           </Pressable>
         ) : null}
@@ -105,7 +122,8 @@ export function ScoreInput({
           accessibilityRole="button"
           accessibilityLabel={`${t('common.decrease')} ${label}`}
           onPress={() => set(value === null ? 0 : value - 1)}
-          style={styles.stepBtn}>
+          style={styles.stepBtn}
+        >
           <Text style={styles.stepText}>−</Text>
         </Pressable>
         <Slider
@@ -124,7 +142,8 @@ export function ScoreInput({
           accessibilityRole="button"
           accessibilityLabel={`${t('common.increase')} ${label}`}
           onPress={() => set(value === null ? 0 : value + 1)}
-          style={styles.stepBtn}>
+          style={styles.stepBtn}
+        >
           <Text style={styles.stepText}>+</Text>
         </Pressable>
       </View>
@@ -133,9 +152,26 @@ export function ScoreInput({
 }
 
 /** UX-10: a two-or-more way segmented control; exactly one segment is selected. */
-export function Segmented({ items, value, onChange }: { items: { id: string; label: string }[]; value: string; onChange: (id: string) => void }) {
+export function Segmented({
+  items,
+  value,
+  onChange,
+}: {
+  items: { id: string; label: string }[];
+  value: string;
+  onChange: (id: string) => void;
+}) {
   return (
-    <View style={{ flexDirection: 'row', padding: 3, borderRadius: 999, backgroundColor: color.glassFill, borderWidth: 1, borderColor: color.glassLine }}>
+    <View
+      style={{
+        flexDirection: 'row',
+        padding: 3,
+        borderRadius: 999,
+        backgroundColor: color.glassFill,
+        borderWidth: 1,
+        borderColor: color.glassLine,
+      }}
+    >
       {items.map((i) => (
         <Pressable
           key={i.id}
@@ -143,7 +179,15 @@ export function Segmented({ items, value, onChange }: { items: { id: string; lab
           accessibilityLabel={i.label}
           accessibilityState={{ selected: i.id === value }}
           onPress={() => onChange(i.id)}
-          style={{ flex: 1, minHeight: 40, borderRadius: 999, alignItems: 'center', justifyContent: 'center', backgroundColor: i.id === value ? color.accentSoft : 'transparent' }}>
+          style={{
+            flex: 1,
+            minHeight: 40,
+            borderRadius: 999,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: i.id === value ? color.accentSoft : 'transparent',
+          }}
+        >
           <Text style={{ fontSize: 15, fontWeight: '600', color: i.id === value ? color.accent : color.soft }}>{i.label}</Text>
         </Pressable>
       ))}
@@ -171,8 +215,12 @@ export function Chips({
           accessibilityState={{ selected: selected.has(item.id) }}
           onPress={() => onToggle(item.id)}
           hitSlop={3}
-          style={[styles.chip, selected.has(item.id) && styles.chipOn]}>
-          <Text style={{ fontSize: 15, fontWeight: '600', color: selected.has(item.id) ? color.onAccent : color.soft }}>{selected.has(item.id) ? '✓ ' : ''}{item.label}</Text>
+          style={[styles.chip, selected.has(item.id) && styles.chipOn]}
+        >
+          <Text style={{ fontSize: 15, fontWeight: '600', color: selected.has(item.id) ? color.onAccent : color.soft }}>
+            {selected.has(item.id) ? '✓ ' : ''}
+            {item.label}
+          </Text>
         </Pressable>
       ))}
     </View>
@@ -184,11 +232,7 @@ export function TimeField({ value, onChange }: { value: Date; onChange: (d: Date
   return (
     <View style={styles.timeRow}>
       <Label>{t('common.time')}</Label>
-      <DateTimePicker
-        mode="datetime"
-        value={value}
-        onValueChange={(_e, d) => onChange(d)}
-      />
+      <DateTimePicker mode="datetime" value={value} onValueChange={(_e, d) => onChange(d)} />
     </View>
   );
 }

@@ -21,8 +21,16 @@ export function FavoritesSection() {
 
   const groups: { kind: Kind; title: string; rows: { key: string; label: string }[] }[] = [
     { kind: 'meals', title: t('settings.favMeals'), rows: prefs.favorites.meals.map((m) => ({ key: m.key, label: m.description })) },
-    { kind: 'drinks', title: t('settings.favDrinks'), rows: prefs.favorites.drinks.map((d) => ({ key: d.key, label: `${d.name} ${d.amountMl} ml` })) },
-    { kind: 'medications', title: t('settings.favMedications'), rows: prefs.favorites.medications.map((m) => ({ key: m.key, label: m.dose ? `${m.name} ${m.dose}` : m.name })) },
+    {
+      kind: 'drinks',
+      title: t('settings.favDrinks'),
+      rows: prefs.favorites.drinks.map((d) => ({ key: d.key, label: `${d.name} ${d.amountMl} ml` })),
+    },
+    {
+      kind: 'medications',
+      title: t('settings.favMedications'),
+      rows: prefs.favorites.medications.map((m) => ({ key: m.key, label: m.dose ? `${m.name} ${m.dose}` : m.name })),
+    },
   ];
   const none = groups.every((g) => g.rows.length === 0);
   return (
@@ -40,7 +48,8 @@ export function FavoritesSection() {
                 accessibilityRole="button"
                 accessibilityLabel={t('settings.favRemove', { name: r.label })}
                 onPress={() => removeFavorite(deps, g.kind, r.key).then(reload, (e) => Alert.alert(errorMessage(e)))}
-                style={{ paddingVertical: 8 }}>
+                style={{ paddingVertical: 8 }}
+              >
                 <Text style={styles.rowText}>{`★ ${r.label}`}</Text>
               </Pressable>
             ))}

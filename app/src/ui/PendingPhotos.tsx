@@ -24,7 +24,12 @@ export function PendingPhotos({ uris, onChange }: { uris: string[]; onChange: (n
       ) : (
         <ScrollView horizontal contentContainerStyle={{ gap: 8 }}>
           {uris.map((uri, i) => (
-            <Pressable key={`${uri}-${i}`} accessibilityRole="button" accessibilityLabel={`${t('photos.drop')} ${i + 1}`} onPress={() => onChange(uris.filter((_, j) => j !== i))}>
+            <Pressable
+              key={`${uri}-${i}`}
+              accessibilityRole="button"
+              accessibilityLabel={`${t('photos.drop')} ${i + 1}`}
+              onPress={() => onChange(uris.filter((_, j) => j !== i))}
+            >
               <Image source={{ uri }} style={{ width: 88, height: 88 }} />
             </Pressable>
           ))}

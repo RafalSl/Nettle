@@ -58,7 +58,13 @@ export async function addPhoto(deps: Deps, input: AddPhotoInput): Promise<Photo>
  * SK-4: attach photos picked in a Skin or Nails form to the entry just saved, dated like the entry. A photo that
  * cannot be saved does not undo the entry or the other photos: the number that failed is returned.
  */
-export async function attachPhotos(deps: Deps, entryKind: PhotoEntryKind, entryId: string, uris: readonly string[], at?: Date): Promise<{ saved: number; failed: number }> {
+export async function attachPhotos(
+  deps: Deps,
+  entryKind: PhotoEntryKind,
+  entryId: string,
+  uris: readonly string[],
+  at?: Date,
+): Promise<{ saved: number; failed: number }> {
   let saved = 0;
   let failed = 0;
   for (const sourceUri of uris) {
@@ -92,7 +98,5 @@ export async function removePhoto(deps: Deps, id: string): Promise<void> {
 
 /** Photos of one entry, oldest first. */
 export async function listPhotos(deps: Deps, entryKind: PhotoEntryKind, entryId: string): Promise<Photo[]> {
-  return (await deps.repo.listRecords('photos'))
-    .filter((p) => p.entryKind === entryKind && p.entryId === entryId)
-    .reverse();
+  return (await deps.repo.listRecords('photos')).filter((p) => p.entryKind === entryKind && p.entryId === entryId).reverse();
 }

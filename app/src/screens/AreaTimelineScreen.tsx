@@ -4,7 +4,18 @@ import { useCallback, useRef, useState } from 'react';
 import { Alert, Pressable, type ScrollViewInstance, View } from 'react-native';
 import { Text } from '@/ui/themed';
 import { sinceCaption } from '@/core/model/derived';
-import { areaTimeline, DEFAULT_TREND_RANGE, limitTrend, resolveJumpDay, trendPoints, type JumpTarget, type TimelineDay, type TimelineEntry, type TrendKey, type TrendRange } from '@/core/usecases/timeline';
+import {
+  areaTimeline,
+  DEFAULT_TREND_RANGE,
+  limitTrend,
+  resolveJumpDay,
+  trendPoints,
+  type JumpTarget,
+  type TimelineDay,
+  type TimelineEntry,
+  type TrendKey,
+  type TrendRange,
+} from '@/core/usecases/timeline';
 import { SCORE_KEYS, type Photo, type SkinArea } from '@/core/model/types';
 import { localDateTime, localDay } from '@/core/model/time';
 import { areaLabel, errorMessage, itemLabel, t } from '@/i18n';
@@ -60,7 +71,10 @@ export default function AreaTimelineScreen() {
     const y = target ? dayY.current[target.day] : undefined;
     if (y !== undefined) scrollRef.current?.scrollTo({ y: Math.max(0, y - 8), animated: true });
   }
-  const jumpNotice = jump && jump.target.how !== 'exact' ? t(jump.target.how === 'earlier' ? 'review.jumpEarlier' : 'review.jumpOldest', { picked: jump.picked, shown: jump.target.day }) : null;
+  const jumpNotice =
+    jump && jump.target.how !== 'exact'
+      ? t(jump.target.how === 'earlier' ? 'review.jumpEarlier' : 'review.jumpOldest', { picked: jump.picked, shown: jump.target.day })
+      : null;
 
   const isNail = days?.some((d) => d.entries.some((e) => e.kind === 'nail')) ?? false;
   const hasSize = days?.some((d) => d.entries.some((e) => e.kind === 'skin' && e.entry.sizeMm !== null)) ?? false; // SK-3: the size is charted only where one is logged
@@ -72,7 +86,9 @@ export default function AreaTimelineScreen() {
     for (const d of days ?? []) {
       for (const e of d.entries) {
         if (e.photos.some((p) => p.id === photo.id)) {
-          return e.kind === 'skin' ? [...SCORE_KEYS.map((k) => `${t(`skin.scores.${k}`)} ${e.entry.scores[k]}`), ...skinExtras(e.entry)].join(', ') : `${t(`nail.stages.${e.entry.stage}`)}, ${t(`nail.extents.${e.entry.extent}`)}`;
+          return e.kind === 'skin'
+            ? [...SCORE_KEYS.map((k) => `${t(`skin.scores.${k}`)} ${e.entry.scores[k]}`), ...skinExtras(e.entry)].join(', ')
+            : `${t(`nail.stages.${e.entry.stage}`)}, ${t(`nail.extents.${e.entry.extent}`)}`;
         }
       }
     }
@@ -81,7 +97,9 @@ export default function AreaTimelineScreen() {
   /** The sheet's title, the same words as the day's log. */
   const entryTitle = (e: TimelineEntry) =>
     describeRow(
-      e.kind === 'skin' ? { kind: 'skinEntries', id: e.entry.id, at: e.entry.at, record: e.entry } : { kind: 'nailEntries', id: e.entry.id, at: e.entry.at, record: e.entry },
+      e.kind === 'skin'
+        ? { kind: 'skinEntries', id: e.entry.id, at: e.entry.at, record: e.entry }
+        : { kind: 'nailEntries', id: e.entry.id, at: e.entry.at, record: e.entry },
       { areas, treatments: [], categories: [] },
     ).title;
   const pick = (photo: Photo) =>
@@ -92,11 +110,7 @@ export default function AreaTimelineScreen() {
       <Heading>{name}</Heading>
       {days !== null && days.length > 0 && (
         <>
-          <Button
-            kind="secondary"
-            title={t('review.goToDate')}
-            onPress={() => (setPickerMax(deps.clock.now()), setPicking((p) => !p))}
-          />
+          <Button kind="secondary" title={t('review.goToDate')} onPress={() => (setPickerMax(deps.clock.now()), setPicking((p) => !p))} />
           {picking && (
             <DateTimePicker
               mode="date"
@@ -113,13 +127,29 @@ export default function AreaTimelineScreen() {
       {days !== null && days.length > 0 && (
         <>
           <Heading>{t('review.trend')}</Heading>
-          {!isNail && <Chips items={keys.map((k) => ({ id: k, label: k === 'size' ? t('review.sizeChip') : t(`skin.scores.${k}`) }))} selected={new Set([key])} onToggle={(id) => setTrend(id as TrendKey)} />}
-          <TrendChart points={limitTrend(trendPoints(days, key), range, localDay(now.toISOString(), deps.clock.timeZone(), deps.dayStart.get()))} max={key === 'extent' ? 3 : key === 'size' ? Math.max(1, ...trendPoints(days, 'size').map((p) => p.value)) : 10} range={range} onRange={setRange} label={key === 'extent' ? t('review.extent') : key === 'size' ? t('review.sizeChip') : t(`skin.scores.${key}`)} />
+          {!isNail && (
+            <Chips
+              items={keys.map((k) => ({ id: k, label: k === 'size' ? t('review.sizeChip') : t(`skin.scores.${k}`) }))}
+              selected={new Set([key])}
+              onToggle={(id) => setTrend(id as TrendKey)}
+            />
+          )}
+          <TrendChart
+            points={limitTrend(trendPoints(days, key), range, localDay(now.toISOString(), deps.clock.timeZone(), deps.dayStart.get()))}
+            max={key === 'extent' ? 3 : key === 'size' ? Math.max(1, ...trendPoints(days, 'size').map((p) => p.value)) : 10}
+            range={range}
+            onRange={setRange}
+            label={key === 'extent' ? t('review.extent') : key === 'size' ? t('review.sizeChip') : t(`skin.scores.${key}`)}
+          />
         </>
       )}
       {allPhotos.length >= 2 && (
         <>
-          <Button kind="secondary" title={comparing ? t('review.compareDone') : t('review.compare')} onPress={() => (setComparing((c) => !c), setPicked([]))} />
+          <Button
+            kind="secondary"
+            title={comparing ? t('review.compareDone') : t('review.compare')}
+            onPress={() => (setComparing((c) => !c), setPicked([]))}
+          />
           {comparing && picked.length < 2 && <Hint>{t('review.comparePick')}</Hint>}
           {comparing && picked.length === 2 && <PhotoCompare photos={picked.map((photo) => ({ photo, caption: captionOf(photo) }))} />}
         </>
@@ -128,10 +158,14 @@ export default function AreaTimelineScreen() {
         <View key={d.day} style={{ gap: 6 }} onLayout={(e) => void (dayY.current[d.day] = e.nativeEvent.layout.y)}>
           <Text style={[styles.label, jump?.target.day === d.day && { backgroundColor: color.accentSoft, borderRadius: 6 }]}>{d.day}</Text>
           {d.medical.map((m) => (
-            <Hint key={`${m.event.id}-${m.edge}`}>{`${t(m.edge === 'start' ? 'review.medicalStart' : 'review.medicalEnd', { kind: t(`medical.kinds.${m.event.kind}`), title: m.event.title })}`}</Hint>
+            <Hint
+              key={`${m.event.id}-${m.edge}`}
+            >{`${t(m.edge === 'start' ? 'review.medicalStart' : 'review.medicalEnd', { kind: t(`medical.kinds.${m.event.kind}`), title: m.event.title })}`}</Hint>
           ))}
           {d.flares.map((f) => (
-            <Hint key={f.id}>{`${localDateTime(f.at.utc, f.at.tz).slice(11)}  ${t(f.kind === 'start' ? 'review.flareStart' : 'review.flareEnd')}`}</Hint>
+            <Hint
+              key={f.id}
+            >{`${localDateTime(f.at.utc, f.at.tz).slice(11)}  ${t(f.kind === 'start' ? 'review.flareStart' : 'review.flareEnd')}`}</Hint>
           ))}
           {d.entries.map((e) => (
             <View key={e.entry.id} style={{ gap: 4 }}>
@@ -141,7 +175,8 @@ export default function AreaTimelineScreen() {
                 accessibilityHint={t('review.entryHint')}
                 disabled={comparing} // while comparing, taps pick photos (UX-10)
                 onPress={() => void openEntry(e.kind === 'skin' ? 'skinEntries' : 'nailEntries', e.entry.id, entryTitle(e))}
-                style={({ pressed }) => pressed && { opacity: 0.6 }}>
+                style={({ pressed }) => pressed && { opacity: 0.6 }}
+              >
                 <Text style={styles.rowText}>
                   {`${localDateTime(e.entry.at.utc, e.entry.at.tz).slice(11)}  ${
                     e.kind === 'skin'
@@ -153,9 +188,11 @@ export default function AreaTimelineScreen() {
               {e.entry.note ? <Hint>{e.entry.note}</Hint> : null}
               <PhotoThumbs photos={e.photos} {...(comparing ? { onPick: pick, picked: new Set(picked.map((p) => p.id)) } : {})} />
               {/* SK-4: how long after the last treatment on this area each photo was taken; computed from the timestamps. */}
-              {[...new Set(e.photos.map((p) => sinceCaption(e.sinceTreatment[p.id] ?? null, (id) => treatmentNames[id] ?? id, t)))].map((c) => (
-                <Hint key={c}>{c}</Hint>
-              ))}
+              {[...new Set(e.photos.map((p) => sinceCaption(e.sinceTreatment[p.id] ?? null, (id) => treatmentNames[id] ?? id, t)))].map(
+                (c) => (
+                  <Hint key={c}>{c}</Hint>
+                ),
+              )}
             </View>
           ))}
         </View>

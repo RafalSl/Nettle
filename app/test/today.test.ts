@@ -15,7 +15,10 @@ const texts: ReminderTexts = {
   backup: { title: 'a', body: 'b' },
   regular: { named: () => ({ title: 'a', body: 'b' }), hidden: () => ({ title: 'a', body: 'b' }), takenLabel: 't', appliedLabel: 'a' },
 };
-const flare = { period: { start: { utc: '2026-01-10T10:00:00.000Z', tz: 'Europe/Warsaw' }, end: null, areaIds: ['area-chin'] }, areas: [{ areaId: 'area-chin', severity: 8 }] } as never;
+const flare = {
+  period: { start: { utc: '2026-01-10T10:00:00.000Z', tz: 'Europe/Warsaw' }, end: null, areaIds: ['area-chin'] },
+  areas: [{ areaId: 'area-chin', severity: 8 }],
+} as never;
 const none: PillInput = { flare: null, checkInDue: false, backupDue: false, backupDays: null, suggestions: 0 };
 
 describe('context pills (UX-2)', () => {
@@ -65,7 +68,11 @@ describe('Today context (UX-2, SK-9)', () => {
 
   it('SK-6 an open flare shows first', async () => {
     const deps = makeDeps(new MemoryRepo());
-    await logSkinEntry(deps, { areaId: 'area-chin', scores: { severity: 9, itch: 1, pain: 1, dryness: 1, scaling: 1 }, at: new Date('2026-01-14T10:00:00.000Z') });
+    await logSkinEntry(deps, {
+      areaId: 'area-chin',
+      scores: { severity: 9, itch: 1, pain: 1, dryness: 1, scaling: 1 },
+      at: new Date('2026-01-14T10:00:00.000Z'),
+    });
     await markExported(deps);
     expect((await todayContext(deps, '2026-01-15')).pills.map((p) => p.kind)).toEqual(['flare']);
   });

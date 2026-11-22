@@ -41,7 +41,16 @@ export function FloatingTabBar({ state, descriptors, emitter, navigateToTab }: T
                 const e = emitter.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
                 if (!focused && !e.defaultPrevented) navigateToTab(route.key);
               }}
-              style={{ height: 52, paddingHorizontal: 22, borderRadius: 999, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: focused ? color.accent : 'transparent' }}>
+              style={{
+                height: 52,
+                paddingHorizontal: 22,
+                borderRadius: 999,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 8,
+                backgroundColor: focused ? color.accent : 'transparent',
+              }}
+            >
               <Icon name={ICONS[route.name] ?? 'list'} size={22} tint={tint} stroke={focused ? 2 : 1.9} wash={false} />
               <Text style={{ fontSize: 15.5, fontWeight: focused ? '700' : '600', color: tint }}>{label}</Text>
             </Pressable>

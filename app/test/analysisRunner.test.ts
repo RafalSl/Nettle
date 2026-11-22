@@ -8,7 +8,13 @@ import { MemoryRepo } from './fakes/memoryRepo';
 import { makeDeps } from './helpers/fixtures';
 import type { LlmProvider, LlmRequest, LlmResponse } from '@/core/ports/llm';
 
-const ANSWER = JSON.stringify({ summary: 'Synthetic summary', hypotheses: [], order_and_lag: 'none', data_limits: [], questions_for_doctor: [] });
+const ANSWER = JSON.stringify({
+  summary: 'Synthetic summary',
+  hypotheses: [],
+  order_and_lag: 'none',
+  data_limits: [],
+  questions_for_doctor: [],
+});
 
 async function setup(llm: LlmProvider) {
   const repo = new MemoryRepo();

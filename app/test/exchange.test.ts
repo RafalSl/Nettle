@@ -42,11 +42,27 @@ async function seeded(make: () => Promise<StorageRepository>) {
   await repo.addSkinEntry(syntheticEntry('e2', '2026-01-12T09:00:00.000Z', 'a-custom'));
   await repo.upsertArea({ ...custom, id: 'a-nail', kind: 'nail', name: 'Synthetic left thumb' });
   await repo.addRecord('nailEntries', syntheticNailEntry('n1', '2026-01-12T10:00:00.000Z', 'a-nail'));
-  await repo.upsertItem('dailyItems', { id: 'tag-custom', name: 'Synthetic tag', predefined: false, archived: false, nameOverride: null, valueKind: 'yesno' as const, description: null });
+  await repo.upsertItem('dailyItems', {
+    id: 'tag-custom',
+    name: 'Synthetic tag',
+    predefined: false,
+    archived: false,
+    nameOverride: null,
+    valueKind: 'yesno' as const,
+    description: null,
+  });
   await repo.addRecord('checkIns', syntheticCheckIn('c1', '2026-01-12T20:00:00.000Z', '2026-01-12', ['tag-travel', 'tag-custom']));
   await repo.addRecord('stoolEntries', syntheticStool('s1', '2026-01-12T07:00:00.000Z'));
   await repo.addRecord('stoolEntries', syntheticStool('s2', '2026-01-12T18:00:00.000Z', 6));
-  await repo.upsertItem('treatments', { id: 'tr1', name: 'Synthetic cream', predefined: false, archived: false, nameOverride: null, valueKind: 'yesno' as const, description: null });
+  await repo.upsertItem('treatments', {
+    id: 'tr1',
+    name: 'Synthetic cream',
+    predefined: false,
+    archived: false,
+    nameOverride: null,
+    valueKind: 'yesno' as const,
+    description: null,
+  });
   await repo.addRecord('treatmentApplications', {
     id: 'ta1',
     at: { utc: '2026-01-12T21:00:00.000Z', tz: TZ },
@@ -64,8 +80,26 @@ async function seeded(make: () => Promise<StorageRepository>) {
     dateUnknown: false,
     note: null,
   });
-  await repo.addRecord('drinks', { id: 'al1', at: { utc: '2026-01-12T19:00:00.000Z', tz: TZ }, name: 'Synthetic beer', amountMl: 500, alcohol: true, ingredients: [], allergens: [], barcode: null, source: { kind: 'typed', edited: false, llm: null, aiTags: false }, note: null });
-  await repo.addRecord('medicationEntries', { id: 'md1', at: { utc: '2026-01-12T08:00:00.000Z', tz: TZ }, category: 'supplement', name: 'Synthetic vitamin', dose: '1 tablet', note: null });
+  await repo.addRecord('drinks', {
+    id: 'al1',
+    at: { utc: '2026-01-12T19:00:00.000Z', tz: TZ },
+    name: 'Synthetic beer',
+    amountMl: 500,
+    alcohol: true,
+    ingredients: [],
+    allergens: [],
+    barcode: null,
+    source: { kind: 'typed', edited: false, llm: null, aiTags: false },
+    note: null,
+  });
+  await repo.addRecord('medicationEntries', {
+    id: 'md1',
+    at: { utc: '2026-01-12T08:00:00.000Z', tz: TZ },
+    category: 'supplement',
+    name: 'Synthetic vitamin',
+    dose: '1 tablet',
+    note: null,
+  });
   await repo.addRecord('reactions', {
     id: 'r1',
     at: { utc: '2026-01-12T09:00:00.000Z', tz: TZ },
@@ -100,7 +134,13 @@ const RAW_RECORDS = {
   report_summaries: [],
   tombstones: [],
 };
-const RAW_SETTINGS = { skin_areas: [], daily_items: [], change_categories: [], treatments: [], preferences: preferencesToJson(defaultPreferences()) };
+const RAW_SETTINGS = {
+  skin_areas: [],
+  daily_items: [],
+  change_categories: [],
+  treatments: [],
+  preferences: preferencesToJson(defaultPreferences()),
+};
 
 describe('data.json validation of nail data (SK-10)', () => {
   const stamp = { utc: '2026-01-10T08:00:00.000Z', tz: 'Europe/Warsaw' };
@@ -116,7 +156,12 @@ describe('data.json validation of nail data (SK-10)', () => {
     const p = parseDataJson(
       file(
         { ...base, nail_entries: [nailRow] },
-        { ...RAW_SETTINGS, skin_areas: [{ id: 'a', kind: 'nail', name: 'x', predefined: false, archived: false, sensitive_default: false, name_override: null }] },
+        {
+          ...RAW_SETTINGS,
+          skin_areas: [
+            { id: 'a', kind: 'nail', name: 'x', predefined: false, archived: false, sensitive_default: false, name_override: null },
+          ],
+        },
       ),
     );
     expect(p.records?.nailEntries).toHaveLength(1);
@@ -124,7 +169,17 @@ describe('data.json validation of nail data (SK-10)', () => {
   });
 
   it('EX-10 rejects a timezone the runtime does not know', () => {
-    const row = { id: 'm1', utc: stamp.utc, tz: 'Mars/Olympus', description: 'Synthetic meal', ingredients: [], allergens: [], barcode: null, source: { kind: 'typed', edited: false, llm: null, ai_tags: false }, note: null };
+    const row = {
+      id: 'm1',
+      utc: stamp.utc,
+      tz: 'Mars/Olympus',
+      description: 'Synthetic meal',
+      ingredients: [],
+      allergens: [],
+      barcode: null,
+      source: { kind: 'typed', edited: false, llm: null, ai_tags: false },
+      note: null,
+    };
     expect(() => parseDataJson(file({ ...base, meals: [row] }))).toThrow(NettleError);
     expect(() => parseDataJson(file({ ...base, meals: [{ ...row, tz: 'Europe/Warsaw' }] }))).not.toThrow();
   });
@@ -143,7 +198,14 @@ describe('data.json validation of nail data (SK-10)', () => {
     const { nail_entries: _omitted, ...withoutNail } = RAW_RECORDS;
     expect(bad(file(withoutNail))).toBe('import_invalid_data');
     expect(
-      bad(file(undefined as never, { ...RAW_SETTINGS, skin_areas: [{ id: 'a', kind: 'toe', name: 'x', predefined: false, archived: false, sensitive_default: false, name_override: null }] })),
+      bad(
+        file(undefined as never, {
+          ...RAW_SETTINGS,
+          skin_areas: [
+            { id: 'a', kind: 'toe', name: 'x', predefined: false, archived: false, sensitive_default: false, name_override: null },
+          ],
+        }),
+      ),
     ).toBe('import_invalid_data');
   });
 
@@ -158,7 +220,12 @@ describe('data.json validation of nail data (SK-10)', () => {
 describe('data.json validation of check-ins, stool and tags (SK-7, SK-11, IN-6)', () => {
   const at = { utc: '2026-01-10T20:00:00.000Z', tz: 'Europe/Warsaw' };
   const checkIn = {
-    id: 'c1', utc: at.utc, tz: at.tz, day: '2026-01-10', values: { 'item-wellbeing': 5, 'item-sleep': 3, 'tag-travel': true }, note: null,
+    id: 'c1',
+    utc: at.utc,
+    tz: at.tz,
+    day: '2026-01-10',
+    values: { 'item-wellbeing': 5, 'item-sleep': 3, 'tag-travel': true },
+    note: null,
   };
   const stool = { id: 's1', utc: at.utc, tz: at.tz, bristol: 4, note: null };
   const records = (over: object = {}) => ({ ...RAW_RECORDS, check_ins: [checkIn], stool_entries: [stool], ...over });
@@ -176,10 +243,15 @@ describe('data.json validation of check-ins, stool and tags (SK-7, SK-11, IN-6)'
     const p = parseDataJson(
       file(records(), {
         ...RAW_SETTINGS,
-        daily_items: [{ id: 'tag-x', name: 'x', predefined: false, archived: false, name_override: null, value_kind: 'yesno', description: null }],
+        daily_items: [
+          { id: 'tag-x', name: 'x', predefined: false, archived: false, name_override: null, value_kind: 'yesno', description: null },
+        ],
       }),
     );
-    expect(p.records?.checkIns[0]).toMatchObject({ day: '2026-01-10', values: { 'item-wellbeing': 5, 'item-sleep': 3, 'tag-travel': true } });
+    expect(p.records?.checkIns[0]).toMatchObject({
+      day: '2026-01-10',
+      values: { 'item-wellbeing': 5, 'item-sleep': 3, 'tag-travel': true },
+    });
     expect(p.records?.stoolEntries[0]?.bristol).toBe(4);
     expect(p.settings?.dailyItems[0]?.id).toBe('tag-x');
   });
@@ -201,14 +273,29 @@ describe('data.json validation of check-ins, stool and tags (SK-7, SK-11, IN-6)'
 
   it('refuses to apply a check-in that uses a tag that will not exist (import_unknown_item)', async () => {
     const deps = makeDeps(new MemoryRepo());
-    const parsed = { payload: parseDataJson(file(records({ check_ins: [{ ...checkIn, values: { 'tag-gone': true } }] }))), preview: undefined as never };
+    const parsed = {
+      payload: parseDataJson(file(records({ check_ins: [{ ...checkIn, values: { 'tag-gone': true } }] }))),
+      preview: undefined as never,
+    };
     expect(await code(applyImport(deps, parsed, { mode: 'merge', parts: RECORDS }))).toBe('import_unknown_item');
   });
 });
 
 describe('data.json validation of alcohol and medication entries (IN-4, IN-5)', () => {
   const at = { utc: '2026-01-10T20:00:00.000Z', tz: 'Europe/Warsaw' };
-  const alcohol = { id: 'al1', utc: at.utc, tz: at.tz, name: 'x', amount_ml: 330, alcohol: false, ingredients: [], allergens: [], barcode: null, source: { kind: 'typed', edited: false, llm: null, aiTags: false }, note: null };
+  const alcohol = {
+    id: 'al1',
+    utc: at.utc,
+    tz: at.tz,
+    name: 'x',
+    amount_ml: 330,
+    alcohol: false,
+    ingredients: [],
+    allergens: [],
+    barcode: null,
+    source: { kind: 'typed', edited: false, llm: null, aiTags: false },
+    note: null,
+  };
   const med = { id: 'md1', utc: at.utc, tz: at.tz, category: 'medication', name: 'x', dose: null, note: null };
   const err = (r: object) => {
     try {
@@ -230,9 +317,28 @@ describe('data.json validation of alcohol and medication entries (IN-4, IN-5)', 
 describe('data.json validation of treatments, events, reactions and allergens (IN-10 to IN-13)', () => {
   const at = { utc: '2026-01-10T20:00:00.000Z', tz: 'Europe/Warsaw' };
   const application = { id: 'ta1', utc: at.utc, tz: at.tz, treatment_id: 'tr1', area_ids: ['area-chin'], reaction: null, note: null };
-  const event = { id: 'ce1', utc: at.utc, tz: at.tz, action: 'started', category: 'cat-product', name: 'x', date_unknown: false, note: null };
+  const event = {
+    id: 'ce1',
+    utc: at.utc,
+    tz: at.tz,
+    action: 'started',
+    category: 'cat-product',
+    name: 'x',
+    date_unknown: false,
+    note: null,
+  };
   const reaction = { id: 'r1', utc: at.utc, tz: at.tz, meal_id: 'm1', symptoms: ['hives'], note: null };
-  const meal = { id: 'm1', utc: at.utc, tz: at.tz, description: 'x', ingredients: [], allergens: ['milk'], barcode: null, source: { kind: 'typed', edited: false, llm: null, aiTags: false }, note: null };
+  const meal = {
+    id: 'm1',
+    utc: at.utc,
+    tz: at.tz,
+    description: 'x',
+    ingredients: [],
+    allergens: ['milk'],
+    barcode: null,
+    source: { kind: 'typed', edited: false, llm: null, aiTags: false },
+    note: null,
+  };
   const records = (over: object = {}) => ({
     ...RAW_RECORDS,
     meals: [meal],
@@ -255,7 +361,9 @@ describe('data.json validation of treatments, events, reactions and allergens (I
     const p = parseDataJson(
       file(records(), {
         ...RAW_SETTINGS,
-        treatments: [{ id: 'tr1', name: 'x', predefined: false, archived: false, name_override: null, value_kind: 'yesno', description: null }],
+        treatments: [
+          { id: 'tr1', name: 'x', predefined: false, archived: false, name_override: null, value_kind: 'yesno', description: null },
+        ],
       }),
     );
     expect(p.records?.meals[0]?.allergens).toEqual(['milk']);
@@ -269,8 +377,18 @@ describe('data.json validation of treatments, events, reactions and allergens (I
     const llm = { model: 'm', at: '2026-01-10T20:00:00.000Z', prompt_version: 'p' };
     const withSource = (source: unknown, barcode: unknown = null) => file(records({ meals: [{ ...meal, source, barcode }] }));
     expect(err(withSource({ kind: 'label_scan', edited: true, llm }, '5900000000008'))).toBe('no error');
-    expect(parseDataJson(withSource({ kind: 'photo_estimate', edited: false, llm })).records?.meals[0]?.source).toEqual({ kind: 'photo_estimate', edited: false, llm: { model: 'm', at: llm.at, promptVersion: 'p' }, aiTags: false });
-    expect(parseDataJson(withSource({ kind: 'name_estimate', edited: true, llm })).records?.meals[0]?.source).toEqual({ kind: 'name_estimate', edited: true, llm: { model: 'm', at: llm.at, promptVersion: 'p' }, aiTags: false }); // IN-19
+    expect(parseDataJson(withSource({ kind: 'photo_estimate', edited: false, llm })).records?.meals[0]?.source).toEqual({
+      kind: 'photo_estimate',
+      edited: false,
+      llm: { model: 'm', at: llm.at, promptVersion: 'p' },
+      aiTags: false,
+    });
+    expect(parseDataJson(withSource({ kind: 'name_estimate', edited: true, llm })).records?.meals[0]?.source).toEqual({
+      kind: 'name_estimate',
+      edited: true,
+      llm: { model: 'm', at: llm.at, promptVersion: 'p' },
+      aiTags: false,
+    }); // IN-19
     for (const bad of [
       { kind: 'name_estimate', edited: false, llm: null, aiTags: false },
       { kind: 'label_scan', edited: false, llm: null, aiTags: false },
@@ -289,8 +407,10 @@ describe('data.json validation of treatments, events, reactions and allergens (I
     expect(err(file(records({ meals: [{ ...meal, allergens: ['dust'] }] })))).toBe('import_invalid_data');
     expect(err(file(records({ meals: [{ ...meal, allergens: undefined }] })))).toBe('import_invalid_data');
     expect(err(file(records({ treatment_applications: [{ ...application, area_ids: [] }] })))).toBe('import_invalid_data');
-    for (const reaction of [undefined, 'burning', 3, '']) expect(err(file(records({ treatment_applications: [{ ...application, reaction }] })))).toBe('import_invalid_data'); // IN-11: the key is required, null means not recorded
-    for (const reaction of [null, 'none', 'mild', 'strong']) expect(err(file(records({ treatment_applications: [{ ...application, reaction }] })))).toBe('no error');
+    for (const reaction of [undefined, 'burning', 3, ''])
+      expect(err(file(records({ treatment_applications: [{ ...application, reaction }] })))).toBe('import_invalid_data'); // IN-11: the key is required, null means not recorded
+    for (const reaction of [null, 'none', 'mild', 'strong'])
+      expect(err(file(records({ treatment_applications: [{ ...application, reaction }] })))).toBe('no error');
     expect(err(file(records({ change_events: [{ ...event, action: 'paused' }] })))).toBe('import_invalid_data');
     expect(err(file(records({ change_events: [{ ...event, date_unknown: 'no' }] })))).toBe('import_invalid_data');
     expect(err(file(records({ reactions: [{ ...reaction, symptoms: [] }] })))).toBe('import_invalid_data');
@@ -303,9 +423,9 @@ describe('data.json validation of treatments, events, reactions and allergens (I
       code(applyImport(deps, { payload: parseDataJson(file(r)), preview: undefined as never }, { mode: 'merge', parts: RECORDS }));
     expect(await apply(records({ meals: [], treatment_applications: [] }))).toBe('import_unknown_meal');
     expect(await apply(records({ reactions: [] }))).toBe('import_unknown_item'); // treatment tr1 is not known
-    expect(await apply(records({ reactions: [], treatment_applications: [{ ...application, treatment_id: 'x', area_ids: ['nope'] }] }))).toBe(
-      'import_unknown_area',
-    );
+    expect(
+      await apply(records({ reactions: [], treatment_applications: [{ ...application, treatment_id: 'x', area_ids: ['nope'] }] })),
+    ).toBe('import_unknown_area');
   });
 });
 
@@ -485,9 +605,7 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
 
   it('EX-1 / EX-10 selecting nothing is rejected', async () => {
     const source = await seeded(make);
-    expect(await code(exportBundle(makeDeps(source), { parts: { records: false, settings: false } }))).toBe(
-      'nothing_selected',
-    );
+    expect(await code(exportBundle(makeDeps(source), { parts: { records: false, settings: false } }))).toBe('nothing_selected');
     const zip = await exportBundle(makeDeps(source), { parts: RECORDS });
     const deps = makeDeps(await make());
     const parsed = await previewImport(deps, zip);

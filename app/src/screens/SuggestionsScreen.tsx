@@ -33,7 +33,12 @@ export default function SuggestionsScreen() {
           key={s.id}
           title={text(s)}
           subtitle={t('aiSuggestions.row', { n: s.ingredients.length, model: s.model })}
-          onPress={() => router.push({ pathname: '/form/edit', params: { kind: s.kind === 'meal' ? 'meals' : 'drinks', id: s.entryId, suggestion: s.id } })}
+          onPress={() =>
+            router.push({
+              pathname: '/form/edit',
+              params: { kind: s.kind === 'meal' ? 'meals' : 'drinks', id: s.entryId, suggestion: s.id },
+            })
+          }
         />
       ))}
     </Screen>

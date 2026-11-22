@@ -17,12 +17,13 @@ import { FONT_FILES } from '@/ui/theme';
 
 void SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
-
 /** SK-9: after start-up, make the scheduled reminders match the settings, the nail areas and the app language. */
 function ReminderSync() {
   const { deps } = useServices();
   useEffect(() => {
-    applyReminders(deps, reminderTexts()).catch((e: unknown) => console.warn('Reminders could not be scheduled:', e instanceof Error ? e.message : 'unknown error')); // a convenience: never block the app, but do not hide the failure
+    applyReminders(deps, reminderTexts()).catch((e: unknown) =>
+      console.warn('Reminders could not be scheduled:', e instanceof Error ? e.message : 'unknown error'),
+    ); // a convenience: never block the app, but do not hide the failure
   }, [deps]);
   return null;
 }
@@ -82,7 +83,11 @@ function CancelButton() {
   );
 }
 
-const form = (title: string) => ({ title, presentation: 'modal' as const, unstable_headerLeftItems: () => [{ type: 'custom' as const, hidesSharedBackground: true, element: <CancelButton /> }] });
+const form = (title: string) => ({
+  title,
+  presentation: 'modal' as const,
+  unstable_headerLeftItems: () => [{ type: 'custom' as const, hidesSharedBackground: true, element: <CancelButton /> }],
+});
 
 /** UX-1, UX-3: the tabs sit in the root stack, and every entry form is a modal above them, one at a time. */
 export default function RootLayout() {
@@ -94,29 +99,29 @@ export default function RootLayout() {
   if (!fontsLoaded && !fontError) return null;
   return (
     <ThemeProvider value={NAV_THEME}>
-    <ServicesProvider>
-      <ReminderSync />
-      <ReminderTaps />
-      <AnalysisWatcher />
-      <Stack key={language} screenOptions={SCREEN_OPTIONS}>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="settings" options={{ headerShown: false }} />
-        <Stack.Screen name="guide" options={{ title: t('nav.guide'), headerBackTitle: t('common.back') }} />
-        <Stack.Screen name="form/meal" options={form(t('nav.meal'))} />
-        <Stack.Screen name="form/skin" options={form(t('nav.skin'))} />
-        <Stack.Screen name="form/checkin" options={form(t('nav.checkin'))} />
-        <Stack.Screen name="form/drink" options={form(t('nav.drink'))} />
-        <Stack.Screen name="form/medication" options={form(t('nav.medication'))} />
-        <Stack.Screen name="form/stool" options={form(t('nav.stool'))} />
-        <Stack.Screen name="form/treatment" options={form(t('nav.treatment'))} />
-        <Stack.Screen name="form/nails" options={form(t('nav.nails'))} />
-        <Stack.Screen name="form/reaction" options={form(t('nav.reaction'))} />
-        <Stack.Screen name="form/change" options={form(t('nav.change'))} />
-        <Stack.Screen name="form/medical" options={form(t('nav.medical'))} />
-        <Stack.Screen name="form/edit" options={form(t('edit.title'))} />
-      </Stack>
-      <LockOverlay />
-    </ServicesProvider>
+      <ServicesProvider>
+        <ReminderSync />
+        <ReminderTaps />
+        <AnalysisWatcher />
+        <Stack key={language} screenOptions={SCREEN_OPTIONS}>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="settings" options={{ headerShown: false }} />
+          <Stack.Screen name="guide" options={{ title: t('nav.guide'), headerBackTitle: t('common.back') }} />
+          <Stack.Screen name="form/meal" options={form(t('nav.meal'))} />
+          <Stack.Screen name="form/skin" options={form(t('nav.skin'))} />
+          <Stack.Screen name="form/checkin" options={form(t('nav.checkin'))} />
+          <Stack.Screen name="form/drink" options={form(t('nav.drink'))} />
+          <Stack.Screen name="form/medication" options={form(t('nav.medication'))} />
+          <Stack.Screen name="form/stool" options={form(t('nav.stool'))} />
+          <Stack.Screen name="form/treatment" options={form(t('nav.treatment'))} />
+          <Stack.Screen name="form/nails" options={form(t('nav.nails'))} />
+          <Stack.Screen name="form/reaction" options={form(t('nav.reaction'))} />
+          <Stack.Screen name="form/change" options={form(t('nav.change'))} />
+          <Stack.Screen name="form/medical" options={form(t('nav.medical'))} />
+          <Stack.Screen name="form/edit" options={form(t('edit.title'))} />
+        </Stack>
+        <LockOverlay />
+      </ServicesProvider>
     </ThemeProvider>
   );
 }

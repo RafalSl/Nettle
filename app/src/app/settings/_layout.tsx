@@ -10,7 +10,13 @@ import { BackButton } from '@/ui/BackButton';
 export default function SettingsStack() {
   return (
     <Stack screenOptions={{ ...SCREEN_OPTIONS, headerBackTitle: t('common.back') }}>
-      <Stack.Screen name="index" options={{ title: t('nav.settings'), unstable_headerLeftItems: () => [{ type: 'custom' as const, hidesSharedBackground: true, element: <BackButton /> }] }} />
+      <Stack.Screen
+        name="index"
+        options={{
+          title: t('nav.settings'),
+          unstable_headerLeftItems: () => [{ type: 'custom' as const, hidesSharedBackground: true, element: <BackButton /> }],
+        }}
+      />
       <Stack.Screen name="logging" options={{ title: t('nav.logging') }} />
       <Stack.Screen name="areas" options={{ title: t('nav.areas') }} />
       <Stack.Screen name="favorites" options={{ title: t('nav.favorites') }} />

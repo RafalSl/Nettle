@@ -11,7 +11,12 @@ type Cell = string | number | boolean | null | undefined | readonly unknown[] | 
 function cell(value: Cell): string {
   if (value === null || value === undefined) return '';
   if (typeof value === 'number' || typeof value === 'boolean') return String(value);
-  let text = typeof value === 'string' ? value : Array.isArray(value) && value.every((v) => typeof v === 'string') ? value.join('; ') : JSON.stringify(value);
+  let text =
+    typeof value === 'string'
+      ? value
+      : Array.isArray(value) && value.every((v) => typeof v === 'string')
+        ? value.join('; ')
+        : JSON.stringify(value);
   if (/^[=+\-@\t\r]/.test(text)) text = `'${text}`;
   return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }
@@ -34,7 +39,12 @@ export const csvPath = (section: string) => `csv/${section}.csv`;
 export function flattenSource(row: Record<string, unknown>): Record<string, Cell> {
   const { source, ...rest } = row;
   if (typeof source !== 'object' || source === null) return rest as Record<string, Cell>;
-  const s = source as { kind?: string; edited?: boolean; llm?: { model?: string; at?: string; prompt_version?: string } | null; ai_tags?: boolean };
+  const s = source as {
+    kind?: string;
+    edited?: boolean;
+    llm?: { model?: string; at?: string; prompt_version?: string } | null;
+    ai_tags?: boolean;
+  };
   const ai = LLM_SOURCE_KINDS.includes(s.kind as SourceKind);
   return {
     ...(rest as Record<string, Cell>),

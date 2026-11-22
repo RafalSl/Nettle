@@ -105,4 +105,5 @@ export function runCardStatus(run: AnalysisRun, nowMs: number): RunCardStatus {
 }
 
 /** LL-12: seconds as "m:ss" for the elapsed time of a call. */
-export const formatElapsed = (seconds: number): string => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
+export const formatElapsed = (seconds: number): string =>
+  `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;

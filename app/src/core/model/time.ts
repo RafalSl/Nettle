@@ -20,7 +20,13 @@ function wallParts(utc: string, tz: string) {
     minute: '2-digit',
   }).formatToParts(new Date(utc));
   const get = (type: string) => parts.find((p) => p.type === type)!.value.padStart(2, '0');
-  return { y: get('year').padStart(4, '0'), mo: get('month'), d: get('day'), h: get('hour') === '24' ? '00' : get('hour'), mi: get('minute') };
+  return {
+    y: get('year').padStart(4, '0'),
+    mo: get('month'),
+    d: get('day'),
+    h: get('hour') === '24' ? '00' : get('hour'),
+    mi: get('minute'),
+  };
 }
 
 /**

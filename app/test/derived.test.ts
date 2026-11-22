@@ -13,8 +13,23 @@ import { MemoryRepo } from './fakes/memoryRepo';
 import { makeDeps } from './helpers/fixtures';
 
 const stamp = (utc: string) => ({ utc, tz: 'Europe/Warsaw' });
-const app = (id: string, utc: string, treatmentId = 'tr1', areaIds = ['area-chin']) => ({ id, at: stamp(utc), treatmentId, areaIds, reaction: null, note: null });
-const skin = (id: string, utc: string, severity: number, areaId = 'area-chin') => ({ id, at: stamp(utc), areaId, scores: { severity, itch: 0, pain: 0, dryness: 0, scaling: 0 }, cracks: false, sizeMm: null, note: null });
+const app = (id: string, utc: string, treatmentId = 'tr1', areaIds = ['area-chin']) => ({
+  id,
+  at: stamp(utc),
+  treatmentId,
+  areaIds,
+  reaction: null,
+  note: null,
+});
+const skin = (id: string, utc: string, severity: number, areaId = 'area-chin') => ({
+  id,
+  at: stamp(utc),
+  areaId,
+  scores: { severity, itch: 0, pain: 0, dryness: 0, scaling: 0 },
+  cracks: false,
+  sizeMm: null,
+  note: null,
+});
 const day = (n: number, hour = 8) => `2026-01-${String(n).padStart(2, '0')}T${String(hour).padStart(2, '0')}:00:00.000Z`;
 
 describe('time since the last treatment (SK-4)', () => {
@@ -23,7 +38,10 @@ describe('time since the last treatment (SK-4)', () => {
   it('SK-4 takes the latest application on that area at or before the photo, with the exact hours', () => {
     expect(sinceLastTreatment('area-chin', day(13, 8), apps)).toEqual({ treatmentId: 'tr2', hours: 12 });
     expect(sinceLastTreatment('area-chin', day(12, 20), apps)).toEqual({ treatmentId: 'tr2', hours: 0 }); // the same moment counts
-    expect(sinceLastTreatment('area-chin', day(12, 20).replace(':00:00.000Z', ':20:00.000Z'), apps)).toEqual({ treatmentId: 'tr2', hours: 0.3 });
+    expect(sinceLastTreatment('area-chin', day(12, 20).replace(':00:00.000Z', ':20:00.000Z'), apps)).toEqual({
+      treatmentId: 'tr2',
+      hours: 0.3,
+    });
     expect(sinceLastTreatment('area-neck', day(13, 8), apps)).toEqual({ treatmentId: 'tr3', hours: 10 }); // another area's application is not mixed in
   });
 
@@ -48,7 +66,9 @@ describe('time since the last treatment (SK-4)', () => {
     expect(elapsedParts(47.9)).toEqual({ unit: 'hours', n: 48 });
     expect(elapsedParts(96)).toEqual({ unit: 'days', n: 4 });
     const tx = (k: string, v?: Record<string, string | number>) => `[${k}${v ? JSON.stringify(v) : ''}]`;
-    expect(sinceCaption({ treatmentId: 'tr1', hours: 14 }, () => 'Cream', tx)).toBe('[derived.sinceTreatment{"elapsed":"[derived.hours{\\"n\\":14}]","name":"Cream"}]');
+    expect(sinceCaption({ treatmentId: 'tr1', hours: 14 }, () => 'Cream', tx)).toBe(
+      '[derived.sinceTreatment{"elapsed":"[derived.hours{\\"n\\":14}]","name":"Cream"}]',
+    );
     expect(sinceCaption(null, () => '', tx)).toBe('[derived.noTreatment]');
     expect(sinceCaptionEn({ treatmentId: 'tr1', hours: 14 }, () => 'Cream')).toBe('14 h after Cream');
     expect(sinceCaptionEn({ treatmentId: 'tr1', hours: 72 }, () => 'Cream')).toBe('3 days after Cream');
@@ -69,7 +89,16 @@ describe('time to relapse (SK-12)', () => {
       asOf,
     );
     expect(rows).toEqual([
-      { areaId: 'area-chin', treatmentId: 'tr1', start: stamp(day(3)), end: stamp(day(7)), applications: 3, flareStart: stamp(day(20)), days: 13, otherTreatmentIds: [] },
+      {
+        areaId: 'area-chin',
+        treatmentId: 'tr1',
+        start: stamp(day(3)),
+        end: stamp(day(7)),
+        applications: 3,
+        flareStart: stamp(day(20)),
+        days: 13,
+        otherTreatmentIds: [],
+      },
     ]);
   });
 
@@ -96,10 +125,16 @@ describe('time to relapse (SK-12)', () => {
     expect(timeToRelapse([calm(day(1))], [app('a', day(20))], 8, day(27, 9))).toHaveLength(1);
   });
 
-  it('SK-12 uses the area\'s own flares, so another area\'s flare does not end its wait, and lists other treatments in between as confounders', () => {
+  it("SK-12 uses the area's own flares, so another area's flare does not end its wait, and lists other treatments in between as confounders", () => {
     const rows = timeToRelapse(
       [calm(day(1)), flare(day(30)), skin('n1', day(2), 2, 'area-neck'), skin('n2', day(12), 10, 'area-neck')],
-      [app('a1', day(3)), app('a2', day(14), 'tr2'), app('a3', day(14, 9), 'tr2'), app('a4', day(18), 'tr3', ['area-neck']), app('a5', day(40), 'tr9')],
+      [
+        app('a1', day(3)),
+        app('a2', day(14), 'tr2'),
+        app('a3', day(14, 9), 'tr2'),
+        app('a4', day(18), 'tr3', ['area-neck']),
+        app('a5', day(40), 'tr9'),
+      ],
       8,
       asOf,
     );
@@ -130,12 +165,24 @@ describe('the derived numbers reach the report, the analysis and the timeline (S
     const repo = new MemoryRepo();
     const deps = makeDeps(repo, '2026-03-01T10:00:00.000Z');
     const cream = await addListItem(deps, 'treatments', 'Synthetic cream');
-    const early = await logSkinEntry(deps, { areaId: 'area-chin', scores: { severity: 2, itch: 0, pain: 0, dryness: 0, scaling: 0 }, at: new Date(day(2)) });
+    const early = await logSkinEntry(deps, {
+      areaId: 'area-chin',
+      scores: { severity: 2, itch: 0, pain: 0, dryness: 0, scaling: 0 },
+      at: new Date(day(2)),
+    });
     await applyTreatment(deps, { treatmentId: cream.id, areaIds: ['area-chin'], at: new Date(day(3)) });
     await applyTreatment(deps, { treatmentId: cream.id, areaIds: ['area-chin'], at: new Date(day(6)) });
-    await logSkinEntry(deps, { areaId: 'area-chin', scores: { severity: 9, itch: 0, pain: 0, dryness: 0, scaling: 0 }, at: new Date(day(16)) });
+    await logSkinEntry(deps, {
+      areaId: 'area-chin',
+      scores: { severity: 9, itch: 0, pain: 0, dryness: 0, scaling: 0 },
+      at: new Date(day(16)),
+    });
     const p1 = await addPhoto(deps, { entryKind: 'skinEntry', entryId: early.id, sourceUri: 'before', at: new Date(day(2, 9)) });
-    const late = await logSkinEntry(deps, { areaId: 'area-chin', scores: { severity: 3, itch: 0, pain: 0, dryness: 0, scaling: 0 }, at: new Date(day(6, 14)) });
+    const late = await logSkinEntry(deps, {
+      areaId: 'area-chin',
+      scores: { severity: 3, itch: 0, pain: 0, dryness: 0, scaling: 0 },
+      at: new Date(day(6, 14)),
+    });
     const p2 = await addPhoto(deps, { entryKind: 'skinEntry', entryId: late.id, sourceUri: 'after', at: new Date(day(6, 14)) });
     return { repo, deps, cream, p1, p2 };
   }
@@ -144,7 +191,13 @@ describe('the derived numbers reach the report, the analysis and the timeline (S
     const { repo } = await setup();
     const data = JSON.parse(buildAnalysisInput(await repo.snapshot(), '2026-01-01', '2026-01-31', 0, 8, '2026-03-01T00:00:00.000Z').json);
     expect(data.time_to_relapse).toEqual([
-      expect.objectContaining({ area: expect.stringMatching(/chin/i), treatment: 'Synthetic cream', applications: 2, days_to_next_flare: 10, next_flare_start: expect.stringContaining('2026-01-16') }),
+      expect.objectContaining({
+        area: expect.stringMatching(/chin/i),
+        treatment: 'Synthetic cream',
+        applications: 2,
+        days_to_next_flare: 10,
+        next_flare_start: expect.stringContaining('2026-01-16'),
+      }),
     ]);
     const none = JSON.parse(buildAnalysisInput(await new MemoryRepo().snapshot(), '2026-01-01', '2026-01-31').json);
     expect('time_to_relapse' in none).toBe(false);
@@ -197,7 +250,7 @@ describe('the derived numbers reach the report, the analysis and the timeline (S
 });
 
 describe('nail photos get the same caption (SK-4)', () => {
-  it('SK-4 a nail entry\'s photo looks up treatments on the nail area', async () => {
+  it("SK-4 a nail entry's photo looks up treatments on the nail area", async () => {
     const deps = makeDeps(new MemoryRepo(), '2026-03-01T10:00:00.000Z');
     const nail = await addArea(deps, 'Synthetic thumb', 'nail');
     const cream = await addListItem(deps, 'treatments', 'Synthetic oil');

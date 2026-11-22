@@ -19,18 +19,8 @@ import { Button, Chips, Heading, Hint, Label, Screen, styles } from '@/ui/compon
 import { SwitchRow } from '@/ui/SwitchRow';
 import { rescheduleReminders } from '@/ui/rescheduleReminders';
 
-function PartSwitch({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: boolean;
-  onChange: (v: boolean) => void;
-}) {
-  return (
-    <SwitchRow title={label} value={value} onChange={onChange} />
-  );
+function PartSwitch({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void }) {
+  return <SwitchRow title={label} value={value} onChange={onChange} />;
 }
 
 /** Total of some collections in a row-count map. */
@@ -210,9 +200,7 @@ export default function DataScreen() {
           />
         </>
       )}
-      {(exportParts.records || exportParts.settings) && (
-        <Button title={t('data.exportButton')} onPress={doExport} />
-      )}
+      {(exportParts.records || exportParts.settings) && <Button title={t('data.exportButton')} onPress={doExport} />}
 
       <Heading>{t('data.importTitle')}</Heading>
       <Hint>{t('data.importHint')}</Hint>
@@ -269,9 +257,7 @@ export default function DataScreen() {
             </Hint>
           )}
           {p.tombstones.skipped > 0 && <Hint>{t('data.tombstoneSkipped', { n: p.tombstones.skipped })}</Hint>}
-          {p.tombstones.restorable > 0 && (
-            <PartSwitch label={t('data.tombstoneRestore')} value={restore} onChange={setRestore} />
-          )}
+          {p.tombstones.restorable > 0 && <PartSwitch label={t('data.tombstoneRestore')} value={restore} onChange={setRestore} />}
           {p.tombstones.removesLocal > 0 && <Hint>{t('data.tombstoneRemoves', { n: p.tombstones.removesLocal })}</Hint>}
           <Label>{t('data.applyParts')}</Label>
           {p.has.records && (

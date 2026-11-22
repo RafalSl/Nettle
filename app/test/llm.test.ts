@@ -72,7 +72,13 @@ describe('API key and model settings (SE-2, SE-4, LL-9)', () => {
     const deps = makeDeps(new MemoryRepo());
     await saveApiKey(deps, 'synthetic-test-key');
     const seen: string[] = [];
-    const spy = { ...deps, llmFor: (c: { model: string }) => (seen.push(c.model), { completeJson: async () => ({ text: '{"ingredients":[],"uncertainty":null}', model: c.model }) }) };
+    const spy = {
+      ...deps,
+      llmFor: (c: { model: string }) => (
+        seen.push(c.model),
+        { completeJson: async () => ({ text: '{"ingredients":[],"uncertainty":null}', model: c.model }) }
+      ),
+    };
     await setModel(spy, 'meal_photo', 'claude-sonnet-5-5');
     await estimateIngredients(spy, { image, language: 'en' });
     expect(seen).toEqual(['claude-sonnet-5-5']);
@@ -127,7 +133,11 @@ describe('ingredient estimate (LL-1, IN-3)', () => {
     const deps = makeDeps(new MemoryRepo(), undefined, llm);
     await saveApiKey(deps, 'synthetic-test-key');
     const est = await estimateIngredients(deps, { image, language: 'pl' });
-    expect(est).toEqual({ names: ['tomato', 'bread'], uncertainty: 'sauce?', provenance: { model: 'fake-model', at: expect.any(String), promptVersion: 'ingredients-2' } });
+    expect(est).toEqual({
+      names: ['tomato', 'bread'],
+      uncertainty: 'sauce?',
+      provenance: { model: 'fake-model', at: expect.any(String), promptVersion: 'ingredients-2' },
+    });
     const req = llm.requests[0]!;
     expect(req.images).toEqual([image]);
     expect(req.system).toContain('Polish');
@@ -169,9 +179,13 @@ describe('Anthropic adapter over fetch (LL-8, LL-10)', () => {
   const req = { system: 'sys', user: 'usr', schema: { type: 'object' }, maxTokens: 100, images: [image] };
   const ok = (over: object = {}) => ({
     status: 200,
-    text: async () => JSON.stringify({ model: 'claude-test', stop_reason: 'end_turn', content: [{ type: 'text', text: '{"a":1}' }], ...over }),
+    text: async () =>
+      JSON.stringify({ model: 'claude-test', stop_reason: 'end_turn', content: [{ type: 'text', text: '{"a":1}' }], ...over }),
   });
-  const fail = (status: number, type?: string) => ({ status, text: async () => JSON.stringify({ type: 'error', error: { type, message: 'm sk-synthetic-secret' } }) });
+  const fail = (status: number, type?: string) => ({
+    status,
+    text: async () => JSON.stringify({ type: 'error', error: { type, message: 'm sk-synthetic-secret' } }),
+  });
   const instant = { sleep: async () => undefined };
   afterEach(() => jest.restoreAllMocks());
 
@@ -185,7 +199,12 @@ describe('Anthropic adapter over fetch (LL-8, LL-10)', () => {
     expect(calls[0]!.init.headers['anthropic-version']).toBe('2026-10-21');
     expect(calls[0]!.init.body).not.toContain('sk-synthetic-secret'); // the key is never in the body
     const body = JSON.parse(calls[0]!.init.body);
-    expect(body).toMatchObject({ model: 'claude-test', max_tokens: 100, system: 'sys', output_config: { format: { type: 'json_schema', schema: { type: 'object' } } } });
+    expect(body).toMatchObject({
+      model: 'claude-test',
+      max_tokens: 100,
+      system: 'sys',
+      output_config: { format: { type: 'json_schema', schema: { type: 'object' } } },
+    });
     expect(body.messages[0].content[0]).toEqual({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: 'AQID' } });
     expect(body.messages[0].content[1]).toEqual({ type: 'text', text: 'usr' });
   });
@@ -312,7 +331,13 @@ describe('Anthropic adapter over fetch (LL-8, LL-10)', () => {
     expect(() => readResponse({ stop_reason: 'end_turn', content: [] })).toThrow('llm_bad_response');
     expect(() => readResponse(null)).toThrow('llm_bad_response');
     expect(() => readResponse({ content: 'x' })).toThrow('llm_bad_response');
-    expect(readResponse({ stop_reason: 'end_turn', model: 'm', content: [{ type: 'thinking' }, { type: 'text', text: 'a' }, { type: 'text', text: 'b' }] })).toEqual({ text: 'ab', model: 'm' });
+    expect(
+      readResponse({
+        stop_reason: 'end_turn',
+        model: 'm',
+        content: [{ type: 'thinking' }, { type: 'text', text: 'a' }, { type: 'text', text: 'b' }],
+      }),
+    ).toEqual({ text: 'ab', model: 'm' });
   });
 
   it('LL-8 a 200 response that is not JSON is llm_bad_response', async () => {

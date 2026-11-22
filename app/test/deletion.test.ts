@@ -24,13 +24,33 @@ async function seeded(make: () => Promise<StorageRepository>) {
   const repo = await make();
   await repo.addMeal(syntheticMeal('m1', '2026-01-10T08:00:00.000Z'));
   await repo.addMeal(syntheticMeal('m2', '2026-01-12T08:00:00.000Z'));
-  await repo.addRecord('reactions', { id: 'r1', at: { utc: '2026-01-10T09:00:00.000Z', tz: TZ }, mealId: 'm1', symptoms: ['hives'], note: null });
-  await repo.addRecord('reactions', { id: 'r2', at: { utc: '2026-01-12T09:00:00.000Z', tz: TZ }, mealId: 'm2', symptoms: ['stomach'], note: null });
+  await repo.addRecord('reactions', {
+    id: 'r1',
+    at: { utc: '2026-01-10T09:00:00.000Z', tz: TZ },
+    mealId: 'm1',
+    symptoms: ['hives'],
+    note: null,
+  });
+  await repo.addRecord('reactions', {
+    id: 'r2',
+    at: { utc: '2026-01-12T09:00:00.000Z', tz: TZ },
+    mealId: 'm2',
+    symptoms: ['stomach'],
+    note: null,
+  });
   await repo.addSkinEntry(syntheticEntry('e1', '2026-01-10T10:00:00.000Z'));
   await repo.addSkinEntry(syntheticEntry('e2', '2026-01-12T10:00:00.000Z'));
   await repo.addRecord('checkIns', syntheticCheckIn('c1', '2026-01-12T20:00:00.000Z', '2026-01-12'));
   await repo.addRecord('stoolEntries', syntheticStool('s1', '2026-01-12T07:00:00.000Z'));
-  await repo.upsertItem('treatments', { id: 'tr1', name: 'Synthetic cream', predefined: false, archived: false, nameOverride: null, valueKind: 'yesno' as const, description: null });
+  await repo.upsertItem('treatments', {
+    id: 'tr1',
+    name: 'Synthetic cream',
+    predefined: false,
+    archived: false,
+    nameOverride: null,
+    valueKind: 'yesno' as const,
+    description: null,
+  });
   return repo;
 }
 

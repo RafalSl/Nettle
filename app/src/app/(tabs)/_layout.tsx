@@ -6,7 +6,17 @@ import { BottomInset, FloatingTabBar, TAB_BAR_INSET } from '@/ui/FloatingTabBar'
 export default function TabsLayout() {
   return (
     <BottomInset.Provider value={TAB_BAR_INSET}>
-      <Tabs screenOptions={{ headerShown: false }} tabBar={(props) => <FloatingTabBar state={props.state as never} descriptors={props.descriptors as never} emitter={props.emitter as never} navigateToTab={props.navigateToTab} />}>
+      <Tabs
+        screenOptions={{ headerShown: false }}
+        tabBar={(props) => (
+          <FloatingTabBar
+            state={props.state as never}
+            descriptors={props.descriptors as never}
+            emitter={props.emitter as never}
+            navigateToTab={props.navigateToTab}
+          />
+        )}
+      >
         <Tabs.Screen name="today" options={{ title: t('tabs.today') }} />
         <Tabs.Screen name="review" options={{ title: t('tabs.review') }} />
       </Tabs>

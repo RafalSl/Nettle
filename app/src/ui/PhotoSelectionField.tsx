@@ -34,7 +34,10 @@ export function PhotoSelectionField({ onChange }: { onChange: (selection: PhotoS
       setAreas(all);
       // EX-7: single photos are listed by area and time, sensitive ones marked.
       const areaOf = new Map(
-        [...(await deps.repo.listSkinEntries()), ...(await deps.repo.listRecords('nailEntries'))].map((e) => [e.id, all.find((a) => a.id === e.areaId)]),
+        [...(await deps.repo.listSkinEntries()), ...(await deps.repo.listRecords('nailEntries'))].map((e) => [
+          e.id,
+          all.find((a) => a.id === e.areaId),
+        ]),
       );
       setPhotos(
         (await deps.repo.listRecords('photos')).map((photo) => {
@@ -67,7 +70,11 @@ export function PhotoSelectionField({ onChange }: { onChange: (selection: PhotoS
     <>
       <Label>{t('exportPhotos.title')}</Label>
       <Hint>{t('exportPhotos.hint')}</Hint>
-      <Chips items={MODES.map((m) => ({ id: m, label: t(`exportPhotos.${m}`) }))} selected={new Set([mode])} onToggle={(id) => setMode(id as Mode)} />
+      <Chips
+        items={MODES.map((m) => ({ id: m, label: t(`exportPhotos.${m}`) }))}
+        selected={new Set([mode])}
+        onToggle={(id) => setMode(id as Mode)}
+      />
       {mode === 'custom' && (
         <>
           <Hint>{t('exportPhotos.customHint')}</Hint>
@@ -75,7 +82,12 @@ export function PhotoSelectionField({ onChange }: { onChange: (selection: PhotoS
             <Hint>{t('exportPhotos.noPhotos')}</Hint>
           ) : (
             <PhotoGrid
-              items={photos.map(({ photo, label }) => ({ id: photo.id, file: photo.file, sensitive: photo.sensitive, label: photo.sensitive ? `${label} (${t('analysis.sensitiveMark')})` : label }))}
+              items={photos.map(({ photo, label }) => ({
+                id: photo.id,
+                file: photo.file,
+                sensitive: photo.sensitive,
+                label: photo.sensitive ? `${label} (${t('analysis.sensitiveMark')})` : label,
+              }))}
               selected={picked}
               onToggle={(id) =>
                 setPicked((cur) => {

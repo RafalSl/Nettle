@@ -24,7 +24,11 @@ export function useEntryDelete(onChanged: () => void) {
   const { deps } = useServices();
   return async function remove(kind: RecordKind, id: string, title: string) {
     try {
-      const choice = await chooseAction({ title, message: await alsoLine(deps, kind, id), actions: [{ label: t('log.deleteAction'), destructive: true }] });
+      const choice = await chooseAction({
+        title,
+        message: await alsoLine(deps, kind, id),
+        actions: [{ label: t('log.deleteAction'), destructive: true }],
+      });
       if (choice === 0) {
         await deleteEntry(deps, kind, id);
         if (kind === 'checkIns') await rescheduleReminders(deps); // SK-9: a day without its record gets its reminder back

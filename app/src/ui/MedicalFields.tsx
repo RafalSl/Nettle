@@ -33,7 +33,9 @@ function EndDayField({ value, onChange }: { value: LocalDay | null; onChange: (d
           }}
         />
       )}
-      {value && <Button kind="secondary" title={t('common.clear')} accessibilityLabel={t('medical.endClear')} onPress={() => onChange(null)} />}
+      {value && (
+        <Button kind="secondary" title={t('common.clear')} accessibilityLabel={t('medical.endClear')} onPress={() => onChange(null)} />
+      )}
       <Hint>{t('medical.endHint')}</Hint>
     </>
   );
@@ -57,8 +59,19 @@ export function MedicalFields({
 }) {
   return (
     <>
-      <Chips items={MEDICAL_KINDS.map((k) => ({ id: k, label: t(`medical.kinds.${k}`) }))} selected={new Set([kind])} onToggle={(id) => onKind(id as MedicalKind)} />
-      <TextInput style={styles.input} accessibilityLabel={t('medical.title')} placeholder={t('medical.title')} maxLength={MAX_MEDICAL_TITLE} value={title} onChangeText={onTitle} />
+      <Chips
+        items={MEDICAL_KINDS.map((k) => ({ id: k, label: t(`medical.kinds.${k}`) }))}
+        selected={new Set([kind])}
+        onToggle={(id) => onKind(id as MedicalKind)}
+      />
+      <TextInput
+        style={styles.input}
+        accessibilityLabel={t('medical.title')}
+        placeholder={t('medical.title')}
+        maxLength={MAX_MEDICAL_TITLE}
+        value={title}
+        onChangeText={onTitle}
+      />
       {kind === 'illness' && <EndDayField value={endDay} onChange={onEndDay} />}
     </>
   );
@@ -77,7 +90,10 @@ export function MedicalEventSection() {
     <FormModal
       dirty={f.dirty}
       missing={title.trim() ? null : t('edit.titleMissing')}
-      onSave={async () => void (await logMedicalEvent(deps, { kind, title, ...(kind === 'illness' ? { endDay } : {}), note, at: time.atForSave }))}>
+      onSave={async () =>
+        void (await logMedicalEvent(deps, { kind, title, ...(kind === 'illness' ? { endDay } : {}), note, at: time.atForSave }))
+      }
+    >
       <MedicalFields kind={kind} onKind={setKind} title={title} onTitle={setTitle} endDay={endDay} onEndDay={setEndDay} />
       <TimeField value={time.value} onChange={time.set} />
       <Label>{t('common.note')}</Label>

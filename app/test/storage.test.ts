@@ -42,9 +42,7 @@ describe('sqlite migrations', () => {
     await db.exec('PRAGMA foreign_keys = ON');
     await db.exec(MIGRATIONS[0]!);
     await db.exec('PRAGMA user_version = 1');
-    await db.run(
-      `INSERT INTO skin_area (id, name, predefined, archived, sensitive_default) VALUES ('area-chin', 'Chin', 1, 0, 0)`,
-    );
+    await db.run(`INSERT INTO skin_area (id, name, predefined, archived, sensitive_default) VALUES ('area-chin', 'Chin', 1, 0, 0)`);
     await db.run(`INSERT INTO meal (id, ts_utc, tz, description) VALUES ('m1', '2026-01-01T08:00:00.000Z', 'UTC', 'Synthetic')`);
     const repo = await SqliteRepo.open(db);
     expect(await repo.listMeals()).toHaveLength(1);
@@ -103,10 +101,14 @@ describe('sqlite migrations', () => {
     await db.exec('PRAGMA foreign_keys = ON');
     await SqliteRepo.open(db);
     await expect(
-      db.run(`INSERT INTO change_event (id, ts_utc, tz, action, category, name) VALUES ('x', '2026-01-01T00:00:00.000Z', 'UTC', 'paused', 'diet', 'n')`),
+      db.run(
+        `INSERT INTO change_event (id, ts_utc, tz, action, category, name) VALUES ('x', '2026-01-01T00:00:00.000Z', 'UTC', 'paused', 'diet', 'n')`,
+      ),
     ).rejects.toThrow();
     await expect(
-      db.run(`INSERT INTO reaction (id, ts_utc, tz, meal_id, symptoms_json) VALUES ('x', '2026-01-01T00:00:00.000Z', 'UTC', 'no-meal', '[]')`),
+      db.run(
+        `INSERT INTO reaction (id, ts_utc, tz, meal_id, symptoms_json) VALUES ('x', '2026-01-01T00:00:00.000Z', 'UTC', 'no-meal', '[]')`,
+      ),
     ).rejects.toThrow();
   });
 
@@ -116,11 +118,26 @@ describe('sqlite migrations', () => {
       await db.exec(sql);
       await db.exec(`PRAGMA user_version = ${i + 1}`);
     }
-    await db.run(`INSERT INTO alcohol_entry (id, ts_utc, tz, drink, amount_ml) VALUES ('d1', '2026-01-01T00:00:00.000Z', 'UTC', 'beer', 500)`);
-    await db.run(`INSERT INTO tombstone (id, kind, deleted_utc, deleted_tz) VALUES ('t1', 'alcoholEntries', '2026-01-02T00:00:00.000Z', 'UTC')`);
+    await db.run(
+      `INSERT INTO alcohol_entry (id, ts_utc, tz, drink, amount_ml) VALUES ('d1', '2026-01-01T00:00:00.000Z', 'UTC', 'beer', 500)`,
+    );
+    await db.run(
+      `INSERT INTO tombstone (id, kind, deleted_utc, deleted_tz) VALUES ('t1', 'alcoholEntries', '2026-01-02T00:00:00.000Z', 'UTC')`,
+    );
     const repo = await SqliteRepo.open(db);
     expect(await repo.listRecords('drinks')).toEqual([
-      { id: 'd1', at: { utc: '2026-01-01T00:00:00.000Z', tz: 'UTC' }, name: 'beer', amountMl: 500, alcohol: true, ingredients: [], allergens: [], barcode: null, source: { kind: 'typed', edited: false, llm: null, aiTags: false }, note: null },
+      {
+        id: 'd1',
+        at: { utc: '2026-01-01T00:00:00.000Z', tz: 'UTC' },
+        name: 'beer',
+        amountMl: 500,
+        alcohol: true,
+        ingredients: [],
+        allergens: [],
+        barcode: null,
+        source: { kind: 'typed', edited: false, llm: null, aiTags: false },
+        note: null,
+      },
     ]);
     expect((await db.all<{ kind: string }>('SELECT kind FROM tombstone')).map((r) => r.kind)).toEqual(['drinks']);
   });
@@ -131,7 +148,9 @@ describe('sqlite migrations', () => {
       await db.exec(sql);
       await db.exec(`PRAGMA user_version = ${i + 1}`);
     }
-    await db.run(`INSERT INTO meal (id, ts_utc, tz, description, allergens_json) VALUES ('m1', '2026-01-01T00:00:00.000Z', 'UTC', 'Synthetic', '[]')`);
+    await db.run(
+      `INSERT INTO meal (id, ts_utc, tz, description, allergens_json) VALUES ('m1', '2026-01-01T00:00:00.000Z', 'UTC', 'Synthetic', '[]')`,
+    );
     await db.run(`INSERT INTO drink (id, ts_utc, tz, name, amount_ml) VALUES ('d1', '2026-01-01T00:00:00.000Z', 'UTC', 'tea', 200)`);
     const repo = await SqliteRepo.open(db);
     const typed = { kind: 'typed', edited: false, llm: null, aiTags: false };
@@ -147,13 +166,19 @@ describe('sqlite migrations', () => {
       await db.exec(sql);
       await db.exec(`PRAGMA user_version = ${i + 1}`);
     }
-    await db.run(`INSERT INTO skin_area (id, name, predefined, sensitive_default, kind) VALUES ('area-intimate', 'Intimate area', 1, 1, 'skin')`);
-    await db.run(`INSERT INTO skin_entry (id, ts_utc, tz, area_id, severity, itch, pain, dryness, scaling) VALUES ('e1', '2026-01-01T00:00:00.000Z', 'UTC', 'area-intimate', 3, 3, 3, 3, 3)`);
+    await db.run(
+      `INSERT INTO skin_area (id, name, predefined, sensitive_default, kind) VALUES ('area-intimate', 'Intimate area', 1, 1, 'skin')`,
+    );
+    await db.run(
+      `INSERT INTO skin_entry (id, ts_utc, tz, area_id, severity, itch, pain, dryness, scaling) VALUES ('e1', '2026-01-01T00:00:00.000Z', 'UTC', 'area-intimate', 3, 3, 3, 3, 3)`,
+    );
     const repo = await SqliteRepo.open(db);
     const old = (await repo.listAreas()).find((a) => a.id === 'area-intimate');
     expect(old).toMatchObject({ name: 'Intimate area', predefined: false, archived: true });
     expect((await repo.listSkinEntries()).map((e) => e.areaId)).toEqual(['area-intimate']); // history stays
-    expect((await repo.listAreas()).filter((a) => a.predefined).map((a) => a.id)).toEqual(expect.arrayContaining(['area-penis', 'area-perineum-groin', 'area-between-buttocks']));
+    expect((await repo.listAreas()).filter((a) => a.predefined).map((a) => a.id)).toEqual(
+      expect.arrayContaining(['area-penis', 'area-perineum-groin', 'area-between-buttocks']),
+    );
     const fresh = await SqliteRepo.open(createNodeSqliteDb());
     expect((await fresh.listAreas()).some((a) => a.id === 'area-intimate')).toBe(false);
   });
@@ -172,12 +197,21 @@ describe('sqlite migrations', () => {
   it('SK-4 stores photo records and keeps each file name unique', async () => {
     const db = createNodeSqliteDb();
     const repo = await SqliteRepo.open(db);
-    const photo = { id: 'p1', at: { utc: '2026-01-01T00:00:00.000Z', tz: 'UTC' }, entryKind: 'skinEntry' as const, entryId: 'e1', sensitive: true, file: 'a.jpg' };
+    const photo = {
+      id: 'p1',
+      at: { utc: '2026-01-01T00:00:00.000Z', tz: 'UTC' },
+      entryKind: 'skinEntry' as const,
+      entryId: 'e1',
+      sensitive: true,
+      file: 'a.jpg',
+    };
     await repo.addRecord('photos', photo);
     expect(await repo.listRecords('photos')).toEqual([photo]);
     await expect(repo.addRecord('photos', { ...photo, id: 'p2' })).rejects.toThrow(); // same file
     await expect(
-      db.run(`INSERT INTO photo (id, ts_utc, tz, entry_kind, entry_id, sensitive, file) VALUES ('x', '2026-01-01T00:00:00.000Z', 'UTC', 'meal', 'e', 0, 'b.jpg')`),
+      db.run(
+        `INSERT INTO photo (id, ts_utc, tz, entry_kind, entry_id, sensitive, file) VALUES ('x', '2026-01-01T00:00:00.000Z', 'UTC', 'meal', 'e', 0, 'b.jpg')`,
+      ),
     ).rejects.toThrow();
   });
 

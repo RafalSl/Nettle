@@ -45,7 +45,14 @@ export async function sinceLastExport(deps: Deps): Promise<{ from: string } | nu
  * ones, optional password, no PDF, for backup and migration.
  */
 export type ExportPreset =
-  | { kind: 'doctor'; days?: { from?: string; to?: string }; report: NonNullable<ExportOptions['report']>; photos?: PhotoSelection; csv?: boolean; /** LL-14 */ summaryId?: string }
+  | {
+      kind: 'doctor';
+      days?: { from?: string; to?: string };
+      report: NonNullable<ExportOptions['report']>;
+      photos?: PhotoSelection;
+      csv?: boolean;
+      /** LL-14 */ summaryId?: string;
+    }
   | { kind: 'backup'; password?: string };
 
 export function presetOptions(preset: ExportPreset): ExportOptions {

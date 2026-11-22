@@ -86,11 +86,7 @@ export function rankSuggestions<T>(
   const all = [...byKey.values()].filter(matches);
   const favs = favorites.map((f) => byKey.get(f.key)!).filter(matches);
   const rest = all.filter((s) => !favKeys.has(s.key));
-  const ordered = [
-    ...favs,
-    ...rest.filter((s) => s.count > 0).sort(frequent),
-    ...rest.filter((s) => s.count === 0).sort(recent),
-  ];
+  const ordered = [...favs, ...rest.filter((s) => s.count > 0).sort(frequent), ...rest.filter((s) => s.count === 0).sort(recent)];
   const limit = query ? (options.queryRows ?? 20) : rows;
   return ordered.slice(0, Math.max(limit, favs.length));
 }

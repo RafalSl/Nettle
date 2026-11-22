@@ -67,19 +67,57 @@ export const drinkMissing = (d: DrinkDraft): string | null =>
   !d.name.trim() ? t('edit.drink') : !(Number(d.amount) > 0) ? t('edit.amount') : null;
 
 /** IN-4: name, amount, the alcohol switch, optional ingredients and allergen tags. Setters are the form's touching ones. */
-export function DrinkFields({ draft, onChange, names = [] }: { draft: DrinkDraft; onChange: (next: DrinkDraft) => void; names?: readonly string[] }) {
+export function DrinkFields({
+  draft,
+  onChange,
+  names = [],
+}: {
+  draft: DrinkDraft;
+  onChange: (next: DrinkDraft) => void;
+  names?: readonly string[];
+}) {
   const set = <K extends keyof DrinkDraft>(k: K, v: DrinkDraft[K]) => onChange({ ...draft, [k]: v });
   return (
     <>
-      <TextInput style={styles.input} accessibilityLabel={t('more.drinkName')} placeholder={t('more.drinkName')} value={draft.name} onChangeText={(v) => set('name', v)} />
-      <TextInput style={styles.input} accessibilityLabel={t('more.drinkAmount')} placeholder={t('more.drinkAmount')} keyboardType="number-pad" value={draft.amount} onChangeText={(v) => set('amount', v)} />
+      <TextInput
+        style={styles.input}
+        accessibilityLabel={t('more.drinkName')}
+        placeholder={t('more.drinkName')}
+        value={draft.name}
+        onChangeText={(v) => set('name', v)}
+      />
+      <TextInput
+        style={styles.input}
+        accessibilityLabel={t('more.drinkAmount')}
+        placeholder={t('more.drinkAmount')}
+        keyboardType="number-pad"
+        value={draft.amount}
+        onChangeText={(v) => set('amount', v)}
+      />
       <SwitchRow title={t('more.drinkAlcohol')} value={draft.alcohol} onChange={(v) => set('alcohol', v)} />
-      <TextInput style={styles.input} accessibilityLabel={t('more.drinkIngredients')} placeholder={t('more.drinkIngredients')} value={draft.ingredients} onChangeText={(v) => set('ingredients', v)} />
+      <TextInput
+        style={styles.input}
+        accessibilityLabel={t('more.drinkIngredients')}
+        placeholder={t('more.drinkIngredients')}
+        value={draft.ingredients}
+        onChangeText={(v) => set('ingredients', v)}
+      />
       {/* IN-1: the word being typed after the last comma matches names from the diary; a tap completes it. */}
       <Chips
-        items={matchIngredientNames(names, lastToken(draft.ingredients), splitIngredients(draft.ingredients)).map((n) => ({ id: n, label: n }))}
+        items={matchIngredientNames(names, lastToken(draft.ingredients), splitIngredients(draft.ingredients)).map((n) => ({
+          id: n,
+          label: n,
+        }))}
         selected={new Set()}
-        onToggle={(n) => set('ingredients', `${draft.ingredients.slice(0, draft.ingredients.length - lastToken(draft.ingredients).length).replace(/\s*$/, ' ').trimStart()}${n}, `)}
+        onToggle={(n) =>
+          set(
+            'ingredients',
+            `${draft.ingredients
+              .slice(0, draft.ingredients.length - lastToken(draft.ingredients).length)
+              .replace(/\s*$/, ' ')
+              .trimStart()}${n}, `,
+          )
+        }
       />
       <Label>{t('more.drinkAllergens')}</Label>
       <Chips

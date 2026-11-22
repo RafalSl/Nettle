@@ -90,17 +90,40 @@ export default function ReportScreen() {
   }
 
   const empty = preview !== null && preview.entries === 0;
-  const pickable = periodPhotos.map(({ photo, areaId }) => ({ id: photo.id, file: photo.file, sensitive: photo.sensitive, label: `${areaId ? (areas.get(areaId) ?? '') : ''} ${localDateTime(photo.at.utc, photo.at.tz)}`.trim() }));
+  const pickable = periodPhotos.map(({ photo, areaId }) => ({
+    id: photo.id,
+    file: photo.file,
+    sensitive: photo.sensitive,
+    label: `${areaId ? (areas.get(areaId) ?? '') : ''} ${localDateTime(photo.at.utc, photo.at.tz)}`.trim(),
+  }));
   return (
     <Screen floating={<FloatingAction title={t('doctor.button')} icon="report" disabled={preview === null || empty} onPress={create} />}>
       <Hint>{t('doctor.hint')}</Hint>
       <Label>{t('doctor.range')}</Label>
-      <Chips items={available.map((p) => ({ id: p, label: t(`doctor.${p}`) }))} selected={new Set([period])} onToggle={(id) => setPeriod(id as Period)} />
+      <Chips
+        items={available.map((p) => ({ id: p, label: t(`doctor.${p}`) }))}
+        selected={new Set([period])}
+        onToggle={(id) => setPeriod(id as Period)}
+      />
       {period === 'custom' && <DayRangePickers from={from} to={to} onFrom={setFrom} onTo={setTo} />}
       {preview && !empty && <Hint>{t('doctor.counts', { entries: preview.entries, photos: preview.photos })}</Hint>}
       {empty && <Hint>{t('doctor.empty')}</Hint>}
-      {preview && preview.sensitivePhotos > 0 && !oneByOne && <SwitchRow title={t('doctor.sensitive', { n: preview.sensitivePhotos })} hint={t('doctor.sensitiveHint')} value={sensitive} onChange={setSensitive} />}
-      {preview && preview.photos > 0 && <SwitchRow title={t('doctor.pickPhotos')} hint={oneByOne ? t('doctor.pickPhotosHint') : undefined} value={oneByOne} onChange={setOneByOne} />}
+      {preview && preview.sensitivePhotos > 0 && !oneByOne && (
+        <SwitchRow
+          title={t('doctor.sensitive', { n: preview.sensitivePhotos })}
+          hint={t('doctor.sensitiveHint')}
+          value={sensitive}
+          onChange={setSensitive}
+        />
+      )}
+      {preview && preview.photos > 0 && (
+        <SwitchRow
+          title={t('doctor.pickPhotos')}
+          hint={oneByOne ? t('doctor.pickPhotosHint') : undefined}
+          value={oneByOne}
+          onChange={setOneByOne}
+        />
+      )}
       {oneByOne && (
         <PhotoGrid
           items={pickable}
@@ -120,7 +143,12 @@ export default function ReportScreen() {
         onToggle={(id) => setLanguage(id as 'en' | 'pl')}
       />
       {!empty && preview !== null && (
-        <ReportSummaryPanel key={`${period}|${period === 'custom' ? `${pickedDay(from, deps.clock.timeZone())}|${pickedDay(to, deps.clock.timeZone())}` : ''}|${language}`} days={() => daysFor(period)} language={language} onChange={setSummary} />
+        <ReportSummaryPanel
+          key={`${period}|${period === 'custom' ? `${pickedDay(from, deps.clock.timeZone())}|${pickedDay(to, deps.clock.timeZone())}` : ''}|${language}`}
+          days={() => daysFor(period)}
+          language={language}
+          onChange={setSummary}
+        />
       )}
     </Screen>
   );

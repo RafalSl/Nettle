@@ -14,10 +14,21 @@ export function WaitArc({ size = 44 }: { size?: number }) {
   const r = size / 2 - 3;
   const c = 2 * Math.PI * r;
   return (
-    <Animated.View style={{ width: size, height: size, transform: [{ rotate: t.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] }) }] }}>
+    <Animated.View
+      style={{ width: size, height: size, transform: [{ rotate: t.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] }) }] }}
+    >
       <Svg width={size} height={size}>
         <Circle cx={size / 2} cy={size / 2} r={r} stroke={color.glassLineRaised} strokeWidth={3} fill="none" />
-        <Circle cx={size / 2} cy={size / 2} r={r} stroke={color.accent} strokeWidth={3} strokeLinecap="round" fill="none" strokeDasharray={`${c * 0.25} ${c}`} />
+        <Circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          stroke={color.accent}
+          strokeWidth={3}
+          strokeLinecap="round"
+          fill="none"
+          strokeDasharray={`${c * 0.25} ${c}`}
+        />
       </Svg>
     </Animated.View>
   );

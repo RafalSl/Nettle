@@ -33,6 +33,8 @@ export async function openFlareSummary(deps: Deps): Promise<OpenFlare | null> {
     const cur = latest.get(e.areaId);
     if (!cur || e.at.utc >= cur.at) latest.set(e.areaId, { at: e.at.utc, severity: e.scores.severity });
   }
-  const areas = [...latest].map(([areaId, v]) => ({ areaId, severity: v.severity })).sort((a, b) => b.severity - a.severity || a.areaId.localeCompare(b.areaId));
+  const areas = [...latest]
+    .map(([areaId, v]) => ({ areaId, severity: v.severity }))
+    .sort((a, b) => b.severity - a.severity || a.areaId.localeCompare(b.areaId));
   return { period, areas };
 }

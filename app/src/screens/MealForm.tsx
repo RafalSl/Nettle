@@ -109,7 +109,12 @@ export default function MealScreen() {
   const ingredientRun = useIngredientRun();
   // IN-10: the AI's allergen suggestion lands as a hint with a select button; nothing is selected by itself.
   const allergenAi = useAllergenAi((tags, note) =>
-    setFromCode({ note: [tags.length === 0 ? t('meal.aiAllergensNone') : '', note ?? ''].filter(Boolean).join(' '), tags, hintKey: 'meal.aiAllergensHint', ai: true }),
+    setFromCode({
+      note: [tags.length === 0 ? t('meal.aiAllergensNone') : '', note ?? ''].filter(Boolean).join(' '),
+      tags,
+      hintKey: 'meal.aiAllergensHint',
+      ai: true,
+    }),
   );
   const [at, setAt] = useState<Date | null>(null);
   const [edited, setEdited] = useState(false);
@@ -133,8 +138,21 @@ export default function MealScreen() {
   const defaultAt = typeof day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(day) ? atOnDay(day, now, tz, deps.dayStart.get()) : now;
 
   const suggestions: Suggestion<MealDraft>[] = rankSuggestions(
-    meals.map((h) => ({ ...h, payload: { description: h.payload.description, ingredients: h.payload.ingredients, allergens: h.payload.allergens, barcode: h.payload.barcode, source: h.payload.source } })),
-    prefs.favorites.meals.map((f) => ({ key: f.key, label: f.description, payload: { description: f.description, ingredients: f.ingredients, allergens: f.allergens, barcode: f.barcode, source: f.source } })),
+    meals.map((h) => ({
+      ...h,
+      payload: {
+        description: h.payload.description,
+        ingredients: h.payload.ingredients,
+        allergens: h.payload.allergens,
+        barcode: h.payload.barcode,
+        source: h.payload.source,
+      },
+    })),
+    prefs.favorites.meals.map((f) => ({
+      key: f.key,
+      label: f.description,
+      payload: { description: f.description, ingredients: f.ingredients, allergens: f.allergens, barcode: f.barcode, source: f.source },
+    })),
     now,
     { rows: prefs.suggestions.rows, windowDays: prefs.suggestions.windowDays, query: description },
   );
@@ -144,7 +162,10 @@ export default function MealScreen() {
     if (s.favorite) parts.push(t('meal.hintFavorite'));
     if (s.count >= 2) parts.push(t('meal.hintCount', { n: s.count }));
     if (s.lastAt) {
-      const days = Math.round((Date.parse(localDay(now.toISOString(), tz, deps.dayStart.get())) - Date.parse(localDay(s.lastAt, tz, deps.dayStart.get()))) / DAY_MS);
+      const days = Math.round(
+        (Date.parse(localDay(now.toISOString(), tz, deps.dayStart.get())) - Date.parse(localDay(s.lastAt, tz, deps.dayStart.get()))) /
+          DAY_MS,
+      );
       parts.push(days <= 0 ? t('meal.hintToday') : days === 1 ? t('meal.hintYesterday') : t('meal.hintDays', { n: days }));
     }
     return parts.join(' · ');
@@ -189,7 +210,16 @@ export default function MealScreen() {
           source: p ? { kind: 'open_food_facts', edited: false, llm: null, aiTags: false } : typedSource(),
           sourceAllergens: p?.allergens ?? [],
         });
-        setFromCode({ note: !p ? t('meal.scanNotFound') : found.incomplete ? t('meal.scanIncomplete') : p.translated ? t('meal.scanFromDbTranslated') : t('meal.scanFromDb'), tags: p?.allergens ?? [] });
+        setFromCode({
+          note: !p
+            ? t('meal.scanNotFound')
+            : found.incomplete
+              ? t('meal.scanIncomplete')
+              : p.translated
+                ? t('meal.scanFromDbTranslated')
+                : t('meal.scanFromDb'),
+          tags: p?.allergens ?? [],
+        });
       };
       if ((found.product || found.history) && found.inStore) {
         // IN-2: an in-store code is ambiguous; the user confirms the match or goes back.
@@ -214,10 +244,12 @@ export default function MealScreen() {
     setEdited(false);
   }
 
-  const touch = <T,>(set: (v: T) => void) => (v: T) => {
-    setEdited(true);
-    set(v);
-  };
+  const touch =
+    <T,>(set: (v: T) => void) =>
+    (v: T) => {
+      setEdited(true);
+      set(v);
+    };
   const setIngredient = (i: number, v: string) => touch(setIngredients)(ingredients.map((x, j) => (j === i ? v : x)));
 
   /**
@@ -236,7 +268,8 @@ export default function MealScreen() {
         filled: { ingredients: next.map((i) => i.trim()).filter(Boolean), allergens: r.label ? tags : [...allergens] },
       });
     }
-    if (tags.length > 0) setFromCode({ note: t('meal.labelTagsHint', { list: tags.map((a) => t(`allergens.${a}`)).join(', ') }), tags, ai: true });
+    if (tags.length > 0)
+      setFromCode({ note: t('meal.labelTagsHint', { list: tags.map((a) => t(`allergens.${a}`)).join(', ') }), tags, ai: true });
     ingredientRun.dismiss();
   }
 
@@ -244,7 +277,12 @@ export default function MealScreen() {
   function saveFields() {
     const list = ingredients.map((i) => i.trim()).filter(Boolean);
     const tags = [...allergens] as Allergen[];
-    return { ingredients: list, allergens: tags, barcode: origin.barcode, source: afterEdit(origin.source, !sameIngredients(origin.filled, { ingredients: list, allergens: tags })) };
+    return {
+      ingredients: list,
+      allergens: tags,
+      barcode: origin.barcode,
+      source: afterEdit(origin.source, !sameIngredients(origin.filled, { ingredients: list, allergens: tags })),
+    };
   }
 
   const key = description.trim().toLowerCase().replace(/\s+/g, ' ');
@@ -268,11 +306,18 @@ export default function MealScreen() {
       onSave={async () => {
         ingredientRun.cancel(); // Save uses the fields as they are and drops a running call
         await logMeal(deps, { description, ...saveFields(), fillLater, note, at: at ?? (day ? defaultAt : undefined) });
-      }}>
+      }}
+    >
       {phase === 'choose' ? (
         <>
           <Label>{t('meal.chooseTitle')}</Label>
-          <TextInput style={styles.input} accessibilityLabel={t('meal.description')} placeholder={t('meal.description')} value={description} onChangeText={setDescription} />
+          <TextInput
+            style={styles.input}
+            accessibilityLabel={t('meal.description')}
+            placeholder={t('meal.description')}
+            value={description}
+            onChangeText={setDescription}
+          />
           {suggestions.length > 0 && <Label>{t('meal.suggestions')}</Label>}
           {suggestions.map((s) => (
             <Pressable
@@ -280,7 +325,8 @@ export default function MealScreen() {
               accessibilityRole="button"
               accessibilityLabel={s.label}
               onPress={() => review(s.payload)}
-              style={({ pressed }) => [{ paddingVertical: 10 }, pressed && { opacity: 0.6 }]}>
+              style={({ pressed }) => [{ paddingVertical: 10 }, pressed && { opacity: 0.6 }]}
+            >
               <Text style={styles.rowText}>{s.label}</Text>
               {hint(s) ? <Hint>{hint(s)}</Hint> : null}
             </Pressable>
@@ -293,7 +339,14 @@ export default function MealScreen() {
         <>
           <BarcodeScanner onCode={(c) => void handleCode(c)} />
           <Label>{t('meal.scanOrType')}</Label>
-          <TextInput style={styles.input} accessibilityLabel={t('meal.scanCode')} placeholder={t('meal.scanCode')} keyboardType="number-pad" value={code} onChangeText={setCode} />
+          <TextInput
+            style={styles.input}
+            accessibilityLabel={t('meal.scanCode')}
+            placeholder={t('meal.scanCode')}
+            keyboardType="number-pad"
+            value={code}
+            onChangeText={setCode}
+          />
           <Button title={t('meal.scanLookup')} disabled={!code.trim() || looking} onPress={() => void handleCode(code)} />
           {looking && <Hint>{t('meal.scanLooking')}</Hint>}
           {notFound && (
@@ -320,7 +373,14 @@ export default function MealScreen() {
               />
             </GlassSurface>
           )}
-          <Button kind="secondary" title={t('meal.scanCancel')} onPress={() => { setNotFound(null); setPhase('choose'); }} />
+          <Button
+            kind="secondary"
+            title={t('meal.scanCancel')}
+            onPress={() => {
+              setNotFound(null);
+              setPhase('choose');
+            }}
+          />
         </>
       ) : (
         <>
@@ -328,12 +388,19 @@ export default function MealScreen() {
           {dateHint && <Hint>{dateHint}</Hint>}
           {fromCode && <Hint>{fromCode.note}</Hint>}
           <Label>{t('meal.description')}</Label>
-          <TextInput style={styles.input} accessibilityLabel={t('meal.description')} value={description} onChangeText={touch(setDescription)} />
+          <TextInput
+            style={styles.input}
+            accessibilityLabel={t('meal.description')}
+            value={description}
+            onChangeText={touch(setDescription)}
+          />
           <Button kind="secondary" title={isFavorite ? t('meal.unfavorite') : t('meal.favorite')} onPress={() => void star()} />
 
           <Button kind="secondary" title={t('meal.fromPhoto')} onPress={() => ingredientRun.start('photo')} />
           <Button kind="secondary" title={t('meal.fromLabel')} onPress={() => ingredientRun.start('label')} />
-          {description.trim() !== '' && <Button kind="secondary" title={t('meal.fromName')} onPress={() => void ingredientRun.startName(description)} />}
+          {description.trim() !== '' && (
+            <Button kind="secondary" title={t('meal.fromName')} onPress={() => void ingredientRun.startName(description)} />
+          )}
           <IngredientRunPanel hook={ingredientRun} onAdd={addRun} />
           <Label>{t('meal.ingredients')}</Label>
           {ingredients.map((value, i) => (
@@ -361,15 +428,24 @@ export default function MealScreen() {
                 )}
               </View>
               {ingredients.length > 1 && (
-                <Button kind="secondary" title="−" accessibilityLabel={t('meal.removeIngredient')} onPress={() => touch(setIngredients)(ingredients.filter((_, j) => j !== i))} />
+                <Button
+                  kind="secondary"
+                  title="−"
+                  accessibilityLabel={t('meal.removeIngredient')}
+                  onPress={() => touch(setIngredients)(ingredients.filter((_, j) => j !== i))}
+                />
               )}
             </View>
           ))}
           <View onLayout={(e) => (addBottom.current = e.nativeEvent.layout.y)}>
-            <Button kind="secondary" title={t('meal.addIngredient')} onPress={() => {
+            <Button
+              kind="secondary"
+              title={t('meal.addIngredient')}
+              onPress={() => {
                 setFocusNew(ingredients.length);
                 setIngredients((l) => [...l, '']);
-              }} />
+              }}
+            />
           </View>
 
           <Label>{t('meal.allergens')}</Label>
@@ -385,15 +461,23 @@ export default function MealScreen() {
           {fromCode && fromCode.tags.some((a) => !allergens.has(a)) && (
             <>
               <Hint>{t(fromCode.hintKey ?? 'meal.scanTagsHint', { list: fromCode.tags.map((a) => t(`allergens.${a}`)).join(', ') })}</Hint>
-              <Button kind="secondary" title={t('meal.scanSelectTags')} onPress={() => {
+              <Button
+                kind="secondary"
+                title={t('meal.scanSelectTags')}
+                onPress={() => {
                   touch(setAllergens)(new Set([...allergens, ...fromCode.tags]));
                   // IN-16, EX-4: tags taken from an AI suggestion are marked as such in the entry and the exports.
                   if (fromCode.ai) setOrigin((o) => ({ ...o, source: { ...o.source, aiTags: true } }));
-                }} />
+                }}
+              />
             </>
           )}
           <AllergenAiControls hook={allergenAi} ingredients={ingredients} />
-          <Button kind="secondary" title={t('meal.suggestAllergens')} onPress={() => touch(setAllergens)(new Set(suggestAllergens(ingredients)))} />
+          <Button
+            kind="secondary"
+            title={t('meal.suggestAllergens')}
+            onPress={() => touch(setAllergens)(new Set(suggestAllergens(ingredients)))}
+          />
           <Hint>{t('meal.allergensHint')}</Hint>
           <FillLaterSwitch value={fillLater} onChange={touch(setFillLater)} />
 
@@ -403,10 +487,24 @@ export default function MealScreen() {
         </>
       )}
       {inStore && (
-        <Sheet title={t('meal.scanInStoreTitle')} onClose={() => { setInStore(null); setPhase('choose'); }}>
+        <Sheet
+          title={t('meal.scanInStoreTitle')}
+          onClose={() => {
+            setInStore(null);
+            setPhase('choose');
+          }}
+        >
           <Hint>{t('meal.scanInStoreBody')}</Hint>
           <SheetRow icon="meal" title={inStore.name || t('meal.scanInStoreTitle')} onPress={() => undefined} />
-          <SheetRow outline title={t('meal.scanUse')} onPress={() => { const go = inStore.fill; setInStore(null); go(); }} />
+          <SheetRow
+            outline
+            title={t('meal.scanUse')}
+            onPress={() => {
+              const go = inStore.fill;
+              setInStore(null);
+              go();
+            }}
+          />
         </Sheet>
       )}
     </FormModal>

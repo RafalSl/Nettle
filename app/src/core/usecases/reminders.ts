@@ -88,10 +88,18 @@ export async function plannedReminders(deps: Deps, texts: ReminderTexts): Promis
     }
   }
   if (s.nails.enabled && (await listActiveAreas(deps, 'nail')).length > 0) {
-    specs.push({ id: 'nails', ...texts.nails, when: { type: 'weekly', weekday: s.nails.weekday, hour: s.nails.hour, minute: s.nails.minute } });
+    specs.push({
+      id: 'nails',
+      ...texts.nails,
+      when: { type: 'weekly', weekday: s.nails.weekday, hour: s.nails.hour, minute: s.nails.minute },
+    });
   }
   if (s.backup.enabled) {
-    specs.push({ id: 'backup', ...texts.backup, when: { type: 'monthly', day: s.backup.day, hour: s.backup.hour, minute: s.backup.minute } });
+    specs.push({
+      id: 'backup',
+      ...texts.backup,
+      when: { type: 'monthly', day: s.backup.day, hour: s.backup.hour, minute: s.backup.minute },
+    });
   }
   const treatments = new Map((await deps.repo.listItems('treatments')).map((t) => [t.id, t.nameOverride ?? t.name]));
   for (const r of (await getPreferences(deps)).regular) {
@@ -163,11 +171,7 @@ const TAP_MARKER = 'lastReminderTap';
  * - nails: the nail update form; just Today when no nail area remains.
  * - backup: Data and backup; it never exports by itself.
  */
-export async function resolveReminderTap(
-  deps: Deps,
-  tap: ReminderTap,
-  options: { hasUnsavedForm: boolean },
-): Promise<TapAction | null> {
+export async function resolveReminderTap(deps: Deps, tap: ReminderTap, options: { hasUnsavedForm: boolean }): Promise<TapAction | null> {
   // Without a delivery time, the day of the tap stands in, so a daily reminder is still handled once per day.
   const when = tap.deliveredAt?.getTime() ?? `day-${localDay(deps.clock.now().toISOString(), deps.clock.timeZone(), 0)}`;
   const marker = `${tap.id}|${tap.action ?? ''}|${when}`;
@@ -180,7 +184,9 @@ export async function resolveReminderTap(
       () => true,
       () => false,
     );
-    return logged ? { route: { pathname: '/today' }, viaToday: false } : { route: { pathname: '/today' }, viaToday: false, notLogged: true };
+    return logged
+      ? { route: { pathname: '/today' }, viaToday: false }
+      : { route: { pathname: '/today' }, viaToday: false, notLogged: true };
   }
   if (options.hasUnsavedForm) return null;
   const today: TapAction = { route: { pathname: '/today' }, viaToday: false };

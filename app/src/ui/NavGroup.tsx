@@ -9,10 +9,15 @@ export function NavGroup({ label, children }: { label?: string; children: ReactN
   const rows = Children.toArray(children);
   return (
     <View style={{ gap: 8 }}>
-      {label ? <Text style={{ fontSize: 13, fontWeight: '600', letterSpacing: 1.4, color: color.muted, textTransform: 'uppercase' }}>{label}</Text> : null}
+      {label ? (
+        <Text style={{ fontSize: 13, fontWeight: '600', letterSpacing: 1.4, color: color.muted, textTransform: 'uppercase' }}>{label}</Text>
+      ) : null}
       <GlassSurface style={{ borderRadius: 26, paddingHorizontal: 14 }}>
         {rows.map((row, i) => (
-          <View key={i} style={i < rows.length - 1 ? { borderBottomWidth: StyleSheet.hairlineWidth, borderColor: color.glassLine } : undefined}>
+          <View
+            key={i}
+            style={i < rows.length - 1 ? { borderBottomWidth: StyleSheet.hairlineWidth, borderColor: color.glassLine } : undefined}
+          >
             {row}
           </View>
         ))}

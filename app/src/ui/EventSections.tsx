@@ -51,8 +51,13 @@ export function ChangeEventSection() {
       missing={name.trim() ? null : t('edit.name')}
       onSave={async () => {
         await logChangeEvent(deps, { action, category, name, ...(known ? { dateUnknown: true } : { at: time.atForSave }) });
-      }}>
-      <Chips items={CHANGE_ACTIONS.map((a) => ({ id: a, label: t(`change.actions.${a}`) }))} selected={new Set([action])} onToggle={(id) => setAction(id as ChangeAction)} />
+      }}
+    >
+      <Chips
+        items={CHANGE_ACTIONS.map((a) => ({ id: a, label: t(`change.actions.${a}`) }))}
+        selected={new Set([action])}
+        onToggle={(id) => setAction(id as ChangeAction)}
+      />
       <Chips items={categories.map((c) => ({ id: c.id, label: itemLabel(c) }))} selected={new Set([category])} onToggle={setCategory} />
       {description ? <Hint>{description}</Hint> : null}
       {action === 'stopped' && (
@@ -79,10 +84,14 @@ export function ChangeEventSection() {
           )}
         </>
       )}
-      <TextInput style={styles.input} accessibilityLabel={t('more.changeName')} placeholder={t('more.changeName')} value={name} onChangeText={setName} />
-      {action === 'started' && (
-        <SwitchRow title={t('change.dateUnknown')} value={unknown} onChange={setUnknown} />
-      )}
+      <TextInput
+        style={styles.input}
+        accessibilityLabel={t('more.changeName')}
+        placeholder={t('more.changeName')}
+        value={name}
+        onChangeText={setName}
+      />
+      {action === 'started' && <SwitchRow title={t('change.dateUnknown')} value={unknown} onChange={setUnknown} />}
       {!known && <TimeField value={time.value} onChange={time.set} />}
       {known && <Hint>{t('change.dateUnknownHint')}</Hint>}
     </FormModal>
@@ -115,13 +124,24 @@ export function ReactionSection() {
       missing={missing}
       banner={
         // IN-13: the urgent-care advice is always visible and stays under the header while the form scrolls.
-        <View style={{ marginHorizontal: 20, marginTop: 4, padding: 14, borderRadius: 22, backgroundColor: color.alertSoft, borderWidth: 1, borderColor: color.alertLine }}>
+        <View
+          style={{
+            marginHorizontal: 20,
+            marginTop: 4,
+            padding: 14,
+            borderRadius: 22,
+            backgroundColor: color.alertSoft,
+            borderWidth: 1,
+            borderColor: color.alertLine,
+          }}
+        >
           <Text style={{ color: color.alert, fontWeight: '600', fontSize: 14.5 }}>{t('more.reactionUrgent')}</Text>
         </View>
       }
       onSave={async () => {
         await logReaction(deps, { mealId: selected!, symptoms: [...symptoms] as Symptom[], at: time.atForSave });
-      }}>
+      }}
+    >
       {meals.length === 0 ? (
         <>
           <Text style={{ fontSize: 20, fontWeight: '800', letterSpacing: -0.4 }}>{t('more.reactionLogMealFirst')}</Text>
@@ -137,7 +157,11 @@ export function ReactionSection() {
             onToggle={setMealId}
           />
           <Label>{t('more.reactionSymptoms')}</Label>
-          <Chips items={SYMPTOMS.map((s) => ({ id: s, label: t(`symptoms.${s}`) }))} selected={symptoms} onToggle={(id) => setSymptoms(toggled(symptoms, id))} />
+          <Chips
+            items={SYMPTOMS.map((s) => ({ id: s, label: t(`symptoms.${s}`) }))}
+            selected={symptoms}
+            onToggle={(id) => setSymptoms(toggled(symptoms, id))}
+          />
           <Label>{t('more.reactionOnset')}</Label>
           <TimeField value={time.value} onChange={time.set} />
         </>

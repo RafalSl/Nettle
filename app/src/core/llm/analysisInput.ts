@@ -51,7 +51,14 @@ const time = (utc: string, tz: string) => localDateTime(utc, tz).slice(11);
  * was eaten, so "eaten on most days" cannot be missed (LL-4). Records of the lookback window before the
  * period are limited to the kinds the lookbacks need.
  */
-export function buildAnalysisInput(src: AnalysisSource, dayFrom: string, dayTo: string, startHour = 0, flareThreshold: FlareRule = DEFAULT_FLARE_THRESHOLD, asOfUtc = `${dayTo}T23:59:59.999Z`): BuiltInput {
+export function buildAnalysisInput(
+  src: AnalysisSource,
+  dayFrom: string,
+  dayTo: string,
+  startHour = 0,
+  flareThreshold: FlareRule = DEFAULT_FLARE_THRESHOLD,
+  asOfUtc = `${dayTo}T23:59:59.999Z`,
+): BuiltInput {
   /** NF-7: the diary day of an entry, with the user's day start. */
   const dayOf = (at: { utc: string; tz: string }) => localDay(at.utc, at.tz, startHour);
   const areaName = new Map(src.skinAreas.map((a) => [a.id, label(a)]));
@@ -101,15 +108,46 @@ export function buildAnalysisInput(src: AnalysisSource, dayFrom: string, dayTo: 
     if (inPeriod(c.day)) periodRecords++;
   }
   for (const e of src.changeEvents) {
-    add('changeEvents', dayOf(e.at), 'events', { time: time(e.at.utc, e.at.tz), action: e.action, category: categoryName.get(e.category) ?? e.category, name: e.name, ...(e.dateUnknown ? { date_unknown: 'already in use before the diary; the date is when it was logged' } : {}), ...(e.note ? { note: e.note } : {}) }, true);
+    add(
+      'changeEvents',
+      dayOf(e.at),
+      'events',
+      {
+        time: time(e.at.utc, e.at.tz),
+        action: e.action,
+        category: categoryName.get(e.category) ?? e.category,
+        name: e.name,
+        ...(e.dateUnknown ? { date_unknown: 'already in use before the diary; the date is when it was logged' } : {}),
+        ...(e.note ? { note: e.note } : {}),
+      },
+      true,
+    );
   }
   for (const m of src.medicationEntries) {
-    add('medicationEntries', dayOf(m.at), 'medication', { time: time(m.at.utc, m.at.tz), kind: m.category, name: m.name, ...(m.dose ? { dose: m.dose } : {}) }, true);
+    add(
+      'medicationEntries',
+      dayOf(m.at),
+      'medication',
+      { time: time(m.at.utc, m.at.tz), kind: m.category, name: m.name, ...(m.dose ? { dose: m.dose } : {}) },
+      true,
+    );
   }
 
   // IN-18: medical events are context like change events, so they also appear in the lookback before the period.
   for (const e of src.medicalEvents) {
-    add('medicalEvents', dayOf(e.at), 'medical', { time: time(e.at.utc, e.at.tz), kind: e.kind, title: e.title, ...(e.endDay ? { until: e.endDay } : {}), ...(e.note ? { note: e.note } : {}) }, true);
+    add(
+      'medicalEvents',
+      dayOf(e.at),
+      'medical',
+      {
+        time: time(e.at.utc, e.at.tz),
+        kind: e.kind,
+        title: e.title,
+        ...(e.endDay ? { until: e.endDay } : {}),
+        ...(e.note ? { note: e.note } : {}),
+      },
+      true,
+    );
   }
   // IN-18, IN-6: a day is an illness day when the Daily health tag says so or an illness event covers it (an illness
   // without an end date covers its own day). One flag, so the model does not count the same illness twice.
@@ -124,22 +162,55 @@ export function buildAnalysisInput(src: AnalysisSource, dayFrom: string, dayTo: 
 
   // Period-only kinds.
   for (const m of src.meals) {
-    add('meals', dayOf(m.at), 'meals', { time: time(m.at.utc, m.at.tz), description: m.description, ingredients: m.ingredients, allergens: m.allergens, ...sourceOf(m.source), ...(m.note ? { note: m.note } : {}) });
+    add('meals', dayOf(m.at), 'meals', {
+      time: time(m.at.utc, m.at.tz),
+      description: m.description,
+      ingredients: m.ingredients,
+      allergens: m.allergens,
+      ...sourceOf(m.source),
+      ...(m.note ? { note: m.note } : {}),
+    });
   }
   for (const a of src.drinks) {
-    add('drinks', dayOf(a.at), 'drinks', { time: time(a.at.utc, a.at.tz), name: a.name, ml: a.amountMl, alcohol: a.alcohol, ...(a.ingredients.length ? { ingredients: a.ingredients } : {}), ...(a.allergens.length ? { allergens: a.allergens } : {}), ...sourceOf(a.source), ...(a.note ? { note: a.note } : {}) });
+    add('drinks', dayOf(a.at), 'drinks', {
+      time: time(a.at.utc, a.at.tz),
+      name: a.name,
+      ml: a.amountMl,
+      alcohol: a.alcohol,
+      ...(a.ingredients.length ? { ingredients: a.ingredients } : {}),
+      ...(a.allergens.length ? { allergens: a.allergens } : {}),
+      ...sourceOf(a.source),
+      ...(a.note ? { note: a.note } : {}),
+    });
   }
   for (const t of src.treatmentApplications) {
-    add('treatmentApplications', dayOf(t.at), 'treatments', { time: time(t.at.utc, t.at.tz), name: treatmentName.get(t.treatmentId) ?? t.treatmentId, areas: t.areaIds.map((id) => areaName.get(id) ?? id), ...(t.reaction ? { reaction: t.reaction } : {}) });
+    add('treatmentApplications', dayOf(t.at), 'treatments', {
+      time: time(t.at.utc, t.at.tz),
+      name: treatmentName.get(t.treatmentId) ?? t.treatmentId,
+      areas: t.areaIds.map((id) => areaName.get(id) ?? id),
+      ...(t.reaction ? { reaction: t.reaction } : {}),
+    });
   }
   for (const s of src.stoolEntries) {
     add('stoolEntries', dayOf(s.at), 'stool', { time: time(s.at.utc, s.at.tz), bristol: s.bristol });
   }
   for (const e of src.skinEntries) {
-    add('skinEntries', dayOf(e.at), 'skin', { time: time(e.at.utc, e.at.tz), area: areaName.get(e.areaId) ?? e.areaId, ...e.scores, ...(e.cracks ? { cracks: true } : {}), ...(e.sizeMm !== null ? { size_mm: e.sizeMm } : {}), ...(e.note ? { note: e.note } : {}) });
+    add('skinEntries', dayOf(e.at), 'skin', {
+      time: time(e.at.utc, e.at.tz),
+      area: areaName.get(e.areaId) ?? e.areaId,
+      ...e.scores,
+      ...(e.cracks ? { cracks: true } : {}),
+      ...(e.sizeMm !== null ? { size_mm: e.sizeMm } : {}),
+      ...(e.note ? { note: e.note } : {}),
+    });
   }
   for (const e of src.nailEntries) {
-    add('nailEntries', dayOf(e.at), 'nails', { time: time(e.at.utc, e.at.tz), nail: areaName.get(e.areaId) ?? e.areaId, stage: e.stage, extent: e.extent });
+    add('nailEntries', dayOf(e.at), 'nails', {
+      time: time(e.at.utc, e.at.tz),
+      nail: areaName.get(e.areaId) ?? e.areaId,
+      stage: e.stage,
+      extent: e.extent,
+    });
   }
   // SK-6: flares are derived from the skin entries (all of them, so a flare that began before the period still shows).
   const flares = deriveFlares(src.skinEntries, flareThreshold)
@@ -160,13 +231,19 @@ export function buildAnalysisInput(src: AnalysisSource, dayFrom: string, dayTo: 
       course_start: localDateTime(x.start.utc, x.start.tz),
       course_end: localDateTime(x.end.utc, x.end.tz),
       applications: x.applications,
-      ...(x.flareStart ? { next_flare_start: localDateTime(x.flareStart.utc, x.flareStart.tz), days_to_next_flare: x.days } : { no_flare_yet: true }),
+      ...(x.flareStart
+        ? { next_flare_start: localDateTime(x.flareStart.utc, x.flareStart.tz), days_to_next_flare: x.days }
+        : { no_flare_yet: true }),
       ...(x.otherTreatmentIds.length ? { other_treatments_in_between: x.otherTreatmentIds.map((id) => treatmentName.get(id) ?? id) } : {}),
     }));
   counts.relapseCourses = relapse.length;
   for (const r of src.reactions) {
     const meal = mealById.get(r.mealId);
-    add('reactions', dayOf(r.at), 'reactions', { onset: time(r.at.utc, r.at.tz), meal: meal ? `${localDateTime(meal.at.utc, meal.at.tz)} ${meal.description}` : null, symptoms: r.symptoms });
+    add('reactions', dayOf(r.at), 'reactions', {
+      onset: time(r.at.utc, r.at.tz),
+      meal: meal ? `${localDateTime(meal.at.utc, meal.at.tz)} ${meal.description}` : null,
+      symptoms: r.symptoms,
+    });
   }
 
   // Every calendar day of the period appears, so days with nothing logged are visible as such.
@@ -193,7 +270,11 @@ export function buildAnalysisInput(src: AnalysisSource, dayFrom: string, dayTo: 
   }
   const frequency = <K extends string>(map: Map<K, Set<string>>, keyName: string, limit: number) =>
     [...map.entries()]
-      .map(([k, set]) => ({ [keyName]: k, days_eaten: set.size, share_of_days_with_meals: Math.round((set.size / Math.max(1, mealDays.size)) * 100) / 100 }))
+      .map(([k, set]) => ({
+        [keyName]: k,
+        days_eaten: set.size,
+        share_of_days_with_meals: Math.round((set.size / Math.max(1, mealDays.size)) * 100) / 100,
+      }))
       .sort((a, b) => (b.days_eaten as number) - (a.days_eaten as number))
       .slice(0, limit);
 
@@ -202,9 +283,22 @@ export function buildAnalysisInput(src: AnalysisSource, dayFrom: string, dayTo: 
   counts.completeDays = completeDays;
   counts.lookbackDays = ordered.filter((d) => d.context).length;
   const json = JSON.stringify({
-    period: { from: dayFrom, to: dayTo, days: periodDays.length, days_logged: completeDays, days_with_meals: mealDays.size, lookback_days_before: LOOKBACK_DAYS },
+    period: {
+      from: dayFrom,
+      to: dayTo,
+      days: periodDays.length,
+      days_logged: completeDays,
+      days_with_meals: mealDays.size,
+      lookback_days_before: LOOKBACK_DAYS,
+    },
     severity_threshold_for_flares: baseThreshold(flareThreshold),
-    ...(typeof flareThreshold === 'number' ? {} : { severity_thresholds_by_area: Object.fromEntries(Object.entries(flareThreshold.perArea).map(([id, n]) => [areaName.get(id) ?? id, n])) }),
+    ...(typeof flareThreshold === 'number'
+      ? {}
+      : {
+          severity_thresholds_by_area: Object.fromEntries(
+            Object.entries(flareThreshold.perArea).map(([id, n]) => [areaName.get(id) ?? id, n]),
+          ),
+        }),
     flares,
     ...(relapse.length ? { time_to_relapse: relapse } : {}),
     ingredient_frequency: frequency(ingredientDays, 'ingredient', 60),

@@ -75,7 +75,11 @@ describe.each(repos)('editing and deleting one entry (%s)', (_name, make) => {
     expect(await code(editReaction(deps, reaction.id, { mealId: meal.id, symptoms: ['hives'], at: d('2026-01-15T07:00:00.000Z') }))).toBe(
       'reaction_before_meal',
     );
-    const ok = await editReaction(deps, reaction.id, { mealId: meal.id, symptoms: ['hives', 'swelling'], at: d('2026-01-15T09:10:00.000Z') });
+    const ok = await editReaction(deps, reaction.id, {
+      mealId: meal.id,
+      symptoms: ['hives', 'swelling'],
+      at: d('2026-01-15T09:10:00.000Z'),
+    });
     expect(ok.id).toBe(reaction.id);
   });
 
@@ -119,7 +123,9 @@ describe.each(repos)('editing and deleting one entry (%s)', (_name, make) => {
     const { repo, deps } = await setup();
     const a = await saveCheckIn(deps, { at: d('2026-01-14T10:00:00.000Z'), values: { 'item-wellbeing': 5 }, confirmEmptyDay: true });
     const b = await saveCheckIn(deps, { at: d('2026-01-15T10:00:00.000Z'), values: { 'item-wellbeing': 6 }, confirmEmptyDay: true });
-    expect(await code(editCheckIn(deps, b.id, { at: d('2026-01-14T18:00:00.000Z'), values: { 'item-wellbeing': 6 } }))).toBe('checkin_day_taken');
+    expect(await code(editCheckIn(deps, b.id, { at: d('2026-01-14T18:00:00.000Z'), values: { 'item-wellbeing': 6 } }))).toBe(
+      'checkin_day_taken',
+    );
     const edited = await editCheckIn(deps, a.id, { values: { 'item-wellbeing': 2 } });
     expect(edited).toMatchObject({ id: a.id, day: a.day, values: { 'item-wellbeing': 2 } });
     expect(await repo.listRecords('checkIns')).toHaveLength(2);
@@ -146,7 +152,12 @@ describe.each(repos)('editing and deleting one entry (%s)', (_name, make) => {
     expect((await repo.listMeals()).map((m) => m.id)).toEqual([other.id]);
     expect(await repo.listRecords('reactions')).toEqual([]);
     const tombs = await repo.listTombstones();
-    expect(tombs.map((t) => [t.id, t.kind]).sort()).toEqual([[meal.id, 'meals'], [r.id, 'reactions']].sort());
+    expect(tombs.map((t) => [t.id, t.kind]).sort()).toEqual(
+      [
+        [meal.id, 'meals'],
+        [r.id, 'reactions'],
+      ].sort(),
+    );
     expect(tombs[0]?.deletedAt).toEqual({ utc: '2026-01-15T10:00:00.000Z', tz: 'Europe/Warsaw' });
     expect(await code(deleteEntry(deps, 'meals', meal.id))).toBe('unknown_entry');
   });

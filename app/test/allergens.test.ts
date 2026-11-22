@@ -1,9 +1,14 @@
 import { addIngredients, joinIngredients, matchIngredientNames, splitIngredients } from '@/core/model/allergens';
 
-
 describe('adding estimated ingredients (IN-3)', () => {
   it('IN-3 keeps what is typed, skips repeats ignoring case and spacing, and leaves one empty row', () => {
-    expect(addIngredients(['Rice ', '', 'milk'], ['rice', ' Soy  sauce', 'soy sauce', '', 'Oats'])).toEqual(['Rice', 'milk', 'Soy  sauce', 'Oats', '']);
+    expect(addIngredients(['Rice ', '', 'milk'], ['rice', ' Soy  sauce', 'soy sauce', '', 'Oats'])).toEqual([
+      'Rice',
+      'milk',
+      'Soy  sauce',
+      'Oats',
+      '',
+    ]);
     expect(addIngredients([''], [])).toEqual(['']);
     expect(addIngredients([], ['a'])).toEqual(['a', '']);
   });
@@ -35,6 +40,11 @@ describe('ingredient autocomplete (IN-1)', () => {
   });
   it('IN-1 needs two letters and returns at most five', () => {
     expect(matchIngredientNames(known, 'm')).toEqual([]);
-    expect(matchIngredientNames(Array.from({ length: 9 }, (_, i) => `milk ${i}`), 'mi')).toHaveLength(5);
+    expect(
+      matchIngredientNames(
+        Array.from({ length: 9 }, (_, i) => `milk ${i}`),
+        'mi',
+      ),
+    ).toHaveLength(5);
   });
 });

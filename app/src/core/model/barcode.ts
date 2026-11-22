@@ -70,7 +70,15 @@ export function parseIngredientText(text: string): string[] {
   parts.push(cur);
   const seen = new Set<string>();
   return parts
-    .map((p) => p.replace(/[_*]/g, '').replace(/\d+([.,]\d+)?\s*%/g, '').replace(/^\s*(ingredients|składniki)\s*:\s*/i, '').replace(/\.$/, '').replace(/\s+/g, ' ').trim())
+    .map((p) =>
+      p
+        .replace(/[_*]/g, '')
+        .replace(/\d+([.,]\d+)?\s*%/g, '')
+        .replace(/^\s*(ingredients|składniki)\s*:\s*/i, '')
+        .replace(/\.$/, '')
+        .replace(/\s+/g, ' ')
+        .trim(),
+    )
     .filter((p) => {
       const key = p.toLowerCase();
       if (!p || seen.has(key)) return false;

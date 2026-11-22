@@ -28,9 +28,18 @@ export function regularName(r: RegularItem, treatments: ListItem[], areas: SkinA
 
 function useRegular() {
   const { deps } = useServices();
-  const [state, setState] = useState<{ items: RegularItem[]; treatments: ListItem[]; areas: SkinArea[] }>({ items: [], treatments: [], areas: [] });
+  const [state, setState] = useState<{ items: RegularItem[]; treatments: ListItem[]; areas: SkinArea[] }>({
+    items: [],
+    treatments: [],
+    areas: [],
+  });
   const reload = useCallback(() => {
-    (async () => setState({ items: await listRegular(deps), treatments: await deps.repo.listItems('treatments'), areas: await deps.repo.listAreas() }))().catch((e) => Alert.alert(errorMessage(e)));
+    (async () =>
+      setState({
+        items: await listRegular(deps),
+        treatments: await deps.repo.listItems('treatments'),
+        areas: await deps.repo.listAreas(),
+      }))().catch((e) => Alert.alert(errorMessage(e)));
   }, [deps]);
   useFocusEffect(reload);
   return { ...state, reload };
@@ -73,7 +82,12 @@ export function RegularItemScreen() {
   const [draft, setDraft] = useState<Date>(() => at({ hour: 8, minute: 0 }));
   const [denied, setDenied] = useState(false);
   const item = items.find((r) => r.id === id);
-  if (!item) return <Screen><Hint>{t('regular.none')}</Hint></Screen>;
+  if (!item)
+    return (
+      <Screen>
+        <Hint>{t('regular.none')}</Hint>
+      </Screen>
+    );
 
   async function run(fn: () => Promise<unknown>) {
     try {
@@ -97,12 +111,21 @@ export function RegularItemScreen() {
       {item.times.map((x) => (
         <View key={timeText(x)} style={styles.timeRow}>
           <Text style={styles.rowText}>{timeText(x)}</Text>
-          <Button kind="secondary" title={t('common.remove')} accessibilityLabel={t('regular.removeTime', { time: timeText(x) })} onPress={() => void setTimes(item.times.filter((y) => y !== x))} />
+          <Button
+            kind="secondary"
+            title={t('common.remove')}
+            accessibilityLabel={t('regular.removeTime', { time: timeText(x) })}
+            onPress={() => void setTimes(item.times.filter((y) => y !== x))}
+          />
         </View>
       ))}
       <View style={styles.timeRow}>
         <DateTimePicker mode="time" value={draft} onValueChange={(_e, d) => setDraft(d)} />
-        <Button kind="secondary" title={t('regular.addTime')} onPress={() => void setTimes([...item.times, { hour: draft.getHours(), minute: draft.getMinutes() }])} />
+        <Button
+          kind="secondary"
+          title={t('regular.addTime')}
+          onPress={() => void setTimes([...item.times, { hour: draft.getHours(), minute: draft.getMinutes() }])}
+        />
       </View>
       {denied && (
         <>
@@ -111,17 +134,24 @@ export function RegularItemScreen() {
         </>
       )}
 
-      <SwitchRow title={t('regular.hideName')} hint={t('regular.hideNameHint')} value={item.hideName} onChange={(v) => void run(() => saveRegularHideName(deps, item.id, v, reminderTexts()))} />
+      <SwitchRow
+        title={t('regular.hideName')}
+        hint={t('regular.hideNameHint')}
+        value={item.hideName}
+        onChange={(v) => void run(() => saveRegularHideName(deps, item.id, v, reminderTexts()))}
+      />
 
       <Button
         kind="secondary"
         title={t('regular.stop')}
         onPress={() =>
-          void confirmDestructive({ title: t('regular.stopTitle'), message: t('regular.stopBody'), action: t('regular.stop') }).then(async (ok) => {
-            if (!ok) return;
-            await run(() => stopRegularAndRemind(deps, item.id, reminderTexts()));
-            router.back();
-          })
+          void confirmDestructive({ title: t('regular.stopTitle'), message: t('regular.stopBody'), action: t('regular.stop') }).then(
+            async (ok) => {
+              if (!ok) return;
+              await run(() => stopRegularAndRemind(deps, item.id, reminderTexts()));
+              router.back();
+            },
+          )
         }
       />
     </Screen>

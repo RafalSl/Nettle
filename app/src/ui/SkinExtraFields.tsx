@@ -43,7 +43,12 @@ export function SkinExtraFields({
   return (
     <>
       <SwitchRow title={t('skin.cracks')} value={cracks} onChange={onCracks} />
-      <Button kind="secondary" title={`${t('skin.details')} ${open ? '▾' : '▸'}`} accessibilityLabel={t('skin.details')} onPress={onToggleOpen} />
+      <Button
+        kind="secondary"
+        title={`${t('skin.details')} ${open ? '▾' : '▸'}`}
+        accessibilityLabel={t('skin.details')}
+        onPress={onToggleOpen}
+      />
       {open && (
         <>
           <TextInput

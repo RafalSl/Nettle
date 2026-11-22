@@ -36,7 +36,15 @@ const scores = { severity: 6, itch: 7, pain: 1, dryness: 4, scaling: 5 };
 const VALID_ANSWER = JSON.stringify({
   summary: 'Synthetic summary',
   hypotheses: [
-    { title: 'Synthetic hypothesis', explanation: 'x', evidence: ['2026-01-12 meal'], counter_evidence: [], uncertainty: 'Few data points', lag_hours: 24, strength: 'weak' },
+    {
+      title: 'Synthetic hypothesis',
+      explanation: 'x',
+      evidence: ['2026-01-12 meal'],
+      counter_evidence: [],
+      uncertainty: 'Few data points',
+      lag_hours: 24,
+      strength: 'weak',
+    },
   ],
   order_and_lag: 'No clear order',
   data_limits: ['Only 5 days'],
@@ -49,8 +57,18 @@ async function diary(make: () => Promise<StorageRepository>, llm = new FakeLlm([
   const deps = makeDeps(repo, '2026-01-20T10:00:00.000Z', llm);
   await saveApiKey(deps, 'synthetic-test-key');
   const at = (s: string) => new Date(s);
-  const m1 = await logMeal(deps, { description: 'Synthetic pasta', ingredients: ['Wheat Pasta', 'tomato'], allergens: ['gluten'], at: at('2026-01-10T11:00:00.000Z') });
-  await logMeal(deps, { description: 'Synthetic soup', ingredients: ['tomato', 'celery'], allergens: ['celery'], at: at('2026-01-11T11:00:00.000Z') });
+  const m1 = await logMeal(deps, {
+    description: 'Synthetic pasta',
+    ingredients: ['Wheat Pasta', 'tomato'],
+    allergens: ['gluten'],
+    at: at('2026-01-10T11:00:00.000Z'),
+  });
+  await logMeal(deps, {
+    description: 'Synthetic soup',
+    ingredients: ['tomato', 'celery'],
+    allergens: ['celery'],
+    at: at('2026-01-11T11:00:00.000Z'),
+  });
   await logMeal(deps, { description: 'Synthetic salad', ingredients: ['tomato'], at: at('2026-01-12T11:00:00.000Z') });
   await logSkinEntry(deps, { areaId: 'area-chin', scores, at: at('2026-01-12T20:00:00.000Z') });
   const nail = await addArea(deps, 'Left thumb', 'nail');
@@ -58,9 +76,18 @@ async function diary(make: () => Promise<StorageRepository>, llm = new FakeLlm([
   await logReaction(deps, { mealId: m1.id, symptoms: ['hives'], at: at('2026-01-10T12:00:00.000Z') });
   const cream = await addListItem(deps, 'treatments', 'Synthetic cream');
   await applyTreatment(deps, { treatmentId: cream.id, areaIds: ['area-chin'], at: at('2026-01-12T21:00:00.000Z') });
-  await saveCheckIn(deps, { at: at('2026-01-12T21:30:00.000Z'), values: { 'item-wellbeing': 4, 'item-stress': 8, 'tag-antibiotics': true }, confirmEmptyDay: true });
+  await saveCheckIn(deps, {
+    at: at('2026-01-12T21:30:00.000Z'),
+    values: { 'item-wellbeing': 4, 'item-stress': 8, 'tag-antibiotics': true },
+    confirmEmptyDay: true,
+  });
   await saveCheckIn(deps, { at: at('2026-01-13T21:30:00.000Z'), values: { 'item-wellbeing': 5 }, confirmEmptyDay: true });
-  await logChangeEvent(deps, { action: 'started', category: 'cat-product', name: 'Synthetic antibiotic', at: at('2025-12-30T09:00:00.000Z') });
+  await logChangeEvent(deps, {
+    action: 'started',
+    category: 'cat-product',
+    name: 'Synthetic antibiotic',
+    at: at('2025-12-30T09:00:00.000Z'),
+  });
   await logMedication(deps, { category: 'supplement', name: 'Synthetic vitamin', at: at('2025-12-28T09:00:00.000Z') });
   await logMeal(deps, { description: 'Synthetic lookback meal', ingredients: ['rice'], at: at('2025-12-29T11:00:00.000Z') }); // must not be sent
   await logMeal(deps, { description: 'Synthetic later meal', ingredients: ['bread'], at: at('2026-01-16T11:00:00.000Z') }); // after the period
@@ -73,17 +100,36 @@ describe('buildAnalysisInput (LL-2, LL-3, LL-4)', () => {
     const deps = makeDeps(repo);
     const llm = { model: 'm', at: '2026-01-10T00:00:00.000Z', promptVersion: 'p' };
     const at = new Date('2026-01-12T10:00:00Z');
-    await logMeal(deps, { description: 'Synthetic a', ingredients: ['x'], source: { kind: 'photo_estimate', edited: true, llm, aiTags: false }, at });
+    await logMeal(deps, {
+      description: 'Synthetic a',
+      ingredients: ['x'],
+      source: { kind: 'photo_estimate', edited: true, llm, aiTags: false },
+      at,
+    });
     await logMeal(deps, { description: 'Synthetic b', ingredients: ['y'], at });
-    await logMeal(deps, { description: 'Synthetic n', ingredients: ['w'], source: { kind: 'name_estimate', edited: false, llm, aiTags: false }, at }); // IN-19
+    await logMeal(deps, {
+      description: 'Synthetic n',
+      ingredients: ['w'],
+      source: { kind: 'name_estimate', edited: false, llm, aiTags: false },
+      at,
+    }); // IN-19
     const data = JSON.parse(buildAnalysisInput(await repo.snapshot(), '2026-01-10', '2026-01-14').json);
     const meals = data.days.flatMap((d: { meals?: { description: string }[] }) => d.meals ?? []);
-    expect(meals.find((m: { description: string }) => m.description === 'Synthetic a').ingredients_source).toBe('photo_estimate (edited by the user)');
+    expect(meals.find((m: { description: string }) => m.description === 'Synthetic a').ingredients_source).toBe(
+      'photo_estimate (edited by the user)',
+    );
     expect(meals.find((m: { description: string }) => m.description === 'Synthetic b').ingredients_source).toBeUndefined();
     expect(meals.find((m: { description: string }) => m.description === 'Synthetic n').ingredients_source).toBe('name_estimate');
-    const tagged = await logMeal(deps, { description: 'Synthetic c', ingredients: ['z'], source: { kind: 'typed', edited: false, llm: null, aiTags: true }, at });
+    const tagged = await logMeal(deps, {
+      description: 'Synthetic c',
+      ingredients: ['z'],
+      source: { kind: 'typed', edited: false, llm: null, aiTags: true },
+      at,
+    });
     expect(tagged.source.aiTags).toBe(true);
-    const again = JSON.parse(buildAnalysisInput(await repo.snapshot(), '2026-01-10', '2026-01-14').json).days.flatMap((d: { meals?: { description: string }[] }) => d.meals ?? []);
+    const again = JSON.parse(buildAnalysisInput(await repo.snapshot(), '2026-01-10', '2026-01-14').json).days.flatMap(
+      (d: { meals?: { description: string }[] }) => d.meals ?? [],
+    );
     expect(again.find((m: { description: string }) => m.description === 'Synthetic c').allergens_source).toContain('ai_suggestion');
   });
 
@@ -158,7 +204,17 @@ describe('analysis prompt (LL-4, LL-10, LL-11)', () => {
   });
 
   it('asks for hypotheses with uncertainty, windows, lookbacks, confounders, incomplete days and limits', () => {
-    for (const phrase of ['never diagnose', 'tentative hypothes', '24, 48 and 72 hours', '7 and 21 days', 'confounders', '"logged": false', 'most days', 'cannot answer', 'order_and_lag']) {
+    for (const phrase of [
+      'never diagnose',
+      'tentative hypothes',
+      '24, 48 and 72 hours',
+      '7 and 21 days',
+      'confounders',
+      '"logged": false',
+      'most days',
+      'cannot answer',
+      'order_and_lag',
+    ]) {
       expect(p.system).toContain(phrase);
     }
     expect(p.system).toContain('Polish');
@@ -181,7 +237,7 @@ describe('analysisResultFromJson (LL-4)', () => {
     expect(analysisResultFromJson({ ...ok, summary: undefined })).toBeNull();
     expect(analysisResultFromJson({ ...ok, data_limits: [1] })).toBeNull();
     expect(analysisResultFromJson({ ...ok, questions_for_doctor: undefined })).toBeNull(); // LL-4: the questions part is required
-    expect(analysisResultFromJson({ ...ok, suggestions: [] , questions_for_doctor: undefined })).toBeNull(); // the old name is gone
+    expect(analysisResultFromJson({ ...ok, suggestions: [], questions_for_doctor: undefined })).toBeNull(); // the old name is gone
     expect(analysisResultFromJson(ok)?.doctorQuestions).toEqual(['Could this be linked to the dry weather?']);
     expect(analysisResultFromJson(null)).toBeNull();
   });
@@ -195,7 +251,17 @@ describe.each(repos)('prepare and run an analysis (%s)', (_name, make) => {
     const prepared = await prepareAnalysis(deps, sel);
     expect(llm.requests).toHaveLength(0);
     expect(prepared).toMatchObject({ dayFrom: '2026-01-10', dayTo: '2026-01-14', model: 'claude-haiku-5-5', promptVersion: 'analysis-10' });
-    expect(prepared.counts).toMatchObject({ meals: 3, skinEntries: 1, nailEntries: 1, reactions: 1, treatmentApplications: 1, checkIns: 2, days: 5, completeDays: 2, photos: 0 });
+    expect(prepared.counts).toMatchObject({
+      meals: 3,
+      skinEntries: 1,
+      nailEntries: 1,
+      reactions: 1,
+      treatmentApplications: 1,
+      checkIns: 2,
+      days: 5,
+      completeDays: 2,
+      photos: 0,
+    });
     expect(prepared.counts.changeEvents).toBe(1); // lookback
     expect(prepared.sentCharacters).toBeGreaterThan(500);
   });
@@ -204,8 +270,18 @@ describe.each(repos)('prepare and run an analysis (%s)', (_name, make) => {
     const { deps, llm } = await diary(make);
     const entry = (await deps.repo.listSkinEntries())[0]!;
     const intimate = await logSkinEntry(deps, { areaId: 'area-penis', scores, at: new Date('2026-01-12T22:00:00.000Z') });
-    const normal = await addPhoto(deps, { entryKind: 'skinEntry', entryId: entry.id, sourceUri: 'chin-photo', at: new Date('2026-01-12T20:05:00.000Z') });
-    const hidden = await addPhoto(deps, { entryKind: 'skinEntry', entryId: intimate.id, sourceUri: 'private-photo', at: new Date('2026-01-12T22:05:00.000Z') });
+    const normal = await addPhoto(deps, {
+      entryKind: 'skinEntry',
+      entryId: entry.id,
+      sourceUri: 'chin-photo',
+      at: new Date('2026-01-12T20:05:00.000Z'),
+    });
+    const hidden = await addPhoto(deps, {
+      entryKind: 'skinEntry',
+      entryId: intimate.id,
+      sourceUri: 'private-photo',
+      at: new Date('2026-01-12T22:05:00.000Z'),
+    });
     expect(hidden.sensitive).toBe(true);
 
     expect((await prepareAnalysis(deps, sel)).request.images).toEqual([]);
@@ -238,7 +314,14 @@ describe.each(repos)('prepare and run an analysis (%s)', (_name, make) => {
     const prepared = await prepareAnalysis(deps, sel);
     const analysis = await runAnalysis(deps, prepared);
     expect(llm.requests[0]).toBe(prepared.request); // exactly what was confirmed
-    expect(analysis).toMatchObject({ dayFrom: '2026-01-10', dayTo: '2026-01-14', model: 'fake-model', promptVersion: 'analysis-10', language: 'en', at: { utc: '2026-01-20T10:00:00.000Z' } });
+    expect(analysis).toMatchObject({
+      dayFrom: '2026-01-10',
+      dayTo: '2026-01-14',
+      model: 'fake-model',
+      promptVersion: 'analysis-10',
+      language: 'en',
+      at: { utc: '2026-01-20T10:00:00.000Z' },
+    });
     expect(analysis.result.hypotheses[0]?.title).toBe('Synthetic hypothesis');
     expect(await listAnalyses(deps)).toEqual([analysis]);
     const after = await repo.snapshot();
@@ -282,7 +365,9 @@ describe.each(repos)('prepare and run an analysis (%s)', (_name, make) => {
     expect(await code(runAnalysis({ ...deps, llmFor: () => answering }, prepared, ctl.signal))).toBe('llm_cancelled');
     expect(await listAnalyses(deps)).toEqual([]);
     const seen: (AbortSignal | undefined)[] = [];
-    const watching = { completeJson: async (r: { signal?: AbortSignal }) => (seen.push(r.signal), { text: VALID_ANSWER, model: 'fake-model' }) };
+    const watching = {
+      completeJson: async (r: { signal?: AbortSignal }) => (seen.push(r.signal), { text: VALID_ANSWER, model: 'fake-model' }),
+    };
     await runAnalysis({ ...deps, llmFor: () => watching }, prepared, new AbortController().signal);
     expect(seen[0]).toBeDefined();
   });

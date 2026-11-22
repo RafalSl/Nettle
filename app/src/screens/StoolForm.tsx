@@ -17,11 +17,22 @@ export default function StoolForm() {
     <FormModal
       dirty={f.dirty}
       missing={type ? null : t('edit.type')}
-      onSave={async () => void (await logStool(deps, { bristol: Number(type), note, at: time.atForSave }))}>
+      onSave={async () => void (await logStool(deps, { bristol: Number(type), note, at: time.atForSave }))}
+    >
       <Hint>{t('today.stoolHint')}</Hint>
-      <Chips items={[1, 2, 3, 4, 5, 6, 7].map((n) => ({ id: String(n), label: String(n) }))} selected={new Set(type ? [type] : [])} onToggle={setType} />
+      <Chips
+        items={[1, 2, 3, 4, 5, 6, 7].map((n) => ({ id: String(n), label: String(n) }))}
+        selected={new Set(type ? [type] : [])}
+        onToggle={setType}
+      />
       <TimeField value={time.value} onChange={time.set} />
-      <TextInput style={styles.input} accessibilityLabel={t('common.note')} placeholder={t('common.note')} value={note} onChangeText={setNote} />
+      <TextInput
+        style={styles.input}
+        accessibilityLabel={t('common.note')}
+        placeholder={t('common.note')}
+        value={note}
+        onChangeText={setNote}
+      />
     </FormModal>
   );
 }

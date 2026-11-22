@@ -32,7 +32,17 @@ describe('the day ring (UX-2)', () => {
 
   it('UX-2 meals, drinks and medication are intake; everything else is body and care', () => {
     for (const k of ['meals', 'drinks', 'medicationEntries']) expect(trackOf(k)).toBe('intake');
-    for (const k of ['skinEntries', 'nailEntries', 'checkIns', 'stoolEntries', 'treatmentApplications', 'changeEvents', 'medicalEvents', 'reactions']) expect(trackOf(k)).toBe('care');
+    for (const k of [
+      'skinEntries',
+      'nailEntries',
+      'checkIns',
+      'stoolEntries',
+      'treatmentApplications',
+      'changeEvents',
+      'medicalEvents',
+      'reactions',
+    ])
+      expect(trackOf(k)).toBe('care');
   });
 
   it('UX-2 the arc runs up to now on today and is absent on a past day', () => {
@@ -61,7 +71,15 @@ describe('the day ring (UX-2)', () => {
   });
 
   it('UX-2 a chain of close entries stays one dot, and entries a gap apart do not merge', () => {
-    const chain = ringDots([e('a', 'meals', '2026-01-15T07:00:00.000Z'), e('b', 'meals', '2026-01-15T07:30:00.000Z'), e('c', 'meals', '2026-01-15T08:00:00.000Z')], '2026-01-15', TZ);
+    const chain = ringDots(
+      [
+        e('a', 'meals', '2026-01-15T07:00:00.000Z'),
+        e('b', 'meals', '2026-01-15T07:30:00.000Z'),
+        e('c', 'meals', '2026-01-15T08:00:00.000Z'),
+      ],
+      '2026-01-15',
+      TZ,
+    );
     expect(chain).toHaveLength(1);
     expect(chain[0]!.ids).toEqual(['a', 'b', 'c']);
     const apart = ringDots([e('a', 'meals', '2026-01-15T07:00:00.000Z'), e('b', 'meals', '2026-01-15T09:00:00.000Z')], '2026-01-15', TZ);

@@ -79,10 +79,13 @@ export function SuggestionPanel({
         kind="secondary"
         title={t('fillLater.dismiss')}
         onPress={() => {
-          dismissSuggestion(deps, suggestionId).then(() => {
-            setS(null);
-            onDismissed();
-          }, (e) => Alert.alert(errorMessage(e)));
+          dismissSuggestion(deps, suggestionId).then(
+            () => {
+              setS(null);
+              onDismissed();
+            },
+            (e) => Alert.alert(errorMessage(e)),
+          );
         }}
       />
     </>

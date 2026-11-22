@@ -42,8 +42,6 @@ How it works:
   refuses to open the project: run `./run.sh npx expo login` once (the login is
   kept in a volume; the CLI prints a link: open it in the host browser, it
   calls back to localhost), or sign out in Expo Go.
-- The first test run on a fresh cache volume can time out the Today screen
-  test; run it again.
 
 ## Docs
 

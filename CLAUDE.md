@@ -73,14 +73,17 @@ changes.
 - Expo login: if Expo Go says it is signed in but the CLI is not, run `./run.sh npx expo login` once (kept in a volume) or sign out in Expo Go
 - typecheck: `./run.sh npm run typecheck`
 - lint: `./run.sh npm run lint` (also enforces that `src/core` imports no Expo/RN/adapters)
-- test: `./run.sh npm test` (the first run on a fresh cache volume can time out the Today screen test; run it again)
-- all three: `./run.sh npm run check`
+- format: `./run.sh npm run format` (Prettier; `npm run format:check` only checks)
+- test: `./run.sh npm test` (screen tests have a 30 s timeout for the first, cold run)
+- all four (typecheck, lint, format check, tests): `./run.sh npm run check`
 - reset the container's dependencies: `docker compose down -v` (removes the `node_modules`, npm and tmp cache volumes)
 
 ## Layout
 - `app/src/core`: pure TS (model, ports, usecases, export). No platform imports.
 - `app/src/adapters`: one folder per external concern (storage, keystore, share).
-- `app/src/app`: expo-router screens; `app/src/services.tsx` is the composition root.
-- `app/test`: tests, fakes (`test/fakes`) and the storage contract (`test/contract`).
+- `app/src/app`: expo-router routes (thin files that export a screen or a form); `app/src/services.tsx` is the composition root.
+- `app/src/screens`: screens; `app/src/forms/<kind>`: the create form, the edit form (`Edit*.tsx`) and the shared fields of one entry kind.
+- `app/src/ui`: shared components and hooks (`useFocusLoad` for screen data, `useNow` for the clock, `showError`).
+- `app/test`: tests, fakes (`test/fakes`), helpers (`test/helpers`), the storage contract (`test/contract`) and screen tests by area on a shared harness (`test/ui/harness.tsx`).
 - `compose.yaml`, `app/Dockerfile`, `app/docker-entrypoint.sh`, `run.sh`: the Docker dev environment (see README.md).
 - `design/`: the design canvas files (`design/canvas/`) and the script that draws the generated boards (`design/generator/`). The UI follows `docs/design-system.md`.

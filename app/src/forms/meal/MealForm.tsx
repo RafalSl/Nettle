@@ -1,13 +1,13 @@
 import { useLocalSearchParams } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
-import { Keyboard, Pressable, type ScrollViewInstance, useWindowDimensions, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, View } from 'react-native';
 import { Text, TextInput } from '@/ui/themed';
 import { addIngredients, matchIngredientNames, suggestAllergens } from '@/core/model/allergens';
 import { NettleError } from '@/core/model/errors';
 import { defaultPreferences, type Preferences } from '@/core/model/preferences';
 import { mealHistory, rankSuggestions, type Suggestion } from '@/core/model/suggestions';
 import { atOnDay, DAY_MS, dayParam, localDay } from '@/core/model/time';
-import { afterEdit, sameIngredients, typedSource, type IngredientSource } from '@/core/model/source';
+import { typedSource, type IngredientSource } from '@/core/model/source';
 import { type Allergen } from '@/core/model/types';
 import { lookupProduct } from '@/core/usecases/barcode';
 import { ingredientNameHistory } from '@/core/usecases/llm';
@@ -28,6 +28,8 @@ import { Sheet, SheetRow } from '@/ui/Sheet';
 import { color } from '@/ui/theme';
 import { showError } from '@/ui/showError';
 import { AllergenChips } from '@/forms/AllergenChips';
+import { useAddIngredientScroll } from '@/forms/meal/useAddIngredientScroll';
+import { useMealDraft } from '@/forms/meal/useMealDraft';
 import { useFocusLoad } from '@/ui/useFocusLoad';
 
 /** What a pick fills into the review form: the latest use of the meal, or a favorite's snapshot. */
@@ -41,14 +43,6 @@ interface MealDraft {
   /** The tags the source itself listed, to tell later edits from the source's own tags (defaults to `allergens`). */
   sourceAllergens?: Allergen[];
 }
-
-/** IN-16: where the form's lists came from, and the lists as they were filled in. */
-interface Origin {
-  barcode: string | null;
-  source: IngredientSource;
-  filled: { ingredients: string[]; allergens: string[] };
-}
-const typedOrigin = (): Origin => ({ barcode: null, source: typedSource(), filled: { ingredients: [], allergens: [] } });
 
 export { SLOW_ESTIMATE_MS } from '@/ui/useIngredientRun';
 
@@ -73,40 +67,11 @@ export default function MealScreen() {
   const [fromCode, setFromCode] = useState<{ note: string; tags: Allergen[]; hintKey?: string; ai?: boolean } | null>(null);
   const [meals, setMeals] = useState<ReturnType<typeof mealHistory>>([]);
   const [prefs, setPrefs] = useState<Preferences>(defaultPreferences());
-  const [description, setDescription] = useState('');
-  const [ingredients, setIngredients] = useState<string[]>(['']);
-  // Adding an ingredient grows the form; scroll so Add ingredient stays just above the keyboard and the floating Save.
-  const scrollRef = useRef<ScrollViewInstance>(null);
-  const addBottom = useRef(0);
-  const prevCount = useRef(1);
-  const windowHeight = useWindowDimensions().height;
-  // The new row takes focus (autoFocus), so the keyboard slides out when it was hidden: scroll as it starts to slide (keyboardWillShow), so the scroll and the slide are one motion.
-  const [focusNew, setFocusNew] = useState<number | null>(null);
-  useEffect(() => {
-    const grew = ingredients.length > prevCount.current;
-    prevCount.current = ingredients.length;
-    if (!grew) return;
-    const scrollTo = (kb: number) => {
-      const visible = windowHeight - kb - 190; // header and the floating Save
-      scrollRef.current?.scrollTo({ y: Math.max(0, addBottom.current + 52 - visible), animated: true });
-    };
-    if (Keyboard.isVisible()) {
-      setTimeout(() => scrollTo(Keyboard.metrics()?.height ?? 0), 50); // after the new row is laid out
-      return;
-    }
-    const sub = Keyboard.addListener('keyboardWillShow', (e) => {
-      sub.remove();
-      setTimeout(() => scrollTo(e.endCoordinates.height), 0); // the layout of the new row lands first
-    });
-    const give = setTimeout(() => sub.remove(), 2000);
-    return () => {
-      clearTimeout(give);
-      sub.remove();
-    };
-  }, [ingredients.length, windowHeight]);
-  const [allergens, setAllergens] = useState<Set<string>>(new Set());
-  const [note, setNote] = useState('');
-  const [fillLater, setFillLater] = useState(false);
+  const draft = useMealDraft();
+  const { description, setDescription, ingredients, setIngredients, allergens, setAllergens, note, setNote, fillLater, setFillLater } =
+    draft;
+  const { at, setAt, edited, setEdited, origin, setOrigin, dateHint, setDateHint, touch, setIngredient, saveFields } = draft;
+  const { scrollRef, onAddLayout, focusNew, setFocusNew } = useAddIngredientScroll(ingredients.length);
   const ingredientRun = useIngredientRun();
   // IN-10: the AI's allergen suggestion lands as a hint with a select button; nothing is selected by itself.
   const allergenAi = useAllergenAi((tags, note) =>
@@ -117,12 +82,8 @@ export default function MealScreen() {
       ai: true,
     }),
   );
-  const [at, setAt] = useState<Date | null>(null);
-  const [edited, setEdited] = useState(false);
-  const [origin, setOrigin] = useState<Origin>(typedOrigin());
   const [names, setNames] = useState<string[]>([]);
   const [focused, setFocused] = useState<number | null>(null);
-  const [dateHint, setDateHint] = useState<string | null>(null);
 
   useFocusLoad(
     async () => ({
@@ -251,14 +212,6 @@ export default function MealScreen() {
     setEdited(false);
   }
 
-  const touch =
-    <T,>(set: (v: T) => void) =>
-    (v: T) => {
-      setEdited(true);
-      set(v);
-    };
-  const setIngredient = (i: number, v: string) => touch(setIngredients)(ingredients.map((x, j) => (j === i ? v : x)));
-
   /**
    * IN-3, IN-15: the chosen names become ordinary rows of the list, editable and removable. IN-16: a run on a typed
    * meal becomes its source, with the list as just filled as the baseline for later edits. Allergen tags the label
@@ -278,18 +231,6 @@ export default function MealScreen() {
     if (tags.length > 0)
       setFromCode({ note: t('meal.labelTagsHint', { list: tags.map((a) => t(`allergens.${a}`)).join(', ') }), tags, ai: true });
     ingredientRun.dismiss();
-  }
-
-  /** What is saved from the lists: cleaned, with the barcode and the source (marked edited when the lists differ from how they were filled). */
-  function saveFields() {
-    const list = ingredients.map((i) => i.trim()).filter(Boolean);
-    const tags = [...allergens] as Allergen[];
-    return {
-      ingredients: list,
-      allergens: tags,
-      barcode: origin.barcode,
-      source: afterEdit(origin.source, !sameIngredients(origin.filled, { ingredients: list, allergens: tags })),
-    };
   }
 
   const key = description.trim().toLowerCase().replace(/\s+/g, ' ');
@@ -444,7 +385,7 @@ export default function MealScreen() {
               )}
             </View>
           ))}
-          <View onLayout={(e) => (addBottom.current = e.nativeEvent.layout.y)}>
+          <View onLayout={(e) => onAddLayout(e.nativeEvent.layout.y)}>
             <Button
               kind="secondary"
               title={t('meal.addIngredient')}

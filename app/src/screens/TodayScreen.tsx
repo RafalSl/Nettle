@@ -1,6 +1,6 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { Text } from '@/ui/themed';
 import { addDays, atOnDay, dayParam as asDay, localDateTime, localDay } from '@/core/model/time';
@@ -8,7 +8,7 @@ import type { ListItem, SkinArea } from '@/core/model/types';
 import { logStool } from '@/core/usecases/checkin';
 import { dayLog, treatmentShortcuts, type LogRow, type TreatmentShortcut } from '@/core/usecases/dayLog';
 import { applyTreatment } from '@/core/usecases/events';
-import { defaultPreferences, type EntryType, type RegularItem } from '@/core/model/preferences';
+import { defaultPreferences, type EntryType, type Preferences, type RegularItem } from '@/core/model/preferences';
 import { logRegular } from '@/core/usecases/regular';
 import { getPreferences } from '@/core/usecases/preferences';
 import { arcPosition, ringDots, type RingDot } from '@/core/model/ring';
@@ -16,6 +16,8 @@ import { todayContext, type TodayContext } from '@/core/usecases/today';
 import { areaLabel, dayParts, itemLabel, t } from '@/i18n';
 import { useServices } from '@/services';
 import { useFocusLoad } from '@/ui/useFocusLoad';
+import { useNewEntryHighlight } from '@/ui/useNewEntryHighlight';
+import { useRowLock } from '@/ui/useRowLock';
 import { useNow } from '@/ui/useNow';
 import { DayLog, TODAY_LOG_LIMIT } from '@/ui/DayLog';
 import { ENTRY_ROUTE } from '@/ui/entryTypes';
@@ -52,6 +54,24 @@ const Card = ({ children }: { children: React.ReactNode }) => (
  * that names what goes with the entry (EN-1, UX-9) or opens it for editing. The highlight of a new row,
  * reordering the quick actions and the date jump are not built yet.
  */
+/** What Today shows for a day, loaded together so one load never mixes two days. */
+interface TodayData {
+  rows: LogRow[];
+  ctx: { areas: SkinArea[]; treatments: ListItem[]; categories: ListItem[] };
+  shortcuts: TreatmentShortcut[];
+  context: TodayContext;
+  regular: RegularItem[];
+  layout: Preferences['quickActions'];
+}
+const EMPTY: TodayData = {
+  rows: [],
+  ctx: { areas: [], treatments: [], categories: [] },
+  shortcuts: [],
+  context: { isToday: true, firstRun: false, pills: [] },
+  regular: [],
+  layout: defaultPreferences().quickActions,
+};
+
 export default function TodayScreen() {
   const { deps } = useServices();
   const router = useRouter();
@@ -60,33 +80,22 @@ export default function TodayScreen() {
   const [pick, setPick] = useState<{ param: string | undefined; day: string | null } | null>(null);
   const chosen = pick && pick.param === dayParam ? pick.day : asDay(dayParam);
   const setChosen = (d: string | null) => setPick({ param: dayParam, day: d });
-  const [rows, setRows] = useState<LogRow[]>([]);
-  const [ctx, setCtx] = useState<{ areas: SkinArea[]; treatments: ListItem[]; categories: ListItem[] }>({
-    areas: [],
-    treatments: [],
-    categories: [],
-  });
-  const [shortcuts, setShortcuts] = useState<TreatmentShortcut[]>([]);
-  const [context, setContext] = useState<TodayContext>({ isToday: true, firstRun: false, pills: [] });
+  const [data, setData] = useState<TodayData>(EMPTY);
+  const { rows, ctx, shortcuts, context, regular, layout } = data;
   const [stoolOpen, setStoolOpen] = useState(false);
-  const [regular, setRegular] = useState<RegularItem[]>([]);
   /** IN-17: the quick sheet of regular items that is open, if any. */
   const [sheetPick, setSheet] = useState<'medication' | 'treatment' | null | undefined>(undefined);
   // SK-9: a tap on a regular item's reminder opens Today with its quick sheet (until the user opens or closes one).
   const fromParam =
     sheetParam === 'medication' || sheetParam === 'treatment' ? (regular.some((r) => r.kind === sheetParam) ? sheetParam : null) : null;
   const sheet = sheetPick === undefined ? fromParam : sheetPick;
-  const [highlight, setHighlight] = useState<Set<string>>(new Set());
-  const seenIds = useRef<{ day: string; ids: Set<string>; loaded: boolean }>({ day: '', ids: new Set(), loaded: false });
-  const highlightTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const { highlight, seen } = useNewEntryHighlight(HIGHLIGHT_MS);
   const [picking, setPicking] = useState(false);
-  const [layout, setLayout] = useState(defaultPreferences().quickActions);
-  const [locked, setLocked] = useState<Set<string>>(new Set());
+  const { locked, lock: lockShortcut } = useRowLock(SHORTCUT_LOCK_MS);
   /** UX-3: what a quick sheet row did, shown on the row until the sheet closes: "Taken 08:05". */
   const [done, setDone] = useState<Record<string, string>>({});
   /** UX-2: the entries of a merged ring dot, listed in a sheet. */
   const [merged, setMerged] = useState<LogRow[] | null>(null);
-  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   // After midnight an unchosen day moves on by itself: the clock is state (`useNow`), not a call in the render body.
   const now = useNow(deps);
@@ -109,33 +118,19 @@ export default function TodayScreen() {
     }),
     [deps, day],
     (r) => {
-      // UX-2: an entry that appeared since the last look (a form just saved it) is highlighted for a moment.
-      // The first load of a day highlights nothing.
-      const seen = seenIds.current;
-      if (seen.day === day && seen.loaded) {
-        const fresh = r.rows.filter((x) => !seen.ids.has(x.id)).map((x) => x.id);
-        if (fresh.length > 0) {
-          setHighlight(new Set(fresh));
-          clearTimeout(highlightTimer.current);
-          highlightTimer.current = setTimeout(() => setHighlight(new Set()), HIGHLIGHT_MS);
-          (highlightTimer.current as { unref?: () => void }).unref?.(); // never keeps a test or a process alive
-        }
-      }
-      seenIds.current = { day, ids: new Set(r.rows.map((x) => x.id)), loaded: true };
-      setRows(r.rows);
-      setCtx(r.ctx);
-      setShortcuts(r.shortcuts);
-      setContext(r.context);
-      setLayout(r.prefs.quickActions);
-      setRegular(r.prefs.regular);
+      seen(
+        day,
+        r.rows.map((x) => x.id),
+      ); // UX-2: highlight what a form just saved
+      setData({
+        rows: r.rows,
+        ctx: r.ctx,
+        shortcuts: r.shortcuts,
+        context: r.context,
+        regular: r.prefs.regular,
+        layout: r.prefs.quickActions,
+      });
     },
-  );
-  useEffect(
-    () => () => {
-      timers.current.forEach(clearTimeout);
-      clearTimeout(highlightTimer.current);
-    },
-    [],
   );
 
   async function run(action: () => Promise<unknown>) {
@@ -151,11 +146,6 @@ export default function TodayScreen() {
     const next = addDays(day, n);
     if (next && next <= today) setChosen(next === today ? null : next);
   };
-
-  function lockShortcut(key: string) {
-    setLocked((l) => new Set(l).add(key));
-    timers.current.push(setTimeout(() => setLocked((l) => new Set([...l].filter((k) => k !== key))), SHORTCUT_LOCK_MS));
-  }
 
   /** UX-2: a pinned tile opens its form; Stool opens its quick sheet while it is pinned (from More it opens the full form). */
   const open = (id: EntryType) => () => {

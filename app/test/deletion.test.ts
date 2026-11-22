@@ -1,6 +1,5 @@
 import { PREDEFINED_AREAS } from '@/core/model/areas';
 import { SqliteRepo } from '@/adapters/storage/sqliteRepo';
-import { NettleError } from '@/core/model/errors';
 import { DELETE_GROUPS } from '@/core/model/deleteGroups';
 import { planDeletion } from '@/core/model/deletion';
 import { RECORD_KINDS } from '@/core/model/types';
@@ -9,16 +8,12 @@ import { deleteData, previewDelete } from '@/core/usecases/deleteData';
 import { MemoryRepo } from './fakes/memoryRepo';
 import { createNodeSqliteDb } from './helpers/nodeSqliteDb';
 import { TZ, makeDeps, syntheticCheckIn, syntheticEntry, syntheticMeal, syntheticStool } from './helpers/fixtures';
+import { errorCode } from './helpers/errors';
 
 const repos: [string, () => Promise<StorageRepository>][] = [
   ['in-memory', async () => new MemoryRepo()],
   ['sqlite', async () => SqliteRepo.open(createNodeSqliteDb())],
 ];
-const code = async (p: Promise<unknown>) =>
-  p.then(
-    () => 'no error',
-    (e: unknown) => (e instanceof NettleError ? e.code : 'other'),
-  );
 
 async function seeded(make: () => Promise<StorageRepository>) {
   const repo = await make();
@@ -116,8 +111,8 @@ describe.each(repos)('bulk delete (%s)', (_name, make) => {
 
   it('SE-9 selecting nothing is rejected and deletes nothing', async () => {
     const repo = await seeded(make);
-    expect(await code(deleteData(makeDeps(repo), { kinds: [] }))).toBe('nothing_selected');
-    expect(await code(previewDelete(makeDeps(repo), { kinds: [] }))).toBe('nothing_selected');
+    expect(await errorCode(deleteData(makeDeps(repo), { kinds: [] }))).toBe('nothing_selected');
+    expect(await errorCode(previewDelete(makeDeps(repo), { kinds: [] }))).toBe('nothing_selected');
     expect(await repo.listRecords('meals')).toHaveLength(2);
   });
 });

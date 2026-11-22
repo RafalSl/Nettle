@@ -1,14 +1,8 @@
-import { NettleError } from '@/core/model/errors';
 import { AppLock, LOCK_AFTER_MS } from '@/core/usecases/appLock';
 import { FakeAuth } from './fakes/fakeAuth';
 import { MemoryRepo } from './fakes/memoryRepo';
 import { makeDeps } from './helpers/fixtures';
-
-const code = async (p: Promise<unknown>) =>
-  p.then(
-    () => 'no error',
-    (e: unknown) => (e instanceof NettleError ? e.code : 'other'),
-  );
+import { errorCode } from './helpers/errors';
 
 function setup() {
   const deps = makeDeps(new MemoryRepo());
@@ -34,11 +28,11 @@ describe('app lock (SE-8)', () => {
     const { deps, lock, auth } = setup();
     await lock.init();
     auth.hasLock = false;
-    expect(await code(lock.setEnabled(true, 'Turn on'))).toBe('lock_unavailable');
+    expect(await errorCode(lock.setEnabled(true, 'Turn on'))).toBe('lock_unavailable');
     expect(auth.prompts).toEqual([]);
     auth.hasLock = true;
     auth.passes = false;
-    expect(await code(lock.setEnabled(true, 'Turn on'))).toBe('lock_failed');
+    expect(await errorCode(lock.setEnabled(true, 'Turn on'))).toBe('lock_failed');
     expect(lock.isEnabled).toBe(false);
     expect(await deps.settings.get('appLockEnabled')).toBeNull();
     auth.passes = true;
@@ -103,7 +97,7 @@ describe('app lock (SE-8)', () => {
     await Promise.resolve();
     expect(released).toBe(true);
     auth.passes = false;
-    expect(await code(lock.setEnabled(false, 'Turn off'))).toBe('lock_failed');
+    expect(await errorCode(lock.setEnabled(false, 'Turn off'))).toBe('lock_failed');
     expect(lock.isEnabled).toBe(true);
     auth.passes = true;
     await lock.setEnabled(false, 'Turn off');

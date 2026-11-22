@@ -7,18 +7,13 @@ import { logDrink } from '@/core/usecases/intake';
 import { logMeal } from '@/core/usecases/logMeal';
 import { getPreferences, setDayStartHour } from '@/core/usecases/preferences';
 import { buildAnalysisInput } from '@/core/llm/analysisInput';
-import { NettleError } from '@/core/model/errors';
 import { unzipSync, strFromU8 } from 'fflate';
 import { MemoryRepo } from './fakes/memoryRepo';
 import { makeDeps } from './helpers/fixtures';
+import { errorCode } from './helpers/errors';
 
 const tz = 'Europe/Warsaw';
 const d = (iso: string) => new Date(iso);
-const code = async (p: Promise<unknown>) =>
-  p.then(
-    () => 'no error',
-    (e: unknown) => (e instanceof NettleError ? e.code : 'other'),
-  );
 
 describe('diary day with a start hour (NF-7)', () => {
   it('NF-7 a day runs from its start hour to the same hour the next day, on the wall clock of the entry', () => {
@@ -67,7 +62,8 @@ describe('diary day with a start hour (NF-7)', () => {
   it('NF-7 the setting is a whole hour from 00:00 to 06:00 and is kept in the preferences', async () => {
     const deps = makeDeps(new MemoryRepo());
     expect(deps.dayStart.get()).toBe(0);
-    for (const bad of [-1, 7, 2.5, NaN, '3' as unknown as number]) expect(await code(setDayStartHour(deps, bad))).toBe('invalid_value');
+    for (const bad of [-1, 7, 2.5, NaN, '3' as unknown as number])
+      expect(await errorCode(setDayStartHour(deps, bad))).toBe('invalid_value');
     expect(await setDayStartHour(deps, 3)).toBe(3);
     expect(deps.dayStart.get()).toBe(3);
     expect((await getPreferences(deps)).dayStartHour).toBe(3);

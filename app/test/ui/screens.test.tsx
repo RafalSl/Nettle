@@ -35,7 +35,7 @@ import en from '@/i18n/en.json';
 import { act, create as createRenderer, type ReactTestRenderer } from 'react-test-renderer';
 import { MemoryPhotoStore } from '../fakes/memoryPhotoStore';
 import { MemoryRepo } from '../fakes/memoryRepo';
-import { makeDeps } from '../helpers/fixtures';
+import { makeDeps, syntheticScores as scores } from '../helpers/fixtures';
 
 // Every tree a test creates is unmounted after it, so no screen timer (Today refreshes every minute) keeps Jest alive.
 const created: ReactTestRenderer[] = [];
@@ -189,7 +189,6 @@ describe('screens render without crashing (NF-3)', () => {
 // ---- Interaction tests: tap through the real screens against in-memory services ----
 
 type Deps = ReturnType<typeof makeDeps>;
-const scores = { severity: 1, itch: 2, pain: 3, dryness: 4, scaling: 5 };
 
 async function mount(
   load: () => { default: React.ComponentType },

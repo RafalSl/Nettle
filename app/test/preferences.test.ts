@@ -20,16 +20,12 @@ import {
 import { MemoryRepo } from './fakes/memoryRepo';
 import { makeDeps } from './helpers/fixtures';
 import { createNodeSqliteDb } from './helpers/nodeSqliteDb';
+import { errorCode } from './helpers/errors';
 
 const repos: [string, () => Promise<StorageRepository>][] = [
   ['in-memory', async () => new MemoryRepo()],
   ['sqlite', async () => SqliteRepo.open(createNodeSqliteDb())],
 ];
-const code = async (p: Promise<unknown>) =>
-  p.then(
-    () => 'no error',
-    (e: unknown) => (e instanceof NettleError ? e.code : 'other'),
-  );
 const both = { records: true, settings: true };
 
 describe.each(repos)('preferences (%s)', (_name, make) => {
@@ -48,9 +44,9 @@ describe.each(repos)('preferences (%s)', (_name, make) => {
       knownNames: false,
     });
     expect((await getPreferences(deps)).suggestions.rows).toBe(8);
-    expect(await code(updateSuggestionSettings(deps, { rows: 0 }))).toBe('invalid_value');
-    expect(await code(updateSuggestionSettings(deps, { rows: 21 }))).toBe('invalid_value');
-    expect(await code(updateSuggestionSettings(deps, { windowDays: 10 as never }))).toBe('invalid_value');
+    expect(await errorCode(updateSuggestionSettings(deps, { rows: 0 }))).toBe('invalid_value');
+    expect(await errorCode(updateSuggestionSettings(deps, { rows: 21 }))).toBe('invalid_value');
+    expect(await errorCode(updateSuggestionSettings(deps, { windowDays: 10 as never }))).toBe('invalid_value');
   });
 
   it('IN-14 a favorite is a snapshot that survives deleting the meal, and a meal saved again refreshes it', async () => {
@@ -129,7 +125,7 @@ describe.each(repos)('preferences (%s)', (_name, make) => {
     prefs = await getPreferences(deps);
     expect(pinnedEntryTypes(prefs)).toEqual(['meal', 'skin', 'checkin', 'treatment', 'drink']);
     expect(pinnedEntryTypes(prefs).length + unpinnedEntryTypes(prefs).length).toBe(11); // nothing is hidden
-    expect(await code(pinEntryType(deps, 'more' as never))).toBe('invalid_value');
+    expect(await errorCode(pinEntryType(deps, 'more' as never))).toBe('invalid_value');
   });
 
   it('EX-1, EX-10 preferences export in the settings part; a fresh install takes them, a merge keeps local ones, replace overwrites', async () => {

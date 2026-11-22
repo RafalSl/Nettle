@@ -1,5 +1,4 @@
 import { localDateTime, localDay } from '@/core/model/time';
-import { NettleError } from '@/core/model/errors';
 import {
   applyReminders,
   DEFAULT_REMINDERS,
@@ -22,6 +21,7 @@ import { addArea, archiveSkinArea } from '@/core/usecases/skin';
 import { FakeNotifier } from './fakes/fakeNotifier';
 import { MemoryRepo } from './fakes/memoryRepo';
 import { makeDeps } from './helpers/fixtures';
+import { errorCode } from './helpers/errors';
 
 const texts: ReminderTexts = {
   checkIn: { title: 'Check-in', body: 'Log today' },
@@ -34,11 +34,6 @@ const texts: ReminderTexts = {
     appliedLabel: 'Applied',
   },
 };
-const code = async (p: Promise<unknown>) =>
-  p.then(
-    () => 'no error',
-    (e: unknown) => (e instanceof NettleError ? e.code : 'other'),
-  );
 const all: ReminderSettings = {
   checkIn: { enabled: true, hour: 20, minute: 30 },
   nails: { enabled: true, weekday: 7, hour: 9, minute: 15 },
@@ -107,7 +102,7 @@ describe('reminders (SK-9)', () => {
   it('SK-9 refused permission saves nothing and says so; turning things off needs no permission', async () => {
     const deps = makeDeps(new MemoryRepo());
     notifier(deps).granted = false;
-    expect(await code(saveReminderSettings(deps, all, texts))).toBe('notifications_denied');
+    expect(await errorCode(saveReminderSettings(deps, all, texts))).toBe('notifications_denied');
     expect(await loadReminderSettings(deps)).toEqual(DEFAULT_REMINDERS);
     expect(notifier(deps).scheduled).toEqual([]);
     const before = notifier(deps).permissionRequests;
@@ -126,7 +121,7 @@ describe('reminders (SK-9)', () => {
       { ...all, backup: { ...all.backup, day: 0 } },
       { ...all, checkIn: { ...all.checkIn, hour: 1.5 } },
     ]) {
-      expect(await code(saveReminderSettings(deps, bad, texts))).toBe('invalid_value');
+      expect(await errorCode(saveReminderSettings(deps, bad, texts))).toBe('invalid_value');
     }
   });
 
@@ -230,9 +225,9 @@ describe('regular items (IN-17, SK-9)', () => {
     expect((await addRegularMedication(deps, { category: 'medication', name: 'synthetic PILL', dose: '5 MG' })).id).toBe(med.id);
     expect((await addRegularTreatment(deps, { treatmentId: cream.id, areaIds: ['area-neck', 'area-chin'] })).id).toBe(tr.id);
     expect(await listRegular(deps)).toHaveLength(2);
-    expect(await code(addRegularTreatment(deps, { treatmentId: 'nope', areaIds: ['area-chin'] }))).toBe('unknown_item');
-    expect(await code(addRegularTreatment(deps, { treatmentId: cream.id, areaIds: [] }))).toBe('no_areas_selected');
-    expect(await code(addRegularMedication(deps, { category: 'medication', name: ' ' }))).toBe('empty_name');
+    expect(await errorCode(addRegularTreatment(deps, { treatmentId: 'nope', areaIds: ['area-chin'] }))).toBe('unknown_item');
+    expect(await errorCode(addRegularTreatment(deps, { treatmentId: cream.id, areaIds: [] }))).toBe('no_areas_selected');
+    expect(await errorCode(addRegularMedication(deps, { category: 'medication', name: ' ' }))).toBe('empty_name');
   });
 
   it('IN-17 one reminder per time, with the name unless hidden, never a dose, and a Taken or Applied action', async () => {
@@ -267,7 +262,7 @@ describe('regular items (IN-17, SK-9)', () => {
   it('IN-17 reminders need permission; refused saves nothing, and Stop removes the item and its reminders but not its entries', async () => {
     const { deps, med } = await setup();
     notifier(deps).granted = false;
-    expect(await code(saveRegularReminders(deps, med.id, [{ hour: 8, minute: 0 }], texts2))).toBe('notifications_denied');
+    expect(await errorCode(saveRegularReminders(deps, med.id, [{ hour: 8, minute: 0 }], texts2))).toBe('notifications_denied');
     expect((await listRegular(deps)).find((r) => r.id === med.id)!.times).toEqual([]);
     notifier(deps).granted = true;
     await saveRegularReminders(deps, med.id, [{ hour: 8, minute: 0 }], texts2);
@@ -276,8 +271,8 @@ describe('regular items (IN-17, SK-9)', () => {
     expect(notifier(deps).scheduled.filter((s) => s.target === 'regular')).toEqual([]);
     expect((await listRegular(deps)).some((r) => r.id === med.id)).toBe(false);
     expect(await deps.repo.listRecords('medicationEntries')).toHaveLength(1);
-    expect(await code(saveRegularReminders(deps, 'nope', [], texts2))).toBe('unknown_item');
-    expect(await code(setRegularTimes(deps, tr0(await listRegular(deps)), [{ hour: 25, minute: 0 }]))).toBe('invalid_value');
+    expect(await errorCode(saveRegularReminders(deps, 'nope', [], texts2))).toBe('unknown_item');
+    expect(await errorCode(setRegularTimes(deps, tr0(await listRegular(deps)), [{ hour: 25, minute: 0 }]))).toBe('invalid_value');
   });
 
   it('IN-17 logging a regular item makes the entry at the given time', async () => {
@@ -290,7 +285,7 @@ describe('regular items (IN-17, SK-9)', () => {
       at: { utc: at.toISOString() },
     });
     expect(await logRegular(deps, tr.id)).toMatchObject({ areaIds: ['area-chin', 'area-neck'] });
-    expect(await code(logRegular(deps, 'nope'))).toBe('unknown_item');
+    expect(await errorCode(logRegular(deps, 'nope'))).toBe('unknown_item');
   });
 
   it('IN-17, SK-9 the action button logs the item and the plain tap opens the quick sheet of its kind', async () => {

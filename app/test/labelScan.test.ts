@@ -6,12 +6,8 @@ import { saveApiKey, scanLabel, setModel } from '@/core/usecases/llm';
 import { FakeLlm } from './fakes/fakeLlm';
 import { MemoryRepo } from './fakes/memoryRepo';
 import { makeDeps } from './helpers/fixtures';
+import { errorCode } from './helpers/errors';
 
-const code = async (p: Promise<unknown>) =>
-  p.then(
-    () => 'no error',
-    (e: unknown) => (e instanceof NettleError ? e.code : 'other'),
-  );
 const image = { mimeType: 'image/jpeg' as const, data: new Uint8Array([1, 2, 3]) };
 const answer = (over: object = {}) =>
   JSON.stringify({
@@ -75,7 +71,7 @@ describe('label scan (IN-15, LL-13)', () => {
   it('SE-2 without a key nothing is sent', async () => {
     const llm = new FakeLlm([answer()]);
     const deps = makeDeps(new MemoryRepo(), undefined, llm);
-    expect(await code(scanLabel(deps, { image, language: 'en' }))).toBe('llm_no_key');
+    expect(await errorCode(scanLabel(deps, { image, language: 'en' }))).toBe('llm_no_key');
     expect(llm.requests).toHaveLength(0);
   });
 });

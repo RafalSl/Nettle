@@ -24,12 +24,8 @@ import {
 import { MemoryRepo } from './fakes/memoryRepo';
 import { createNodeSqliteDb } from './helpers/nodeSqliteDb';
 import { makeDeps } from './helpers/fixtures';
+import { errorCode } from './helpers/errors';
 
-const code = async (p: Promise<unknown>) =>
-  p.then(
-    () => 'no error',
-    (e: unknown) => (e instanceof NettleError ? e.code : 'other'),
-  );
 const at = (iso: string) => new Date(iso);
 const scores = { severity: 4, itch: 3, pain: 2, dryness: 1, scaling: 0 };
 const sel = { dayFrom: '2026-01-10', dayTo: '2026-01-14', language: 'en' as const };
@@ -164,13 +160,13 @@ describe('the pack (LL-15)', () => {
     expect(prepared.marked.map((m) => m.kind)).toEqual(['meal', 'drink']);
     expect(prepared.photos).toEqual([{ id: open.id, label: expect.stringContaining('Chin'), sensitive: false }]);
     expect(await deps.settings.get('ai_pack_state')).toBeNull(); // nothing remembered yet
-    expect(await code(preparePack(deps, { ...sel, dayFrom: '2026-01-15' }))).toBe('invalid_range');
-    expect(await code(preparePack(deps, { ...sel, photoIds: ['nope'] }))).toBe('unknown_photo');
-    expect(await code(preparePack(deps, { ...sel, photoIds: Array.from({ length: 21 }, (_, i) => `p${i}`) }))).toBe('too_many_photos');
+    expect(await errorCode(preparePack(deps, { ...sel, dayFrom: '2026-01-15' }))).toBe('invalid_range');
+    expect(await errorCode(preparePack(deps, { ...sel, photoIds: ['nope'] }))).toBe('unknown_photo');
+    expect(await errorCode(preparePack(deps, { ...sel, photoIds: Array.from({ length: 21 }, (_, i) => `p${i}`) }))).toBe('too_many_photos');
     const empty = makeDeps(new MemoryRepo());
-    expect(await code(preparePack(empty, sel))).toBe('analysis_no_data');
+    expect(await errorCode(preparePack(empty, sel))).toBe('analysis_no_data');
     await logMeal(empty, { description: 'Synthetic', ingredients: [], fillLater: true, at: at('2025-06-01T08:00:00.000Z') });
-    expect(await code(preparePack(empty, sel))).toBe('no error'); // only marked entries is still a pack
+    expect(await errorCode(preparePack(empty, sel))).toBe('no error'); // only marked entries is still a pack
   });
 });
 
@@ -280,9 +276,9 @@ describe('the result (LL-15)', () => {
   it('LL-15 a result for another pack, for entries outside its pack, or an empty one is refused; one imported before is skipped', async () => {
     const { repo, deps, pancakes, plain } = await diary();
     const { packId } = await buildPack(deps, sel);
-    expect(await code(previewResult(deps, resultBytes(answer('pack-aaaaaaaaaaaa'))))).toBe('result_wrong_pack');
+    expect(await errorCode(previewResult(deps, resultBytes(answer('pack-aaaaaaaaaaaa'))))).toBe('result_wrong_pack');
     expect(
-      await code(
+      await errorCode(
         previewResult(
           deps,
           resultBytes(
@@ -295,7 +291,7 @@ describe('the result (LL-15)', () => {
         ),
       ),
     ).toBe('result_unknown_entry'); // an unmarked entry is not in the pack
-    expect(await code(previewResult(deps, resultBytes({ pack_id: packId, model: 'm' })))).toBe('result_invalid');
+    expect(await errorCode(previewResult(deps, resultBytes({ pack_id: packId, model: 'm' })))).toBe('result_invalid');
     const bytes = resultBytes(
       answer(packId, { fills: [{ kind: 'meal', id: pancakes.id, ingredients: ['flour'], allergens: [], note: null }] }),
     );
@@ -317,7 +313,7 @@ describe('the result (LL-15)', () => {
       if (kind === 'reportSummaries' && fail) throw new Error('synthetic storage failure');
       return addRecord(kind, r);
     }) as typeof repo.addRecord;
-    expect(await code(importResult(deps, bytes))).toBe('other');
+    expect(await errorCode(importResult(deps, bytes))).toBe('other');
     expect(await repo.listRecords('analyses')).toEqual([]);
     expect((await previewResult(deps, bytes)).alreadyImported).toBe(false);
     fail = false;
@@ -381,7 +377,7 @@ describe('suggestions to review (IN-20)', () => {
     await dismissSuggestion(deps, suggestion.id);
     expect(await listSuggestions(deps)).toEqual([]);
     expect((await markedEntries(deps)).map((m) => m.id)).toContain(pancakes.id);
-    expect(await code(completeSuggestion(deps, suggestion.id, { edited: false, aiTags: false }))).toBe('suggestion_gone');
+    expect(await errorCode(completeSuggestion(deps, suggestion.id, { edited: false, aiTags: false }))).toBe('suggestion_gone');
   });
 
   it('IN-16, IN-20 completing clears the mark and gives a typed entry the source name estimate (manual) with the model the result names', async () => {

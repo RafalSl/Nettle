@@ -1,6 +1,5 @@
 import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate';
 import { SqliteRepo } from '@/adapters/storage/sqliteRepo';
-import { NettleError } from '@/core/model/errors';
 import { filterPhotoIds, planPhotoNames, selectPhotos } from '@/core/export/photoSelection';
 import type { Photo } from '@/core/model/types';
 import type { StorageRepository } from '@/core/ports/storage';
@@ -11,7 +10,8 @@ import type { Deps } from '@/core/usecases/deps';
 import { MemoryPhotoStore } from './fakes/memoryPhotoStore';
 import { MemoryRepo } from './fakes/memoryRepo';
 import { createNodeSqliteDb } from './helpers/nodeSqliteDb';
-import { makeDeps } from './helpers/fixtures';
+import { makeDeps, syntheticScores as scores } from './helpers/fixtures';
+import { errorCode } from './helpers/errors';
 
 const repos: [string, () => Promise<StorageRepository>][] = [
   ['in-memory', async () => new MemoryRepo()],
@@ -19,12 +19,6 @@ const repos: [string, () => Promise<StorageRepository>][] = [
 ];
 const BOTH = { records: true, settings: true };
 const RECORDS = { records: true, settings: false };
-const scores = { severity: 1, itch: 2, pain: 3, dryness: 4, scaling: 5 };
-const code = async (p: Promise<unknown>) =>
-  p.then(
-    () => 'no error',
-    (e: unknown) => (e instanceof NettleError ? e.code : 'other'),
-  );
 const names = (zip: Uint8Array) => Object.keys(unzipSync(zip)).sort();
 const dataJson = (zip: Uint8Array) => JSON.parse(strFromU8(unzipSync(zip)['data.json']!));
 const text = (b: Uint8Array) => new TextDecoder().decode(b);
@@ -193,7 +187,7 @@ describe.each(repos)('export and import with photos (%s)', (_name, make) => {
     const broken = zipSync(files);
     const target = makeDeps(await make());
     const parsed = await previewImport(target, broken);
-    expect(await code(applyImport(target, parsed, { mode: 'replace', parts: BOTH }))).toBe('import_missing_photo');
+    expect(await errorCode(applyImport(target, parsed, { mode: 'replace', parts: BOTH }))).toBe('import_missing_photo');
     expect(store(target).files.size).toBe(0);
     expect(await target.repo.listRecords('skinEntries')).toEqual([]);
   });
@@ -208,7 +202,7 @@ describe.each(repos)('export and import with photos (%s)', (_name, make) => {
     files['data.json'] = strToU8(JSON.stringify(json));
     const target = makeDeps(await make());
     const parsed = await previewImport(target, zipSync(files));
-    expect(await code(applyImport(target, parsed, { mode: 'merge', parts: RECORDS }))).toBe('import_unknown_entry');
+    expect(await errorCode(applyImport(target, parsed, { mode: 'merge', parts: RECORDS }))).toBe('import_unknown_entry');
     expect(store(target).files.size).toBe(0);
   });
 
@@ -219,7 +213,7 @@ describe.each(repos)('export and import with photos (%s)', (_name, make) => {
       const json = JSON.parse(strFromU8(files['data.json']!));
       json.records.photos[0].file = bad;
       const target = makeDeps(await make());
-      expect(await code(previewImport(target, zipSync({ ...files, 'data.json': strToU8(JSON.stringify(json)) })))).toBe(
+      expect(await errorCode(previewImport(target, zipSync({ ...files, 'data.json': strToU8(JSON.stringify(json)) })))).toBe(
         'import_invalid_data',
       );
     }

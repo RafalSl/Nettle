@@ -15,14 +15,10 @@ import { strFromU8, unzipSync } from 'fflate';
 import { MemoryRepo } from './fakes/memoryRepo';
 import { createNodeSqliteDb } from './helpers/nodeSqliteDb';
 import { makeDeps } from './helpers/fixtures';
+import { errorCode } from './helpers/errors';
 
 const scores = { severity: 4, itch: 3, pain: 2, dryness: 5, scaling: 1 };
 const at = (iso: string) => new Date(iso);
-const code = async (p: Promise<unknown>) =>
-  p.then(
-    () => 'no error',
-    (e: unknown) => (e instanceof NettleError ? e.code : 'other'),
-  );
 
 describe('cracks and size on a skin entry (SK-3)', () => {
   it('SK-3 an entry has no cracks and no size unless it says so, and a size is whole millimetres from 1 to 500', async () => {
@@ -34,7 +30,7 @@ describe('cracks and size on a skin entry (SK-3)', () => {
     });
     expect(await logSkinEntry(deps, { areaId: 'area-chin', scores, sizeMm: null })).toMatchObject({ sizeMm: null });
     for (const bad of [0, -3, 501, 12.5, Number.NaN, '12' as never]) {
-      expect(await code(logSkinEntry(deps, { areaId: 'area-chin', scores, sizeMm: bad }))).toBe('invalid_size');
+      expect(await errorCode(logSkinEntry(deps, { areaId: 'area-chin', scores, sizeMm: bad }))).toBe('invalid_size');
     }
   });
 
@@ -57,7 +53,7 @@ describe('cracks and size on a skin entry (SK-3)', () => {
     const e = await logSkinEntry(deps, { areaId: 'area-chin', scores, cracks: true, sizeMm: 10 });
     const edited = await editSkinEntry(deps, e.id, { areaId: 'area-chin', scores, cracks: false, sizeMm: null });
     expect(edited).toMatchObject({ id: e.id, cracks: false, sizeMm: null });
-    expect(await code(editSkinEntry(deps, e.id, { areaId: 'area-chin', scores, sizeMm: 0 }))).toBe('invalid_size');
+    expect(await errorCode(editSkinEntry(deps, e.id, { areaId: 'area-chin', scores, sizeMm: 0 }))).toBe('invalid_size');
     expect((await deps.repo.listRecords('skinEntries'))[0]).toMatchObject({ cracks: false, sizeMm: null });
   });
 
@@ -109,7 +105,7 @@ describe('cracks and size on a skin entry (SK-3)', () => {
       ...json,
       records: { ...json.records, skin_entries: [{ ...json.records.skin_entries[0], ...patch }] },
     }); // an undefined field counts as missing
-    const code = (raw: unknown) => {
+    const parseCode = (raw: unknown) => {
       try {
         parseDataJson(raw);
         return 'no error';
@@ -117,7 +113,7 @@ describe('cracks and size on a skin entry (SK-3)', () => {
         return e instanceof NettleError ? e.code : 'other';
       }
     };
-    expect(code(withEntry({}))).toBe('no error');
+    expect(parseCode(withEntry({}))).toBe('no error');
     for (const patch of [
       { cracks: undefined },
       { cracks: 'yes' },
@@ -127,7 +123,7 @@ describe('cracks and size on a skin entry (SK-3)', () => {
       { size_mm: 2.5 },
       { size_mm: '12' },
     ]) {
-      expect(code(withEntry(patch))).toBe('import_invalid_data');
+      expect(parseCode(withEntry(patch))).toBe('import_invalid_data');
     }
   });
 

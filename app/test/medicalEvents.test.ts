@@ -17,12 +17,8 @@ import { areaTimeline } from '@/core/usecases/timeline';
 import { MemoryRepo } from './fakes/memoryRepo';
 import { createNodeSqliteDb } from './helpers/nodeSqliteDb';
 import { makeDeps } from './helpers/fixtures';
+import { errorCode } from './helpers/errors';
 
-const code = async (p: Promise<unknown>) =>
-  p.then(
-    () => 'no error',
-    (e: unknown) => (e instanceof NettleError ? e.code : 'other'),
-  );
 const at = (iso: string) => new Date(iso);
 const scores = { severity: 3, itch: 1, pain: 1, dryness: 1, scaling: 1 };
 
@@ -49,9 +45,9 @@ describe('medical events (IN-18)', () => {
 
   it('IN-18 needs a kind and a title of 1 to 120 characters, and says what is wrong', async () => {
     const deps = makeDeps(new MemoryRepo());
-    expect(await code(logMedicalEvent(deps, { kind: 'visit', title: '   ' }))).toBe('empty_title');
-    expect(await code(logMedicalEvent(deps, { kind: 'visit', title: 'x'.repeat(121) }))).toBe('invalid_value');
-    expect(await code(logMedicalEvent(deps, { kind: 'x-ray' as never, title: 'Synthetic' }))).toBe('invalid_value');
+    expect(await errorCode(logMedicalEvent(deps, { kind: 'visit', title: '   ' }))).toBe('empty_title');
+    expect(await errorCode(logMedicalEvent(deps, { kind: 'visit', title: 'x'.repeat(121) }))).toBe('invalid_value');
+    expect(await errorCode(logMedicalEvent(deps, { kind: 'x-ray' as never, title: 'Synthetic' }))).toBe('invalid_value');
     expect((await logMedicalEvent(deps, { kind: 'visit', title: 'x'.repeat(120) })).title).toHaveLength(120);
     expect(await deps.repo.listRecords('medicalEvents')).toHaveLength(1);
   });
@@ -66,14 +62,18 @@ describe('medical events (IN-18)', () => {
       '2026-01-10',
     );
     expect((await logMedicalEvent(deps, { kind: 'illness', title: 'Synthetic ongoing', at: start })).endDay).toBeNull();
-    expect(await code(logMedicalEvent(deps, { kind: 'illness', title: 'Synthetic', at: start, endDay: '2026-01-09' }))).toBe(
+    expect(await errorCode(logMedicalEvent(deps, { kind: 'illness', title: 'Synthetic', at: start, endDay: '2026-01-09' }))).toBe(
       'invalid_value',
     );
-    expect(await code(logMedicalEvent(deps, { kind: 'illness', title: 'Synthetic', at: start, endDay: '2026-02-30' }))).toBe(
+    expect(await errorCode(logMedicalEvent(deps, { kind: 'illness', title: 'Synthetic', at: start, endDay: '2026-02-30' }))).toBe(
       'invalid_value',
     );
-    expect(await code(logMedicalEvent(deps, { kind: 'illness', title: 'Synthetic', at: start, endDay: 'tomorrow' }))).toBe('invalid_value');
-    expect(await code(logMedicalEvent(deps, { kind: 'visit', title: 'Synthetic', at: start, endDay: '2026-01-14' }))).toBe('invalid_value');
+    expect(await errorCode(logMedicalEvent(deps, { kind: 'illness', title: 'Synthetic', at: start, endDay: 'tomorrow' }))).toBe(
+      'invalid_value',
+    );
+    expect(await errorCode(logMedicalEvent(deps, { kind: 'visit', title: 'Synthetic', at: start, endDay: '2026-01-14' }))).toBe(
+      'invalid_value',
+    );
   });
 
   it('EN-1, IN-18 an edit keeps the id and the date, can add, change or clear the end date, and cannot give a visit an end', async () => {
@@ -84,7 +84,9 @@ describe('medical events (IN-18)', () => {
     expect((await editMedicalEvent(deps, e.id, { kind: 'illness', title: 'Synthetic cold', endDay: null })).endDay).toBeNull();
     const asVisit = await editMedicalEvent(deps, e.id, { kind: 'visit', title: 'Synthetic cold' });
     expect(asVisit).toMatchObject({ kind: 'visit', endDay: null });
-    expect(await code(editMedicalEvent(deps, e.id, { kind: 'visit', title: 'Synthetic', endDay: '2026-01-13' }))).toBe('invalid_value');
+    expect(await errorCode(editMedicalEvent(deps, e.id, { kind: 'visit', title: 'Synthetic', endDay: '2026-01-13' }))).toBe(
+      'invalid_value',
+    );
     expect(await deps.repo.listRecords('medicalEvents')).toHaveLength(1);
   });
 

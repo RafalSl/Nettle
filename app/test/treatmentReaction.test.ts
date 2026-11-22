@@ -1,7 +1,6 @@
 import { buildAnalysisInput } from '@/core/llm/analysisInput';
 import { analysisPrompt } from '@/core/llm/analysisPrompt';
 import { buildReportHtml } from '@/core/export/report';
-import { NettleError } from '@/core/model/errors';
 import { PREDEFINED_ITEMS } from '@/core/model/lists';
 import { SqliteRepo } from '@/adapters/storage/sqliteRepo';
 import { editTreatmentApplication } from '@/core/usecases/entries';
@@ -10,12 +9,7 @@ import { addListItem } from '@/core/usecases/lists';
 import { MemoryRepo } from './fakes/memoryRepo';
 import { createNodeSqliteDb } from './helpers/nodeSqliteDb';
 import { makeDeps } from './helpers/fixtures';
-
-const code = async (p: Promise<unknown>) =>
-  p.then(
-    () => 'no error',
-    (e: unknown) => (e instanceof NettleError ? e.code : 'other'),
-  );
+import { errorCode } from './helpers/errors';
 
 async function setup() {
   const repo = new MemoryRepo();
@@ -39,11 +33,13 @@ describe('reaction after applying a treatment (IN-11)', () => {
     const { deps, cream } = await setup();
     const app = await applyTreatment(deps, { treatmentId: cream.id, areaIds: ['area-chin'], reaction: 'mild' });
     expect(app.reaction).toBe('mild');
-    expect(await code(applyTreatment(deps, { treatmentId: cream.id, areaIds: ['area-chin'], reaction: 'burning' as never }))).toBe(
+    expect(await errorCode(applyTreatment(deps, { treatmentId: cream.id, areaIds: ['area-chin'], reaction: 'burning' as never }))).toBe(
       'invalid_value',
     );
     expect(
-      await code(editTreatmentApplication(deps, app.id, { treatmentId: cream.id, areaIds: ['area-chin'], reaction: 'severe' as never })),
+      await errorCode(
+        editTreatmentApplication(deps, app.id, { treatmentId: cream.id, areaIds: ['area-chin'], reaction: 'severe' as never }),
+      ),
     ).toBe('invalid_value');
     expect((await deps.repo.listRecords('treatmentApplications')).map((a) => a.reaction)).toEqual(['mild']);
   });

@@ -1,5 +1,4 @@
 import { SqliteRepo } from '@/adapters/storage/sqliteRepo';
-import { NettleError } from '@/core/model/errors';
 import type { StorageRepository } from '@/core/ports/storage';
 import { logStool, saveCheckIn } from '@/core/usecases/checkin';
 import { applyTreatment, logReaction } from '@/core/usecases/events';
@@ -21,19 +20,14 @@ import { addArea, archiveSkinArea, logNailEntry, logSkinEntry } from '@/core/use
 import { flarePeriods } from '@/core/usecases/flares';
 import { MemoryPhotoStore } from './fakes/memoryPhotoStore';
 import { MemoryRepo } from './fakes/memoryRepo';
-import { makeDeps } from './helpers/fixtures';
+import { makeDeps, syntheticScores as scores } from './helpers/fixtures';
 import { createNodeSqliteDb } from './helpers/nodeSqliteDb';
+import { errorCode } from './helpers/errors';
 
 const repos: [string, () => Promise<StorageRepository>][] = [
   ['in-memory', async () => new MemoryRepo()],
   ['sqlite', async () => SqliteRepo.open(createNodeSqliteDb())],
 ];
-const code = async (p: Promise<unknown>) =>
-  p.then(
-    () => 'no error',
-    (e: unknown) => (e instanceof NettleError ? e.code : 'other'),
-  );
-const scores = { severity: 1, itch: 2, pain: 3, dryness: 4, scaling: 5 };
 const d = (iso: string) => new Date(iso);
 
 describe.each(repos)('editing and deleting one entry (%s)', (_name, make) => {
@@ -61,20 +55,20 @@ describe.each(repos)('editing and deleting one entry (%s)', (_name, make) => {
     const meal = await logMeal(deps, { description: 'Synthetic oats', ingredients: [], at: d('2026-01-15T08:00:00.000Z') });
     await editMeal(deps, meal.id, { description: 'Synthetic oats 2', ingredients: [] });
     expect((await repo.listRecords('meals'))[0]?.at).toEqual(meal.at);
-    expect(await code(editMeal(deps, meal.id, { description: '  ', ingredients: [] }))).toBe('empty_description');
-    expect(await code(editMeal(deps, 'nope', { description: 'x', ingredients: [] }))).toBe('unknown_entry');
+    expect(await errorCode(editMeal(deps, meal.id, { description: '  ', ingredients: [] }))).toBe('empty_description');
+    expect(await errorCode(editMeal(deps, 'nope', { description: 'x', ingredients: [] }))).toBe('unknown_entry');
   });
 
   it('EN-1 a meal cannot be moved after its reaction, and a reaction cannot move before its meal', async () => {
     const { deps } = await setup();
     const meal = await logMeal(deps, { description: 'Synthetic oats', ingredients: [], at: d('2026-01-15T08:00:00.000Z') });
     const reaction = await logReaction(deps, { mealId: meal.id, symptoms: ['hives'], at: d('2026-01-15T09:00:00.000Z') });
-    expect(await code(editMeal(deps, meal.id, { description: 'Synthetic oats', ingredients: [], at: d('2026-01-15T09:30:00.000Z') }))).toBe(
-      'meal_after_reaction',
-    );
-    expect(await code(editReaction(deps, reaction.id, { mealId: meal.id, symptoms: ['hives'], at: d('2026-01-15T07:00:00.000Z') }))).toBe(
-      'reaction_before_meal',
-    );
+    expect(
+      await errorCode(editMeal(deps, meal.id, { description: 'Synthetic oats', ingredients: [], at: d('2026-01-15T09:30:00.000Z') })),
+    ).toBe('meal_after_reaction');
+    expect(
+      await errorCode(editReaction(deps, reaction.id, { mealId: meal.id, symptoms: ['hives'], at: d('2026-01-15T07:00:00.000Z') })),
+    ).toBe('reaction_before_meal');
     const ok = await editReaction(deps, reaction.id, {
       mealId: meal.id,
       symptoms: ['hives', 'swelling'],
@@ -100,8 +94,10 @@ describe.each(repos)('editing and deleting one entry (%s)', (_name, make) => {
     const edited = await editSkinEntry(deps, entry.id, { areaId: 'area-chin', scores: { ...scores, itch: 9 } });
     expect(edited.scores.itch).toBe(9);
     expect((await repo.listRecords('skinEntries'))[0]?.id).toBe(entry.id);
-    expect(await code(editSkinEntry(deps, entry.id, { areaId: 'area-neck', scores }))).toBe('area_archived');
-    expect(await code(editSkinEntry(deps, entry.id, { areaId: 'area-sternum', scores: { ...scores, pain: 11 } }))).toBe('invalid_score');
+    expect(await errorCode(editSkinEntry(deps, entry.id, { areaId: 'area-neck', scores }))).toBe('area_archived');
+    expect(await errorCode(editSkinEntry(deps, entry.id, { areaId: 'area-sternum', scores: { ...scores, pain: 11 } }))).toBe(
+      'invalid_score',
+    );
   });
 
   it('EN-1 edits nail entries, stool entries and treatment applications through the same rules', async () => {
@@ -111,7 +107,7 @@ describe.each(repos)('editing and deleting one entry (%s)', (_name, make) => {
     expect((await editNailEntry(deps, ne.id, { areaId: nail.id, stage: 'yellow', extent: 'up_to_half' })).id).toBe(ne.id);
     const st = await logStool(deps, { bristol: 4 });
     expect((await editStool(deps, st.id, { bristol: 6 })).bristol).toBe(6);
-    expect(await code(editStool(deps, st.id, { bristol: 9 }))).toBe('invalid_stool_type');
+    expect(await errorCode(editStool(deps, st.id, { bristol: 9 }))).toBe('invalid_stool_type');
     const tr = await addListItem(deps, 'treatments', 'Synthetic cream');
     const app = await applyTreatment(deps, { treatmentId: tr.id, areaIds: ['area-chin'] });
     const edited = await editTreatmentApplication(deps, app.id, { treatmentId: tr.id, areaIds: ['area-chin', 'area-neck'] });
@@ -123,7 +119,7 @@ describe.each(repos)('editing and deleting one entry (%s)', (_name, make) => {
     const { repo, deps } = await setup();
     const a = await saveCheckIn(deps, { at: d('2026-01-14T10:00:00.000Z'), values: { 'item-wellbeing': 5 }, confirmEmptyDay: true });
     const b = await saveCheckIn(deps, { at: d('2026-01-15T10:00:00.000Z'), values: { 'item-wellbeing': 6 }, confirmEmptyDay: true });
-    expect(await code(editCheckIn(deps, b.id, { at: d('2026-01-14T18:00:00.000Z'), values: { 'item-wellbeing': 6 } }))).toBe(
+    expect(await errorCode(editCheckIn(deps, b.id, { at: d('2026-01-14T18:00:00.000Z'), values: { 'item-wellbeing': 6 } }))).toBe(
       'checkin_day_taken',
     );
     const edited = await editCheckIn(deps, a.id, { values: { 'item-wellbeing': 2 } });
@@ -159,7 +155,7 @@ describe.each(repos)('editing and deleting one entry (%s)', (_name, make) => {
       ].sort(),
     );
     expect(tombs[0]?.deletedAt).toEqual({ utc: '2026-01-15T10:00:00.000Z', tz: 'Europe/Warsaw' });
-    expect(await code(deleteEntry(deps, 'meals', meal.id))).toBe('unknown_entry');
+    expect(await errorCode(deleteEntry(deps, 'meals', meal.id))).toBe('unknown_entry');
   });
 
   it('EN-1, SK-4 deleting a skin entry also deletes its photos and their files, and nothing else', async () => {

@@ -1,12 +1,10 @@
 import { MemoryRepo } from './fakes/memoryRepo';
-import { makeDeps } from './helpers/fixtures';
+import { makeDeps, syntheticScores as scores } from './helpers/fixtures';
 import { backupCardDue, daysSinceExport, getLastExport, markExported, presetOptions, sinceLastExport } from '@/core/usecases/backup';
 import { exportBundle, previewImport } from '@/core/usecases/exchange';
 import { addPhoto } from '@/core/usecases/photos';
 import { logSkinEntry } from '@/core/usecases/skin';
 import { unpackBundle } from '@/core/export/bundle';
-
-const scores = { severity: 1, itch: 2, pain: 3, dryness: 4, scaling: 5 };
 
 describe('export bookkeeping (EX-11, UX-2)', () => {
   it('EX-11 knows nothing before the first export, then the local day of the last one', async () => {

@@ -1,5 +1,4 @@
 import { SqliteRepo } from '@/adapters/storage/sqliteRepo';
-import { NettleError } from '@/core/model/errors';
 import type { StorageRepository } from '@/core/ports/storage';
 import { deleteData } from '@/core/usecases/deleteData';
 import { addPhoto, attachPhotos, listPhotos, removePhoto, setPhotoSensitive } from '@/core/usecases/photos';
@@ -7,18 +6,13 @@ import { addArea, logNailEntry, logSkinEntry } from '@/core/usecases/skin';
 import { MemoryPhotoStore } from './fakes/memoryPhotoStore';
 import { MemoryRepo } from './fakes/memoryRepo';
 import { createNodeSqliteDb } from './helpers/nodeSqliteDb';
-import { makeDeps } from './helpers/fixtures';
+import { makeDeps, syntheticScores as scores } from './helpers/fixtures';
+import { errorCode } from './helpers/errors';
 
 const repos: [string, () => Promise<StorageRepository>][] = [
   ['in-memory', async () => new MemoryRepo()],
   ['sqlite', async () => SqliteRepo.open(createNodeSqliteDb())],
 ];
-const code = async (p: Promise<unknown>) =>
-  p.then(
-    () => 'no error',
-    (e: unknown) => (e instanceof NettleError ? e.code : 'other'),
-  );
-const scores = { severity: 1, itch: 2, pain: 3, dryness: 4, scaling: 5 };
 
 describe.each(repos)('photos (%s)', (_name, make) => {
   async function setup() {
@@ -66,7 +60,7 @@ describe.each(repos)('photos (%s)', (_name, make) => {
     expect([a.sensitive, b.sensitive, c.sensitive]).toEqual([true, false, false]);
     await setPhotoSensitive(deps, c.id, true);
     expect((await listPhotos(deps, 'skinEntry', chin.id))[0]?.sensitive).toBe(true);
-    expect(await code(setPhotoSensitive(deps, 'nope', true))).toBe('unknown_photo');
+    expect(await errorCode(setPhotoSensitive(deps, 'nope', true))).toBe('unknown_photo');
   });
 
   it('SK-1, SK-5 each of the three intimate areas starts its photos as sensitive', async () => {
@@ -79,7 +73,7 @@ describe.each(repos)('photos (%s)', (_name, make) => {
 
   it('SK-4 refuses an unknown entry without storing a file', async () => {
     const { deps, store } = await setup();
-    expect(await code(addPhoto(deps, { entryKind: 'skinEntry', entryId: 'nope', sourceUri: 'x' }))).toBe('unknown_entry');
+    expect(await errorCode(addPhoto(deps, { entryKind: 'skinEntry', entryId: 'nope', sourceUri: 'x' }))).toBe('unknown_entry');
     expect(store.files.size).toBe(0);
   });
 
@@ -87,7 +81,7 @@ describe.each(repos)('photos (%s)', (_name, make) => {
     const { deps, repo, store } = await setup();
     const entry = await logSkinEntry(deps, { areaId: 'area-chin', scores });
     store.failNextSave = true;
-    expect(await code(addPhoto(deps, { entryKind: 'skinEntry', entryId: entry.id, sourceUri: 'x' }))).toBe('photo_failed');
+    expect(await errorCode(addPhoto(deps, { entryKind: 'skinEntry', entryId: entry.id, sourceUri: 'x' }))).toBe('photo_failed');
     expect(await repo.listRecords('photos')).toEqual([]);
     expect(store.files.size).toBe(0);
   });
@@ -112,7 +106,7 @@ describe.each(repos)('photos (%s)', (_name, make) => {
     await removePhoto(deps, a.id);
     expect((await repo.listRecords('photos')).map((p) => p.id)).toEqual([b.id]);
     expect([...store.files.keys()]).toEqual([b.file]);
-    expect(await code(removePhoto(deps, a.id))).toBe('unknown_photo');
+    expect(await errorCode(removePhoto(deps, a.id))).toBe('unknown_photo');
   });
 
   it('SE-9 deleting an entry deletes its photos and their files, and no others', async () => {

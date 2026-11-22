@@ -18,10 +18,9 @@ import { logMeal } from '@/core/usecases/logMeal';
 import { addArea, archiveSkinArea, logNailEntry, logSkinEntry } from '@/core/usecases/skin';
 import { areasWithEntries, areaTimeline, resolveJumpDay, trendPoints } from '@/core/usecases/timeline';
 import { MemoryRepo } from './fakes/memoryRepo';
-import { makeDeps } from './helpers/fixtures';
+import { makeDeps, syntheticScores as scores } from './helpers/fixtures';
 
 const d = (iso: string) => new Date(iso);
-const scores = { severity: 1, itch: 2, pain: 3, dryness: 4, scaling: 5 };
 
 describe('the day log (UX-2)', () => {
   it('UX-2 lists everything of one local day, oldest first, and nothing of the days around it', async () => {

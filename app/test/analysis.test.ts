@@ -22,16 +22,12 @@ import { FakeLlm } from './fakes/fakeLlm';
 import { MemoryRepo } from './fakes/memoryRepo';
 import { createNodeSqliteDb } from './helpers/nodeSqliteDb';
 import { makeDeps } from './helpers/fixtures';
+import { errorCode } from './helpers/errors';
 
 const repos: [string, () => Promise<StorageRepository>][] = [
   ['in-memory', async () => new MemoryRepo()],
   ['sqlite', async () => SqliteRepo.open(createNodeSqliteDb())],
 ];
-const code = async (p: Promise<unknown>) =>
-  p.then(
-    () => 'no error',
-    (e: unknown) => (e instanceof NettleError ? e.code : 'other'),
-  );
 const scores = { severity: 6, itch: 7, pain: 1, dryness: 4, scaling: 5 };
 const VALID_ANSWER = JSON.stringify({
   summary: 'Synthetic summary',
@@ -296,16 +292,16 @@ describe.each(repos)('prepare and run an analysis (%s)', (_name, make) => {
 
   it('LL-6 rejects an unknown photo and more photos than the cap', async () => {
     const { deps } = await diary(make);
-    expect(await code(prepareAnalysis(deps, { ...sel, photoIds: ['nope'] }))).toBe('unknown_photo');
+    expect(await errorCode(prepareAnalysis(deps, { ...sel, photoIds: ['nope'] }))).toBe('unknown_photo');
     const ids = Array.from({ length: MAX_ANALYSIS_PHOTOS + 1 }, (_, i) => `p${i}`);
-    expect(await code(prepareAnalysis(deps, { ...sel, photoIds: ids }))).toBe('too_many_photos');
+    expect(await errorCode(prepareAnalysis(deps, { ...sel, photoIds: ids }))).toBe('too_many_photos');
   });
 
   it('LL-2 rejects bad ranges and a range with nothing logged', async () => {
     const { deps } = await diary(make);
-    expect(await code(prepareAnalysis(deps, { ...sel, dayFrom: '2026-01-14', dayTo: '2026-01-10' }))).toBe('invalid_range');
-    expect(await code(prepareAnalysis(deps, { ...sel, dayFrom: '10-01-2026' }))).toBe('invalid_range');
-    expect(await code(prepareAnalysis(deps, { ...sel, dayFrom: '2026-02-01', dayTo: '2026-02-05' }))).toBe('analysis_no_data');
+    expect(await errorCode(prepareAnalysis(deps, { ...sel, dayFrom: '2026-01-14', dayTo: '2026-01-10' }))).toBe('invalid_range');
+    expect(await errorCode(prepareAnalysis(deps, { ...sel, dayFrom: '10-01-2026' }))).toBe('invalid_range');
+    expect(await errorCode(prepareAnalysis(deps, { ...sel, dayFrom: '2026-02-01', dayTo: '2026-02-05' }))).toBe('analysis_no_data');
   });
 
   it('LL-7 run stores the analysis as its own object with model, run date, prompt version and counts', async () => {
@@ -337,14 +333,14 @@ describe.each(repos)('prepare and run an analysis (%s)', (_name, make) => {
   ])('LL-8 %s: a clear code and nothing stored', async (_n, error, expected) => {
     const { deps } = await diary(make, new FakeLlm([error]));
     const prepared = await prepareAnalysis(deps, sel);
-    expect(await code(runAnalysis(deps, prepared))).toBe(expected);
+    expect(await errorCode(runAnalysis(deps, prepared))).toBe(expected);
     expect(await listAnalyses(deps)).toEqual([]);
   });
 
   it('LL-8 an unreadable or off-shape answer is llm_bad_response and nothing is stored', async () => {
     for (const bad of ['not json', '{}', JSON.stringify({ ...JSON.parse(VALID_ANSWER), hypotheses: [{}] })]) {
       const { deps } = await diary(make, new FakeLlm([bad]));
-      expect(await code(runAnalysis(deps, await prepareAnalysis(deps, sel)))).toBe('llm_bad_response');
+      expect(await errorCode(runAnalysis(deps, await prepareAnalysis(deps, sel)))).toBe('llm_bad_response');
       expect(await listAnalyses(deps)).toEqual([]);
     }
   });
@@ -353,7 +349,7 @@ describe.each(repos)('prepare and run an analysis (%s)', (_name, make) => {
     const { deps, llm } = await diary(make);
     const prepared = await prepareAnalysis(deps, sel);
     await deps.keys.delete('anthropic_api_key');
-    expect(await code(runAnalysis(deps, prepared))).toBe('llm_no_key');
+    expect(await errorCode(runAnalysis(deps, prepared))).toBe('llm_no_key');
     expect(llm.requests).toHaveLength(0);
   });
 
@@ -362,7 +358,7 @@ describe.each(repos)('prepare and run an analysis (%s)', (_name, make) => {
     const prepared = await prepareAnalysis(deps, sel);
     const ctl = new AbortController();
     const answering = { completeJson: async () => (ctl.abort(), { text: VALID_ANSWER, model: 'fake-model' }) };
-    expect(await code(runAnalysis({ ...deps, llmFor: () => answering }, prepared, ctl.signal))).toBe('llm_cancelled');
+    expect(await errorCode(runAnalysis({ ...deps, llmFor: () => answering }, prepared, ctl.signal))).toBe('llm_cancelled');
     expect(await listAnalyses(deps)).toEqual([]);
     const seen: (AbortSignal | undefined)[] = [];
     const watching = {
@@ -397,7 +393,7 @@ describe.each(repos)('stored analyses travel with the export (%s)', (_name, make
     const json = JSON.parse(strFromU8(files['data.json']!));
     json.records.analyses[0].result.hypotheses[0].strength = 'strong';
     const damaged = zipSync({ ...files, 'data.json': strToU8(JSON.stringify(json)) });
-    expect(await code(previewImport(makeDeps(await make()), damaged))).toBe('import_invalid_data');
+    expect(await errorCode(previewImport(makeDeps(await make()), damaged))).toBe('import_invalid_data');
   });
 
   it('SE-9 analyses can be deleted on their own, without touching entries', async () => {

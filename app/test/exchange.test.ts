@@ -11,6 +11,7 @@ import { MemoryRepo } from './fakes/memoryRepo';
 import { MemoryKeyStore } from './fakes/memoryKeyStore';
 import { createNodeSqliteDb } from './helpers/nodeSqliteDb';
 import { TZ, makeDeps, syntheticEntry, syntheticCheckIn, syntheticMeal, syntheticNailEntry, syntheticStool } from './helpers/fixtures';
+import { errorCode } from './helpers/errors';
 
 const repos: [string, () => Promise<StorageRepository>][] = [
   ['in-memory', async () => new MemoryRepo()],
@@ -111,11 +112,6 @@ async function seeded(make: () => Promise<StorageRepository>) {
 }
 
 const dataJson = (zip: Uint8Array) => JSON.parse(strFromU8(unzipSync(zip)['data.json']!));
-const code = async (p: Promise<unknown>) =>
-  p.then(
-    () => 'no error',
-    (e: unknown) => (e instanceof NettleError ? e.code : 'other'),
-  );
 
 const RAW_RECORDS = {
   meals: [],
@@ -213,7 +209,7 @@ describe('data.json validation of nail data (SK-10)', () => {
     const target = new MemoryRepo();
     const deps = makeDeps(target);
     const parsed = { payload: parseDataJson(file({ ...base, nail_entries: [nailRow] })), preview: undefined as never };
-    expect(await code(applyImport(deps, parsed, { mode: 'merge', parts: RECORDS }))).toBe('import_unknown_area');
+    expect(await errorCode(applyImport(deps, parsed, { mode: 'merge', parts: RECORDS }))).toBe('import_unknown_area');
   });
 });
 
@@ -277,7 +273,7 @@ describe('data.json validation of check-ins, stool and tags (SK-7, SK-11, IN-6)'
       payload: parseDataJson(file(records({ check_ins: [{ ...checkIn, values: { 'tag-gone': true } }] }))),
       preview: undefined as never,
     };
-    expect(await code(applyImport(deps, parsed, { mode: 'merge', parts: RECORDS }))).toBe('import_unknown_item');
+    expect(await errorCode(applyImport(deps, parsed, { mode: 'merge', parts: RECORDS }))).toBe('import_unknown_item');
   });
 });
 
@@ -420,7 +416,7 @@ describe('data.json validation of treatments, events, reactions and allergens (I
   it('refuses to apply references to a missing meal, treatment or area', async () => {
     const deps = makeDeps(new MemoryRepo());
     const apply = (r: object) =>
-      code(applyImport(deps, { payload: parseDataJson(file(r)), preview: undefined as never }, { mode: 'merge', parts: RECORDS }));
+      errorCode(applyImport(deps, { payload: parseDataJson(file(r)), preview: undefined as never }, { mode: 'merge', parts: RECORDS }));
     expect(await apply(records({ meals: [], treatment_applications: [] }))).toBe('import_unknown_meal');
     expect(await apply(records({ reactions: [] }))).toBe('import_unknown_item'); // treatment tr1 is not known
     expect(
@@ -562,7 +558,7 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
     await target.addRecord('meals', syntheticMeal('keep', '2026-01-01T08:00:00.000Z'));
     const deps = makeDeps(target);
     const parsed = await previewImport(deps, zip);
-    expect(await code(applyImport(deps, parsed, { mode: 'replace', parts: BOTH }))).toBe('import_unknown_area');
+    expect(await errorCode(applyImport(deps, parsed, { mode: 'replace', parts: BOTH }))).toBe('import_unknown_area');
     expect((await target.listRecords('meals')).map((m) => m.id)).toEqual(['keep']);
   });
 
@@ -605,12 +601,12 @@ describe.each(repos)('export/import (%s)', (_name, make) => {
 
   it('EX-1 / EX-10 selecting nothing is rejected', async () => {
     const source = await seeded(make);
-    expect(await code(exportBundle(makeDeps(source), { parts: { records: false, settings: false } }))).toBe('nothing_selected');
+    expect(await errorCode(exportBundle(makeDeps(source), { parts: { records: false, settings: false } }))).toBe('nothing_selected');
     const zip = await exportBundle(makeDeps(source), { parts: RECORDS });
     const deps = makeDeps(await make());
     const parsed = await previewImport(deps, zip);
     // Asking for settings from a records-only file leaves nothing to apply.
-    expect(await code(applyImport(deps, parsed, { mode: 'merge', parts: SETTINGS }))).toBe('nothing_selected');
+    expect(await errorCode(applyImport(deps, parsed, { mode: 'merge', parts: SETTINGS }))).toBe('nothing_selected');
   });
 
   it('EX-1 range export is a snapshot of the chosen range only; settings are not filtered', async () => {
@@ -648,35 +644,35 @@ describe('import validation', () => {
   const zipOf = (obj: unknown) => zipSync({ 'data.json': strToU8(JSON.stringify(obj)) });
 
   it('EX-10 rejects a file that is not a ZIP', async () => {
-    expect(await code(previewImport(deps(), strToU8('not a zip')))).toBe('import_corrupt_zip');
+    expect(await errorCode(previewImport(deps(), strToU8('not a zip')))).toBe('import_corrupt_zip');
   });
 
   it('EX-10 rejects a ZIP without data.json', async () => {
-    expect(await code(previewImport(deps(), zipSync({ 'other.txt': strToU8('x') })))).toBe('import_missing_data');
+    expect(await errorCode(previewImport(deps(), zipSync({ 'other.txt': strToU8('x') })))).toBe('import_missing_data');
   });
 
   it('EX-10 rejects invalid JSON', async () => {
-    expect(await code(previewImport(deps(), zipSync({ 'data.json': strToU8('{oops') })))).toBe('import_invalid_json');
+    expect(await errorCode(previewImport(deps(), zipSync({ 'data.json': strToU8('{oops') })))).toBe('import_invalid_json');
   });
 
   it('EX-10 rejects a newer schema_version before looking at the rest', async () => {
-    expect(await code(previewImport(deps(), zipOf({ schema_version: 2 })))).toBe('import_unsupported_version');
+    expect(await errorCode(previewImport(deps(), zipOf({ schema_version: 2 })))).toBe('import_unsupported_version');
   });
 
   it('EX-10 rejects a missing or non-numeric schema_version', async () => {
-    expect(await code(previewImport(deps(), zipOf({})))).toBe('import_invalid_data');
-    expect(await code(previewImport(deps(), zipOf({ schema_version: '1' })))).toBe('import_invalid_data');
+    expect(await errorCode(previewImport(deps(), zipOf({})))).toBe('import_invalid_data');
+    expect(await errorCode(previewImport(deps(), zipOf({ schema_version: '1' })))).toBe('import_invalid_data');
   });
 
   it('EX-10 rejects a file with neither records nor settings', async () => {
-    expect(await code(previewImport(deps(), zipOf({ schema_version: 1 })))).toBe('import_invalid_data');
+    expect(await errorCode(previewImport(deps(), zipOf({ schema_version: 1 })))).toBe('import_invalid_data');
   });
 
   it('EX-10 rejects out-of-range scores, bad timestamps, bad sections and duplicate ids', async () => {
     const mutate = async (fn: (j: any) => void) => {
       const j = await goodJson();
       fn(j);
-      return code(previewImport(deps(), zipOf(j)));
+      return errorCode(previewImport(deps(), zipOf(j)));
     };
     expect(await mutate((j) => (j.records.skin_entries[0].scores.itch = 11))).toBe('import_invalid_data');
     expect(await mutate((j) => (j.records.meals[0].utc = '2026-01-12 08:00'))).toBe('import_invalid_data');
@@ -689,7 +685,7 @@ describe('import validation', () => {
   it('EX-10 validation failure does not touch the store', async () => {
     const target = new MemoryRepo();
     const d = makeDeps(target);
-    await code(previewImport(d, zipOf({ schema_version: 1, records: { meals: [], skin_entries: 5 } })));
+    await errorCode(previewImport(d, zipOf({ schema_version: 1, records: { meals: [], skin_entries: 5 } })));
     expect(await target.listRecords('meals')).toEqual([]);
   });
 });
@@ -714,13 +710,13 @@ describe.each(repos)('password-protected export/import (%s)', (_name, make) => {
     const zip = await exportBundle(makeDeps(source), { password: PW });
     const target = await make();
     const deps = makeDeps(target);
-    expect(await code(previewImport(deps, zip))).toBe('import_password_required');
-    expect(await code(previewImport(deps, zip, 'synthetic-wrong-pass'))).toBe('import_wrong_password');
+    expect(await errorCode(previewImport(deps, zip))).toBe('import_password_required');
+    expect(await errorCode(previewImport(deps, zip, 'synthetic-wrong-pass'))).toBe('import_wrong_password');
     expect(await target.listRecords('meals')).toEqual([]);
   });
 
   it('EX-6 a too-short password is rejected before anything is exported', async () => {
     const source = await seeded(make);
-    expect(await code(exportBundle(makeDeps(source), { password: 'short' }))).toBe('password_too_short');
+    expect(await errorCode(exportBundle(makeDeps(source), { password: 'short' }))).toBe('password_too_short');
   });
 });

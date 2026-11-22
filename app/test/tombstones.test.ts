@@ -9,7 +9,7 @@ import { addPhoto } from '@/core/usecases/photos';
 import { logSkinEntry } from '@/core/usecases/skin';
 import { MemoryPhotoStore } from './fakes/memoryPhotoStore';
 import { MemoryRepo } from './fakes/memoryRepo';
-import { makeDeps } from './helpers/fixtures';
+import { makeDeps, syntheticScores as scores } from './helpers/fixtures';
 import { createNodeSqliteDb } from './helpers/nodeSqliteDb';
 
 const repos: [string, () => Promise<StorageRepository>][] = [
@@ -17,7 +17,6 @@ const repos: [string, () => Promise<StorageRepository>][] = [
   ['sqlite', async () => SqliteRepo.open(createNodeSqliteDb())],
 ];
 const both = { records: true, settings: true };
-const scores = { severity: 1, itch: 2, pain: 3, dryness: 4, scaling: 5 };
 const d = (iso: string) => new Date(iso);
 
 describe.each(repos)('tombstones in export and import (%s)', (_name, make) => {

@@ -6,12 +6,7 @@ import { estimateIngredientsFromName, MAX_NAME_ESTIMATE_CHARS, nameEstimateText,
 import { FakeLlm } from './fakes/fakeLlm';
 import { MemoryRepo } from './fakes/memoryRepo';
 import { makeDeps } from './helpers/fixtures';
-
-const code = async (p: Promise<unknown>) =>
-  p.then(
-    () => 'no error',
-    (e: unknown) => (e instanceof NettleError ? e.code : 'other'),
-  );
+import { errorCode } from './helpers/errors';
 
 describe('meal name estimate (IN-19)', () => {
   it('IN-19 the name estimate is the third AI source and needs its LLM details like the other two', () => {
@@ -72,10 +67,10 @@ describe('meal name estimate (IN-19)', () => {
   it('IN-19 no description and no key send nothing; a malformed answer is llm_bad_response', async () => {
     const llm = new FakeLlm(['not json']);
     const deps = makeDeps(new MemoryRepo(), undefined, llm);
-    expect(await code(estimateIngredientsFromName(deps, { description: '   ', language: 'en' }))).toBe('empty_description');
-    expect(await code(estimateIngredientsFromName(deps, { description: 'pancakes', language: 'en' }))).toBe('llm_no_key');
+    expect(await errorCode(estimateIngredientsFromName(deps, { description: '   ', language: 'en' }))).toBe('empty_description');
+    expect(await errorCode(estimateIngredientsFromName(deps, { description: 'pancakes', language: 'en' }))).toBe('llm_no_key');
     await saveApiKey(deps, 'synthetic-test-key');
-    expect(await code(estimateIngredientsFromName(deps, { description: 'pancakes', language: 'en' }))).toBe('llm_bad_response');
+    expect(await errorCode(estimateIngredientsFromName(deps, { description: 'pancakes', language: 'en' }))).toBe('llm_bad_response');
     expect(llm.requests).toHaveLength(1); // only the third call reached the provider
   });
 });

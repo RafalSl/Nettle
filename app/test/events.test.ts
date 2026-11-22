@@ -1,4 +1,3 @@
-import { NettleError } from '@/core/model/errors';
 import { suggestAllergens } from '@/core/model/allergens';
 import { ALLERGENS } from '@/core/model/types';
 import { logDrink, logMedication } from '@/core/usecases/intake';
@@ -8,12 +7,7 @@ import { logMeal } from '@/core/usecases/logMeal';
 import { addArea, archiveSkinArea } from '@/core/usecases/skin';
 import { MemoryRepo } from './fakes/memoryRepo';
 import { makeDeps } from './helpers/fixtures';
-
-const code = async (p: Promise<unknown>) =>
-  p.then(
-    () => 'no error',
-    (e: unknown) => (e instanceof NettleError ? e.code : 'other'),
-  );
+import { errorCode } from './helpers/errors';
 
 describe('allergen tags (IN-10)', () => {
   it('IN-10 lists the 14 EU allergens', () => {
@@ -26,7 +20,7 @@ describe('allergen tags (IN-10)', () => {
     const meal = await logMeal(deps, { description: 'Synthetic', ingredients: [], allergens: ['milk', 'milk', 'eggs'] });
     expect(meal.allergens).toEqual(['milk', 'eggs']);
     expect((await logMeal(deps, { description: 'Plain', ingredients: [] })).allergens).toEqual([]);
-    expect(await code(logMeal(deps, { description: 'x', ingredients: [], allergens: ['dust' as never] }))).toBe('invalid_value');
+    expect(await errorCode(logMeal(deps, { description: 'x', ingredients: [], allergens: ['dust' as never] }))).toBe('invalid_value');
   });
 
   it('IN-10 suggests allergens from English and Polish ingredient text, as a suggestion only', () => {
@@ -55,13 +49,13 @@ describe('treatments (IN-11)', () => {
   it('IN-11 needs at least one existing, active area and an active saved treatment', async () => {
     const deps = makeDeps(new MemoryRepo());
     const cream = await addListItem(deps, 'treatments', 'Synthetic cream');
-    expect(await code(applyTreatment(deps, { treatmentId: cream.id, areaIds: [] }))).toBe('no_areas_selected');
-    expect(await code(applyTreatment(deps, { treatmentId: cream.id, areaIds: ['nope'] }))).toBe('unknown_area');
-    expect(await code(applyTreatment(deps, { treatmentId: 'nope', areaIds: ['area-chin'] }))).toBe('unknown_item');
+    expect(await errorCode(applyTreatment(deps, { treatmentId: cream.id, areaIds: [] }))).toBe('no_areas_selected');
+    expect(await errorCode(applyTreatment(deps, { treatmentId: cream.id, areaIds: ['nope'] }))).toBe('unknown_area');
+    expect(await errorCode(applyTreatment(deps, { treatmentId: 'nope', areaIds: ['area-chin'] }))).toBe('unknown_item');
     await archiveSkinArea(deps, 'area-chin');
-    expect(await code(applyTreatment(deps, { treatmentId: cream.id, areaIds: ['area-chin'] }))).toBe('area_archived');
+    expect(await errorCode(applyTreatment(deps, { treatmentId: cream.id, areaIds: ['area-chin'] }))).toBe('area_archived');
     await archiveListItem(deps, 'treatments', cream.id);
-    expect(await code(applyTreatment(deps, { treatmentId: cream.id, areaIds: ['area-neck'] }))).toBe('area_archived');
+    expect(await errorCode(applyTreatment(deps, { treatmentId: cream.id, areaIds: ['area-neck'] }))).toBe('area_archived');
   });
 });
 
@@ -95,7 +89,7 @@ describe('routine changes (IN-12)', () => {
     const deps = makeDeps(new MemoryRepo());
     const e = await logChangeEvent(deps, { action: 'started', category: 'cat-product', name: 'Synthetic cream', dateUnknown: true });
     expect(e.dateUnknown).toBe(true);
-    expect(await code(logChangeEvent(deps, { action: 'stopped', category: 'cat-product', name: 'x', dateUnknown: true }))).toBe(
+    expect(await errorCode(logChangeEvent(deps, { action: 'stopped', category: 'cat-product', name: 'x', dateUnknown: true }))).toBe(
       'invalid_value',
     );
   });
@@ -118,10 +112,10 @@ describe('routine changes (IN-12)', () => {
   it('IN-12 rejects an empty name and unknown values', async () => {
     const deps = makeDeps(new MemoryRepo());
     const ok = { action: 'started', category: 'cat-product', name: 'x' } as const;
-    expect(await code(logChangeEvent(deps, { ...ok, name: '  ' }))).toBe('empty_item_name');
-    expect(await code(logChangeEvent(deps, { ...ok, action: 'paused' as never }))).toBe('invalid_value');
-    expect(await code(logChangeEvent(deps, { ...ok, category: 'mood' }))).toBe('unknown_item');
-    expect(await code(logChangeEvent(deps, { ...ok, category: 'medication' }))).toBe('unknown_item'); // medication is not a category
+    expect(await errorCode(logChangeEvent(deps, { ...ok, name: '  ' }))).toBe('empty_item_name');
+    expect(await errorCode(logChangeEvent(deps, { ...ok, action: 'paused' as never }))).toBe('invalid_value');
+    expect(await errorCode(logChangeEvent(deps, { ...ok, category: 'mood' }))).toBe('unknown_item');
+    expect(await errorCode(logChangeEvent(deps, { ...ok, category: 'medication' }))).toBe('unknown_item'); // medication is not a category
   });
 });
 
@@ -143,10 +137,10 @@ describe('immediate reactions (IN-13)', () => {
     const deps = makeDeps(new MemoryRepo());
     const meal = await logMeal(deps, { description: 'Synthetic lunch', ingredients: [], at: new Date('2026-01-15T12:00:00.000Z') });
     const at = new Date('2026-01-15T13:00:00.000Z');
-    expect(await code(logReaction(deps, { mealId: 'nope', symptoms: ['hives'], at }))).toBe('unknown_meal');
-    expect(await code(logReaction(deps, { mealId: meal.id, symptoms: [], at }))).toBe('invalid_value');
-    expect(await code(logReaction(deps, { mealId: meal.id, symptoms: ['sneezing' as never], at }))).toBe('invalid_value');
-    expect(await code(logReaction(deps, { mealId: meal.id, symptoms: ['hives'], at: new Date('2026-01-15T11:59:00.000Z') }))).toBe(
+    expect(await errorCode(logReaction(deps, { mealId: 'nope', symptoms: ['hives'], at }))).toBe('unknown_meal');
+    expect(await errorCode(logReaction(deps, { mealId: meal.id, symptoms: [], at }))).toBe('invalid_value');
+    expect(await errorCode(logReaction(deps, { mealId: meal.id, symptoms: ['sneezing' as never], at }))).toBe('invalid_value');
+    expect(await errorCode(logReaction(deps, { mealId: meal.id, symptoms: ['hives'], at: new Date('2026-01-15T11:59:00.000Z') }))).toBe(
       'reaction_before_meal',
     );
   });
@@ -159,8 +153,8 @@ describe('alcohol and medications (IN-4, IN-5)', () => {
     const e = await logDrink(deps, { name: ' Synthetic beer ', amountMl: 500, at: new Date('2026-01-15T18:00:00.000Z') });
     expect(e).toMatchObject({ name: 'Synthetic beer', amountMl: 500, note: null });
     expect(await repo.listRecords('drinks')).toEqual([e]);
-    expect(await code(logDrink(deps, { name: ' ', amountMl: 100 }))).toBe('empty_name');
-    for (const bad of [0, -5, 2.5, NaN]) expect(await code(logDrink(deps, { name: 'x', amountMl: bad }))).toBe('invalid_amount');
+    expect(await errorCode(logDrink(deps, { name: ' ', amountMl: 100 }))).toBe('empty_name');
+    for (const bad of [0, -5, 2.5, NaN]) expect(await errorCode(logDrink(deps, { name: 'x', amountMl: bad }))).toBe('invalid_amount');
   });
 
   it('IN-4 and IN-10 a drink may be non-alcoholic and carry ingredients and allergen tags', async () => {
@@ -175,7 +169,7 @@ describe('alcohol and medications (IN-4, IN-5)', () => {
     expect(coffee).toMatchObject({ alcohol: false, ingredients: ['coffee', 'milk'], allergens: ['milk'] });
     const beer = await logDrink(deps, { name: 'Synthetic beer', amountMl: 500, alcohol: true });
     expect(beer).toMatchObject({ alcohol: true, ingredients: [], allergens: [] });
-    expect(await code(logDrink(deps, { name: 'x', amountMl: 1, allergens: ['gold' as never] }))).toBe('invalid_value');
+    expect(await errorCode(logDrink(deps, { name: 'x', amountMl: 1, allergens: ['gold' as never] }))).toBe('invalid_value');
   });
 
   it('IN-5 logs a medication or supplement with an optional dose', async () => {
@@ -186,7 +180,7 @@ describe('alcohol and medications (IN-4, IN-5)', () => {
     expect(a).toMatchObject({ category: 'supplement', name: 'Synthetic vitamin', dose: '1 tablet' });
     expect(b.dose).toBeNull();
     expect(await repo.listRecords('medicationEntries')).toHaveLength(2);
-    expect(await code(logMedication(deps, { category: 'medication', name: '' }))).toBe('empty_name');
-    expect(await code(logMedication(deps, { category: 'herb' as never, name: 'x' }))).toBe('invalid_value');
+    expect(await errorCode(logMedication(deps, { category: 'medication', name: '' }))).toBe('empty_name');
+    expect(await errorCode(logMedication(deps, { category: 'herb' as never, name: 'x' }))).toBe('invalid_value');
   });
 });

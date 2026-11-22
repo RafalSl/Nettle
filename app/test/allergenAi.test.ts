@@ -7,12 +7,7 @@ import { planAllergenSuggestion, saveApiKey, setModel, suggestAllergensWithAi } 
 import { FakeLlm } from './fakes/fakeLlm';
 import { MemoryRepo } from './fakes/memoryRepo';
 import { makeDeps } from './helpers/fixtures';
-
-const code = async (p: Promise<unknown>) =>
-  p.then(
-    () => 'no error',
-    (e: unknown) => (e instanceof NettleError ? e.code : 'other'),
-  );
+import { errorCode } from './helpers/errors';
 
 const answer = (items: object[], note: string | null = null) => JSON.stringify({ items, note });
 
@@ -108,15 +103,17 @@ describe('AI allergen suggestion (IN-10, LL-9)', () => {
     expect((await planAllergenSuggestion(deps, ['butter'])).toSend).toEqual(['butter']);
     const ctl = new AbortController();
     ctl.abort();
-    expect(await code(suggestAllergensWithAi(deps, { ingredients: ['butter'], language: 'en', signal: ctl.signal }))).toBe('llm_cancelled');
+    expect(await errorCode(suggestAllergensWithAi(deps, { ingredients: ['butter'], language: 'en', signal: ctl.signal }))).toBe(
+      'llm_cancelled',
+    );
     expect((await planAllergenSuggestion(deps, ['butter'])).toSend).toEqual(['butter']);
   });
 
   it('IN-10 an empty list sends nothing, and without a key nothing is sent', async () => {
     const llm = new FakeLlm([answer([])]);
     const deps = makeDeps(new MemoryRepo(), undefined, llm);
-    expect(await code(suggestAllergensWithAi(deps, { ingredients: [' '], language: 'en' }))).toBe('no_ingredients');
-    expect(await code(suggestAllergensWithAi(deps, { ingredients: ['milk'], language: 'en' }))).toBe('llm_no_key');
+    expect(await errorCode(suggestAllergensWithAi(deps, { ingredients: [' '], language: 'en' }))).toBe('no_ingredients');
+    expect(await errorCode(suggestAllergensWithAi(deps, { ingredients: ['milk'], language: 'en' }))).toBe('llm_no_key');
     expect(llm.requests).toHaveLength(0);
   });
 });

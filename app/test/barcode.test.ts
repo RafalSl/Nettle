@@ -7,12 +7,7 @@ import { logMeal } from '@/core/usecases/logMeal';
 import { FakeBarcode } from './fakes/fakeBarcode';
 import { MemoryRepo } from './fakes/memoryRepo';
 import { makeDeps } from './helpers/fixtures';
-
-const code = async (p: Promise<unknown>) =>
-  p.then(
-    () => 'no error',
-    (e: unknown) => (e instanceof NettleError ? e.code : 'other'),
-  );
+import { errorCode } from './helpers/errors';
 
 describe('barcode numbers (IN-2)', () => {
   it('IN-2 accepts EAN-13, EAN-8, UPC-A and GTIN-14 with a correct check digit, ignoring spaces and dashes', () => {
@@ -132,11 +127,11 @@ describe('Open Food Facts adapter (IN-9)', () => {
       global.fetch = answer(404, { status: 0 }) as unknown as typeof fetch;
       expect(await openFoodFacts.lookup('3017620422003')).toBeNull();
       global.fetch = answer(503, {}) as unknown as typeof fetch;
-      expect(await code(openFoodFacts.lookup('3017620422003'))).toBe('barcode_lookup_failed');
+      expect(await errorCode(openFoodFacts.lookup('3017620422003'))).toBe('barcode_lookup_failed');
       global.fetch = jest.fn(async () => {
         throw new TypeError('Network request failed');
       }) as unknown as typeof fetch;
-      expect(await code(openFoodFacts.lookup('3017620422003'))).toBe('barcode_lookup_failed');
+      expect(await errorCode(openFoodFacts.lookup('3017620422003'))).toBe('barcode_lookup_failed');
       global.fetch = jest.fn(
         async () =>
           ({
@@ -147,7 +142,7 @@ describe('Open Food Facts adapter (IN-9)', () => {
             },
           }) as unknown as Response,
       ) as unknown as typeof fetch;
-      expect(await code(openFoodFacts.lookup('3017620422003'))).toBe('barcode_lookup_failed');
+      expect(await errorCode(openFoodFacts.lookup('3017620422003'))).toBe('barcode_lookup_failed');
     });
   });
 });
@@ -208,9 +203,9 @@ describe('looking a product up (IN-2, IN-8)', () => {
   it('IN-2, IN-9 an invalid code is refused without asking the source, and an unreachable source says so', async () => {
     const src = new FakeBarcode();
     const deps = depsWith(src);
-    expect(await code(lookupProduct(deps, '1234'))).toBe('invalid_barcode');
+    expect(await errorCode(lookupProduct(deps, '1234'))).toBe('invalid_barcode');
     expect(src.lookups).toEqual([]);
     src.failing.add('3017620422003');
-    expect(await code(lookupProduct(deps, '3017620422003'))).toBe('barcode_lookup_failed');
+    expect(await errorCode(lookupProduct(deps, '3017620422003'))).toBe('barcode_lookup_failed');
   });
 });

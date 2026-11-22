@@ -6,6 +6,7 @@ import { localDay } from '@/core/model/time';
 import { DEFAULT_TREND_RANGE, healthTrendPoints, limitTrend, trendScoreItems, type TrendPoint, type TrendRange } from '@/core/usecases/timeline';
 import { errorMessage, itemDescription, itemLabel, t } from '@/i18n';
 import { useServices } from '@/services';
+import { useNow } from '@/ui/useNow';
 import { TrendChart } from '@/ui/TrendChart';
 import { Chips, Heading, Hint, Screen } from '@/ui/components';
 
@@ -28,6 +29,7 @@ export default function HealthTrendsScreen() {
       if (selected) healthTrendPoints(deps, selected).then(setPoints, (e) => Alert.alert(errorMessage(e)));
     }, [deps, selected]),
   );
+  const now = useNow(deps);
   const item = items.find((i) => i.id === selected);
   return (
     <Screen>
@@ -38,7 +40,7 @@ export default function HealthTrendsScreen() {
         <>
           <Chips items={items.map((i) => ({ id: i.id, label: itemLabel(i) }))} selected={new Set(selected ? [selected] : [])} onToggle={setPick} />
           {item && itemDescription(item) ? <Hint>{itemDescription(item)}</Hint> : null}
-          <TrendChart points={limitTrend(points, range, localDay(deps.clock.now().toISOString(), deps.clock.timeZone(), deps.dayStart.get()))} max={10} label={item ? itemLabel(item) : ''} range={range} onRange={setRange} />
+          <TrendChart points={limitTrend(points, range, localDay(now.toISOString(), deps.clock.timeZone(), deps.dayStart.get()))} max={10} label={item ? itemLabel(item) : ''} range={range} onRange={setRange} />
         </>
       )}
     </Screen>

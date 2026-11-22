@@ -17,6 +17,7 @@ import { PhotoSelectionField } from '@/ui/PhotoSelectionField';
 import { DeleteSection } from '@/ui/DeleteSection';
 import { Button, Chips, Heading, Hint, Label, Screen, styles } from '@/ui/components';
 import { SwitchRow } from '@/ui/SwitchRow';
+import { rescheduleReminders } from '@/ui/rescheduleReminders';
 
 function PartSwitch({
   label,
@@ -127,7 +128,8 @@ export default function DataScreen() {
       await applyImport(deps, pending, { mode, parts: importParts, restoreTombstoned: restore });
       setPending(null);
       // IN-17, EX-10: regular items came with the file; their reminders are scheduled again, asking for permission on this phone.
-      const reminders = importParts.settings ? await restoreReminders(deps, reminderTexts()) : true;
+      // SK-9: records alone can still add or remove today's Daily health record.
+      const reminders = importParts.settings ? await restoreReminders(deps, reminderTexts()) : (await rescheduleReminders(deps), true);
       Alert.alert(t('data.imported'), reminders ? undefined : t('regular.denied'));
     } catch (e) {
       Alert.alert(errorMessage(e));

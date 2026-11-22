@@ -318,17 +318,30 @@ export async function importResult(deps: Deps, bytes: Uint8Array): Promise<Resul
   const { result, pack, accepted, preview } = await plan(deps, bytes);
   if (preview.alreadyImported) return { ...preview, imported: false };
   const at = makeStamp(deps.clock);
-  if (result.analysis) {
-    const analysis: Analysis = { id: deps.ids(), at, dayFrom: pack.dayFrom, dayTo: pack.dayTo, model: result.model, promptVersion: ANALYSIS_PROMPT_VERSION, language: pack.language, counts: pack.counts, result: result.analysis, manual: true };
-    await deps.repo.addRecord('analyses', analysis);
-  }
-  if (result.reportSummary) {
-    const summary: ReportSummary = { id: deps.ids(), at, dayFrom: pack.dayFrom, dayTo: pack.dayTo, language: pack.language, model: result.model, promptVersion: SUMMARY_PROMPT_VERSION, counts: pack.counts, generated: result.reportSummary, text: result.reportSummary, manual: true };
-    await deps.repo.addRecord('reportSummaries', summary);
-  }
-  const state = await readState(deps);
+  // The pack is marked imported before any record is stored, so a retry after a failure never stores a record twice;
+  // if storing fails, the mark is taken back and the import can run again.
+  const before = await readState(deps);
   const added: Suggestion[] = accepted.map((f) => ({ id: deps.ids(), kind: f.kind, entryId: f.id, ingredients: f.ingredients, allergens: f.allergens, note: f.note, model: result.model, packId: pack.id, receivedUtc: at.utc }));
-  await writeState(deps, { ...state, imported: [...state.imported, pack.id], suggestions: [...state.suggestions, ...added] });
+  await writeState(deps, { ...before, imported: [...before.imported, pack.id], suggestions: [...before.suggestions, ...added] });
+  const stored: { kind: 'analyses' | 'reportSummaries'; id: string }[] = [];
+  try {
+    if (result.analysis) {
+      const analysis: Analysis = { id: deps.ids(), at, dayFrom: pack.dayFrom, dayTo: pack.dayTo, model: result.model, promptVersion: ANALYSIS_PROMPT_VERSION, language: pack.language, counts: pack.counts, result: result.analysis, manual: true };
+      await deps.repo.addRecord('analyses', analysis);
+      stored.push({ kind: 'analyses', id: analysis.id });
+    }
+    if (result.reportSummary) {
+      const summary: ReportSummary = { id: deps.ids(), at, dayFrom: pack.dayFrom, dayTo: pack.dayTo, language: pack.language, model: result.model, promptVersion: SUMMARY_PROMPT_VERSION, counts: pack.counts, generated: result.reportSummary, text: result.reportSummary, manual: true };
+      await deps.repo.addRecord('reportSummaries', summary);
+      stored.push({ kind: 'reportSummaries', id: summary.id });
+    }
+  } catch (e) {
+    const undo: Partial<Record<'analyses' | 'reportSummaries', string[]>> = {};
+    for (const r of stored) (undo[r.kind] ??= []).push(r.id);
+    await deps.repo.deleteRecords(undo).catch(() => undefined);
+    await writeState(deps, before).catch(() => undefined);
+    throw e;
+  }
   return { ...preview, imported: true };
 }
 
@@ -373,8 +386,11 @@ export async function dismissSuggestion(deps: Deps, id: string): Promise<void> {
  * allergen tags were selected from the suggestion (IN-16).
  */
 export async function completeSuggestion(deps: Deps, id: string, opts: { edited: boolean; aiTags: boolean }): Promise<void> {
-  const s = await getSuggestion(deps, id);
-  const { entry } = s;
+  // Read from the state, not from `listSuggestions`: the edit that came just before may already have cleared the mark.
+  const waiting = (await readState(deps)).suggestions.find((x) => x.id === id);
+  const entry = waiting ? await entryOf(deps, waiting) : null;
+  if (!waiting || !entry) throw new NettleError('suggestion_gone', id);
+  const s = waiting;
   const source: IngredientSource =
     entry.source.kind === 'typed'
       ? { kind: 'name_estimate', edited: opts.edited, llm: { model: s.model, at: s.receivedUtc, promptVersion: 'manual', manual: true }, aiTags: opts.aiTags }

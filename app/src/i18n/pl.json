@@ -1141,6 +1141,7 @@
     "stopTitle": "Zakończyć tę stałą pozycję?",
     "stopBody": "Jej przypomnienia się kończą, a pozycja znika z szybkiej listy. Zapisane wpisy zostają.",
     "denied": "Powiadomienia są wyłączone dla tej aplikacji, więc przypomnienia nie mogą się pokazać.",
+    "notLogged": "Nic nie zostało zapisane: tej stałej pozycji nie udało się zapisać z przypomnienia. Zapisz ją na ekranie Dziś.",
     "openSystem": "Otwórz ustawienia systemu",
     "areas": "Miejsca: {{list}}",
     "noneTitle": "Nic stałego jeszcze nie ma"

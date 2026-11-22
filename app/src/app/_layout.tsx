@@ -3,7 +3,7 @@ import { Stack, ThemeProvider, useRootNavigationState, useRouter } from 'expo-ro
 import * as SplashScreen from 'expo-splash-screen';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { useEffect } from 'react';
-import { AppState, Pressable } from 'react-native';
+import { Alert, AppState, Pressable } from 'react-native';
 import { Text } from '@/ui/themed';
 import { applyReminders, resolveReminderTap } from '@/core/usecases/reminders';
 import { reminderTexts, t, useAppLanguage } from '@/i18n';
@@ -60,6 +60,7 @@ function ReminderTaps() {
       await appLock.whenUnlocked(); // SE-8: a tap waits for the unlock
       const action = await resolveReminderTap(deps, tap, { hasUnsavedForm: unsavedForm.current });
       if (!action) return;
+      if (action.notLogged) Alert.alert(t('regular.notLogged')); // IN-17: a Taken or Applied that logged nothing is never silent
       if (action.viaToday) {
         router.navigate('/today');
         router.push(action.route as never);

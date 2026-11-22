@@ -27,6 +27,7 @@ import { DrinkFields, draftFromDrink, drinkInput, drinkMissing, type DrinkDraft 
 import { FillLaterSwitch } from '@/ui/FillLaterSwitch';
 import { PhotoStrip } from '@/ui/PhotoStrip';
 import { SuggestionPanel } from '@/ui/SuggestionPanel';
+import { rescheduleReminders } from '@/ui/rescheduleReminders';
 import { MedicalFields } from '@/ui/MedicalFields';
 import { parseSizeText, sizeToSave, SkinExtraFields } from '@/ui/SkinExtraFields';
 import { DailyHealthFields, type DailyValues } from '@/ui/DailyHealthFields';
@@ -100,7 +101,7 @@ function MealFields({ r, suggestionId }: { r: Rec<'meals'>; suggestionId: string
           at: c.at ?? undefined,
         });
         // IN-20: names were added from a suggestion: the mark clears and the source reads name estimate (manual).
-if (suggestionId && sug.baseline) await completeSuggestion(deps, suggestionId, { edited: !sameList(sug.baseline, splitIngredients(ingredients)), aiTags: sug.aiTags });
+        if (suggestionId && sug.baseline) await completeSuggestion(deps, suggestionId, { edited: !sameList(sug.baseline, splitIngredients(ingredients)), aiTags: sug.aiTags });
       }}>
       <Label>{t('meal.description')}</Label>
       <TextInput style={styles.input} accessibilityLabel={t('meal.description')} value={description} onChangeText={setDescription} />
@@ -187,7 +188,10 @@ function CheckInFields({ r, items }: { r: Rec<'checkIns'>; items: ListItem[] }) 
   const c = useCommon(r.note, f.touch);
   const [values, setValues] = useField<DailyValues>({ ...r.values }, f.touch);
   return (
-    <FormModal dirty={f.dirty} missing={null} onSave={async () => void (await editCheckIn(deps, r.id, { values, note: c.note, at: c.at ?? undefined }))}>
+    <FormModal dirty={f.dirty} missing={null} onSave={async () => {
+        await editCheckIn(deps, r.id, { values, note: c.note, at: c.at ?? undefined });
+        await rescheduleReminders(deps); // SK-9: a record moved to another day changes which day is skipped
+      }}>
       <DailyHealthFields items={items} values={values} onChange={setValues} />
       <CommonFields c={c} original={r.at.utc} />
     </FormModal>

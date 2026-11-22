@@ -147,6 +147,8 @@ export async function sendTestReminder(deps: Deps, title: string, body: string):
 export interface TapAction {
   route: { pathname: string; params?: Record<string, string> };
   viaToday: boolean;
+  /** IN-17: the action button of a regular item's reminder could not log it; the screen says so. */
+  notLogged?: boolean;
 }
 
 const TAP_MARKER = 'lastReminderTap';
@@ -166,13 +168,19 @@ export async function resolveReminderTap(
   tap: ReminderTap,
   options: { hasUnsavedForm: boolean },
 ): Promise<TapAction | null> {
-  const marker = `${tap.id}|${tap.action ?? ''}|${tap.deliveredAt?.getTime() ?? 0}`;
+  // Without a delivery time, the day of the tap stands in, so a daily reminder is still handled once per day.
+  const when = tap.deliveredAt?.getTime() ?? `day-${localDay(deps.clock.now().toISOString(), deps.clock.timeZone(), 0)}`;
+  const marker = `${tap.id}|${tap.action ?? ''}|${when}`;
   if ((await deps.settings.get(TAP_MARKER)) === marker) return null;
   await deps.settings.set(TAP_MARKER, marker);
   // IN-17: the action button of a regular item's reminder logs it, whatever form is open.
   if (tap.target === 'regular' && tap.action === 'log' && typeof tap.itemId === 'string') {
-    await logRegular(deps, tap.itemId).catch(() => undefined); // a stopped item or a removed area: nothing to log, never crash a tap
-    return { route: { pathname: '/today' }, viaToday: false };
+    // A stopped item or a removed area: nothing is logged, the tap never crashes, and the person is told.
+    const logged = await logRegular(deps, tap.itemId).then(
+      () => true,
+      () => false,
+    );
+    return logged ? { route: { pathname: '/today' }, viaToday: false } : { route: { pathname: '/today' }, viaToday: false, notLogged: true };
   }
   if (options.hasUnsavedForm) return null;
   const today: TapAction = { route: { pathname: '/today' }, viaToday: false };

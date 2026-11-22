@@ -173,6 +173,25 @@ describe('the result (LL-15)', () => {
     expect(await listSuggestions(deps)).toHaveLength(1);
   });
 
+  it('LL-15 an import that fails part way stores nothing and can run again without a second analysis', async () => {
+    const { repo, deps } = await diary();
+    const { packId } = await buildPack(deps, sel);
+    const bytes = resultBytes(answer(packId));
+    const addRecord = repo.addRecord.bind(repo);
+    let fail = true;
+    repo.addRecord = (async (kind: Parameters<typeof addRecord>[0], r: never) => {
+      if (kind === 'reportSummaries' && fail) throw new Error('synthetic storage failure');
+      return addRecord(kind, r);
+    }) as typeof repo.addRecord;
+    expect(await code(importResult(deps, bytes))).toBe('other');
+    expect(await repo.listRecords('analyses')).toEqual([]);
+    expect((await previewResult(deps, bytes)).alreadyImported).toBe(false);
+    fail = false;
+    expect((await importResult(deps, bytes)).imported).toBe(true);
+    expect(await repo.listRecords('analyses')).toHaveLength(1);
+    expect(await repo.listRecords('reportSummaries')).toHaveLength(1);
+  });
+
   it('IN-20 a fill for an entry that was deleted or unmarked since the pack is skipped and counted, and so is a second fill for one entry', async () => {
     const { deps, pancakes, smoothie } = await diary();
     const { packId } = await buildPack(deps, sel);
@@ -222,6 +241,16 @@ describe('suggestions to review (IN-20)', () => {
     const [meal] = (await deps.repo.listMeals()).filter((m) => m.id === pancakes.id);
     expect(meal).toMatchObject({ ingredients: ['wheat flour', 'milk'], allergens: ['gluten'], source: { kind: 'name_estimate', edited: true, aiTags: true, llm: { model: 'Synthetic Model 9', promptVersion: 'manual', manual: true } } });
     expect(meal!.fillLater).toBeUndefined();
+    expect(await listSuggestions(deps)).toEqual([]);
+  });
+
+  it('IN-16, IN-20 completing works when the edit just saved already switched the mark off', async () => {
+    const { deps, suggestion, pancakes } = await withSuggestion();
+    await editMeal(deps, pancakes.id, { description: 'Synthetic pancakes with jam', ingredients: ['wheat flour', 'milk'], allergens: [], fillLater: false });
+    await completeSuggestion(deps, suggestion.id, { edited: false, aiTags: false });
+    const meal = (await deps.repo.listMeals()).find((m) => m.id === pancakes.id)!;
+    expect(meal.source).toMatchObject({ kind: 'name_estimate', llm: { model: 'Synthetic Model 9', manual: true } });
+    expect(meal.fillLater).toBeUndefined();
     expect(await listSuggestions(deps)).toEqual([]);
   });
 

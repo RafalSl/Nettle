@@ -1,1 +1,1 @@
-export { default } from '@/screens/SkinForm';
+export { default } from '@/forms/skin/SkinForm';

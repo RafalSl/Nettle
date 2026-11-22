@@ -1,2 +1,1 @@
-import { TreatmentForm } from '@/screens/formPages';
-export default TreatmentForm;
+export { default } from '@/forms/treatment/TreatmentForm';

@@ -10,7 +10,7 @@ import { areaLabel, reminderTexts, t } from '@/i18n';
 import { useServices } from '@/services';
 import { FormModal, useField, useForm } from '@/ui/FormModal';
 import { PendingPhotos } from '@/ui/PendingPhotos';
-import { useFormTime } from '@/ui/useFormTime';
+import { useFormTime } from '@/forms/useFormTime';
 import { Button, Chips, Hint, Label, TimeField, styles } from '@/ui/components';
 import { showError } from '@/ui/showError';
 
@@ -18,7 +18,7 @@ import { showError } from '@/ui/showError';
  * SK-10, SK-3: one nail area per affected nail; an entry has a stage and a rough extent instead of scores.
  * "No change" repeats the area's last stage and extent in one tap. Photos picked here are saved with the entry (SK-4).
  */
-export function NailSection() {
+export default function NailForm() {
   const { deps } = useServices();
   const router = useRouter();
   const f = useForm();

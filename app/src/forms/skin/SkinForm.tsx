@@ -9,8 +9,8 @@ import { areaLabel, t } from '@/i18n';
 import { useServices } from '@/services';
 import { FormModal, useField, useForm } from '@/ui/FormModal';
 import { PendingPhotos } from '@/ui/PendingPhotos';
-import { parseSizeText, sizeToSave, SkinExtraFields } from '@/ui/SkinExtraFields';
-import { useFormTime } from '@/ui/useFormTime';
+import { parseSizeText, sizeToSave, SkinExtraFields } from '@/forms/skin/SkinExtraFields';
+import { useFormTime } from '@/forms/useFormTime';
 import { Button, Chips, Hint, Label, ScoreInput, TimeField, styles } from '@/ui/components';
 import { showError } from '@/ui/showError';
 

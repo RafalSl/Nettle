@@ -10,14 +10,14 @@ import { listActiveAreas } from '@/core/usecases/skin';
 import { areaLabel, itemDescription, itemLabel, t } from '@/i18n';
 import { useServices } from '@/services';
 import { FormModal, useField, useForm } from '@/ui/FormModal';
-import { useFormTime } from '@/ui/useFormTime';
+import { useFormTime } from '@/forms/useFormTime';
 import { Button, Chips, Hint, Label, TimeField, styles } from '@/ui/components';
 import { SwitchRow } from '@/ui/SwitchRow';
 import { showError } from '@/ui/showError';
 import { toggled } from '@/ui/sets';
 
 /** IN-11: a saved list of treatments; applying one to one or more areas is timestamped (now, or the chosen day). */
-export function TreatmentSection() {
+export default function TreatmentForm() {
   const { deps } = useServices();
   const f = useForm();
   const [treatments, setTreatments] = useState<ListItem[]>([]);

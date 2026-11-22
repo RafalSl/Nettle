@@ -1,2 +1,1 @@
-import { ReactionForm } from '@/screens/formPages';
-export default ReactionForm;
+export { default } from '@/forms/reaction/ReactionForm';

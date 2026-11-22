@@ -1,2 +1,1 @@
-import { ChangeForm } from '@/screens/formPages';
-export default ChangeForm;
+export { default } from '@/forms/change/ChangeForm';

@@ -19,7 +19,7 @@ import { confirmDestructive } from '@/ui/actionSheet';
 import { BarcodeScanner } from '@/ui/BarcodeScanner';
 import { FormModal } from '@/ui/FormModal';
 import { AllergenAiControls, useAllergenAi } from '@/ui/useAllergenAi';
-import { FillLaterSwitch } from '@/ui/FillLaterSwitch';
+import { FillLaterSwitch } from '@/forms/FillLaterSwitch';
 import { IngredientRunPanel, SOURCE_OF, useIngredientRun, type Run } from '@/ui/useIngredientRun';
 import { Button, Chips, Hint, Label, TimeField, styles } from '@/ui/components';
 import { GlassSurface } from '@/ui/GlassSurface';

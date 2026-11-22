@@ -4,12 +4,9 @@ import { View } from 'react-native';
 import { Text, TextInput } from '@/ui/themed';
 import { localDay } from '@/core/model/time';
 import { MAX_MEDICAL_TITLE, MEDICAL_KINDS, type LocalDay, type MedicalKind } from '@/core/model/types';
-import { logMedicalEvent } from '@/core/usecases/events';
 import { t } from '@/i18n';
 import { useServices } from '@/services';
-import { FormModal, useField, useForm } from '@/ui/FormModal';
-import { useFormTime } from '@/ui/useFormTime';
-import { Button, Chips, Hint, Label, TimeField, styles } from '@/ui/components';
+import { Button, Chips, Hint, Label, styles } from '@/ui/components';
 
 /** IN-18: the end date of an illness, optional. A tap opens a date picker; Clear removes it. */
 function EndDayField({ value, onChange }: { value: LocalDay | null; onChange: (d: LocalDay | null) => void }) {
@@ -74,30 +71,5 @@ export function MedicalFields({
       />
       {kind === 'illness' && <EndDayField value={endDay} onChange={onEndDay} />}
     </>
-  );
-}
-
-/** IN-18: log a visit, test result, diagnosis, illness or other medical event. Nothing leaves the phone. */
-export function MedicalEventSection() {
-  const { deps } = useServices();
-  const f = useForm();
-  const [kind, setKind] = useField<MedicalKind>('visit', f.touch);
-  const [title, setTitle] = useField('', f.touch);
-  const [endDay, setEndDay] = useField<LocalDay | null>(null, f.touch);
-  const [note, setNote] = useField('', f.touch);
-  const time = useFormTime(f.touch);
-  return (
-    <FormModal
-      dirty={f.dirty}
-      missing={title.trim() ? null : t('edit.titleMissing')}
-      onSave={async () =>
-        void (await logMedicalEvent(deps, { kind, title, ...(kind === 'illness' ? { endDay } : {}), note, at: time.atForSave }))
-      }
-    >
-      <MedicalFields kind={kind} onKind={setKind} title={title} onTitle={setTitle} endDay={endDay} onEndDay={setEndDay} />
-      <TimeField value={time.value} onChange={time.set} />
-      <Label>{t('common.note')}</Label>
-      <TextInput style={styles.input} accessibilityLabel={t('common.note')} value={note} onChangeText={setNote} />
-    </FormModal>
   );
 }

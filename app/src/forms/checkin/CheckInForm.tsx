@@ -12,7 +12,7 @@ import { errorMessage, reminderTexts, t } from '@/i18n';
 import { useServices } from '@/services';
 import { chooseAction } from '@/ui/actionSheet';
 import { FormModal, useForm } from '@/ui/FormModal';
-import { DailyHealthFields, type DailyValues } from '@/ui/DailyHealthFields';
+import { DailyHealthFields, type DailyValues } from '@/forms/checkin/DailyHealthFields';
 import { Button, Hint, Label, TimeField, styles } from '@/ui/components';
 import { showError } from '@/ui/showError';
 

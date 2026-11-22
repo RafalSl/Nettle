@@ -5,7 +5,7 @@ import { ALLERGENS, type Allergen } from '@/core/model/types';
 import type { DrinkSnapshot } from '@/core/usecases/preferences';
 import { t } from '@/i18n';
 import { Chips, Label, styles } from '@/ui/components';
-import { FillLaterSwitch } from '@/ui/FillLaterSwitch';
+import { FillLaterSwitch } from '@/forms/FillLaterSwitch';
 import { SwitchRow } from '@/ui/SwitchRow';
 import { toggled } from '@/ui/sets';
 

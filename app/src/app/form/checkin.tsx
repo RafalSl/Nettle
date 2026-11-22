@@ -1,1 +1,1 @@
-export { default } from '@/screens/CheckInForm';
+export { default } from '@/forms/checkin/CheckInForm';

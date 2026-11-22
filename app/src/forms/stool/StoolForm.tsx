@@ -3,7 +3,7 @@ import { logStool } from '@/core/usecases/checkin';
 import { t } from '@/i18n';
 import { useServices } from '@/services';
 import { FormModal, useField, useForm } from '@/ui/FormModal';
-import { useFormTime } from '@/ui/useFormTime';
+import { useFormTime } from '@/forms/useFormTime';
 import { Chips, Hint, TimeField, styles } from '@/ui/components';
 
 /** SK-7: the full stool form behind "Earlier…" on the quick sheet: Bristol type 1 to 7, a time and a note. */

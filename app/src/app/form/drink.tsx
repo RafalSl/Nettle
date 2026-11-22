@@ -1,2 +1,1 @@
-import { DrinkForm } from '@/screens/formPages';
-export default DrinkForm;
+export { default } from '@/forms/drink/DrinkForm';

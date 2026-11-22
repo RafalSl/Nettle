@@ -40,8 +40,17 @@ describe('derived flares (SK-6)', () => {
     expect(flares[1]).toMatchObject({ start: at('20'), end: at('21'), areaIds: ['area-arm'] });
   });
 
-  it('SK-6 an open flare absorbs a later one of another area, and stays open', () => {
-    const flares = deriveFlares([when('10', 8), when('12', 9, 'area-neck'), when('13', 2, 'area-neck')], 8);
+  it('SK-6 an open flare reaches only to its last entry: a later flare of another area is its own period', () => {
+    const flares = deriveFlares([when('01', 9), when('20', 9, 'area-neck'), when('22', 3, 'area-neck'), when('25', 8, 'area-arm'), when('26', 9, 'area-arm')], 8);
+    expect(flares).toEqual([
+      { start: at('01'), end: null, areaIds: ['area-chin'], lastEntryAt: at('01') },
+      { start: at('20'), end: at('22'), areaIds: ['area-neck'], lastEntryAt: at('20') },
+      { start: at('25'), end: null, areaIds: ['area-arm'], lastEntryAt: at('26') },
+    ]);
+  });
+
+  it('SK-6 a flare that starts by the last entry of an open one merges into it and stays open', () => {
+    const flares = deriveFlares([when('10', 8), when('12', 9), when('11', 9, 'area-neck'), when('13', 2, 'area-neck')], 8);
     expect(flares).toEqual([{ start: at('10'), end: null, areaIds: ['area-chin', 'area-neck'], lastEntryAt: at('12') }]);
   });
 
@@ -64,6 +73,15 @@ describe('derived flares (SK-6)', () => {
     expect(await openFlare(deps)).toBeNull();
     expect(await flarePeriods(deps)).toHaveLength(1);
     for (const bad of [0, 11, 2.5]) await expect(setFlareThreshold(deps, bad)).rejects.toBeInstanceOf(NettleError);
+  });
+
+  it('SK-6, UX-2 with several open flares, the current one is the most recent', async () => {
+    const deps = makeDeps(new MemoryRepo());
+    const scores = (severity: number) => ({ severity, itch: 0, pain: 0, dryness: 0, scaling: 0 });
+    await logSkinEntry(deps, { areaId: 'area-chin', scores: scores(9), at: new Date('2026-01-01T08:00:00.000Z') });
+    await logSkinEntry(deps, { areaId: 'area-neck', scores: scores(9), at: new Date('2026-01-12T08:00:00.000Z') });
+    expect(await flarePeriods(deps)).toHaveLength(2);
+    expect(await openFlare(deps)).toMatchObject({ areaIds: ['area-neck'], end: null });
   });
 
   it('LL-2 the analysis input lists derived flares by area name with the threshold used', async () => {

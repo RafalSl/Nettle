@@ -31,7 +31,7 @@ const byTime = (a: { at: Stamp; id: string }, b: { at: Stamp; id: string }) => a
 /**
  * SK-6, SK-8: flare periods from skin entries and a severity threshold (one for all areas or one per area), oldest first. Per area a period starts at the first
  * entry at or above the threshold and ends at the first later entry below it; overlapping periods of different
- * areas merge into one. Nail entries are not skin entries, so they never flare.
+ * areas merge into one. An open period reaches to its last entry, so a later flare of another area is its own period. Nail entries are not skin entries, so they never flare.
  */
 export function deriveFlares(entries: readonly Pick<SkinEntry, 'id' | 'at' | 'areaId' | 'scores'>[], rule: FlareRule): FlarePeriod[] {
   const perArea: FlarePeriod[] = [];
@@ -52,7 +52,8 @@ export function deriveFlares(entries: readonly Pick<SkinEntry, 'id' | 'at' | 'ar
   const merged: FlarePeriod[] = [];
   for (const p of perArea) {
     const cur = merged[merged.length - 1];
-    if (cur && (cur.end === null || p.start.utc <= cur.end.utc)) {
+    // SK-6: an open period is known only up to its last entry ("open at last entry"), so it overlaps what starts by then.
+    if (cur && p.start.utc <= (cur.end ?? cur.lastEntryAt).utc) {
       for (const id of p.areaIds) if (!cur.areaIds.includes(id)) cur.areaIds.push(id);
       cur.end = cur.end === null || p.end === null ? null : cur.end.utc >= p.end.utc ? cur.end : p.end;
       if (p.lastEntryAt.utc > cur.lastEntryAt.utc) cur.lastEntryAt = p.lastEntryAt;

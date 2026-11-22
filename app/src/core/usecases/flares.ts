@@ -9,9 +9,12 @@ export async function flarePeriods(deps: Deps): Promise<FlarePeriod[]> {
   return deriveFlares(await deps.repo.listSkinEntries(), threshold);
 }
 
-/** SK-6, UX-2: the flare that has no later entry below the threshold, if any (at most one after merging). */
+/**
+ * SK-6, UX-2: the flare that has no later entry below the threshold, if any. Several can be open (an area whose last
+ * entry was high and that was not logged again); the most recent one is the current flare.
+ */
 export async function openFlare(deps: Deps): Promise<FlarePeriod | null> {
-  return (await flarePeriods(deps)).find((p) => p.end === null) ?? null;
+  return (await flarePeriods(deps)).filter((p) => p.end === null).pop() ?? null;
 }
 
 export interface OpenFlare {

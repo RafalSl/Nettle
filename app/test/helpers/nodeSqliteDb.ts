@@ -12,8 +12,7 @@ export function createNodeSqliteDb(): SqlDb {
     run: async (sql, params = []) => {
       db.prepare(sql).run(...(params as SQLInputValue[]));
     },
-    all: async <T>(sql: string, params: (string | number | null)[] = []) =>
-      db.prepare(sql).all(...(params as SQLInputValue[])) as T[],
+    all: async <T>(sql: string, params: (string | number | null)[] = []) => db.prepare(sql).all(...(params as SQLInputValue[])) as T[],
     transaction: async (fn) => {
       db.exec('BEGIN');
       try {

@@ -1,13 +1,14 @@
-import { useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
-import { Alert, View } from 'react-native';
+import { useState } from 'react';
+import { View } from 'react-native';
 import { TextInput } from '@/ui/themed';
 import type { AreaKind, SkinArea } from '@/core/model/types';
 import { addArea, archiveSkinArea, renameSkinArea, resetSkinAreaName, setAreaSensitiveDefault } from '@/core/usecases/skin';
-import { areaLabel, errorMessage, t } from '@/i18n';
+import { areaLabel, t } from '@/i18n';
 import { useServices } from '@/services';
 import { Button, Chips, Heading, Hint, Label, styles } from '@/ui/components';
 import { SwitchRow } from '@/ui/SwitchRow';
+import { showError } from '@/ui/showError';
+import { useFocusLoad } from '@/ui/useFocusLoad';
 
 /**
  * SK-2, SK-10, UX-6: add, rename and archive the skin or nail areas. Active names are unique. A predefined area
@@ -18,10 +19,7 @@ export function AreasSection({ kind }: { kind: AreaKind }) {
   const [areas, setAreas] = useState<SkinArea[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [name, setName] = useState('');
-  const reload = useCallback(() => {
-    deps.repo.listAreas().then((all) => setAreas(all.filter((a) => a.kind === kind)));
-  }, [deps, kind]);
-  useFocusEffect(reload);
+  const reload = useFocusLoad(async () => (await deps.repo.listAreas()).filter((a) => a.kind === kind), [deps, kind], setAreas);
 
   const run = async (fn: () => Promise<unknown>) => {
     try {
@@ -29,7 +27,7 @@ export function AreasSection({ kind }: { kind: AreaKind }) {
       setName('');
       reload();
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
   };
   const active = areas.filter((a) => !a.archived);
@@ -39,8 +37,18 @@ export function AreasSection({ kind }: { kind: AreaKind }) {
   return (
     <>
       <Heading>{t(kind === 'skin' ? 'settings.skinAreas' : 'settings.nailAreas')}</Heading>
-      <Chips items={active.map((a) => ({ id: a.id, label: areaLabel(a) }))} selected={new Set(selected ? [selected] : [])} onToggle={setSelected} />
-      <TextInput style={styles.input} accessibilityLabel={t(`settings.${kind}AreaName`)} placeholder={t(`settings.${kind}AreaName`)} value={name} onChangeText={setName} />
+      <Chips
+        items={active.map((a) => ({ id: a.id, label: areaLabel(a) }))}
+        selected={new Set(selected ? [selected] : [])}
+        onToggle={setSelected}
+      />
+      <TextInput
+        style={styles.input}
+        accessibilityLabel={t(`settings.${kind}AreaName`)}
+        placeholder={t(`settings.${kind}AreaName`)}
+        value={name}
+        onChangeText={setName}
+      />
       <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
         <Button kind="secondary" title={t('common.add')} onPress={() => run(() => addArea(deps, name, kind))} />
         {current && (
@@ -52,23 +60,33 @@ export function AreasSection({ kind }: { kind: AreaKind }) {
             <Button
               kind="secondary"
               title={t('more.archive')}
-              onPress={() => run(async () => {
-                await archiveSkinArea(deps, current.id);
-                setSelected(null);
-              })}
+              onPress={() =>
+                run(async () => {
+                  await archiveSkinArea(deps, current.id);
+                  setSelected(null);
+                })
+              }
             />
           </>
         )}
       </View>
       {current && (
         // SK-5: new photos of this area start as sensitive; a photo can still be changed one by one.
-        <SwitchRow title={t('settings.sensitiveDefault')} value={current.sensitiveDefault} onChange={(v) => run(() => setAreaSensitiveDefault(deps, current.id, v))} />
+        <SwitchRow
+          title={t('settings.sensitiveDefault')}
+          value={current.sensitiveDefault}
+          onChange={(v) => run(() => setAreaSensitiveDefault(deps, current.id, v))}
+        />
       )}
       {archived.length > 0 && (
         <>
           <Label>{t('more.archivedList')}</Label>
           <Hint>{t('more.restore')}</Hint>
-          <Chips items={archived.map((a) => ({ id: a.id, label: areaLabel(a) }))} selected={new Set()} onToggle={(id) => run(() => archiveSkinArea(deps, id, false))} />
+          <Chips
+            items={archived.map((a) => ({ id: a.id, label: areaLabel(a) }))}
+            selected={new Set()}
+            onToggle={(id) => run(() => archiveSkinArea(deps, id, false))}
+          />
         </>
       )}
     </>

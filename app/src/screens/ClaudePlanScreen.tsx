@@ -1,15 +1,25 @@
-import { useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { Alert } from 'react-native';
 import { localDateTime, localDay } from '@/core/model/time';
 import { RECORD_KINDS, type Photo } from '@/core/model/types';
-import { buildPack, importResult, markedEntries, preparePack, previewResult, type MarkedEntry, type ResultPreview } from '@/core/usecases/aiPack';
-import { areaLabel, currentLanguage, errorMessage, t } from '@/i18n';
+import {
+  buildPack,
+  importResult,
+  markedEntries,
+  preparePack,
+  previewResult,
+  type MarkedEntry,
+  type ResultPreview,
+} from '@/core/usecases/aiPack';
+import { areaLabel, currentLanguage, t } from '@/i18n';
 import { useServices } from '@/services';
 import { DayRangePickers, pickedDay } from '@/ui/DayRangePickers';
 import { Button, Heading, Hint, Label, Screen } from '@/ui/components';
 import { FloatingAction } from '@/ui/FloatingSave';
 import { PhotoGrid } from '@/ui/PhotoGrid';
+import { showError } from '@/ui/showError';
+import { toggled } from '@/ui/sets';
+import { useFocusLoad } from '@/ui/useFocusLoad';
 
 const daysAgo = (n: number) => new Date(Date.now() - n * 24 * 3600 * 1000);
 
@@ -29,30 +39,30 @@ export default function ClaudePlanScreen() {
   const dayFrom = pickedDay(from, tz);
   const dayTo = pickedDay(to, tz);
 
-  useFocusEffect(
-    useCallback(() => {
-      (async () => {
-        const areas = new Map((await deps.repo.listAreas()).map((a) => [a.id, a]));
-        const entryArea = new Map([...(await deps.repo.listSkinEntries()), ...(await deps.repo.listRecords('nailEntries'))].map((e) => [e.id, e.areaId]));
-        setPhotos(
-          (await deps.repo.listRecords('photos'))
-            .filter((p) => localDay(p.at.utc, p.at.tz, deps.dayStart.get()) >= dayFrom && localDay(p.at.utc, p.at.tz, deps.dayStart.get()) <= dayTo)
-            .map((photo) => {
-              const area = areas.get(entryArea.get(photo.entryId) ?? '');
-              return { photo, label: `${area ? areaLabel(area) : ''} ${localDateTime(photo.at.utc, photo.at.tz)}`.trim() };
-            }),
-        );
-        setMarked(await markedEntries(deps));
-      })().catch((e) => Alert.alert(errorMessage(e)));
-    }, [deps, dayFrom, dayTo, setPhotos, setMarked]),
+  useFocusLoad(
+    async () => {
+      const areas = new Map((await deps.repo.listAreas()).map((a) => [a.id, a]));
+      const entryArea = new Map(
+        [...(await deps.repo.listRecords('skinEntries')), ...(await deps.repo.listRecords('nailEntries'))].map((e) => [e.id, e.areaId]),
+      );
+      const inRange = (p: { at: { utc: string; tz: string } }) => {
+        const d = localDay(p.at.utc, p.at.tz, deps.dayStart.get());
+        return d >= dayFrom && d <= dayTo;
+      };
+      const photos = (await deps.repo.listRecords('photos')).filter(inRange).map((photo) => {
+        const area = areas.get(entryArea.get(photo.entryId) ?? '');
+        return { photo, label: `${area ? areaLabel(area) : ''} ${localDateTime(photo.at.utc, photo.at.tz)}`.trim() };
+      });
+      return { photos, marked: await markedEntries(deps) };
+    },
+    [deps, dayFrom, dayTo],
+    (r) => {
+      setPhotos(r.photos);
+      setMarked(r.marked);
+    },
   );
 
-  const toggle = (id: string) =>
-    setChosen((cur) => {
-      const next = new Set(cur);
-      if (!next.delete(id)) next.add(id);
-      return next;
-    });
+  const toggle = (id: string) => setChosen((cur) => toggled(cur, id));
 
   /** LL-5-style confirmation: exactly what the pack holds and the three things the person must know. */
   async function prepare() {
@@ -63,8 +73,15 @@ export default function ClaudePlanScreen() {
       const lines = [
         t('plan.confirmIntro'),
         '',
-        t('analysis.range', { from: prepared.dayFrom, to: prepared.dayTo, days: prepared.counts.days ?? 0, complete: prepared.counts.completeDays ?? 0 }),
-        ...RECORD_KINDS.filter((k) => (prepared.counts[k] ?? 0) > 0).map((k) => `• ${t(`delete.line.${k}`, { n: prepared.counts[k] ?? 0 })}`),
+        t('analysis.range', {
+          from: prepared.dayFrom,
+          to: prepared.dayTo,
+          days: prepared.counts.days ?? 0,
+          complete: prepared.counts.completeDays ?? 0,
+        }),
+        ...RECORD_KINDS.filter((k) => (prepared.counts[k] ?? 0) > 0).map(
+          (k) => `• ${t(`delete.line.${k}`, { n: prepared.counts[k] ?? 0 })}`,
+        ),
         ...(prepared.counts.lookbackDays ? [t('analysis.lookback', { n: prepared.counts.lookbackDays })] : []),
         ...prepared.marked.map((m) => `• ${t('plan.markedLine', { text: m.text })}`),
         ...prepared.photos.map((p) => `• ${t(p.sensitive ? 'analysis.photoLineSensitive' : 'analysis.photoLine', { label: p.label })}`),
@@ -81,12 +98,12 @@ export default function ClaudePlanScreen() {
             (async () => {
               const pack = await buildPack(deps, sel);
               await fileShare.saveAndShare(pack.fileName, pack.bytes, 'application/zip');
-            })().catch((e) => Alert.alert(errorMessage(e)));
+            })().catch((e) => showError(e));
           },
         },
       ]);
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
   }
 
@@ -114,13 +131,13 @@ export default function ClaudePlanScreen() {
           onPress: () => {
             importResult(deps, bytes).then(
               () => Alert.alert(t('plan.importedTitle'), t('plan.importedBody')),
-              (e) => Alert.alert(errorMessage(e)),
+              (e) => showError(e),
             );
           },
         },
       ]);
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
   }
 
@@ -137,7 +154,18 @@ export default function ClaudePlanScreen() {
       {photos.length === 0 ? (
         <Hint>{t('analysis.photosNone')}</Hint>
       ) : (
-        <PhotoGrid items={photos.map(({ photo, label }) => ({ id: photo.id, file: photo.file, sensitive: photo.sensitive, label: photo.sensitive ? `${label} (${t('analysis.sensitiveMark')})` : label }))} selected={chosen} onToggle={toggle} onAll={() => setChosen(new Set(photos.filter((p) => !p.photo.sensitive).map((p) => p.photo.id)))} onNone={() => setChosen(new Set())} />
+        <PhotoGrid
+          items={photos.map(({ photo, label }) => ({
+            id: photo.id,
+            file: photo.file,
+            sensitive: photo.sensitive,
+            label: photo.sensitive ? `${label} (${t('analysis.sensitiveMark')})` : label,
+          }))}
+          selected={chosen}
+          onToggle={toggle}
+          onAll={() => setChosen(new Set(photos.filter((p) => !p.photo.sensitive).map((p) => p.photo.id)))}
+          onNone={() => setChosen(new Set())}
+        />
       )}
       <Hint>{t('plan.markedCount', { n: marked.length })}</Hint>
       <Hint>{t('plan.prepareHint')}</Hint>

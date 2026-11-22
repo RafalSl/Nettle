@@ -139,7 +139,17 @@ const reaction: ExtraTable<Reaction> = {
 const drink: ExtraTable<Drink> = {
   table: 'drink',
   columns: ['name', 'amount_ml', 'alcohol', 'ingredients_json', 'allergens_json', 'barcode', 'source_json', 'fill_later', 'note'],
-  toValues: (e) => [e.name, e.amountMl, +e.alcohol, JSON.stringify(e.ingredients), JSON.stringify(e.allergens), e.barcode, JSON.stringify(e.source), e.fillLater ? 1 : 0, e.note],
+  toValues: (e) => [
+    e.name,
+    e.amountMl,
+    +e.alcohol,
+    JSON.stringify(e.ingredients),
+    JSON.stringify(e.allergens),
+    e.barcode,
+    JSON.stringify(e.source),
+    e.fillLater ? 1 : 0,
+    e.note,
+  ],
   fromRow: (r) => ({
     id: r.id as string,
     at: { utc: r.ts_utc as string, tz: r.tz as string },
@@ -186,7 +196,16 @@ const photo: ExtraTable<Photo> = {
 const analysis: ExtraTable<Analysis> = {
   table: 'analysis',
   columns: ['day_from', 'day_to', 'model', 'prompt_version', 'language', 'counts_json', 'result_json', 'manual'],
-  toValues: (a) => [a.dayFrom, a.dayTo, a.model, a.promptVersion, a.language, JSON.stringify(a.counts), JSON.stringify(analysisResultToJson(a.result)), a.manual ? 1 : 0],
+  toValues: (a) => [
+    a.dayFrom,
+    a.dayTo,
+    a.model,
+    a.promptVersion,
+    a.language,
+    JSON.stringify(a.counts),
+    JSON.stringify(analysisResultToJson(a.result)),
+    a.manual ? 1 : 0,
+  ],
   fromRow: (r) => ({
     id: r.id as string,
     at: { utc: r.ts_utc as string, tz: r.tz as string },
@@ -205,7 +224,17 @@ const analysis: ExtraTable<Analysis> = {
 const reportSummary: ExtraTable<ReportSummary> = {
   table: 'report_summary',
   columns: ['day_from', 'day_to', 'language', 'model', 'prompt_version', 'counts_json', 'generated', 'text', 'manual'],
-  toValues: (s) => [s.dayFrom, s.dayTo, s.language, s.model, s.promptVersion, JSON.stringify(s.counts), s.generated, s.text, s.manual ? 1 : 0],
+  toValues: (s) => [
+    s.dayFrom,
+    s.dayTo,
+    s.language,
+    s.model,
+    s.promptVersion,
+    JSON.stringify(s.counts),
+    s.generated,
+    s.text,
+    s.manual ? 1 : 0,
+  ],
   fromRow: (r) => ({
     id: r.id as string,
     at: { utc: r.ts_utc as string, tz: r.tz as string },

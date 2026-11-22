@@ -6,6 +6,7 @@ import { planAllergenSuggestion, suggestAllergensWithAi } from '@/core/usecases/
 import { currentLanguage, errorMessage, t } from '@/i18n';
 import { useServices } from '@/services';
 import { Button, Hint } from '@/ui/components';
+import { showError } from '@/ui/showError';
 
 type State = { s: 'idle' } | { s: 'running' } | { s: 'failed'; error: unknown };
 
@@ -54,7 +55,7 @@ export function useAllergenAi(onSuggested: (tags: Allergen[], note: string | nul
         ],
       );
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
   }
 

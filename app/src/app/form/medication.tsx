@@ -1,2 +1,1 @@
-import { MedicationForm } from '@/screens/formPages';
-export default MedicationForm;
+export { default } from '@/forms/medication/MedicationForm';

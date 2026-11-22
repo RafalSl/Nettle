@@ -9,7 +9,7 @@ import { addPhoto } from '@/core/usecases/photos';
 import { logSkinEntry } from '@/core/usecases/skin';
 import { MemoryPhotoStore } from './fakes/memoryPhotoStore';
 import { MemoryRepo } from './fakes/memoryRepo';
-import { makeDeps } from './helpers/fixtures';
+import { makeDeps, syntheticScores as scores } from './helpers/fixtures';
 import { createNodeSqliteDb } from './helpers/nodeSqliteDb';
 
 const repos: [string, () => Promise<StorageRepository>][] = [
@@ -17,7 +17,6 @@ const repos: [string, () => Promise<StorageRepository>][] = [
   ['sqlite', async () => SqliteRepo.open(createNodeSqliteDb())],
 ];
 const both = { records: true, settings: true };
-const scores = { severity: 1, itch: 2, pain: 3, dryness: 4, scaling: 5 };
 const d = (iso: string) => new Date(iso);
 
 describe.each(repos)('tombstones in export and import (%s)', (_name, make) => {
@@ -35,9 +34,9 @@ describe.each(repos)('tombstones in export and import (%s)', (_name, make) => {
     return { a, b, meal, reaction, entry, photo, backup };
   }
   const ids = async (repo: StorageRepository) => ({
-    meals: (await repo.listMeals()).map((m) => m.id),
+    meals: (await repo.listRecords('meals')).map((m) => m.id),
     reactions: (await repo.listRecords('reactions')).map((r) => r.id),
-    skin: (await repo.listSkinEntries()).map((e) => e.id),
+    skin: (await repo.listRecords('skinEntries')).map((e) => e.id),
     photos: (await repo.listRecords('photos')).map((p) => p.id),
   });
 
@@ -46,7 +45,10 @@ describe.each(repos)('tombstones in export and import (%s)', (_name, make) => {
     await deleteEntry(a, 'meals', meal.id);
     const parsed = await previewImport(a, await exportBundle(a, { parts: both }));
     expect(parsed.payload.tombstones?.map((t) => [t.id, t.kind]).sort()).toEqual(
-      [[meal.id, 'meals'], [reaction.id, 'reactions']].sort(),
+      [
+        [meal.id, 'meals'],
+        [reaction.id, 'reactions'],
+      ].sort(),
     );
     expect(parsed.payload.tombstones?.[0]?.deletedAt).toEqual({ utc: '2026-01-15T10:00:00.000Z', tz: 'Europe/Warsaw' });
   });
@@ -72,7 +74,7 @@ describe.each(repos)('tombstones in export and import (%s)', (_name, make) => {
     expect(await b.repo.listTombstones()).toEqual([]);
   });
 
-  it("EX-13 an incoming tombstone deletes the local entry with its reactions, photos and photo files", async () => {
+  it('EX-13 an incoming tombstone deletes the local entry with its reactions, photos and photo files', async () => {
     const { a, b, meal, entry, photo } = await setup();
     await deleteEntry(a, 'meals', meal.id);
     await deleteEntry(a, 'skinEntries', entry.id);

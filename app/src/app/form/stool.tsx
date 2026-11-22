@@ -1,1 +1,1 @@
-export { default } from '@/screens/StoolForm';
+export { default } from '@/forms/stool/StoolForm';

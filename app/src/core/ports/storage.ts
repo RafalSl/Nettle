@@ -1,16 +1,13 @@
 import type { Preferences } from '../model/preferences';
 import type {
   DateRange,
-  ExtraKind,
   ListItem,
   ListKind,
-  Meal,
   Payload,
   RecordKind,
   Records,
   Settings,
   SkinArea,
-  SkinEntry,
   Snapshot,
   Stamp,
   Tombstone,
@@ -36,34 +33,24 @@ export type ExistingIds = Record<CollectionKey, Set<string>>;
 
 /** Repository port (EX-1, EX-10, portable data). Implemented by SQLite and by an in-memory fake. */
 export interface StorageRepository {
-  addMeal(meal: Meal): Promise<void>;
-  /** Newest first. */
-  listMeals(range?: DateRange): Promise<Meal[]>;
-
   /** Insert or update by id. */
   upsertArea(area: SkinArea): Promise<void>;
   /** All areas, including archived. */
   listAreas(): Promise<SkinArea[]>;
-
-  addSkinEntry(entry: SkinEntry): Promise<void>;
-  /** Newest first. */
-  listSkinEntries(range?: DateRange): Promise<SkinEntry[]>;
 
   /** Insert or update by id. */
   upsertItem(kind: ListKind, item: ListItem): Promise<void>;
   /** All items of a list, including archived, ordered by id. */
   listItems(kind: ListKind): Promise<ListItem[]>;
 
-  /** Generic storage for the flat record kinds (see ExtraKind). Newest first. */
-  addRecord<K extends ExtraKind>(kind: K, record: Records[K][number]): Promise<void>;
-  /** Insert or replace by id, for records that change after they are created (the daily check-in). */
-  putRecord<K extends ExtraKind>(kind: K, record: Records[K][number]): Promise<void>;
-  listRecords<K extends ExtraKind>(kind: K, range?: DateRange): Promise<Records[K]>;
-
-  /** EN-1: replace a meal (and its ingredients) that already exists. Unknown id: throws. */
-  putMeal(meal: Meal): Promise<void>;
-  /** EN-1: replace a skin entry that already exists. Unknown id: throws. */
-  putSkinEntry(entry: SkinEntry): Promise<void>;
+  /** Adds a new record of any kind (a meal with its ingredients, a skin entry, a drink …). An existing id throws. */
+  addRecord<K extends RecordKind>(kind: K, record: Records[K][number]): Promise<void>;
+  /** EN-1: insert or replace by id, for a record that changes after it was created (an edit, the day's Daily health). */
+  putRecord<K extends RecordKind>(kind: K, record: Records[K][number]): Promise<void>;
+  /** The records of a kind, optionally in a time range, newest first. */
+  listRecords<K extends RecordKind>(kind: K, range?: DateRange): Promise<Records[K]>;
+  /** One record by id, or null. */
+  getRecord<K extends RecordKind>(kind: K, id: string): Promise<Records[K][number] | null>;
 
   /** SE-9: atomically delete the given records by id (unknown ids are ignored). Areas and lists are untouched. Leaves no tombstones. */
   deleteRecords(ids: Partial<Record<RecordKind, string[]>>): Promise<void>;

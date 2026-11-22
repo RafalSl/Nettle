@@ -1,19 +1,10 @@
 import { MemoryRepo } from './fakes/memoryRepo';
-import { makeDeps } from './helpers/fixtures';
-import {
-  backupCardDue,
-  daysSinceExport,
-  getLastExport,
-  markExported,
-  presetOptions,
-  sinceLastExport,
-} from '@/core/usecases/backup';
+import { makeDeps, syntheticScores as scores } from './helpers/fixtures';
+import { backupCardDue, daysSinceExport, getLastExport, markExported, presetOptions, sinceLastExport } from '@/core/usecases/backup';
 import { exportBundle, previewImport } from '@/core/usecases/exchange';
 import { addPhoto } from '@/core/usecases/photos';
 import { logSkinEntry } from '@/core/usecases/skin';
 import { unpackBundle } from '@/core/export/bundle';
-
-const scores = { severity: 1, itch: 2, pain: 3, dryness: 4, scaling: 5 };
 
 describe('export bookkeeping (EX-11, UX-2)', () => {
   it('EX-11 knows nothing before the first export, then the local day of the last one', async () => {
@@ -29,7 +20,10 @@ describe('export bookkeeping (EX-11, UX-2)', () => {
     const deps = makeDeps(new MemoryRepo(), '2026-03-01T10:00:00.000Z');
     expect(await backupCardDue(deps)).toBe(true);
     await markExported(deps);
-    const later = (days: number) => ({ ...deps, clock: { ...deps.clock, now: () => new Date(Date.parse('2026-03-01T10:00:00.000Z') + days * 86_400_000) } });
+    const later = (days: number) => ({
+      ...deps,
+      clock: { ...deps.clock, now: () => new Date(Date.parse('2026-03-01T10:00:00.000Z') + days * 86_400_000) },
+    });
     expect(await daysSinceExport(later(3))).toBe(3);
     expect(await backupCardDue(later(7))).toBe(false);
     expect(await backupCardDue(later(8))).toBe(true);
@@ -48,7 +42,11 @@ describe('export presets (EX-14)', () => {
   it('EX-14 the doctor report has records only, a PDF and leaves sensitive photos out', async () => {
     const deps = await setup();
     const opts = presetOptions({ kind: 'doctor', report, days: { from: '2026-01-01' } });
-    expect(opts).toMatchObject({ parts: { records: true, settings: false }, photos: { mode: 'non_sensitive' }, days: { from: '2026-01-01' } });
+    expect(opts).toMatchObject({
+      parts: { records: true, settings: false },
+      photos: { mode: 'non_sensitive' },
+      days: { from: '2026-01-01' },
+    });
     expect(opts.report).toBe(report);
     const parsed = await previewImport(deps, await exportBundle(deps, { ...opts, report: undefined }));
     expect(parsed.payload.records?.photos).toEqual([]);

@@ -1,4 +1,5 @@
 import { deriveFlares, type FlareRule } from './flares';
+import { DAY_MS, HOUR_MS } from './time';
 import type { SkinEntry, Stamp, TreatmentApplication } from './types';
 
 /** SK-4: how far back a photo looks for the last treatment on its area. */
@@ -6,8 +7,6 @@ export const TREATMENT_LOOKBACK_DAYS = 7;
 /** SK-12: a course ends after this many days without an application; one gap for all treatments (decided 2026-11-16). */
 export const COURSE_GAP_DAYS = 7;
 
-const HOUR = 3_600_000;
-const DAY = 24 * HOUR;
 const ms = (utc: string) => Date.parse(utc);
 const round1 = (n: number) => Math.round(n * 10) / 10;
 
@@ -23,15 +22,19 @@ export interface SinceTreatment {
  * "no treatment logged" in that window. The program computes it from the timestamps, so it is exact and repeatable;
  * nothing is stored, it is recomputed from the applications every time.
  */
-export function sinceLastTreatment(areaId: string, atUtc: string, applications: readonly Pick<TreatmentApplication, 'at' | 'areaIds' | 'treatmentId' | 'id'>[]): SinceTreatment | null {
+export function sinceLastTreatment(
+  areaId: string,
+  atUtc: string,
+  applications: readonly Pick<TreatmentApplication, 'at' | 'areaIds' | 'treatmentId' | 'id'>[],
+): SinceTreatment | null {
   const t = ms(atUtc);
   let best: (typeof applications)[number] | null = null;
   for (const a of applications) {
     if (!a.areaIds.includes(areaId) || ms(a.at.utc) > t) continue;
     if (!best || a.at.utc > best.at.utc || (a.at.utc === best.at.utc && a.id > best.id)) best = a;
   }
-  if (!best || t - ms(best.at.utc) > TREATMENT_LOOKBACK_DAYS * DAY) return null;
-  return { treatmentId: best.treatmentId, hours: round1((t - ms(best.at.utc)) / HOUR) };
+  if (!best || t - ms(best.at.utc) > TREATMENT_LOOKBACK_DAYS * DAY_MS) return null;
+  return { treatmentId: best.treatmentId, hours: round1((t - ms(best.at.utc)) / HOUR_MS) };
 }
 
 /** How to say an elapsed time: minutes under an hour, hours under two days, otherwise days. */
@@ -89,22 +92,31 @@ export function timeToRelapse(
   const rows: RelapseRow[] = [];
   const skinAreas = [...new Set(skinEntries.map((e) => e.areaId))].sort();
   for (const areaId of skinAreas) {
-    const flares = deriveFlares(skinEntries.filter((e) => e.areaId === areaId), threshold);
+    const flares = deriveFlares(
+      skinEntries.filter((e) => e.areaId === areaId),
+      threshold,
+    );
     const onArea = applications.filter((a) => a.areaIds.includes(areaId));
     for (const treatmentId of [...new Set(onArea.map((a) => a.treatmentId))].sort()) {
-      const mine = onArea.filter((a) => a.treatmentId === treatmentId).sort((a, b) => a.at.utc.localeCompare(b.at.utc) || a.id.localeCompare(b.id));
+      const mine = onArea
+        .filter((a) => a.treatmentId === treatmentId)
+        .sort((a, b) => a.at.utc.localeCompare(b.at.utc) || a.id.localeCompare(b.id));
       const courses: (typeof mine)[] = [];
       for (const a of mine) {
         const cur = courses[courses.length - 1];
-        if (cur && ms(a.at.utc) - ms(cur[cur.length - 1]!.at.utc) <= COURSE_GAP_DAYS * DAY) cur.push(a);
+        if (cur && ms(a.at.utc) - ms(cur[cur.length - 1]!.at.utc) <= COURSE_GAP_DAYS * DAY_MS) cur.push(a);
         else courses.push([a]);
       }
       for (const course of courses) {
         const end = course[course.length - 1]!.at;
-        if (ms(asOfUtc) - ms(end.utc) <= COURSE_GAP_DAYS * DAY) continue; // still running, or only just stopped
+        if (ms(asOfUtc) - ms(end.utc) <= COURSE_GAP_DAYS * DAY_MS) continue; // still running, or only just stopped
         const flare = flares.find((f) => f.start.utc > end.utc) ?? null;
         const until = flare ? flare.start.utc : asOfUtc;
-        const others = [...new Set(onArea.filter((a) => a.treatmentId !== treatmentId && a.at.utc > end.utc && a.at.utc <= until).map((a) => a.treatmentId))].sort();
+        const others = [
+          ...new Set(
+            onArea.filter((a) => a.treatmentId !== treatmentId && a.at.utc > end.utc && a.at.utc <= until).map((a) => a.treatmentId),
+          ),
+        ].sort();
         rows.push({
           areaId,
           treatmentId,
@@ -112,7 +124,7 @@ export function timeToRelapse(
           end,
           applications: course.length,
           flareStart: flare ? flare.start : null,
-          days: flare ? round1((ms(flare.start.utc) - ms(end.utc)) / DAY) : null,
+          days: flare ? round1((ms(flare.start.utc) - ms(end.utc)) / DAY_MS) : null,
           otherTreatmentIds: others,
         });
       }

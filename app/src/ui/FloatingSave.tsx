@@ -12,7 +12,9 @@ export const SAVE_INSET = 150;
 function useKeyboardHeight(): number {
   const [height, setHeight] = useState(0);
   useEffect(() => {
-    const show = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillChangeFrame' : 'keyboardDidShow', (e) => setHeight(e.endCoordinates.height));
+    const show = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillChangeFrame' : 'keyboardDidShow', (e) =>
+      setHeight(e.endCoordinates.height),
+    );
     const hide = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', () => setHeight(0));
     return () => {
       show.remove();
@@ -35,7 +37,19 @@ export function FloatingSave({ disabled, missing, onPress }: { disabled: boolean
  * UX-3, UX-12: the single primary action of a screen, floating like the form Save ("Prepare the pack", "Send and
  * analyse", "Create doctor report", "Try again"). `missing` is the line above a disabled button.
  */
-export function FloatingAction({ title, icon, disabled = false, missing = null, onPress }: { title: string; icon?: IconName; disabled?: boolean; missing?: string | null; onPress: () => void }) {
+export function FloatingAction({
+  title,
+  icon,
+  disabled = false,
+  missing = null,
+  onPress,
+}: {
+  title: string;
+  icon?: IconName;
+  disabled?: boolean;
+  missing?: string | null;
+  onPress: () => void;
+}) {
   const keyboard = useKeyboardHeight();
   return (
     <View pointerEvents="box-none" style={{ position: 'absolute', left: 20, right: 20, bottom: keyboard > 0 ? keyboard + 12 : 26, gap: 8 }}>
@@ -48,7 +62,18 @@ export function FloatingAction({ title, icon, disabled = false, missing = null, 
         accessibilityState={{ disabled }}
         disabled={disabled}
         onPress={onPress}
-        style={{ height: 56, borderRadius: 999, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: disabled ? color.disabledFill : color.accent, borderWidth: disabled ? 1 : 0, borderColor: color.glassLine }}>
+        style={{
+          height: 56,
+          borderRadius: 999,
+          flexDirection: 'row',
+          gap: 8,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: disabled ? color.disabledFill : color.accent,
+          borderWidth: disabled ? 1 : 0,
+          borderColor: color.glassLine,
+        }}
+      >
         {icon ? <Icon name={icon} size={20} tint={disabled ? color.disabledText : color.onAccent} stroke={2.4} wash={false} /> : null}
         <Text style={{ fontSize: 16.5, fontWeight: '700', color: disabled ? color.disabledText : color.onAccent }}>{title}</Text>
       </Pressable>

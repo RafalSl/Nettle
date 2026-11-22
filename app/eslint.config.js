@@ -5,6 +5,10 @@ module.exports = defineConfig([
   globalIgnores(['node_modules/', '.expo/', 'dist/']),
   expo,
   {
+    // `useFocusLoad(load, deps, apply)` lists its dependencies like useEffect; check them the same way.
+    rules: { 'react-hooks/exhaustive-deps': ['warn', { additionalHooks: '(useFocusLoad)' }] },
+  },
+  {
     // Ports and adapters: core logic makes no platform or network calls and knows no adapters.
     files: ['src/core/**'],
     rules: {
@@ -12,8 +16,14 @@ module.exports = defineConfig([
         'error',
         {
           patterns: [
-            { group: ['expo', 'expo-*', 'react-native', 'react', '@react-native*', 'node:*'], message: 'src/core must stay platform-free.' },
-            { group: ['@/adapters/*', '@/ui/*', '@/i18n', '@/i18n/*', '@/services'], message: 'src/core must not depend on adapters or UI.' },
+            {
+              group: ['expo', 'expo-*', 'react-native', 'react', '@react-native*', 'node:*'],
+              message: 'src/core must stay platform-free.',
+            },
+            {
+              group: ['@/adapters/*', '@/ui/*', '@/i18n', '@/i18n/*', '@/services'],
+              message: 'src/core must not depend on adapters or UI.',
+            },
           ],
         },
       ],

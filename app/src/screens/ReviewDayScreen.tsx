@@ -1,10 +1,11 @@
-import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
-import { Alert } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useState } from 'react';
 import type { ListItem, SkinArea } from '@/core/model/types';
+import { dayParam } from '@/core/model/time';
 import { dayLog, type LogRow } from '@/core/usecases/dayLog';
-import { errorMessage, t } from '@/i18n';
+import { t } from '@/i18n';
 import { useServices } from '@/services';
+import { useFocusLoad } from '@/ui/useFocusLoad';
 import { Button, Heading, Screen } from '@/ui/components';
 import { DayLog } from '@/ui/DayLog';
 
@@ -14,22 +15,41 @@ export default function ReviewDayScreen() {
   const router = useRouter();
   const { day } = useLocalSearchParams<{ day?: string }>();
   const [rows, setRows] = useState<LogRow[]>([]);
-  const [ctx, setCtx] = useState<{ areas: SkinArea[]; treatments: ListItem[]; categories: ListItem[] }>({ areas: [], treatments: [], categories: [] });
-  const valid = typeof day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(day) ? day : null;
-  const load = useCallback(() => {
-    if (!valid) return;
-    (async () => {
-      setRows(await dayLog(deps, valid));
-      setCtx({ areas: await deps.repo.listAreas(), treatments: await deps.repo.listItems('treatments'), categories: await deps.repo.listItems('changeCategories') });
-    })().catch((e) => Alert.alert(errorMessage(e)));
-  }, [deps, valid]);
-  useFocusEffect(load);
+  const [ctx, setCtx] = useState<{ areas: SkinArea[]; treatments: ListItem[]; categories: ListItem[] }>({
+    areas: [],
+    treatments: [],
+    categories: [],
+  });
+  const valid = dayParam(day);
+  const load = useFocusLoad(
+    async () =>
+      valid
+        ? {
+            rows: await dayLog(deps, valid),
+            ctx: {
+              areas: await deps.repo.listAreas(),
+              treatments: await deps.repo.listItems('treatments'),
+              categories: await deps.repo.listItems('changeCategories'),
+            },
+          }
+        : null,
+    [deps, valid],
+    (r) => {
+      if (!r) return;
+      setRows(r.rows);
+      setCtx(r.ctx);
+    },
+  );
   if (!valid) return <Screen>{null}</Screen>;
   return (
     <Screen>
       <Heading>{valid}</Heading>
       <DayLog rows={rows} ctx={ctx} onChanged={load} />
-      <Button kind="secondary" title={t('day.openOnToday')} onPress={() => router.navigate({ pathname: '/today', params: { day: valid } })} />
+      <Button
+        kind="secondary"
+        title={t('day.openOnToday')}
+        onPress={() => router.navigate({ pathname: '/today', params: { day: valid } })}
+      />
     </Screen>
   );
 }

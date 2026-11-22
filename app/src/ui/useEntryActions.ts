@@ -1,11 +1,11 @@
 import { useRouter } from 'expo-router';
-import { Alert } from 'react-native';
 import type { RecordKind } from '@/core/model/types';
 import { deleteEntry, previewEntryDelete } from '@/core/usecases/entries';
-import { errorMessage, t } from '@/i18n';
+import { t } from '@/i18n';
 import { useServices } from '@/services';
 import { chooseAction } from '@/ui/actionSheet';
 import { rescheduleReminders } from '@/ui/rescheduleReminders';
+import { showError } from '@/ui/showError';
 
 /** What else goes with an entry, as one line (a meal's reactions, an entry's photos), or undefined. */
 async function alsoLine(deps: Parameters<typeof previewEntryDelete>[0], kind: RecordKind, id: string): Promise<string | undefined> {
@@ -24,14 +24,18 @@ export function useEntryDelete(onChanged: () => void) {
   const { deps } = useServices();
   return async function remove(kind: RecordKind, id: string, title: string) {
     try {
-      const choice = await chooseAction({ title, message: await alsoLine(deps, kind, id), actions: [{ label: t('log.deleteAction'), destructive: true }] });
+      const choice = await chooseAction({
+        title,
+        message: await alsoLine(deps, kind, id),
+        actions: [{ label: t('log.deleteAction'), destructive: true }],
+      });
       if (choice === 0) {
         await deleteEntry(deps, kind, id);
         if (kind === 'checkIns') await rescheduleReminders(deps); // SK-9: a day without its record gets its reminder back
         onChanged();
       }
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
   };
 }
@@ -58,7 +62,7 @@ export function useEntryActions(onChanged: () => void) {
         onChanged();
       }
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
   };
 }

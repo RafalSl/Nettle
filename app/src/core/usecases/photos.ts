@@ -15,10 +15,7 @@ export interface AddPhotoInput {
 
 /** The area an entry belongs to, or an error when the entry does not exist. */
 async function areaOfEntry(deps: Deps, kind: PhotoEntryKind, entryId: string) {
-  const entry =
-    kind === 'skinEntry'
-      ? (await deps.repo.listSkinEntries()).find((e) => e.id === entryId)
-      : (await deps.repo.listRecords('nailEntries')).find((e) => e.id === entryId);
+  const entry = await deps.repo.getRecord(kind === 'skinEntry' ? 'skinEntries' : 'nailEntries', entryId);
   if (!entry) throw new NettleError('unknown_entry', entryId);
   const area = (await deps.repo.listAreas()).find((a) => a.id === entry.areaId);
   if (!area) throw new NettleError('unknown_area', entry.areaId);
@@ -58,7 +55,13 @@ export async function addPhoto(deps: Deps, input: AddPhotoInput): Promise<Photo>
  * SK-4: attach photos picked in a Skin or Nails form to the entry just saved, dated like the entry. A photo that
  * cannot be saved does not undo the entry or the other photos: the number that failed is returned.
  */
-export async function attachPhotos(deps: Deps, entryKind: PhotoEntryKind, entryId: string, uris: readonly string[], at?: Date): Promise<{ saved: number; failed: number }> {
+export async function attachPhotos(
+  deps: Deps,
+  entryKind: PhotoEntryKind,
+  entryId: string,
+  uris: readonly string[],
+  at?: Date,
+): Promise<{ saved: number; failed: number }> {
   let saved = 0;
   let failed = 0;
   for (const sourceUri of uris) {
@@ -73,7 +76,7 @@ export async function attachPhotos(deps: Deps, entryKind: PhotoEntryKind, entryI
 }
 
 async function findPhoto(deps: Deps, id: string): Promise<Photo> {
-  const photo = (await deps.repo.listRecords('photos')).find((p) => p.id === id);
+  const photo = await deps.repo.getRecord('photos', id);
   if (!photo) throw new NettleError('unknown_photo', id);
   return photo;
 }
@@ -92,7 +95,5 @@ export async function removePhoto(deps: Deps, id: string): Promise<void> {
 
 /** Photos of one entry, oldest first. */
 export async function listPhotos(deps: Deps, entryKind: PhotoEntryKind, entryId: string): Promise<Photo[]> {
-  return (await deps.repo.listRecords('photos'))
-    .filter((p) => p.entryKind === entryKind && p.entryId === entryId)
-    .reverse();
+  return (await deps.repo.listRecords('photos')).filter((p) => p.entryKind === entryKind && p.entryId === entryId).reverse();
 }

@@ -16,7 +16,22 @@ import { isScore } from '../usecases/skin';
 import { EXTRA_CODECS } from './extras';
 import { parsePreferences } from './preferencesJson';
 import { parseBarcode, parseSource } from './sourceJson';
-import { bad, bool, enumList, parseFillLater, oneOf, isObj, list, nullableSize, nullableText, str, tz, unique, utc, type Obj } from './guards';
+import {
+  bad,
+  bool,
+  enumList,
+  parseFillLater,
+  oneOf,
+  isObj,
+  list,
+  nullableSize,
+  nullableText,
+  str,
+  tz,
+  unique,
+  utc,
+  type Obj,
+} from './guards';
 import { LIST_KEYS, recordWireKey, SCHEMA_VERSION } from './schema';
 
 const obj = (o: Obj, k: string, where: string): Obj => (isObj(o[k]) ? (o[k] as Obj) : bad(`${where}.${k}`));
@@ -57,7 +72,10 @@ export function parseDataJson(raw: unknown): Payload {
         nameOverride: nullableText(o, 'name_override', w),
       };
     });
-    unique(skinAreas.map((a) => a.id), 'settings.skin_areas');
+    unique(
+      skinAreas.map((a) => a.id),
+      'settings.skin_areas',
+    );
     const lists = {} as Record<(typeof LIST_KINDS)[number], ListItem[]>;
     for (const kind of LIST_KINDS) {
       const key = LIST_KEYS[kind];
@@ -73,7 +91,10 @@ export function parseDataJson(raw: unknown): Payload {
           description: nullableText(o, 'description', w),
         };
       });
-      unique(lists[kind].map((x) => x.id), `settings.${key}`);
+      unique(
+        lists[kind].map((x) => x.id),
+        `settings.${key}`,
+      );
     }
     payload.settings = { skinAreas, ...lists };
     payload.preferences = parsePreferences(obj(settings, 'preferences', 'settings'));
@@ -119,15 +140,24 @@ export function parseDataJson(raw: unknown): Payload {
         note: nullableText(o, 'note', w),
       };
     });
-    unique(meals.map((m) => m.id), 'records.meals');
-    unique(skinEntries.map((e) => e.id), 'records.skin_entries');
+    unique(
+      meals.map((m) => m.id),
+      'records.meals',
+    );
+    unique(
+      skinEntries.map((e) => e.id),
+      'records.skin_entries',
+    );
     const out = { meals, skinEntries } as Records;
     for (const kind of EXTRA_KINDS) {
       const codec = EXTRA_CODECS[kind];
       const rows = list(records, codec.key).map((o, i) =>
         (codec.parse as (o: Obj, w: string) => Records[typeof kind][number])(o, `records.${codec.key}[${i}]`),
       );
-      unique(rows.map((r) => r.id), `records.${codec.key}`);
+      unique(
+        rows.map((r) => r.id),
+        `records.${codec.key}`,
+      );
       Object.assign(out, { [kind]: rows });
     }
     payload.records = out;
@@ -140,7 +170,10 @@ export function parseDataJson(raw: unknown): Payload {
         deletedAt: { utc: utc(o, w), tz: tz(o, w) },
       };
     });
-    unique(payload.tombstones.map((t) => t.id), 'records.tombstones');
+    unique(
+      payload.tombstones.map((t) => t.id),
+      'records.tombstones',
+    );
   }
 
   if (!payload.records && !payload.settings) return bad('no records or settings section');

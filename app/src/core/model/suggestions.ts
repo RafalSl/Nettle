@@ -1,4 +1,5 @@
 import type { Drink, MedicationEntry, Meal } from './types';
+import { DAY_MS } from './time';
 
 /** IN-14: one earlier use of something the user logs often. `key` is its identity, `payload` what a pick fills in. */
 export interface HistoryItem<T> {
@@ -38,8 +39,6 @@ export interface SuggestionOptions {
   /** Rows when filtering (default 20). */
   queryRows?: number;
 }
-
-const DAY_MS = 86_400_000;
 
 /** IN-14: a meal is its description, trimmed, lowercase, single spaces. */
 export const normalizeText = (s: string): string => s.trim().toLowerCase().replace(/\s+/g, ' ');
@@ -86,11 +85,7 @@ export function rankSuggestions<T>(
   const all = [...byKey.values()].filter(matches);
   const favs = favorites.map((f) => byKey.get(f.key)!).filter(matches);
   const rest = all.filter((s) => !favKeys.has(s.key));
-  const ordered = [
-    ...favs,
-    ...rest.filter((s) => s.count > 0).sort(frequent),
-    ...rest.filter((s) => s.count === 0).sort(recent),
-  ];
+  const ordered = [...favs, ...rest.filter((s) => s.count > 0).sort(frequent), ...rest.filter((s) => s.count === 0).sort(recent)];
   const limit = query ? (options.queryRows ?? 20) : rows;
   return ordered.slice(0, Math.max(limit, favs.length));
 }

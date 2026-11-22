@@ -58,7 +58,8 @@ export function PhotoStrip({ entryKind, entryId }: { entryKind: PhotoEntryKind; 
                   setSelected(p.id);
                   if (p.sensitive) setShown((s) => new Set(s).add(p.id));
                 }}
-                style={{ borderWidth: p.id === selected ? 2 : 0, borderColor: color.accent }}>
+                style={{ borderWidth: p.id === selected ? 2 : 0, borderColor: color.accent }}
+              >
                 <Image source={{ uri: deps.photos.uri(p.file) }} blurRadius={hidden ? 30 : 0} style={{ width: 88, height: 88 }} />
               </Pressable>
             );
@@ -77,7 +78,9 @@ export function PhotoStrip({ entryKind, entryId }: { entryKind: PhotoEntryKind; 
             title={t('photos.remove')}
             onPress={async () => {
               // UX-9: an action sheet with the destructive choice first and Cancel last.
-              if (await confirmDestructive({ title: t('photos.removeTitle'), message: t('photos.removeBody'), action: t('photos.remove') })) {
+              if (
+                await confirmDestructive({ title: t('photos.removeTitle'), message: t('photos.removeBody'), action: t('photos.remove') })
+              ) {
                 setSelected(null);
                 await run(() => removePhoto(deps, current.id));
               }

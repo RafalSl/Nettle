@@ -79,12 +79,28 @@ export async function exportBundle(deps: Deps, options: ExportOptions = {}): Pro
       snapshot.photos.push({ ...p, file: path });
     }
   }
-  const data = toDataJson(snapshot, range, makeStamp(deps.clock), parts, await deps.repo.listTombstones(), (await deps.repo.getPreferences()) ?? undefined);
+  const data = toDataJson(
+    snapshot,
+    range,
+    makeStamp(deps.clock),
+    parts,
+    await deps.repo.listTombstones(),
+    (await deps.repo.getPreferences()) ?? undefined,
+  );
 
   if (options.csv) {
     for (const section of [data.records, data.settings]) {
       for (const [name, rows] of Object.entries(section ?? {})) {
-        if (Array.isArray(rows)) files[csvPath(name)] = strToU8(toCsv(name === 'meals' || name === 'drinks' ? (rows as Record<string, unknown>[]).map(flattenSource) : name === 'check_ins' ? (rows as Record<string, unknown>[]).map(flattenValues) : (rows as Record<string, never>[])));
+        if (Array.isArray(rows))
+          files[csvPath(name)] = strToU8(
+            toCsv(
+              name === 'meals' || name === 'drinks'
+                ? (rows as Record<string, unknown>[]).map(flattenSource)
+                : name === 'check_ins'
+                  ? (rows as Record<string, unknown>[]).map(flattenValues)
+                  : (rows as Record<string, never>[]),
+            ),
+          );
       }
     }
   }
@@ -102,9 +118,14 @@ export async function exportBundle(deps: Deps, options: ExportOptions = {}): Pro
     let summary: ReportSummary | undefined;
     if (options.summaryId) {
       // LL-14: changing the range or the language asks for a new summary, so a stale one is refused, not printed.
-      summary = (await deps.repo.listRecords('reportSummaries')).find((s) => s.id === options.summaryId);
+      summary = (await deps.repo.getRecord('reportSummaries', options.summaryId)) ?? undefined;
       const days = options.days;
-      if (!summary || summary.language !== options.report.language || (days?.from && days.from !== summary.dayFrom) || (days?.to && days.to !== summary.dayTo)) {
+      if (
+        !summary ||
+        summary.language !== options.report.language ||
+        (days?.from && days.from !== summary.dayFrom) ||
+        (days?.to && days.to !== summary.dayTo)
+      ) {
         throw new NettleError('summary_mismatch');
       }
     }

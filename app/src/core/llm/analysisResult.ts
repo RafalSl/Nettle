@@ -1,7 +1,6 @@
+import { isObj, type Obj } from '../model/json';
 import { HYPOTHESIS_STRENGTHS, type AnalysisResult, type Hypothesis } from '../model/types';
 
-type Obj = Record<string, unknown>;
-const isObj = (v: unknown): v is Obj => typeof v === 'object' && v !== null && !Array.isArray(v);
 const isStr = (v: unknown): v is string => typeof v === 'string';
 const strList = (v: unknown): string[] | null => (Array.isArray(v) && v.every(isStr) ? (v as string[]) : null);
 

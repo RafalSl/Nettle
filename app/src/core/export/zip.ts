@@ -154,7 +154,7 @@ export function writeZip(files: Record<string, Uint8Array>, opts: WriteOptions =
 
 function findAesExtra(extra: Uint8Array): { strength: number; method: number } | null {
   const dv = new DataView(extra.buffer, extra.byteOffset, extra.byteLength);
-  for (let o = 0; o + 4 <= extra.length; ) {
+  for (let o = 0; o + 4 <= extra.length;) {
     const id = dv.getUint16(o, true);
     const len = dv.getUint16(o + 2, true);
     if (id === 0x9901 && len >= 7 && o + 4 + len <= extra.length) {

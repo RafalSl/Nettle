@@ -13,6 +13,9 @@ import type { CheckIn, Meal, NailEntry, SkinEntry, StoolEntry } from '@/core/mod
 import type { StorageRepository } from '@/core/ports/storage';
 
 /** Clearly synthetic data only. */
+
+/** SK-3: five different scores, so a test can tell them apart. */
+export const syntheticScores = { severity: 1, itch: 2, pain: 3, dryness: 4, scaling: 5 };
 export const TZ = 'Europe/Warsaw';
 
 export function makeDeps(repo: StorageRepository, now = '2026-01-15T10:00:00.000Z', llm: LlmProvider = new FakeLlm()): Deps {
@@ -91,7 +94,13 @@ export const syntheticCheckIn = (id: string, utc: string, day: string, tags: str
   id,
   at: { utc, tz: TZ },
   day,
-  values: { 'item-wellbeing': 6, 'item-sleep': 4, 'item-abdominal-pain': 0, 'item-bloating': true, ...Object.fromEntries(tags.map((t) => [t, true])) },
+  values: {
+    'item-wellbeing': 6,
+    'item-sleep': 4,
+    'item-abdominal-pain': 0,
+    'item-bloating': true,
+    ...Object.fromEntries(tags.map((t) => [t, true])),
+  },
   note: 'synthetic note',
 });
 

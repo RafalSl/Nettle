@@ -59,7 +59,8 @@ export async function setAreaFlareThreshold(deps: Deps, areaId: string, threshol
   const area = (await deps.repo.listAreas()).find((a) => a.id === areaId);
   if (!area) throw new NettleError('unknown_area', areaId);
   if (area.kind !== 'skin') throw new NettleError('wrong_area_kind', areaId);
-  if (threshold !== null && (!Number.isInteger(threshold) || threshold < 1 || threshold > 10)) throw new NettleError('invalid_value', 'flareThreshold');
+  if (threshold !== null && (!Number.isInteger(threshold) || threshold < 1 || threshold > 10))
+    throw new NettleError('invalid_value', 'flareThreshold');
   return (
     await change(deps, (p) => {
       if (threshold === null) delete p.flareThresholdByArea[areaId];
@@ -158,9 +159,7 @@ export async function refreshFavoriteMeal(deps: Deps, meal: Meal): Promise<void>
   const key = normalizeText(meal.description);
   const prefs = await deps.repo.getPreferences();
   if (!prefs?.favorites.meals.some((m) => m.key === key)) return;
-  prefs.favorites.meals = prefs.favorites.meals.map((m) =>
-    m.key === key ? mealSnapshot(meal) : m,
-  );
+  prefs.favorites.meals = prefs.favorites.meals.map((m) => (m.key === key ? mealSnapshot(meal) : m));
   await deps.repo.setPreferences(prefs);
 }
 

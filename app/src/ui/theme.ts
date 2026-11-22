@@ -2,7 +2,13 @@
  * UX-12: every colour, type and shape value of the Aurora ring design, in one place (docs/design-system.md).
  * Screens and components import from here; no colour literals anywhere else.
  */
-import { Gabarito_400Regular, Gabarito_500Medium, Gabarito_600SemiBold, Gabarito_700Bold, Gabarito_800ExtraBold } from '@expo-google-fonts/gabarito';
+import {
+  Gabarito_400Regular,
+  Gabarito_500Medium,
+  Gabarito_600SemiBold,
+  Gabarito_700Bold,
+  Gabarito_800ExtraBold,
+} from '@expo-google-fonts/gabarito';
 
 export const color = {
   ground: '#070B12',

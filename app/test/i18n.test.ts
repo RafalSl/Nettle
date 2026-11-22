@@ -6,9 +6,7 @@ import { PREDEFINED_ITEMS } from '@/core/model/lists';
 import { ALLERGENS, CHANGE_ACTIONS, LIST_KINDS, RECORD_KINDS, NAIL_EXTENTS, NAIL_STAGES, SYMPTOMS } from '@/core/model/types';
 
 const keys = (o: object, prefix = ''): string[] =>
-  Object.entries(o).flatMap(([k, v]) =>
-    typeof v === 'object' && v !== null ? keys(v, `${prefix}${k}.`) : [`${prefix}${k}`],
-  );
+  Object.entries(o).flatMap(([k, v]) => (typeof v === 'object' && v !== null ? keys(v, `${prefix}${k}.`) : [`${prefix}${k}`]));
 
 describe('i18n (NF-6)', () => {
   it('English and Polish have exactly the same keys', () => {

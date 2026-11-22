@@ -1,6 +1,15 @@
 import { atOnDay, localDay } from '@/core/model/time';
 import { archiveListItem, addListItem } from '@/core/usecases/lists';
-import { dayLog, dayStatus, daysWithEntries, treatmentShortcuts, addMonths, monthOf, monthOverview, monthShape } from '@/core/usecases/dayLog';
+import {
+  dayLog,
+  dayStatus,
+  daysWithEntries,
+  treatmentShortcuts,
+  addMonths,
+  monthOf,
+  monthOverview,
+  monthShape,
+} from '@/core/usecases/dayLog';
 import { reportPhotos, reportPreview } from '@/core/usecases/backup';
 import { addPhoto } from '@/core/usecases/photos';
 import { saveCheckIn, logStool } from '@/core/usecases/checkin';
@@ -9,10 +18,9 @@ import { logMeal } from '@/core/usecases/logMeal';
 import { addArea, archiveSkinArea, logNailEntry, logSkinEntry } from '@/core/usecases/skin';
 import { areasWithEntries, areaTimeline, resolveJumpDay, trendPoints } from '@/core/usecases/timeline';
 import { MemoryRepo } from './fakes/memoryRepo';
-import { makeDeps } from './helpers/fixtures';
+import { makeDeps, syntheticScores as scores } from './helpers/fixtures';
 
 const d = (iso: string) => new Date(iso);
-const scores = { severity: 1, itch: 2, pain: 3, dryness: 4, scaling: 5 };
 
 describe('the day log (UX-2)', () => {
   it('UX-2 lists everything of one local day, oldest first, and nothing of the days around it', async () => {
@@ -62,7 +70,9 @@ describe('treatment shortcuts (IN-11)', () => {
   it('IN-11 shows at most three, most used first, and never an archived treatment or area', async () => {
     const { deps, cream, oil } = await setup();
     const use = (treatmentId: string, areaId: string, n: number) =>
-      Promise.all(Array.from({ length: n }, (_, i) => applyTreatment(deps, { treatmentId, areaIds: [areaId], at: d(`2026-01-1${i}T08:00:00.000Z`) })));
+      Promise.all(
+        Array.from({ length: n }, (_, i) => applyTreatment(deps, { treatmentId, areaIds: [areaId], at: d(`2026-01-1${i}T08:00:00.000Z`) })),
+      );
     await use(cream.id, 'area-chin', 2);
     await use(cream.id, 'area-neck', 4);
     await use(oil.id, 'area-chin', 3);

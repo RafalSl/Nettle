@@ -1,4 +1,14 @@
-import { ALLERGEN_PROMPT_VERSION, allergenPrompt, INGREDIENTS_PROMPT_VERSION, LABEL_PROMPT_VERSION, MAX_KNOWN_NAMES, NAME_PROMPT_VERSION, ingredientsPrompt, labelPrompt, namePrompt } from '../llm/prompts';
+import {
+  ALLERGEN_PROMPT_VERSION,
+  allergenPrompt,
+  INGREDIENTS_PROMPT_VERSION,
+  LABEL_PROMPT_VERSION,
+  MAX_KNOWN_NAMES,
+  NAME_PROMPT_VERSION,
+  ingredientsPrompt,
+  labelPrompt,
+  namePrompt,
+} from '../llm/prompts';
 import type { LlmProvenance } from '../model/source';
 import { parseAllergenSuggestion, parseIngredientEstimate, parseLabelScan, type IngredientEstimate, type LabelScan } from '../llm/parse';
 import { NettleError } from '../model/errors';
@@ -6,10 +16,12 @@ import { ALLERGENS, type Allergen } from '../model/types';
 import { LLM_ACTIONS, type LlmAction } from '../llm/actions';
 import type { Language, LlmImage, LlmProvider, ModelChoice } from '../ports/llm';
 import type { Deps } from './deps';
+import { readJsonSetting, SETTING_KEYS, writeJsonSetting } from './settingsStore';
+import { isObj } from '../model/json';
 
 /** SE-2: the API key lives only in the key store. */
 export const API_KEY_NAME = 'anthropic_api_key';
-const modelSetting = (action: LlmAction) => `llm_model.${action}`;
+const modelSetting = SETTING_KEYS.llmModel;
 /** LL-9: the default for every action. */
 export const DEFAULT_MODEL = 'claude-haiku-5-5';
 
@@ -65,7 +77,8 @@ export async function getGroupModel(deps: Deps, group: ModelGroup): Promise<stri
 
 /** LL-2: pick the model of a whole group (every action of it); null restores the default. */
 export async function setGroupModel(deps: Deps, group: ModelGroup, model: string | null): Promise<void> {
-  if (model !== null && model !== DEFAULT_MODEL && !deps.llmModels.some((m) => m.id === model)) throw new NettleError('invalid_value', 'model');
+  if (model !== null && model !== DEFAULT_MODEL && !deps.llmModels.some((m) => m.id === model))
+    throw new NettleError('invalid_value', 'model');
   for (const action of MODEL_GROUPS[group]) await setModel(deps, action, model);
 }
 
@@ -83,13 +96,22 @@ export async function currentProvider(deps: Deps, action: LlmAction): Promise<{ 
  */
 export async function estimateIngredients(
   deps: Deps,
-  input: { image: LlmImage; language: Language; signal?: AbortSignal; /** From `knownIngredientNames`; empty when the setting is off. */ knownNames?: readonly string[] },
+  input: {
+    image: LlmImage;
+    language: Language;
+    signal?: AbortSignal;
+    /** From `knownIngredientNames`; empty when the setting is off. */ knownNames?: readonly string[];
+  },
 ): Promise<IngredientEstimate & { provenance: LlmProvenance }> {
   const { provider } = await currentProvider(deps, 'meal_photo');
   const prompt = ingredientsPrompt(input.language, input.knownNames ?? []);
   const response = await provider.completeJson({ ...prompt, images: [input.image], ...(input.signal ? { signal: input.signal } : {}) });
   // IN-16: the model that answered, when, and which prompt asked.
-  const provenance: LlmProvenance = { model: response.model, at: deps.clock.now().toISOString(), promptVersion: INGREDIENTS_PROMPT_VERSION };
+  const provenance: LlmProvenance = {
+    model: response.model,
+    at: deps.clock.now().toISOString(),
+    promptVersion: INGREDIENTS_PROMPT_VERSION,
+  };
   return { ...parseIngredientEstimate(response.text), provenance };
 }
 
@@ -152,7 +174,10 @@ export async function knownIngredientNames(deps: Deps): Promise<string[]> {
  */
 export async function ingredientNameHistory(deps: Deps, limit = 500): Promise<string[]> {
   const counts = new Map<string, { name: string; n: number }>();
-  const lists = [...(await deps.repo.listMeals()).map((m) => m.ingredients), ...(await deps.repo.listRecords('drinks')).map((d) => d.ingredients)];
+  const lists = [
+    ...(await deps.repo.listRecords('meals')).map((m) => m.ingredients),
+    ...(await deps.repo.listRecords('drinks')).map((d) => d.ingredients),
+  ];
   for (const list of lists) {
     for (const raw of list) {
       const name = raw.trim();
@@ -163,12 +188,15 @@ export async function ingredientNameHistory(deps: Deps, limit = 500): Promise<st
       else counts.set(key, { name, n: 1 });
     }
   }
-  return [...counts.values()].sort((a, b) => b.n - a.n || a.name.localeCompare(b.name)).slice(0, limit).map((c) => c.name);
+  return [...counts.values()]
+    .sort((a, b) => b.n - a.n || a.name.localeCompare(b.name))
+    .slice(0, limit)
+    .map((c) => c.name);
 }
 
 /** Most ingredient names one allergen request sends. */
 export const MAX_ALLERGEN_INGREDIENTS = 80;
-const ALLERGEN_CACHE = 'allergen_cache';
+const ALLERGEN_CACHE = SETTING_KEYS.allergenCache;
 const MAX_CACHED_NAMES = 3000;
 
 const nameKey = (name: string) => name.trim().toLowerCase().replace(/\s+/g, ' ');
@@ -176,15 +204,13 @@ const nameKey = (name: string) => name.trim().toLowerCase().replace(/\s+/g, ' ')
 type CacheFile = { version: string; names: Record<string, Allergen[]> };
 
 async function readAllergenCache(deps: Deps): Promise<CacheFile> {
-  const empty: CacheFile = { version: ALLERGEN_PROMPT_VERSION, names: {} };
-  try {
-    const raw = await deps.settings.get(ALLERGEN_CACHE);
-    const parsed = raw ? (JSON.parse(raw) as CacheFile) : empty;
-    // A different prompt version means different answers: the old ones are not reused.
-    return parsed.version === ALLERGEN_PROMPT_VERSION && typeof parsed.names === 'object' && parsed.names !== null ? parsed : empty;
-  } catch {
-    return empty;
-  }
+  // A different prompt version means different answers: the old ones are not reused.
+  return readJsonSetting(
+    deps,
+    ALLERGEN_CACHE,
+    (raw) => (isObj(raw) && raw.version === ALLERGEN_PROMPT_VERSION && isObj(raw.names) ? (raw as CacheFile) : null),
+    () => ({ version: ALLERGEN_PROMPT_VERSION, names: {} }),
+  );
 }
 
 /** IN-10: forgets every saved allergen suggestion (Delete data, AI). */
@@ -204,7 +230,14 @@ export interface AllergenPlan {
  * this phone (not exported), so a name asked before is never sent again. Nothing is sent here.
  */
 export async function planAllergenSuggestion(deps: Deps, ingredients: readonly string[]): Promise<AllergenPlan> {
-  const names = [...new Map(ingredients.map((i) => i.trim()).filter(Boolean).map((n) => [nameKey(n), n])).values()].slice(0, MAX_ALLERGEN_INGREDIENTS);
+  const names = [
+    ...new Map(
+      ingredients
+        .map((i) => i.trim())
+        .filter(Boolean)
+        .map((n) => [nameKey(n), n]),
+    ).values(),
+  ].slice(0, MAX_ALLERGEN_INGREDIENTS);
   if (names.length === 0) throw new NettleError('no_ingredients');
   const cache = await readAllergenCache(deps);
   const known = new Set<Allergen>();
@@ -243,7 +276,7 @@ export async function suggestAllergensWithAi(
   }
   const keys = Object.keys(cache.names);
   for (const k of keys.slice(0, Math.max(0, keys.length - MAX_CACHED_NAMES))) delete cache.names[k]; // oldest first
-  await deps.settings.set(ALLERGEN_CACHE, JSON.stringify(cache));
+  await writeJsonSetting(deps, ALLERGEN_CACHE, cache);
   return { allergens: [...all], note: parsed.note, asked: plan.toSend.length };
 }
 

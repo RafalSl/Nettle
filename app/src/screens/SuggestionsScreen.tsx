@@ -1,12 +1,12 @@
-import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
-import { Alert } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import type { Drink, Meal } from '@/core/model/types';
 import { listSuggestions, type Suggestion } from '@/core/usecases/aiPack';
-import { errorMessage, t } from '@/i18n';
+import { t } from '@/i18n';
 import { useServices } from '@/services';
 import { NavRow } from '@/ui/NavRow';
 import { Hint, Screen } from '@/ui/components';
+import { useFocusLoad } from '@/ui/useFocusLoad';
 
 type Row = Suggestion & { entry: Meal | Drink };
 const text = (s: Row) => ('description' in s.entry ? s.entry.description : s.entry.name);
@@ -19,11 +19,7 @@ export default function SuggestionsScreen() {
   const { deps } = useServices();
   const router = useRouter();
   const [rows, setRows] = useState<Row[] | null>(null);
-  useFocusEffect(
-    useCallback(() => {
-      listSuggestions(deps).then(setRows, (e) => Alert.alert(errorMessage(e)));
-    }, [deps]),
-  );
+  useFocusLoad(() => listSuggestions(deps), [deps], setRows);
   return (
     <Screen>
       <Hint>{t('aiSuggestions.intro')}</Hint>
@@ -33,7 +29,12 @@ export default function SuggestionsScreen() {
           key={s.id}
           title={text(s)}
           subtitle={t('aiSuggestions.row', { n: s.ingredients.length, model: s.model })}
-          onPress={() => router.push({ pathname: '/form/edit', params: { kind: s.kind === 'meal' ? 'meals' : 'drinks', id: s.entryId, suggestion: s.id } })}
+          onPress={() =>
+            router.push({
+              pathname: '/form/edit',
+              params: { kind: s.kind === 'meal' ? 'meals' : 'drinks', id: s.entryId, suggestion: s.id },
+            })
+          }
         />
       ))}
     </Screen>

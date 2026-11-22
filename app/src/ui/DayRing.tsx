@@ -15,7 +15,10 @@ const R_CARE = 74;
 const DOT_BOX = 28; // the visible dot is smaller; the box is the touch target (hit slop makes it 44)
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 const circumference = (r: number) => 2 * Math.PI * r;
-const point = (position: number, r: number) => ({ x: C + r * Math.cos(-Math.PI / 2 + 2 * Math.PI * position), y: C + r * Math.sin(-Math.PI / 2 + 2 * Math.PI * position) });
+const point = (position: number, r: number) => ({
+  x: C + r * Math.cos(-Math.PI / 2 + 2 * Math.PI * position),
+  y: C + r * Math.sin(-Math.PI / 2 + 2 * Math.PI * position),
+});
 
 /**
  * UX-2, UX-12: the day ring. A 256 pt glass dial: the outer track holds intake (filled dots), the inner one body and
@@ -82,8 +85,29 @@ export function DayRing({
             <Circle cx={C} cy={C} r={R_CARE} stroke={color.glassLine} strokeWidth={1.5} fill="none" />
             {arc !== null && (
               <G rotation={-90} originX={C} originY={C}>
-                <AnimatedCircle cx={C} cy={C} r={R_INTAKE} stroke={color.accent} strokeOpacity={0.25} strokeWidth={9} strokeLinecap="round" fill="none" strokeDasharray={cInt} strokeDashoffset={dashOffset} />
-                <AnimatedCircle cx={C} cy={C} r={R_INTAKE} stroke={color.accent} strokeWidth={3} strokeLinecap="round" fill="none" strokeDasharray={cInt} strokeDashoffset={dashOffset} />
+                <AnimatedCircle
+                  cx={C}
+                  cy={C}
+                  r={R_INTAKE}
+                  stroke={color.accent}
+                  strokeOpacity={0.25}
+                  strokeWidth={9}
+                  strokeLinecap="round"
+                  fill="none"
+                  strokeDasharray={cInt}
+                  strokeDashoffset={dashOffset}
+                />
+                <AnimatedCircle
+                  cx={C}
+                  cy={C}
+                  r={R_INTAKE}
+                  stroke={color.accent}
+                  strokeWidth={3}
+                  strokeLinecap="round"
+                  fill="none"
+                  strokeDasharray={cInt}
+                  strokeDashoffset={dashOffset}
+                />
               </G>
             )}
             {labels.map((l, i) => {
@@ -95,9 +119,20 @@ export function DayRing({
               );
             })}
           </Svg>
-          <View pointerEvents="box-none" style={{ position: 'absolute', left: 0, top: 0, width: SIZE, height: SIZE, alignItems: 'center', justifyContent: 'center' }}>
-            <Pressable accessibilityRole="button" accessibilityLabel={t('day.jump')} onPress={onPickDate} hitSlop={8} style={{ alignItems: 'center' }}>
-              <Text style={{ fontSize: 12.5, fontWeight: '600', letterSpacing: 1.8, color: color.accent, textTransform: 'uppercase' }}>{weekday}</Text>
+          <View
+            pointerEvents="box-none"
+            style={{ position: 'absolute', left: 0, top: 0, width: SIZE, height: SIZE, alignItems: 'center', justifyContent: 'center' }}
+          >
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('day.jump')}
+              onPress={onPickDate}
+              hitSlop={8}
+              style={{ alignItems: 'center' }}
+            >
+              <Text style={{ fontSize: 12.5, fontWeight: '600', letterSpacing: 1.8, color: color.accent, textTransform: 'uppercase' }}>
+                {weekday}
+              </Text>
               <Text style={{ fontSize: 38, fontWeight: '800', letterSpacing: -1.2 }}>{date}</Text>
               <Text style={{ fontSize: 13, color: color.muted }}>{t('day.entries', { n: count })}</Text>
             </Pressable>
@@ -113,7 +148,16 @@ export function DayRing({
                 accessibilityLabel={t('day.dot', { n: d.ids.length })}
                 onPress={() => onDot(d)}
                 hitSlop={8}
-                style={{ position: 'absolute', left: p.x - DOT_BOX / 2, top: p.y - DOT_BOX / 2, width: DOT_BOX, height: DOT_BOX, alignItems: 'center', justifyContent: 'center' }}>
+                style={{
+                  position: 'absolute',
+                  left: p.x - DOT_BOX / 2,
+                  top: p.y - DOT_BOX / 2,
+                  width: DOT_BOX,
+                  height: DOT_BOX,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
                 <View
                   style={{
                     width: size,
@@ -124,18 +168,54 @@ export function DayRing({
                     backgroundColor: d.track === 'intake' ? color.accent : color.ground,
                     borderWidth: d.track === 'intake' ? 0 : 2,
                     borderColor: color.accent,
-                  }}>
-                  {merged ? <Text style={{ fontSize: 11, fontWeight: '700', color: d.track === 'intake' ? color.onAccent : color.accent }}>{d.ids.length}</Text> : null}
+                  }}
+                >
+                  {merged ? (
+                    <Text style={{ fontSize: 11, fontWeight: '700', color: d.track === 'intake' ? color.onAccent : color.accent }}>
+                      {d.ids.length}
+                    </Text>
+                  ) : null}
                 </View>
               </Pressable>
             );
           })}
         </GlassSurface>
       </View>
-      <Pressable accessibilityRole="button" accessibilityLabel={t('day.previous')} onPress={onPrevious} hitSlop={12} style={{ position: 'absolute', left: -6, top: C - 22, width: 44, height: 44, alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t('day.previous')}
+        onPress={onPrevious}
+        hitSlop={12}
+        style={{
+          position: 'absolute',
+          left: -6,
+          top: C - 22,
+          width: 44,
+          height: 44,
+          alignItems: 'center',
+          justifyContent: 'center',
+          opacity: 0.5,
+        }}
+      >
         <Icon name="back" size={22} wash={false} />
       </Pressable>
-      <Pressable accessibilityRole="button" accessibilityLabel={t('day.next')} accessibilityState={{ disabled: !canGoNext }} onPress={canGoNext ? onNext : undefined} hitSlop={12} style={{ position: 'absolute', right: -6, top: C - 22, width: 44, height: 44, alignItems: 'center', justifyContent: 'center', opacity: canGoNext ? 0.5 : 0.15 }}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t('day.next')}
+        accessibilityState={{ disabled: !canGoNext }}
+        onPress={canGoNext ? onNext : undefined}
+        hitSlop={12}
+        style={{
+          position: 'absolute',
+          right: -6,
+          top: C - 22,
+          width: 44,
+          height: 44,
+          alignItems: 'center',
+          justifyContent: 'center',
+          opacity: canGoNext ? 0.5 : 0.15,
+        }}
+      >
         <Icon name="chev" size={22} wash={false} />
       </Pressable>
     </View>

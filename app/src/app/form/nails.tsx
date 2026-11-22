@@ -1,2 +1,1 @@
-import { NailForm } from '@/screens/formPages';
-export default NailForm;
+export { default } from '@/forms/nails/NailForm';

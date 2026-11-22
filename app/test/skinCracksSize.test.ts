@@ -15,23 +15,22 @@ import { strFromU8, unzipSync } from 'fflate';
 import { MemoryRepo } from './fakes/memoryRepo';
 import { createNodeSqliteDb } from './helpers/nodeSqliteDb';
 import { makeDeps } from './helpers/fixtures';
+import { errorCode } from './helpers/errors';
 
 const scores = { severity: 4, itch: 3, pain: 2, dryness: 5, scaling: 1 };
 const at = (iso: string) => new Date(iso);
-const code = async (p: Promise<unknown>) =>
-  p.then(
-    () => 'no error',
-    (e: unknown) => (e instanceof NettleError ? e.code : 'other'),
-  );
 
 describe('cracks and size on a skin entry (SK-3)', () => {
   it('SK-3 an entry has no cracks and no size unless it says so, and a size is whole millimetres from 1 to 500', async () => {
     const deps = makeDeps(new MemoryRepo());
     expect(await logSkinEntry(deps, { areaId: 'area-chin', scores })).toMatchObject({ cracks: false, sizeMm: null });
-    expect(await logSkinEntry(deps, { areaId: 'area-chin', scores, cracks: true, sizeMm: 500 })).toMatchObject({ cracks: true, sizeMm: 500 });
+    expect(await logSkinEntry(deps, { areaId: 'area-chin', scores, cracks: true, sizeMm: 500 })).toMatchObject({
+      cracks: true,
+      sizeMm: 500,
+    });
     expect(await logSkinEntry(deps, { areaId: 'area-chin', scores, sizeMm: null })).toMatchObject({ sizeMm: null });
     for (const bad of [0, -3, 501, 12.5, Number.NaN, '12' as never]) {
-      expect(await code(logSkinEntry(deps, { areaId: 'area-chin', scores, sizeMm: bad }))).toBe('invalid_size');
+      expect(await errorCode(logSkinEntry(deps, { areaId: 'area-chin', scores, sizeMm: bad }))).toBe('invalid_size');
     }
   });
 
@@ -54,8 +53,8 @@ describe('cracks and size on a skin entry (SK-3)', () => {
     const e = await logSkinEntry(deps, { areaId: 'area-chin', scores, cracks: true, sizeMm: 10 });
     const edited = await editSkinEntry(deps, e.id, { areaId: 'area-chin', scores, cracks: false, sizeMm: null });
     expect(edited).toMatchObject({ id: e.id, cracks: false, sizeMm: null });
-    expect(await code(editSkinEntry(deps, e.id, { areaId: 'area-chin', scores, sizeMm: 0 }))).toBe('invalid_size');
-    expect((await deps.repo.listSkinEntries())[0]).toMatchObject({ cracks: false, sizeMm: null });
+    expect(await errorCode(editSkinEntry(deps, e.id, { areaId: 'area-chin', scores, sizeMm: 0 }))).toBe('invalid_size');
+    expect((await deps.repo.listRecords('skinEntries'))[0]).toMatchObject({ cracks: false, sizeMm: null });
   });
 
   it('SK-3 SQLite enforces the flag and the size range in the database, and an old entry gets the defaults', async () => {
@@ -66,15 +65,22 @@ describe('cracks and size on a skin entry (SK-3)', () => {
       await db.exec(sql);
       await db.exec(`PRAGMA user_version = ${i + 1}`);
     }
-    await db.run(`INSERT INTO skin_entry (id, ts_utc, tz, area_id, severity, itch, pain, dryness, scaling) VALUES ('old', '2026-01-01T00:00:00.000Z', 'UTC', 'area-x', 1, 1, 1, 1, 1)`).catch(() => undefined);
+    await db
+      .run(
+        `INSERT INTO skin_entry (id, ts_utc, tz, area_id, severity, itch, pain, dryness, scaling) VALUES ('old', '2026-01-01T00:00:00.000Z', 'UTC', 'area-x', 1, 1, 1, 1, 1)`,
+      )
+      .catch(() => undefined);
     const repo = await SqliteRepo.open(db);
     const insert = (id: string, cracks: number, size: number | null) =>
-      db.run(`INSERT INTO skin_entry (id, ts_utc, tz, area_id, severity, itch, pain, dryness, scaling, cracks, size_mm) VALUES (?, '2026-01-02T00:00:00.000Z', 'UTC', 'area-chin', 1, 1, 1, 1, 1, ?, ?)`, [id, cracks, size]);
+      db.run(
+        `INSERT INTO skin_entry (id, ts_utc, tz, area_id, severity, itch, pain, dryness, scaling, cracks, size_mm) VALUES (?, '2026-01-02T00:00:00.000Z', 'UTC', 'area-chin', 1, 1, 1, 1, 1, ?, ?)`,
+        [id, cracks, size],
+      );
     await expect(insert('a', 2, null)).rejects.toThrow();
     await expect(insert('b', 0, 0)).rejects.toThrow();
     await expect(insert('c', 0, 501)).rejects.toThrow();
     await insert('d', 1, 500);
-    expect((await repo.listSkinEntries()).find((e) => e.id === 'd')).toMatchObject({ cracks: true, sizeMm: 500 });
+    expect((await repo.listRecords('skinEntries')).find((e) => e.id === 'd')).toMatchObject({ cracks: true, sizeMm: 500 });
   });
 
   it('SK-3, EX-1 data.json carries cracks and size_mm, and an import refuses a missing flag or a size out of range', async () => {
@@ -83,10 +89,23 @@ describe('cracks and size on a skin entry (SK-3)', () => {
     await logSkinEntry(deps, { areaId: 'area-chin', scores, at: at('2026-01-11T08:00:00.000Z') });
     const json = JSON.parse(strFromU8(unzipSync(await exportBundle(deps, { parts: { records: true, settings: true } }))['data.json']!));
     const pairs = (rows: { cracks: boolean; size_mm: number | null }[]) => rows.map((e) => [e.cracks, e.size_mm]).sort();
-    expect(pairs(json.records.skin_entries)).toEqual([[false, null], [true, 12]]);
-    expect(parseDataJson(json).records?.skinEntries.map((e) => [e.cracks, e.sizeMm]).sort()).toEqual([[false, null], [true, 12]]);
-    const withEntry = (patch: object) => ({ ...json, records: { ...json.records, skin_entries: [{ ...json.records.skin_entries[0], ...patch }] } }); // an undefined field counts as missing
-    const code = (raw: unknown) => {
+    expect(pairs(json.records.skin_entries)).toEqual([
+      [false, null],
+      [true, 12],
+    ]);
+    expect(
+      parseDataJson(json)
+        .records?.skinEntries.map((e) => [e.cracks, e.sizeMm])
+        .sort(),
+    ).toEqual([
+      [false, null],
+      [true, 12],
+    ]);
+    const withEntry = (patch: object) => ({
+      ...json,
+      records: { ...json.records, skin_entries: [{ ...json.records.skin_entries[0], ...patch }] },
+    }); // an undefined field counts as missing
+    const parseCode = (raw: unknown) => {
       try {
         parseDataJson(raw);
         return 'no error';
@@ -94,9 +113,17 @@ describe('cracks and size on a skin entry (SK-3)', () => {
         return e instanceof NettleError ? e.code : 'other';
       }
     };
-    expect(code(withEntry({}))).toBe('no error');
-    for (const patch of [{ cracks: undefined }, { cracks: 'yes' }, { size_mm: undefined }, { size_mm: 0 }, { size_mm: 501 }, { size_mm: 2.5 }, { size_mm: '12' }]) {
-      expect(code(withEntry(patch))).toBe('import_invalid_data');
+    expect(parseCode(withEntry({}))).toBe('no error');
+    for (const patch of [
+      { cracks: undefined },
+      { cracks: 'yes' },
+      { size_mm: undefined },
+      { size_mm: 0 },
+      { size_mm: 501 },
+      { size_mm: 2.5 },
+      { size_mm: '12' },
+    ]) {
+      expect(parseCode(withEntry(patch))).toBe('import_invalid_data');
     }
   });
 
@@ -117,7 +144,7 @@ describe('cracks and size on a skin entry (SK-3)', () => {
     expect(p.system).toMatch(/not a size of zero/);
   });
 
-  it('SK-8 the timeline charts the size where one is logged, using the day\'s largest', async () => {
+  it("SK-8 the timeline charts the size where one is logged, using the day's largest", async () => {
     const deps = makeDeps(new MemoryRepo());
     await logSkinEntry(deps, { areaId: 'area-chin', scores, sizeMm: 10, at: at('2026-01-10T08:00:00.000Z') });
     await logSkinEntry(deps, { areaId: 'area-chin', scores, sizeMm: 16, at: at('2026-01-10T18:00:00.000Z') });
@@ -140,15 +167,46 @@ describe('cracks and size on a skin entry (SK-3)', () => {
 });
 
 describe('cracks and size in the doctor report (EX-3, SK-3)', () => {
-  const entry = (id: string, day: string, over: object = {}) => ({ id, at: { utc: `${day}T08:00:00.000Z`, tz: 'Europe/Warsaw' }, areaId: 'area-chin', scores, cracks: false, sizeMm: null, note: null, ...over });
+  const entry = (id: string, day: string, over: object = {}) => ({
+    id,
+    at: { utc: `${day}T08:00:00.000Z`, tz: 'Europe/Warsaw' },
+    areaId: 'area-chin',
+    scores,
+    cracks: false,
+    sizeMm: null,
+    note: null,
+    ...over,
+  });
   const html = (skinEntries: object[]) =>
     buildReportHtml({
       language: 'en',
       text: (key: string) => `[${key}]`,
       areaName: (a: { name: string }) => a.name,
       itemName: (i: { name: string }) => i.name,
-      records: { ...Object.fromEntries(['meals', 'nailEntries', 'checkIns', 'stoolEntries', 'treatmentApplications', 'changeEvents', 'medicalEvents', 'reactions', 'drinks', 'medicationEntries', 'photos', 'analyses', 'reportSummaries', 'tombstones'].map((k) => [k, []])), skinEntries },
-      skinAreas: [{ id: 'area-chin', kind: 'skin', name: 'Chin', predefined: true, archived: false, sensitiveDefault: false, nameOverride: null }],
+      records: {
+        ...Object.fromEntries(
+          [
+            'meals',
+            'nailEntries',
+            'checkIns',
+            'stoolEntries',
+            'treatmentApplications',
+            'changeEvents',
+            'medicalEvents',
+            'reactions',
+            'drinks',
+            'medicationEntries',
+            'photos',
+            'analyses',
+            'reportSummaries',
+            'tombstones',
+          ].map((k) => [k, []]),
+        ),
+        skinEntries,
+      },
+      skinAreas: [
+        { id: 'area-chin', kind: 'skin', name: 'Chin', predefined: true, archived: false, sensitiveDefault: false, nameOverride: null },
+      ],
       dailyItems: [],
       changeCategories: [],
       treatments: [],

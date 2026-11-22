@@ -30,11 +30,13 @@ export interface HistoryProduct {
 /** IN-2: the latest meal or drink made from this barcode, or null. */
 export async function findInHistory(deps: Deps, barcode: string): Promise<HistoryProduct | null> {
   const hits: (HistoryProduct & { kind: 'meal' | 'drink' })[] = [];
-  for (const m of await deps.repo.listMeals()) {
-    if (m.barcode === barcode) hits.push({ kind: 'meal', name: m.description, ingredients: m.ingredients, allergens: m.allergens, source: m.source, at: m.at.utc });
+  for (const m of await deps.repo.listRecords('meals')) {
+    if (m.barcode === barcode)
+      hits.push({ kind: 'meal', name: m.description, ingredients: m.ingredients, allergens: m.allergens, source: m.source, at: m.at.utc });
   }
   for (const d of await deps.repo.listRecords('drinks')) {
-    if (d.barcode === barcode) hits.push({ kind: 'drink', name: d.name, ingredients: d.ingredients, allergens: d.allergens, source: d.source, at: d.at.utc });
+    if (d.barcode === barcode)
+      hits.push({ kind: 'drink', name: d.name, ingredients: d.ingredients, allergens: d.allergens, source: d.source, at: d.at.utc });
   }
   hits.sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0));
   const top = hits[0];

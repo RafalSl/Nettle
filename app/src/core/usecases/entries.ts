@@ -17,141 +17,102 @@ import type {
   ChangeEvent,
   MedicalEvent,
 } from '../model/types';
-import type { StorageRepository } from '../ports/storage';
 import { cleanValues, logStool, type CheckInInput } from './checkin';
 import type { Deps } from './deps';
-import { applyTreatment, logChangeEvent, logMedicalEvent, logReaction, type ApplyTreatmentInput, type ChangeEventInput, type MedicalEventInput, type ReactionInput } from './events';
+import type { EntryWrite } from './write';
+import {
+  applyTreatment,
+  logChangeEvent,
+  logMedicalEvent,
+  logReaction,
+  type ApplyTreatmentInput,
+  type ChangeEventInput,
+  type MedicalEventInput,
+  type ReactionInput,
+} from './events';
 import { afterEdit, sameIngredients } from '../model/source';
 import { logDrink, logMedication, type LogDrinkInput } from './intake';
 import { logMeal, type LogMealInput } from './logMeal';
 import { logNailEntry, logSkinEntry, type LogNailEntryInput, type LogSkinEntryInput } from './skin';
 
 /** The record of a kind with this id, or a NettleError('unknown_entry'). */
-export async function getEntry(deps: Deps, kind: RecordKind, id: string): Promise<Records[RecordKind][number]> {
-  const all =
-    kind === 'meals'
-      ? await deps.repo.listMeals()
-      : kind === 'skinEntries'
-        ? await deps.repo.listSkinEntries()
-        : await deps.repo.listRecords(kind);
-  const found = (all as { id: string }[]).find((r) => r.id === id);
+export async function getEntry<K extends RecordKind>(deps: Deps, kind: K, id: string): Promise<Records[K][number]> {
+  const found = await deps.repo.getRecord(kind, id);
   if (!found) throw new NettleError('unknown_entry', `${kind}/${id}`);
-  return found as Records[RecordKind][number];
+  return found;
 }
 
-/**
- * EN-1: dependencies for editing one record with the validation of the matching `log*` use case. The id is
- * kept, the "add" calls become "replace", an unchanged time keeps its stamp (and so its timezone) and areas
- * or items the entry already uses stay allowed after they were archived (archived, not deleted).
- */
 const cleanList = (l: readonly string[]) => l.map((i) => i.trim()).filter(Boolean);
 
-function editing(deps: Deps, id: string, keep: { at?: Stamp; used?: string[] }): Deps {
-  const used = new Set(keep.used ?? []);
-  const withStamp = <T extends { at: Stamp }>(r: T): T => (keep.at ? { ...r, at: keep.at } : r);
-  const repo = new Proxy(deps.repo, {
-    get(target, prop) {
-      switch (prop) {
-        case 'addMeal':
-          return (m: Meal) => target.putMeal(withStamp(m));
-        case 'addSkinEntry':
-          return (e: SkinEntry) => target.putSkinEntry(withStamp(e));
-        case 'addRecord':
-          return (k: Parameters<StorageRepository['putRecord']>[0], r: never) =>
-            target.putRecord(k, withStamp(r as { at: Stamp }) as never);
-        case 'listAreas':
-          return async () => (await target.listAreas()).map((a) => (used.has(a.id) ? { ...a, archived: false } : a));
-        case 'listItems':
-          return async (k: Parameters<StorageRepository['listItems']>[0]) =>
-            (await target.listItems(k)).map((i) => (used.has(i.id) ? { ...i, archived: false } : i));
-        default: {
-          const v = Reflect.get(target, prop);
-          return typeof v === 'function' ? v.bind(target) : v;
-        }
-      }
-    },
-  });
-  return { ...deps, repo, ids: () => id };
-}
-
-/** Keeps the original stamp when the edit gives no new time. */
-const keepAt = (orig: { at: Stamp }, at?: Date) => (at ? undefined : orig.at);
+/**
+ * EN-1: how an edit writes through the matching `log*` use case, so it keeps that use case's rules: the id stays,
+ * the record is replaced, an unchanged time keeps its stamp (and so its time zone), and the areas or items the
+ * entry already uses stay allowed after they were archived (archived, not deleted).
+ */
+const editOf = (orig: { id: string; at: Stamp }, at: Date | undefined, used: string[] = []): EntryWrite => ({
+  id: orig.id,
+  ...(at ? {} : { keepAt: orig.at }),
+  allowArchived: new Set(used),
+});
 
 /** EN-1: edit a meal. Its time cannot move after one of its reactions. */
 export async function editMeal(deps: Deps, id: string, input: LogMealInput): Promise<Meal> {
-  const orig = (await getEntry(deps, 'meals', id)) as Meal;
+  const orig = await getEntry(deps, 'meals', id);
   const at = input.at ? makeStamp(deps.clock, input.at) : orig.at;
   for (const r of await deps.repo.listRecords('reactions')) {
     if (r.mealId === id && r.at.utc < at.utc) throw new NettleError('meal_after_reaction', id);
   }
   const changed = !sameIngredients(orig, { ingredients: cleanList(input.ingredients), allergens: input.allergens ?? [] });
-  return logMeal(editing(deps, id, { at: keepAt(orig, input.at) }), { ...input, barcode: orig.barcode, source: afterEdit(orig.source, changed) });
+  return logMeal(deps, { ...input, barcode: orig.barcode, source: afterEdit(orig.source, changed) }, editOf(orig, input.at));
 }
 
 export async function editSkinEntry(deps: Deps, id: string, input: LogSkinEntryInput): Promise<SkinEntry> {
-  const orig = (await getEntry(deps, 'skinEntries', id)) as SkinEntry;
-  return logSkinEntry(editing(deps, id, { at: keepAt(orig, input.at), used: [orig.areaId] }), input);
+  const orig = await getEntry(deps, 'skinEntries', id);
+  return logSkinEntry(deps, input, editOf(orig, input.at, [orig.areaId]));
 }
 
 export async function editNailEntry(deps: Deps, id: string, input: LogNailEntryInput): Promise<NailEntry> {
-  const orig = (await getEntry(deps, 'nailEntries', id)) as NailEntry;
-  return logNailEntry(editing(deps, id, { at: keepAt(orig, input.at), used: [orig.areaId] }), input);
+  const orig = await getEntry(deps, 'nailEntries', id);
+  return logNailEntry(deps, input, editOf(orig, input.at, [orig.areaId]));
 }
 
 export async function editStool(deps: Deps, id: string, input: { bristol: number; at?: Date; note?: string }): Promise<StoolEntry> {
-  const orig = (await getEntry(deps, 'stoolEntries', id)) as StoolEntry;
-  return logStool(editing(deps, id, { at: keepAt(orig, input.at) }), input);
+  const orig = await getEntry(deps, 'stoolEntries', id);
+  return logStool(deps, input, editOf(orig, input.at));
 }
 
-export async function editDrink(
-  deps: Deps,
-  id: string,
-  input: LogDrinkInput,
-): Promise<Drink> {
-  const orig = (await getEntry(deps, 'drinks', id)) as Drink;
+export async function editDrink(deps: Deps, id: string, input: LogDrinkInput): Promise<Drink> {
+  const orig = await getEntry(deps, 'drinks', id);
   const changed = !sameIngredients(orig, { ingredients: cleanList(input.ingredients ?? []), allergens: input.allergens ?? [] });
-  return logDrink(editing(deps, id, { at: keepAt(orig, input.at) }), { ...input, barcode: orig.barcode, source: afterEdit(orig.source, changed) });
+  return logDrink(deps, { ...input, barcode: orig.barcode, source: afterEdit(orig.source, changed) }, editOf(orig, input.at));
 }
 
-export async function editMedication(
-  deps: Deps,
-  id: string,
-  input: Parameters<typeof logMedication>[1],
-): Promise<MedicationEntry> {
-  const orig = (await getEntry(deps, 'medicationEntries', id)) as MedicationEntry;
-  return logMedication(editing(deps, id, { at: keepAt(orig, input.at) }), input);
+export async function editMedication(deps: Deps, id: string, input: Parameters<typeof logMedication>[1]): Promise<MedicationEntry> {
+  const orig = await getEntry(deps, 'medicationEntries', id);
+  return logMedication(deps, input, editOf(orig, input.at));
 }
 
-export async function editTreatmentApplication(
-  deps: Deps,
-  id: string,
-  input: ApplyTreatmentInput,
-): Promise<TreatmentApplication> {
-  const orig = (await getEntry(deps, 'treatmentApplications', id)) as TreatmentApplication;
-  return applyTreatment(
-    editing(deps, id, { at: keepAt(orig, input.at), used: [orig.treatmentId, ...orig.areaIds] }),
-    input,
-  );
+export async function editTreatmentApplication(deps: Deps, id: string, input: ApplyTreatmentInput): Promise<TreatmentApplication> {
+  const orig = await getEntry(deps, 'treatmentApplications', id);
+  return applyTreatment(deps, input, editOf(orig, input.at, [orig.treatmentId, ...orig.areaIds]));
 }
 
 export async function editMedicalEvent(deps: Deps, id: string, input: MedicalEventInput): Promise<MedicalEvent> {
-  const orig = (await getEntry(deps, 'medicalEvents', id)) as MedicalEvent;
-  const edit = editing(deps, id, { at: keepAt(orig, input.at) });
-  // The end date is checked against the day the event is on. An unchanged date keeps its own stamp, so validate with it too.
-  const same = input.at === undefined ? { clock: { now: () => new Date(orig.at.utc), timeZone: () => orig.at.tz } } : {};
-  return logMedicalEvent({ ...edit, ...same }, input);
+  const orig = await getEntry(deps, 'medicalEvents', id);
+  // The end date is checked against the day of the kept stamp when the date did not change.
+  return logMedicalEvent(deps, input, editOf(orig, input.at));
 }
 
 export async function editChangeEvent(deps: Deps, id: string, input: ChangeEventInput): Promise<ChangeEvent> {
-  const orig = (await getEntry(deps, 'changeEvents', id)) as ChangeEvent;
-  return logChangeEvent(editing(deps, id, { at: keepAt(orig, input.at) }), input);
+  const orig = await getEntry(deps, 'changeEvents', id);
+  return logChangeEvent(deps, input, editOf(orig, input.at));
 }
 
 /** EN-1: edit a reaction; it still cannot start before its meal (a different meal may be chosen). */
 export async function editReaction(deps: Deps, id: string, input: ReactionInput): Promise<Reaction> {
-  const orig = (await getEntry(deps, 'reactions', id)) as Reaction;
-  // Validate against the original onset when no new time is given, not against "now"; the stamp is kept as is.
-  return logReaction(editing(deps, id, { at: keepAt(orig, input.at) }), { ...input, at: input.at ?? new Date(orig.at.utc) });
+  const orig = await getEntry(deps, 'reactions', id);
+  // Without a new time the kept onset is what is checked against the meal, not "now".
+  return logReaction(deps, input, editOf(orig, input.at));
 }
 
 /**
@@ -159,7 +120,7 @@ export async function editReaction(deps: Deps, id: string, input: ReactionInput)
  * another record is refused: a day has one record.
  */
 export async function editCheckIn(deps: Deps, id: string, input: CheckInInput): Promise<CheckIn> {
-  const orig = (await getEntry(deps, 'checkIns', id)) as CheckIn;
+  const orig = await getEntry(deps, 'checkIns', id);
   const values = await cleanValues(deps, input, orig);
   const at = input.at ? makeStamp(deps.clock, input.at) : orig.at;
   const day = localDay(at.utc, at.tz, deps.dayStart.get());

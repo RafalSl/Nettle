@@ -6,7 +6,7 @@ import { getPreferences } from './preferences';
 /** SK-6: the flare periods derived from the skin entries and the threshold in the preferences, oldest first. */
 export async function flarePeriods(deps: Deps): Promise<FlarePeriod[]> {
   const threshold = flareRule(await getPreferences(deps));
-  return deriveFlares(await deps.repo.listSkinEntries(), threshold);
+  return deriveFlares(await deps.repo.listRecords('skinEntries'), threshold);
 }
 
 /**
@@ -27,12 +27,14 @@ export interface OpenFlare {
 export async function openFlareSummary(deps: Deps): Promise<OpenFlare | null> {
   const period = await openFlare(deps);
   if (!period) return null;
-  const entries = (await deps.repo.listSkinEntries()).filter((e) => period.areaIds.includes(e.areaId));
+  const entries = (await deps.repo.listRecords('skinEntries')).filter((e) => period.areaIds.includes(e.areaId));
   const latest = new Map<string, { at: string; severity: number }>();
   for (const e of entries) {
     const cur = latest.get(e.areaId);
     if (!cur || e.at.utc >= cur.at) latest.set(e.areaId, { at: e.at.utc, severity: e.scores.severity });
   }
-  const areas = [...latest].map(([areaId, v]) => ({ areaId, severity: v.severity })).sort((a, b) => b.severity - a.severity || a.areaId.localeCompare(b.areaId));
+  const areas = [...latest]
+    .map(([areaId, v]) => ({ areaId, severity: v.severity }))
+    .sort((a, b) => b.severity - a.severity || a.areaId.localeCompare(b.areaId));
   return { period, areas };
 }

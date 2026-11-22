@@ -18,7 +18,8 @@ import { FakePdf } from './fakes/fakePdf';
 import { MemoryRepo } from './fakes/memoryRepo';
 import { makeDeps } from './helpers/fixtures';
 
-const get = (obj: unknown, key: string): unknown => key.split('.').reduce<unknown>((o, k) => (o as Record<string, unknown> | undefined)?.[k], obj);
+const get = (obj: unknown, key: string): unknown =>
+  key.split('.').reduce<unknown>((o, k) => (o as Record<string, unknown> | undefined)?.[k], obj);
 
 describe('toCsv (EX-5)', () => {
   it('EX-5 writes a header and rows with quotes, commas, newlines and lists escaped', () => {
@@ -27,9 +28,7 @@ describe('toCsv (EX-5)', () => {
       { id: 'b', note: 'has, comma and "quote"\nand newline', extra: 'only here' },
     ]);
     expect(csv).toBe(
-      'id,note,n,flag,list,none,extra\r\n' +
-        'a,plain,3,true,x; y,,\r\n' +
-        'b,"has, comma and ""quote""\nand newline",,,,,only here\r\n',
+      'id,note,n,flag,list,none,extra\r\n' + 'a,plain,3,true,x; y,,\r\n' + 'b,"has, comma and ""quote""\nand newline",,,,,only here\r\n',
     );
   });
 
@@ -49,7 +48,17 @@ async function diary() {
   const llm = new FakeLlm([
     JSON.stringify({
       summary: 'Synthetic AI summary <b>',
-      hypotheses: [{ title: 'Synthetic hypothesis', explanation: 'x', evidence: ['e1'], counter_evidence: [], uncertainty: 'u', lag_hours: null, strength: 'weak' }],
+      hypotheses: [
+        {
+          title: 'Synthetic hypothesis',
+          explanation: 'x',
+          evidence: ['e1'],
+          counter_evidence: [],
+          uncertainty: 'u',
+          lag_hours: null,
+          strength: 'weak',
+        },
+      ],
       order_and_lag: 'none',
       data_limits: ['limit'],
       questions_for_doctor: [],
@@ -58,21 +67,43 @@ async function diary() {
   const deps = makeDeps(repo, '2026-01-20T10:00:00.000Z', llm);
   await saveApiKey(deps, 'synthetic-test-key');
   const at = (s: string) => new Date(s);
-  const meal = await logMeal(deps, { description: 'Synthetic <pasta> & sauce', ingredients: ['pasta'], allergens: ['gluten'], at: at('2026-01-10T11:00:00.000Z') });
+  const meal = await logMeal(deps, {
+    description: 'Synthetic <pasta> & sauce',
+    ingredients: ['pasta'],
+    allergens: ['gluten'],
+    at: at('2026-01-10T11:00:00.000Z'),
+  });
   await logReaction(deps, { mealId: meal.id, symptoms: ['hives'], at: at('2026-01-10T12:00:00.000Z') });
-  const e1 = await logSkinEntry(deps, { areaId: 'area-chin', scores: { severity: 3, itch: 4, pain: 0, dryness: 2, scaling: 1 }, at: at('2026-01-10T20:00:00.000Z') });
-  const e2 = await logSkinEntry(deps, { areaId: 'area-chin', scores: { severity: 8, itch: 8, pain: 2, dryness: 5, scaling: 4 }, at: at('2026-01-13T20:00:00.000Z') });
-  const priv = await logSkinEntry(deps, { areaId: 'area-penis', scores: { severity: 5, itch: 5, pain: 5, dryness: 5, scaling: 5 }, at: at('2026-01-11T20:00:00.000Z') });
+  const e1 = await logSkinEntry(deps, {
+    areaId: 'area-chin',
+    scores: { severity: 3, itch: 4, pain: 0, dryness: 2, scaling: 1 },
+    at: at('2026-01-10T20:00:00.000Z'),
+  });
+  const e2 = await logSkinEntry(deps, {
+    areaId: 'area-chin',
+    scores: { severity: 8, itch: 8, pain: 2, dryness: 5, scaling: 4 },
+    at: at('2026-01-13T20:00:00.000Z'),
+  });
+  const priv = await logSkinEntry(deps, {
+    areaId: 'area-penis',
+    scores: { severity: 5, itch: 5, pain: 5, dryness: 5, scaling: 5 },
+    at: at('2026-01-11T20:00:00.000Z'),
+  });
   const nail = await addArea(deps, 'Left thumb', 'nail');
   const n1 = await logNailEntry(deps, { areaId: nail.id, stage: 'yellow', extent: 'under_quarter', at: at('2026-01-12T08:00:00.000Z') });
-  const p = (kind: 'skinEntry' | 'nailEntry', id: string, uri: string, when: string) => addPhoto(deps, { entryKind: kind, entryId: id, sourceUri: uri, at: at(when) });
+  const p = (kind: 'skinEntry' | 'nailEntry', id: string, uri: string, when: string) =>
+    addPhoto(deps, { entryKind: kind, entryId: id, sourceUri: uri, at: at(when) });
   const photos = {
     chin1: await p('skinEntry', e1.id, 'chin-first', '2026-01-10T20:05:00.000Z'),
     chin2: await p('skinEntry', e2.id, 'chin-last', '2026-01-13T20:05:00.000Z'),
     priv: await p('skinEntry', priv.id, 'private-photo', '2026-01-11T20:05:00.000Z'),
     nail: await p('nailEntry', n1.id, 'nail-photo', '2026-01-12T08:05:00.000Z'),
   };
-  await saveCheckIn(deps, { at: at('2026-01-12T21:00:00.000Z'), values: { 'item-wellbeing': 5, 'item-stress': 2, 'item-bloating': true, 'tag-travel': true }, confirmEmptyDay: true });
+  await saveCheckIn(deps, {
+    at: at('2026-01-12T21:00:00.000Z'),
+    values: { 'item-wellbeing': 5, 'item-stress': 2, 'item-bloating': true, 'tag-travel': true },
+    confirmEmptyDay: true,
+  });
   await logStool(deps, { bristol: 6, at: at('2026-01-12T07:00:00.000Z') });
   const cream = await addListItem(deps, 'treatments', 'Synthetic cream');
   await applyTreatment(deps, { treatmentId: cream.id, areaIds: ['area-chin'], at: at('2026-01-13T21:00:00.000Z') });
@@ -94,7 +125,14 @@ describe('export with CSV and PDF report (EX-3, EX-4, EX-5, EX-8)', () => {
     const zip = await exportBundle(deps, { csv: true });
     const files = unzipSync(zip);
     const names = Object.keys(files);
-    for (const n of ['csv/meals.csv', 'csv/skin_entries.csv', 'csv/check_ins.csv', 'csv/skin_areas.csv', 'csv/daily_items.csv', 'csv/analyses.csv']) {
+    for (const n of [
+      'csv/meals.csv',
+      'csv/skin_entries.csv',
+      'csv/check_ins.csv',
+      'csv/skin_areas.csv',
+      'csv/daily_items.csv',
+      'csv/analyses.csv',
+    ]) {
       expect(names).toContain(n);
     }
     const skin = strFromU8(files['csv/skin_entries.csv']!).split('\r\n');
@@ -111,7 +149,19 @@ describe('export with CSV and PDF report (EX-3, EX-4, EX-5, EX-8)', () => {
     const zip = await exportBundle(deps, { report: reportOptions() });
     const html = pdf.html[0]!;
     expect(strFromU8(unzipSync(zip)['report.pdf']!)).toBe(html);
-    for (const key of ['report.flares', 'report.skin', 'report.nails', 'report.photos', 'report.checkins', 'report.stool', 'report.treatments', 'report.changes', 'report.intake', 'report.reactions', 'report.aiTitle']) {
+    for (const key of [
+      'report.flares',
+      'report.skin',
+      'report.nails',
+      'report.photos',
+      'report.checkins',
+      'report.stool',
+      'report.treatments',
+      'report.changes',
+      'report.intake',
+      'report.reactions',
+      'report.aiTitle',
+    ]) {
       expect(html).toContain(`[${key}]`);
     }
     expect(html).toContain('Synthetic &lt;pasta&gt; &amp; sauce'); // user text is escaped
@@ -131,7 +181,7 @@ describe('export with CSV and PDF report (EX-3, EX-4, EX-5, EX-8)', () => {
     expect(pdf.html[1]).toContain('[report.flaresBasisByArea{');
   });
 
-  it('EX-4 AI analyses sit in their own labelled section after the person\'s records', async () => {
+  it("EX-4 AI analyses sit in their own labelled section after the person's records", async () => {
     const { deps, pdf } = await diary();
     await exportBundle(deps, { report: reportOptions() });
     const html = pdf.html[0]!;
@@ -191,13 +241,42 @@ describe('export with CSV and PDF report (EX-3, EX-4, EX-5, EX-8)', () => {
   it('EX-4 intake read by an AI is marked, with a legend, and typed intake is not', () => {
     const at = { utc: '2026-01-10T12:00:00.000Z', tz: 'Europe/Warsaw' };
     const llm = { model: 'm', at: at.utc, promptVersion: 'p' };
-    const meal = (id: string, source: object) => ({ id, at, description: `Synthetic ${id}`, ingredients: [`rice-${id}`], allergens: [], barcode: null, source, note: null });
+    const meal = (id: string, source: object) => ({
+      id,
+      at,
+      description: `Synthetic ${id}`,
+      ingredients: [`rice-${id}`],
+      allergens: [],
+      barcode: null,
+      source,
+      note: null,
+    });
     const html = (meals: object[]) =>
       buildReportHtml({
         ...reportOptions('en'),
-        records: { ...Object.fromEntries(['skinEntries', 'nailEntries', 'checkIns', 'stoolEntries', 'treatmentApplications', 'changeEvents', 'medicalEvents', 'reactions', 'drinks', 'medicationEntries', 'photos', 'analyses', 'reportSummaries'].map((k) => [k, []])), meals } as never,
+        records: {
+          ...Object.fromEntries(
+            [
+              'skinEntries',
+              'nailEntries',
+              'checkIns',
+              'stoolEntries',
+              'treatmentApplications',
+              'changeEvents',
+              'medicalEvents',
+              'reactions',
+              'drinks',
+              'medicationEntries',
+              'photos',
+              'analyses',
+              'reportSummaries',
+            ].map((k) => [k, []]),
+          ),
+          meals,
+        } as never,
         skinAreas: [],
-        dailyItems: [], changeCategories: [],
+        dailyItems: [],
+        changeCategories: [],
         treatments: [],
         photos: new Map(),
         range: { from: null, to: null },
@@ -220,12 +299,46 @@ describe('export with CSV and PDF report (EX-3, EX-4, EX-5, EX-8)', () => {
 
   it('EX-4 AI-suggested allergen tags are marked even when the ingredients were typed', () => {
     const at = { utc: '2026-01-10T12:00:00.000Z', tz: 'Europe/Warsaw' };
-    const meal = (id: string, aiTags: boolean) => ({ id, at, description: `Synthetic ${id}`, ingredients: [`rice-${id}`], allergens: ['milk'], barcode: null, source: { kind: 'typed', edited: false, llm: null, aiTags }, note: null });
+    const meal = (id: string, aiTags: boolean) => ({
+      id,
+      at,
+      description: `Synthetic ${id}`,
+      ingredients: [`rice-${id}`],
+      allergens: ['milk'],
+      barcode: null,
+      source: { kind: 'typed', edited: false, llm: null, aiTags },
+      note: null,
+    });
     const html = (meals: object[]) =>
       buildReportHtml({
         ...reportOptions('en'),
-        records: { ...Object.fromEntries(['skinEntries', 'nailEntries', 'checkIns', 'stoolEntries', 'treatmentApplications', 'changeEvents', 'medicalEvents', 'reactions', 'drinks', 'medicationEntries', 'photos', 'analyses', 'reportSummaries'].map((k) => [k, []])), meals } as never,
-        skinAreas: [], dailyItems: [], changeCategories: [], treatments: [], photos: new Map(), range: { from: null, to: null }, exportedAt: { utc: '2026-01-20T10:00:00.000Z', tz: 'Europe/Warsaw' },
+        records: {
+          ...Object.fromEntries(
+            [
+              'skinEntries',
+              'nailEntries',
+              'checkIns',
+              'stoolEntries',
+              'treatmentApplications',
+              'changeEvents',
+              'medicalEvents',
+              'reactions',
+              'drinks',
+              'medicationEntries',
+              'photos',
+              'analyses',
+              'reportSummaries',
+            ].map((k) => [k, []]),
+          ),
+          meals,
+        } as never,
+        skinAreas: [],
+        dailyItems: [],
+        changeCategories: [],
+        treatments: [],
+        photos: new Map(),
+        range: { from: null, to: null },
+        exportedAt: { utc: '2026-01-20T10:00:00.000Z', tz: 'Europe/Warsaw' },
       });
     const out = html([meal('a', true), meal('b', false)]);
     expect(out).toContain('[allergens.milk] [[report.aiMark]]');
@@ -237,9 +350,17 @@ describe('export with CSV and PDF report (EX-3, EX-4, EX-5, EX-8)', () => {
   it('EX-5, EX-4 the meals and drinks CSV has plain columns that say what is AI-derived', async () => {
     const { deps } = await (async () => ({ deps: makeDeps(new MemoryRepo()) }))();
     const llm = { model: 'm', at: '2026-01-10T00:00:00.000Z', promptVersion: 'p' };
-    await logMeal(deps, { description: 'Synthetic scanned', ingredients: ['rice'], source: { kind: 'label_scan', edited: true, llm, aiTags: true } });
+    await logMeal(deps, {
+      description: 'Synthetic scanned',
+      ingredients: ['rice'],
+      source: { kind: 'label_scan', edited: true, llm, aiTags: true },
+    });
     await logMeal(deps, { description: 'Synthetic typed', ingredients: ['oats'] });
-    await logMeal(deps, { description: 'Synthetic named', ingredients: ['milk'], source: { kind: 'name_estimate', edited: false, llm, aiTags: false } });
+    await logMeal(deps, {
+      description: 'Synthetic named',
+      ingredients: ['milk'],
+      source: { kind: 'name_estimate', edited: false, llm, aiTags: false },
+    });
     const files = unzipSync(await exportBundle(deps, { csv: true, parts: { records: true, settings: false } }));
     const rows = strFromU8(files['csv/meals.csv']!).trim().split('\r\n');
     const header = rows[0]!.split(',');
@@ -247,20 +368,46 @@ describe('export with CSV and PDF report (EX-3, EX-4, EX-5, EX-8)', () => {
     expect(header).not.toContain('source');
     const scanned = rows.find((r) => r.includes('Synthetic scanned'))!;
     const typed = rows.find((r) => r.includes('Synthetic typed'))!;
-    expect([col(scanned, 'ingredients_source'), col(scanned, 'ingredients_ai'), col(scanned, 'ingredients_edited'), col(scanned, 'allergens_ai'), col(scanned, 'ai_model')]).toEqual(['label_scan', 'yes', 'yes', 'yes', 'm']);
+    expect([
+      col(scanned, 'ingredients_source'),
+      col(scanned, 'ingredients_ai'),
+      col(scanned, 'ingredients_edited'),
+      col(scanned, 'allergens_ai'),
+      col(scanned, 'ai_model'),
+    ]).toEqual(['label_scan', 'yes', 'yes', 'yes', 'm']);
     expect([col(typed, 'ingredients_source'), col(typed, 'ingredients_ai'), col(typed, 'allergens_ai')]).toEqual(['typed', 'no', 'no']);
     const named = rows.find((r) => r.includes('Synthetic named'))!;
-    expect([col(named, 'ingredients_source'), col(named, 'ingredients_ai'), col(named, 'ingredients_edited')]).toEqual(['name_estimate', 'yes', 'no']); // IN-19
+    expect([col(named, 'ingredients_source'), col(named, 'ingredients_ai'), col(named, 'ingredients_edited')]).toEqual([
+      'name_estimate',
+      'yes',
+      'no',
+    ]); // IN-19
   });
 
   it('EX-3 an empty diary still produces a valid page with a title and the disclaimer', () => {
     const html = buildReportHtml({
       ...reportOptions('pl'),
       records: Object.fromEntries(
-        ['meals', 'skinEntries', 'nailEntries', 'checkIns', 'stoolEntries', 'treatmentApplications', 'changeEvents', 'medicalEvents', 'reactions', 'drinks', 'medicationEntries', 'photos', 'analyses', 'reportSummaries'].map((k) => [k, []]),
+        [
+          'meals',
+          'skinEntries',
+          'nailEntries',
+          'checkIns',
+          'stoolEntries',
+          'treatmentApplications',
+          'changeEvents',
+          'medicalEvents',
+          'reactions',
+          'drinks',
+          'medicationEntries',
+          'photos',
+          'analyses',
+          'reportSummaries',
+        ].map((k) => [k, []]),
       ) as never,
       skinAreas: [],
-      dailyItems: [], changeCategories: [],
+      dailyItems: [],
+      changeCategories: [],
       treatments: [],
       photos: new Map(),
       range: { from: null, to: null },

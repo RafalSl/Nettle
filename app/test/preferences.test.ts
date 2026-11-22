@@ -20,16 +20,12 @@ import {
 import { MemoryRepo } from './fakes/memoryRepo';
 import { makeDeps } from './helpers/fixtures';
 import { createNodeSqliteDb } from './helpers/nodeSqliteDb';
+import { errorCode } from './helpers/errors';
 
 const repos: [string, () => Promise<StorageRepository>][] = [
   ['in-memory', async () => new MemoryRepo()],
   ['sqlite', async () => SqliteRepo.open(createNodeSqliteDb())],
 ];
-const code = async (p: Promise<unknown>) =>
-  p.then(
-    () => 'no error',
-    (e: unknown) => (e instanceof NettleError ? e.code : 'other'),
-  );
 const both = { records: true, settings: true };
 
 describe.each(repos)('preferences (%s)', (_name, make) => {
@@ -41,22 +37,40 @@ describe.each(repos)('preferences (%s)', (_name, make) => {
 
   it('IN-14 suggestion settings are validated and stored', async () => {
     const deps = makeDeps(await make());
-    expect(await updateSuggestionSettings(deps, { rows: 8, windowDays: 14, saveOnTap: true })).toEqual({ rows: 8, windowDays: 14, saveOnTap: true, knownNames: false });
+    expect(await updateSuggestionSettings(deps, { rows: 8, windowDays: 14, saveOnTap: true })).toEqual({
+      rows: 8,
+      windowDays: 14,
+      saveOnTap: true,
+      knownNames: false,
+    });
     expect((await getPreferences(deps)).suggestions.rows).toBe(8);
-    expect(await code(updateSuggestionSettings(deps, { rows: 0 }))).toBe('invalid_value');
-    expect(await code(updateSuggestionSettings(deps, { rows: 21 }))).toBe('invalid_value');
-    expect(await code(updateSuggestionSettings(deps, { windowDays: 10 as never }))).toBe('invalid_value');
+    expect(await errorCode(updateSuggestionSettings(deps, { rows: 0 }))).toBe('invalid_value');
+    expect(await errorCode(updateSuggestionSettings(deps, { rows: 21 }))).toBe('invalid_value');
+    expect(await errorCode(updateSuggestionSettings(deps, { windowDays: 10 as never }))).toBe('invalid_value');
   });
 
   it('IN-14 a favorite is a snapshot that survives deleting the meal, and a meal saved again refreshes it', async () => {
     const deps = makeDeps(await make());
     const meal = await logMeal(deps, { description: 'Synthetic  OATS', ingredients: ['oats'], allergens: ['milk'] });
     expect(await toggleFavoriteMeal(deps, meal)).toBe(true);
-    expect((await getPreferences(deps)).favorites.meals).toEqual([{ key: 'synthetic oats', description: 'Synthetic  OATS', ingredients: ['oats'], allergens: ['milk'], barcode: null, source: { kind: 'typed', edited: false, llm: null, aiTags: false } }]);
+    expect((await getPreferences(deps)).favorites.meals).toEqual([
+      {
+        key: 'synthetic oats',
+        description: 'Synthetic  OATS',
+        ingredients: ['oats'],
+        allergens: ['milk'],
+        barcode: null,
+        source: { kind: 'typed', edited: false, llm: null, aiTags: false },
+      },
+    ]);
     await deps.repo.deleteRecords({ meals: [meal.id] });
     expect((await getPreferences(deps)).favorites.meals).toHaveLength(1);
     await logMeal(deps, { description: 'synthetic oats', ingredients: ['oats', 'honey'], allergens: [] });
-    expect((await getPreferences(deps)).favorites.meals[0]).toMatchObject({ description: 'synthetic oats', ingredients: ['oats', 'honey'], allergens: [] });
+    expect((await getPreferences(deps)).favorites.meals[0]).toMatchObject({
+      description: 'synthetic oats',
+      ingredients: ['oats', 'honey'],
+      allergens: [],
+    });
     expect(await toggleFavoriteMeal(deps, meal)).toBe(false);
     expect((await getPreferences(deps)).favorites.meals).toEqual([]);
   });
@@ -64,14 +78,34 @@ describe.each(repos)('preferences (%s)', (_name, make) => {
   it('IN-14 saving a meal that is not a favorite stores no preferences', async () => {
     const deps = makeDeps(await make());
     await logMeal(deps, { description: 'Synthetic oats', ingredients: [] });
-    await refreshFavoriteMeal(deps, { ...(await deps.repo.listMeals())[0]! });
+    await refreshFavoriteMeal(deps, { ...(await deps.repo.listRecords('meals'))[0]! });
     expect(await deps.repo.getPreferences()).toBeNull();
   });
 
   it('IN-14 favorite drinks are identified by name and amount', async () => {
     const deps = makeDeps(await make());
-    expect(await toggleFavoriteDrink(deps, { name: 'Synthetic beer', amountMl: 500, alcohol: true, ingredients: [], allergens: [], barcode: null, source: { kind: 'typed', edited: false, llm: null, aiTags: false } })).toBe(true);
-    expect(await toggleFavoriteDrink(deps, { name: 'synthetic BEER', amountMl: 330, alcohol: true, ingredients: [], allergens: [], barcode: null, source: { kind: 'typed', edited: false, llm: null, aiTags: false } })).toBe(true);
+    expect(
+      await toggleFavoriteDrink(deps, {
+        name: 'Synthetic beer',
+        amountMl: 500,
+        alcohol: true,
+        ingredients: [],
+        allergens: [],
+        barcode: null,
+        source: { kind: 'typed', edited: false, llm: null, aiTags: false },
+      }),
+    ).toBe(true);
+    expect(
+      await toggleFavoriteDrink(deps, {
+        name: 'synthetic BEER',
+        amountMl: 330,
+        alcohol: true,
+        ingredients: [],
+        allergens: [],
+        barcode: null,
+        source: { kind: 'typed', edited: false, llm: null, aiTags: false },
+      }),
+    ).toBe(true);
     expect((await getPreferences(deps)).favorites.drinks.map((a) => a.amountMl)).toEqual([500, 330]);
   });
 
@@ -91,7 +125,7 @@ describe.each(repos)('preferences (%s)', (_name, make) => {
     prefs = await getPreferences(deps);
     expect(pinnedEntryTypes(prefs)).toEqual(['meal', 'skin', 'checkin', 'treatment', 'drink']);
     expect(pinnedEntryTypes(prefs).length + unpinnedEntryTypes(prefs).length).toBe(11); // nothing is hidden
-    expect(await code(pinEntryType(deps, 'more' as never))).toBe('invalid_value');
+    expect(await errorCode(pinEntryType(deps, 'more' as never))).toBe('invalid_value');
   });
 
   it('EX-1, EX-10 preferences export in the settings part; a fresh install takes them, a merge keeps local ones, replace overwrites', async () => {
@@ -129,7 +163,24 @@ describe.each(repos)('preferences (%s)', (_name, make) => {
       { ...good, suggestions: { ...good.suggestions, window_days: 10 } },
       { ...good, quick_actions: { order: ['meal', 'meal'], hidden: [] } },
       { ...good, quick_actions: { order: ['nope'], hidden: [] } },
-      { ...good, favorites: { ...good.favorites, drinks: [{ key: 'k', name: 'x', amount_ml: -5, alcohol: false, ingredients: [], allergens: [], barcode: null, source: { kind: 'typed', edited: false, llm: null, aiTags: false } }] } },
+      {
+        ...good,
+        favorites: {
+          ...good.favorites,
+          drinks: [
+            {
+              key: 'k',
+              name: 'x',
+              amount_ml: -5,
+              alcohol: false,
+              ingredients: [],
+              allergens: [],
+              barcode: null,
+              source: { kind: 'typed', edited: false, llm: null, aiTags: false },
+            },
+          ],
+        },
+      },
     ]) {
       expect(() => parsePreferences(bad)).toThrow(NettleError);
     }

@@ -8,7 +8,11 @@ import { chooseAction } from '@/ui/actionSheet';
 /** A full backup (records, settings, every photo; no password) handed to the share sheet, and noted as the last export. */
 export async function exportEverything(deps: Deps, fileShare: FileShare): Promise<void> {
   const stamp = deps.clock.now().toISOString().slice(0, 10);
-  await fileShare.saveAndShare(`nettle-export-${stamp}.zip`, await exportBundle(deps, presetOptions({ kind: 'backup' })), 'application/zip');
+  await fileShare.saveAndShare(
+    `nettle-export-${stamp}.zip`,
+    await exportBundle(deps, presetOptions({ kind: 'backup' })),
+    'application/zip',
+  );
   await markExported(deps);
 }
 

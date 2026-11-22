@@ -1,6 +1,5 @@
 import { PREDEFINED_AREAS } from '@/core/model/areas';
 import { SqliteRepo } from '@/adapters/storage/sqliteRepo';
-import { NettleError } from '@/core/model/errors';
 import { DELETE_GROUPS } from '@/core/model/deleteGroups';
 import { planDeletion } from '@/core/model/deletion';
 import { RECORD_KINDS } from '@/core/model/types';
@@ -9,28 +8,44 @@ import { deleteData, previewDelete } from '@/core/usecases/deleteData';
 import { MemoryRepo } from './fakes/memoryRepo';
 import { createNodeSqliteDb } from './helpers/nodeSqliteDb';
 import { TZ, makeDeps, syntheticCheckIn, syntheticEntry, syntheticMeal, syntheticStool } from './helpers/fixtures';
+import { errorCode } from './helpers/errors';
 
 const repos: [string, () => Promise<StorageRepository>][] = [
   ['in-memory', async () => new MemoryRepo()],
   ['sqlite', async () => SqliteRepo.open(createNodeSqliteDb())],
 ];
-const code = async (p: Promise<unknown>) =>
-  p.then(
-    () => 'no error',
-    (e: unknown) => (e instanceof NettleError ? e.code : 'other'),
-  );
 
 async function seeded(make: () => Promise<StorageRepository>) {
   const repo = await make();
-  await repo.addMeal(syntheticMeal('m1', '2026-01-10T08:00:00.000Z'));
-  await repo.addMeal(syntheticMeal('m2', '2026-01-12T08:00:00.000Z'));
-  await repo.addRecord('reactions', { id: 'r1', at: { utc: '2026-01-10T09:00:00.000Z', tz: TZ }, mealId: 'm1', symptoms: ['hives'], note: null });
-  await repo.addRecord('reactions', { id: 'r2', at: { utc: '2026-01-12T09:00:00.000Z', tz: TZ }, mealId: 'm2', symptoms: ['stomach'], note: null });
-  await repo.addSkinEntry(syntheticEntry('e1', '2026-01-10T10:00:00.000Z'));
-  await repo.addSkinEntry(syntheticEntry('e2', '2026-01-12T10:00:00.000Z'));
+  await repo.addRecord('meals', syntheticMeal('m1', '2026-01-10T08:00:00.000Z'));
+  await repo.addRecord('meals', syntheticMeal('m2', '2026-01-12T08:00:00.000Z'));
+  await repo.addRecord('reactions', {
+    id: 'r1',
+    at: { utc: '2026-01-10T09:00:00.000Z', tz: TZ },
+    mealId: 'm1',
+    symptoms: ['hives'],
+    note: null,
+  });
+  await repo.addRecord('reactions', {
+    id: 'r2',
+    at: { utc: '2026-01-12T09:00:00.000Z', tz: TZ },
+    mealId: 'm2',
+    symptoms: ['stomach'],
+    note: null,
+  });
+  await repo.addRecord('skinEntries', syntheticEntry('e1', '2026-01-10T10:00:00.000Z'));
+  await repo.addRecord('skinEntries', syntheticEntry('e2', '2026-01-12T10:00:00.000Z'));
   await repo.addRecord('checkIns', syntheticCheckIn('c1', '2026-01-12T20:00:00.000Z', '2026-01-12'));
   await repo.addRecord('stoolEntries', syntheticStool('s1', '2026-01-12T07:00:00.000Z'));
-  await repo.upsertItem('treatments', { id: 'tr1', name: 'Synthetic cream', predefined: false, archived: false, nameOverride: null, valueKind: 'yesno' as const, description: null });
+  await repo.upsertItem('treatments', {
+    id: 'tr1',
+    name: 'Synthetic cream',
+    predefined: false,
+    archived: false,
+    nameOverride: null,
+    valueKind: 'yesno' as const,
+    description: null,
+  });
   return repo;
 }
 
@@ -63,7 +78,7 @@ describe.each(repos)('bulk delete (%s)', (_name, make) => {
     const repo = await seeded(make);
     const counts = await previewDelete(makeDeps(repo), { kinds: ['meals'] });
     expect(counts).toMatchObject({ meals: 2, reactions: 2, skinEntries: 0 });
-    expect(await repo.listMeals()).toHaveLength(2);
+    expect(await repo.listRecords('meals')).toHaveLength(2);
     expect(await repo.listRecords('reactions')).toHaveLength(2);
   });
 
@@ -71,16 +86,16 @@ describe.each(repos)('bulk delete (%s)', (_name, make) => {
     const repo = await seeded(make);
     const counts = await deleteData(makeDeps(repo), { kinds: ['skinEntries', 'checkIns'] });
     expect(counts).toMatchObject({ skinEntries: 2, checkIns: 1, meals: 0 });
-    expect(await repo.listSkinEntries()).toEqual([]);
+    expect(await repo.listRecords('skinEntries')).toEqual([]);
     expect(await repo.listRecords('checkIns')).toEqual([]);
-    expect(await repo.listMeals()).toHaveLength(2);
+    expect(await repo.listRecords('meals')).toHaveLength(2);
     expect(await repo.listRecords('stoolEntries')).toHaveLength(1);
   });
 
   it('SE-9 deletes by date range, taking linked reactions with their meals', async () => {
     const repo = await seeded(make);
     await deleteData(makeDeps(repo), { kinds: ['meals'], range: { from: '2026-01-11T00:00:00.000Z' } });
-    expect((await repo.listMeals()).map((m) => m.id)).toEqual(['m1']);
+    expect((await repo.listRecords('meals')).map((m) => m.id)).toEqual(['m1']);
     expect((await repo.listRecords('reactions')).map((r) => r.id)).toEqual(['r1']);
   });
 
@@ -96,9 +111,9 @@ describe.each(repos)('bulk delete (%s)', (_name, make) => {
 
   it('SE-9 selecting nothing is rejected and deletes nothing', async () => {
     const repo = await seeded(make);
-    expect(await code(deleteData(makeDeps(repo), { kinds: [] }))).toBe('nothing_selected');
-    expect(await code(previewDelete(makeDeps(repo), { kinds: [] }))).toBe('nothing_selected');
-    expect(await repo.listMeals()).toHaveLength(2);
+    expect(await errorCode(deleteData(makeDeps(repo), { kinds: [] }))).toBe('nothing_selected');
+    expect(await errorCode(previewDelete(makeDeps(repo), { kinds: [] }))).toBe('nothing_selected');
+    expect(await repo.listRecords('meals')).toHaveLength(2);
   });
 });
 

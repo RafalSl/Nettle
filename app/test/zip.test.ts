@@ -108,7 +108,7 @@ const sevenZip = ['7z', '7zz'].find((bin) => spawnSync(bin, ['i'], { stdio: 'ign
   const dir = mkdtempSync(join(tmpdir(), 'nettle-zip-'));
   afterAll(() => rmSync(dir, { recursive: true, force: true }));
 
-  it('7-Zip opens our encrypted ZIP and we open 7-Zip\'s', () => {
+  it("7-Zip opens our encrypted ZIP and we open 7-Zip's", () => {
     const data = rb(100_003);
     const zip = writeZip({ 'a.bin': data, 'b.txt': strToU8('synthetic text') }, { password: PW, randomBytes: rb });
     writeFileSync(join(dir, 'ours.zip'), zip);
@@ -126,11 +126,14 @@ const sevenZip = ['7z', '7zz'].find((bin) => spawnSync(bin, ['i'], { stdio: 'ign
 
   it('7-Zip opens an encrypted ZIP that has stored photo entries', () => {
     const photo = rb(60_001);
-    const zip = writeZip({ 'data.json': strToU8('{}'), 'photos/2026-01-10_chin_01.jpg': photo }, {
-      password: PW,
-      randomBytes: rb,
-      stored: (n) => n.startsWith('photos/'),
-    });
+    const zip = writeZip(
+      { 'data.json': strToU8('{}'), 'photos/2026-01-10_chin_01.jpg': photo },
+      {
+        password: PW,
+        randomBytes: rb,
+        stored: (n) => n.startsWith('photos/'),
+      },
+    );
     writeFileSync(join(dir, 'photos.zip'), zip);
     const x = spawnSync(sevenZip!, ['x', '-y', `-p${PW}`, `-o${join(dir, 'y')}`, join(dir, 'photos.zip')]);
     expect(x.status).toBe(0);

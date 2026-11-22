@@ -1,6 +1,5 @@
 import { strFromU8, unzipSync } from 'fflate';
 import { SqliteRepo } from '@/adapters/storage/sqliteRepo';
-import { NettleError } from '@/core/model/errors';
 import { localDaysToRange } from '@/core/model/time';
 import type { StorageRepository } from '@/core/ports/storage';
 import { exportBundle } from '@/core/usecases/exchange';
@@ -8,12 +7,7 @@ import { archiveSkinArea, lastSkinScores, logSkinEntry, repeatSkinEntry } from '
 import { MemoryRepo } from './fakes/memoryRepo';
 import { createNodeSqliteDb } from './helpers/nodeSqliteDb';
 import { makeDeps, syntheticMeal } from './helpers/fixtures';
-
-const code = async (p: Promise<unknown>) =>
-  p.then(
-    () => 'no error',
-    (e: unknown) => (e instanceof NettleError ? e.code : 'other'),
-  );
+import { errorCode } from './helpers/errors';
 
 describe('localDaysToRange (EX-11 note, NF-4)', () => {
   it('EX-11 converts a winter day in Warsaw (UTC+1), inclusive at both ends', () => {
@@ -74,7 +68,7 @@ describe.each(repos)('export by local days (%s)', (_name, make) => {
       ['last', '2026-01-15T22:59:59.000Z'],
       ['after', '2026-01-15T23:00:00.000Z'],
     ] as const) {
-      await repo.addMeal(syntheticMeal(id, utc));
+      await repo.addRecord('meals', syntheticMeal(id, utc));
     }
     const zip = await exportBundle(makeDeps(repo), { days: { from: '2026-01-15', to: '2026-01-15' } });
     const json = JSON.parse(strFromU8(unzipSync(zip)['data.json']!));
@@ -84,8 +78,8 @@ describe.each(repos)('export by local days (%s)', (_name, make) => {
 
   it('EX-11 rejects an invalid day range before exporting', async () => {
     const deps = makeDeps(await make());
-    expect(await code(exportBundle(deps, { days: { from: '2026-01-16', to: '2026-01-15' } }))).toBe('invalid_range');
-    expect(await code(exportBundle(deps, { days: { from: 'yesterday' } }))).toBe('invalid_range');
+    expect(await errorCode(exportBundle(deps, { days: { from: '2026-01-16', to: '2026-01-15' } }))).toBe('invalid_range');
+    expect(await errorCode(exportBundle(deps, { days: { from: 'yesterday' } }))).toBe('invalid_range');
   });
 });
 
@@ -107,14 +101,14 @@ describe('fast skin logging (SK-3, NF-2)', () => {
     await logSkinEntry(deps, { areaId: 'area-chin', scores, note: 'flaky', at: new Date('2026-01-10T08:00:00.000Z') });
     const again = await repeatSkinEntry(deps, 'area-chin', new Date('2026-01-11T08:00:00.000Z'));
     expect(again).toMatchObject({ areaId: 'area-chin', scores, note: null, at: { utc: '2026-01-11T08:00:00.000Z' } });
-    expect(await repo.listSkinEntries()).toHaveLength(2);
+    expect(await repo.listRecords('skinEntries')).toHaveLength(2);
   });
 
   it('SK-3 "no change" needs a previous entry and a loggable area', async () => {
     const deps = makeDeps(new MemoryRepo());
-    expect(await code(repeatSkinEntry(deps, 'area-chin'))).toBe('no_previous_entry');
+    expect(await errorCode(repeatSkinEntry(deps, 'area-chin'))).toBe('no_previous_entry');
     await logSkinEntry(deps, { areaId: 'area-chin', scores });
     await archiveSkinArea(deps, 'area-chin');
-    expect(await code(repeatSkinEntry(deps, 'area-chin'))).toBe('area_archived');
+    expect(await errorCode(repeatSkinEntry(deps, 'area-chin'))).toBe('area_archived');
   });
 });

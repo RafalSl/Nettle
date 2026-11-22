@@ -9,6 +9,7 @@ import { useServices } from '@/services';
 import { Chips, Hint, Label, styles } from '@/ui/components';
 import { PhotoGrid } from '@/ui/PhotoGrid';
 import { SwitchRow } from '@/ui/SwitchRow';
+import { toggled } from '@/ui/sets';
 
 type Mode = 'non_sensitive' | 'all' | 'none' | 'filter' | 'custom';
 const MODES: Mode[] = ['non_sensitive', 'all', 'none', 'filter', 'custom'];
@@ -34,7 +35,10 @@ export function PhotoSelectionField({ onChange }: { onChange: (selection: PhotoS
       setAreas(all);
       // EX-7: single photos are listed by area and time, sensitive ones marked.
       const areaOf = new Map(
-        [...(await deps.repo.listSkinEntries()), ...(await deps.repo.listRecords('nailEntries'))].map((e) => [e.id, all.find((a) => a.id === e.areaId)]),
+        [...(await deps.repo.listRecords('skinEntries')), ...(await deps.repo.listRecords('nailEntries'))].map((e) => [
+          e.id,
+          all.find((a) => a.id === e.areaId),
+        ]),
       );
       setPhotos(
         (await deps.repo.listRecords('photos')).map((photo) => {
@@ -67,7 +71,11 @@ export function PhotoSelectionField({ onChange }: { onChange: (selection: PhotoS
     <>
       <Label>{t('exportPhotos.title')}</Label>
       <Hint>{t('exportPhotos.hint')}</Hint>
-      <Chips items={MODES.map((m) => ({ id: m, label: t(`exportPhotos.${m}`) }))} selected={new Set([mode])} onToggle={(id) => setMode(id as Mode)} />
+      <Chips
+        items={MODES.map((m) => ({ id: m, label: t(`exportPhotos.${m}`) }))}
+        selected={new Set([mode])}
+        onToggle={(id) => setMode(id as Mode)}
+      />
       {mode === 'custom' && (
         <>
           <Hint>{t('exportPhotos.customHint')}</Hint>
@@ -75,15 +83,14 @@ export function PhotoSelectionField({ onChange }: { onChange: (selection: PhotoS
             <Hint>{t('exportPhotos.noPhotos')}</Hint>
           ) : (
             <PhotoGrid
-              items={photos.map(({ photo, label }) => ({ id: photo.id, file: photo.file, sensitive: photo.sensitive, label: photo.sensitive ? `${label} (${t('analysis.sensitiveMark')})` : label }))}
+              items={photos.map(({ photo, label }) => ({
+                id: photo.id,
+                file: photo.file,
+                sensitive: photo.sensitive,
+                label: photo.sensitive ? `${label} (${t('analysis.sensitiveMark')})` : label,
+              }))}
               selected={picked}
-              onToggle={(id) =>
-                setPicked((cur) => {
-                  const next = new Set(cur);
-                  if (!next.delete(id)) next.add(id);
-                  return next;
-                })
-              }
+              onToggle={(id) => setPicked((cur) => toggled(cur, id))}
               onAll={() => setPicked(new Set(photos.filter((p) => !p.photo.sensitive).map((p) => p.photo.id)))}
               onNone={() => setPicked(new Set())}
             />
@@ -96,13 +103,7 @@ export function PhotoSelectionField({ onChange }: { onChange: (selection: PhotoS
           <Chips
             items={areas.map((a) => ({ id: a.id, label: areaLabel(a) }))}
             selected={areaIds}
-            onToggle={(id) =>
-              setAreaIds((cur) => {
-                const next = new Set(cur);
-                if (!next.delete(id)) next.add(id);
-                return next;
-              })
-            }
+            onToggle={(id) => setAreaIds((cur) => toggled(cur, id))}
           />
           <SwitchRow title={t('exportPhotos.includeSensitive')} value={includeSensitive} onChange={setIncludeSensitive} />
           <SwitchRow title={t('exportPhotos.limit')} value={limit} onChange={setLimit} />

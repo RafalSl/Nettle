@@ -1,6 +1,6 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { Alert, Linking, View } from 'react-native';
 import { Text } from '@/ui/themed';
 import { listRegular } from '@/core/usecases/regular';
@@ -13,12 +13,14 @@ import {
   sendTestReminder,
   type ReminderSettings,
 } from '@/core/usecases/reminders';
-import { errorMessage, reminderTexts, t } from '@/i18n';
+import { reminderTexts, t } from '@/i18n';
 import { useServices } from '@/services';
 import type { ReminderStatus } from '@/core/ports/notifier';
 import { Button, Chips, Heading, Hint, Label, styles } from '@/ui/components';
 import { SwitchRow } from '@/ui/SwitchRow';
 import { color } from '@/ui/theme';
+import { showError } from '@/ui/showError';
+import { useFocusLoad } from '@/ui/useFocusLoad';
 
 const at = (hour: number, minute: number) => {
   const d = new Date();
@@ -37,12 +39,20 @@ export function RemindersSection() {
   const [denied, setDenied] = useState(false);
   const [status, setStatus] = useState<ReminderStatus | null>(null);
 
-  const load = useCallback(() => {
-    loadReminderSettings(deps).then(setS).catch(() => undefined);
-    reminderStatus(deps).then(setStatus, () => setStatus(null));
-    listRegular(deps).then((r) => setRegular({ n: r.length, withReminders: r.filter((x) => x.times.length > 0).length }), () => undefined);
-  }, [deps]);
-  useFocusEffect(load);
+  const ignore = () => undefined;
+  useFocusLoad(() => loadReminderSettings(deps), [deps], setS, ignore);
+  useFocusLoad(
+    () => reminderStatus(deps),
+    [deps],
+    setStatus,
+    () => setStatus(null),
+  );
+  useFocusLoad(
+    () => listRegular(deps),
+    [deps],
+    (r) => setRegular({ n: r.length, withReminders: r.filter((x) => x.times.length > 0).length }),
+    ignore,
+  );
 
   /** Shows the new value only after it was saved, so a refused permission leaves the switch off. */
   async function change(next: ReminderSettings) {
@@ -53,7 +63,7 @@ export function RemindersSection() {
       reminderStatus(deps).then(setStatus, () => undefined);
     } catch (e) {
       setDenied(e instanceof Error && 'code' in e && (e as { code: string }).code === 'notifications_denied');
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
   }
 
@@ -62,14 +72,16 @@ export function RemindersSection() {
       await sendTestReminder(deps, t('reminders.test.title'), t('reminders.test.body'));
       Alert.alert(t('reminders.test.sent'));
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
     reminderStatus(deps).then(setStatus, () => undefined);
   }
 
   // NO-3: with notifications blocked in iOS Settings the switches are off and disabled, and a coral banner says why.
   const blocked = status?.permission === 'denied';
-  const row = (label: string, value: boolean, onChange: (v: boolean) => void) => <SwitchRow title={label} value={value && !blocked} onChange={onChange} disabled={blocked} />;
+  const row = (label: string, value: boolean, onChange: (v: boolean) => void) => (
+    <SwitchRow title={label} value={value && !blocked} onChange={onChange} disabled={blocked} />
+  );
   const time = (hour: number, minute: number, onChange: (h: number, m: number) => void) => (
     <View style={styles.timeRow}>
       <Label>{t('reminders.time')}</Label>
@@ -82,17 +94,24 @@ export function RemindersSection() {
       <Heading>{t('reminders.title')}</Heading>
       <Hint>{t('reminders.hint')}</Hint>
       {(denied || blocked) && (
-        <View style={{ padding: 14, borderRadius: 22, gap: 10, backgroundColor: color.alertSoft, borderWidth: 1, borderColor: color.alertLine }}>
+        <View
+          style={{ padding: 14, borderRadius: 22, gap: 10, backgroundColor: color.alertSoft, borderWidth: 1, borderColor: color.alertLine }}
+        >
           <Text style={{ color: color.alert, fontWeight: '600', fontSize: 14.5 }}>{t('regular.denied')}</Text>
           <Button kind="secondary" title={t('regular.openSystem')} onPress={() => void Linking.openSettings()} />
         </View>
       )}
       {status && <Hint>{t(`reminders.status.${status.permission}`, { n: status.scheduled })}</Hint>}
       <Button kind="secondary" title={t('reminders.test.button')} onPress={() => void sendTest()} />
-      <NavRow title={t('regular.title')} subtitle={t('regular.summary', { n: regular.n, m: regular.withReminders })} onPress={() => router.push('/settings/regular')} />
+      <NavRow
+        title={t('regular.title')}
+        subtitle={t('regular.summary', { n: regular.n, m: regular.withReminders })}
+        onPress={() => router.push('/settings/regular')}
+      />
 
       {row(t('reminders.checkIn'), s.checkIn.enabled, (enabled) => change({ ...s, checkIn: { ...s.checkIn, enabled } }))}
-      {s.checkIn.enabled && time(s.checkIn.hour, s.checkIn.minute, (hour, minute) => change({ ...s, checkIn: { ...s.checkIn, hour, minute } }))}
+      {s.checkIn.enabled &&
+        time(s.checkIn.hour, s.checkIn.minute, (hour, minute) => change({ ...s, checkIn: { ...s.checkIn, hour, minute } }))}
 
       {row(t('reminders.nails'), s.nails.enabled, (enabled) => change({ ...s, nails: { ...s.nails, enabled } }))}
       {s.nails.enabled && (

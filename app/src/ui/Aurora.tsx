@@ -4,7 +4,23 @@ import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 import { color } from '@/ui/theme';
 
 /** One soft glow that drifts slowly (UX-12: 18 to 26 s loops, native driver, so it costs the JS thread nothing). */
-function Glow({ tint, size, style, seconds, dx, dy, opacity }: { tint: string; size: number; style: object; seconds: number; dx: number; dy: number; opacity: number }) {
+function Glow({
+  tint,
+  size,
+  style,
+  seconds,
+  dx,
+  dy,
+  opacity,
+}: {
+  tint: string;
+  size: number;
+  style: object;
+  seconds: number;
+  dx: number;
+  dy: number;
+  opacity: number;
+}) {
   const [t] = useState(() => new Animated.Value(0));
   useEffect(() => {
     const loop = Animated.loop(
@@ -21,8 +37,14 @@ function Glow({ tint, size, style, seconds, dx, dy, opacity }: { tint: string; s
       style={[
         { position: 'absolute', width: size, height: size },
         style,
-        { transform: [{ translateX: t.interpolate({ inputRange: [0, 1], outputRange: [0, dx] }) }, { translateY: t.interpolate({ inputRange: [0, 1], outputRange: [0, dy] }) }] },
-      ]}>
+        {
+          transform: [
+            { translateX: t.interpolate({ inputRange: [0, 1], outputRange: [0, dx] }) },
+            { translateY: t.interpolate({ inputRange: [0, 1], outputRange: [0, dy] }) },
+          ],
+        },
+      ]}
+    >
       <Svg width={size} height={size}>
         <Defs>
           <RadialGradient id="glow" cx="50%" cy="50%" r="50%">

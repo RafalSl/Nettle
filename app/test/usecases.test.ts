@@ -1,4 +1,3 @@
-import { NettleError } from '@/core/model/errors';
 import { logMeal } from '@/core/usecases/logMeal';
 import {
   addArea,
@@ -10,14 +9,8 @@ import {
   resetSkinAreaName,
 } from '@/core/usecases/skin';
 import { MemoryRepo } from './fakes/memoryRepo';
-import { makeDeps } from './helpers/fixtures';
-
-const scores = { severity: 1, itch: 2, pain: 3, dryness: 4, scaling: 5 };
-const code = async (p: Promise<unknown>) =>
-  p.then(
-    () => 'no error',
-    (e: unknown) => (e instanceof NettleError ? e.code : 'other'),
-  );
+import { makeDeps, syntheticScores as scores } from './helpers/fixtures';
+import { errorCode } from './helpers/errors';
 
 describe('logMeal', () => {
   it('IN-1 saves description and cleaned ingredient list', async () => {
@@ -25,13 +18,11 @@ describe('logMeal', () => {
     const meal = await logMeal(deps, { description: '  Synthetic soup ', ingredients: [' water ', '', 'salt'] });
     expect(meal.description).toBe('Synthetic soup');
     expect(meal.ingredients).toEqual(['water', 'salt']);
-    expect(await deps.repo.listMeals()).toEqual([meal]);
+    expect(await deps.repo.listRecords('meals')).toEqual([meal]);
   });
 
   it('IN-1 rejects an empty description', async () => {
-    expect(await code(logMeal(makeDeps(new MemoryRepo()), { description: '  ', ingredients: [] }))).toBe(
-      'empty_description',
-    );
+    expect(await errorCode(logMeal(makeDeps(new MemoryRepo()), { description: '  ', ingredients: [] }))).toBe('empty_description');
   });
 
   it('NF-4 stores UTC plus local timezone, and the timestamp is editable', async () => {
@@ -49,21 +40,19 @@ describe('logSkinEntry', () => {
     const e = await logSkinEntry(deps, { areaId: 'area-chin', scores, note: ' ok ' });
     expect(e.scores).toEqual(scores);
     expect(e.note).toBe('ok');
-    expect(await deps.repo.listSkinEntries()).toEqual([e]);
+    expect(await deps.repo.listRecords('skinEntries')).toEqual([e]);
   });
 
   it.each([11, -1, 2.5, Number.NaN])('SK-3 rejects score %p', async (bad) => {
     const deps = makeDeps(new MemoryRepo());
-    expect(await code(logSkinEntry(deps, { areaId: 'area-chin', scores: { ...scores, itch: bad } }))).toBe(
-      'invalid_score',
-    );
+    expect(await errorCode(logSkinEntry(deps, { areaId: 'area-chin', scores: { ...scores, itch: bad } }))).toBe('invalid_score');
   });
 
   it('SK-3 rejects unknown and archived areas', async () => {
     const deps = makeDeps(new MemoryRepo());
-    expect(await code(logSkinEntry(deps, { areaId: 'nope', scores }))).toBe('unknown_area');
+    expect(await errorCode(logSkinEntry(deps, { areaId: 'nope', scores }))).toBe('unknown_area');
     await archiveSkinArea(deps, 'area-neck');
-    expect(await code(logSkinEntry(deps, { areaId: 'area-neck', scores }))).toBe('area_archived');
+    expect(await errorCode(logSkinEntry(deps, { areaId: 'area-neck', scores }))).toBe('area_archived');
   });
 });
 
@@ -90,8 +79,8 @@ describe('areas', () => {
 
   it('SK-2 names must not be empty, and predefined areas can be archived', async () => {
     const deps = makeDeps(new MemoryRepo());
-    expect(await code(addArea(deps, ' '))).toBe('empty_area_name');
-    expect(await code(renameSkinArea(deps, 'area-chin', ' '))).toBe('empty_area_name');
+    expect(await errorCode(addArea(deps, ' '))).toBe('empty_area_name');
+    expect(await errorCode(renameSkinArea(deps, 'area-chin', ' '))).toBe('empty_area_name');
     await archiveSkinArea(deps, 'area-chin');
     expect((await listActiveAreas(deps)).map((a) => a.id)).not.toContain('area-chin');
   });
@@ -113,17 +102,17 @@ describe('nail areas (SK-10)', () => {
   it('SK-10 keeps kinds apart: scores go to skin areas, stage and extent to nail areas', async () => {
     const deps = makeDeps(new MemoryRepo());
     const nail = await addArea(deps, 'Synthetic left thumb', 'nail');
-    expect(await code(logSkinEntry(deps, { areaId: nail.id, scores }))).toBe('wrong_area_kind');
-    expect(await code(logNailEntry(deps, { areaId: 'area-chin', stage: 'clear', extent: 'none' }))).toBe('wrong_area_kind');
+    expect(await errorCode(logSkinEntry(deps, { areaId: nail.id, scores }))).toBe('wrong_area_kind');
+    expect(await errorCode(logNailEntry(deps, { areaId: 'area-chin', stage: 'clear', extent: 'none' }))).toBe('wrong_area_kind');
   });
 
   it('SK-10 rejects an unknown stage, an unknown extent and an archived nail area', async () => {
     const deps = makeDeps(new MemoryRepo());
     const nail = await addArea(deps, 'Synthetic left thumb', 'nail');
     const base = { areaId: nail.id, stage: 'clear', extent: 'none' } as const;
-    expect(await code(logNailEntry(deps, { ...base, stage: 'purple' as never }))).toBe('invalid_nail_value');
-    expect(await code(logNailEntry(deps, { ...base, extent: 'all' as never }))).toBe('invalid_nail_value');
+    expect(await errorCode(logNailEntry(deps, { ...base, stage: 'purple' as never }))).toBe('invalid_nail_value');
+    expect(await errorCode(logNailEntry(deps, { ...base, extent: 'all' as never }))).toBe('invalid_nail_value');
     await archiveSkinArea(deps, nail.id);
-    expect(await code(logNailEntry(deps, base))).toBe('area_archived');
+    expect(await errorCode(logNailEntry(deps, base))).toBe('area_archived');
   });
 });

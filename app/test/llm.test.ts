@@ -23,12 +23,8 @@ import { FakeLlm } from './fakes/fakeLlm';
 import { MemoryRepo } from './fakes/memoryRepo';
 import { createNodeSqliteDb } from './helpers/nodeSqliteDb';
 import { makeDeps } from './helpers/fixtures';
+import { errorCode } from './helpers/errors';
 
-const code = async (p: Promise<unknown>) =>
-  p.then(
-    () => 'no error',
-    (e: unknown) => (e instanceof NettleError ? e.code : 'other'),
-  );
 const image = { mimeType: 'image/jpeg' as const, data: new Uint8Array([1, 2, 3]) };
 
 describe('bytesToBase64', () => {
@@ -49,7 +45,7 @@ describe('API key and model settings (SE-2, SE-4, LL-9)', () => {
     expect(await deps.keys.get('anthropic_api_key')).toBe('synthetic-rotated-key');
     await deleteApiKey(deps);
     expect(await hasApiKey(deps)).toBe(false);
-    expect(await code(saveApiKey(deps, '   '))).toBe('empty_key');
+    expect(await errorCode(saveApiKey(deps, '   '))).toBe('empty_key');
   });
 
   it('LL-9 each action has its own model, Haiku 5.5 by default, chosen from the offered list', async () => {
@@ -59,8 +55,8 @@ describe('API key and model settings (SE-2, SE-4, LL-9)', () => {
     await setModel(deps, 'analysis', 'claude-sonnet-5-5');
     expect(await getModel(deps, 'analysis')).toBe('claude-sonnet-5-5');
     expect(await getModel(deps, 'meal_photo')).toBe(DEFAULT_MODEL); // the others are untouched
-    expect(await code(setModel(deps, 'analysis', 'made-up-model'))).toBe('invalid_value');
-    expect(await code(setModel(deps, 'nonsense' as never, 'claude-sonnet-5-5'))).toBe('invalid_value');
+    expect(await errorCode(setModel(deps, 'analysis', 'made-up-model'))).toBe('invalid_value');
+    expect(await errorCode(setModel(deps, 'nonsense' as never, 'claude-sonnet-5-5'))).toBe('invalid_value');
     await setModel(deps, 'analysis', null);
     expect(await getModel(deps, 'analysis')).toBe(DEFAULT_MODEL);
     // a stored model the provider no longer offers falls back to the default
@@ -72,7 +68,13 @@ describe('API key and model settings (SE-2, SE-4, LL-9)', () => {
     const deps = makeDeps(new MemoryRepo());
     await saveApiKey(deps, 'synthetic-test-key');
     const seen: string[] = [];
-    const spy = { ...deps, llmFor: (c: { model: string }) => (seen.push(c.model), { completeJson: async () => ({ text: '{"ingredients":[],"uncertainty":null}', model: c.model }) }) };
+    const spy = {
+      ...deps,
+      llmFor: (c: { model: string }) => (
+        seen.push(c.model),
+        { completeJson: async () => ({ text: '{"ingredients":[],"uncertainty":null}', model: c.model }) }
+      ),
+    };
     await setModel(spy, 'meal_photo', 'claude-sonnet-5-5');
     await estimateIngredients(spy, { image, language: 'en' });
     expect(seen).toEqual(['claude-sonnet-5-5']);
@@ -127,7 +129,11 @@ describe('ingredient estimate (LL-1, IN-3)', () => {
     const deps = makeDeps(new MemoryRepo(), undefined, llm);
     await saveApiKey(deps, 'synthetic-test-key');
     const est = await estimateIngredients(deps, { image, language: 'pl' });
-    expect(est).toEqual({ names: ['tomato', 'bread'], uncertainty: 'sauce?', provenance: { model: 'fake-model', at: expect.any(String), promptVersion: 'ingredients-2' } });
+    expect(est).toEqual({
+      names: ['tomato', 'bread'],
+      uncertainty: 'sauce?',
+      provenance: { model: 'fake-model', at: expect.any(String), promptVersion: 'ingredients-2' },
+    });
     const req = llm.requests[0]!;
     expect(req.images).toEqual([image]);
     expect(req.system).toContain('Polish');
@@ -137,7 +143,7 @@ describe('ingredient estimate (LL-1, IN-3)', () => {
   it('LL-1 without a key it fails with llm_no_key before anything is sent', async () => {
     const llm = new FakeLlm(['{}']);
     const deps = makeDeps(new MemoryRepo(), undefined, llm);
-    expect(await code(estimateIngredients(deps, { image, language: 'en' }))).toBe('llm_no_key');
+    expect(await errorCode(estimateIngredients(deps, { image, language: 'en' }))).toBe('llm_no_key');
     expect(llm.requests).toHaveLength(0);
   });
 
@@ -146,8 +152,8 @@ describe('ingredient estimate (LL-1, IN-3)', () => {
     const repo = new MemoryRepo();
     const deps = makeDeps(repo, undefined, llm);
     await saveApiKey(deps, 'synthetic-test-key');
-    expect(await code(estimateIngredients(deps, { image, language: 'en' }))).toBe('llm_rate_limited');
-    expect(await repo.listMeals()).toEqual([]);
+    expect(await errorCode(estimateIngredients(deps, { image, language: 'en' }))).toBe('llm_rate_limited');
+    expect(await repo.listRecords('meals')).toEqual([]);
   });
 
   it('LL-8 malformed answers are llm_bad_response', () => {
@@ -169,9 +175,13 @@ describe('Anthropic adapter over fetch (LL-8, LL-10)', () => {
   const req = { system: 'sys', user: 'usr', schema: { type: 'object' }, maxTokens: 100, images: [image] };
   const ok = (over: object = {}) => ({
     status: 200,
-    text: async () => JSON.stringify({ model: 'claude-test', stop_reason: 'end_turn', content: [{ type: 'text', text: '{"a":1}' }], ...over }),
+    text: async () =>
+      JSON.stringify({ model: 'claude-test', stop_reason: 'end_turn', content: [{ type: 'text', text: '{"a":1}' }], ...over }),
   });
-  const fail = (status: number, type?: string) => ({ status, text: async () => JSON.stringify({ type: 'error', error: { type, message: 'm sk-synthetic-secret' } }) });
+  const fail = (status: number, type?: string) => ({
+    status,
+    text: async () => JSON.stringify({ type: 'error', error: { type, message: 'm sk-synthetic-secret' } }),
+  });
   const instant = { sleep: async () => undefined };
   afterEach(() => jest.restoreAllMocks());
 
@@ -185,7 +195,12 @@ describe('Anthropic adapter over fetch (LL-8, LL-10)', () => {
     expect(calls[0]!.init.headers['anthropic-version']).toBe('2026-10-21');
     expect(calls[0]!.init.body).not.toContain('sk-synthetic-secret'); // the key is never in the body
     const body = JSON.parse(calls[0]!.init.body);
-    expect(body).toMatchObject({ model: 'claude-test', max_tokens: 100, system: 'sys', output_config: { format: { type: 'json_schema', schema: { type: 'object' } } } });
+    expect(body).toMatchObject({
+      model: 'claude-test',
+      max_tokens: 100,
+      system: 'sys',
+      output_config: { format: { type: 'json_schema', schema: { type: 'object' } } },
+    });
     expect(body.messages[0].content[0]).toEqual({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: 'AQID' } });
     expect(body.messages[0].content[1]).toEqual({ type: 'text', text: 'usr' });
   });
@@ -312,7 +327,13 @@ describe('Anthropic adapter over fetch (LL-8, LL-10)', () => {
     expect(() => readResponse({ stop_reason: 'end_turn', content: [] })).toThrow('llm_bad_response');
     expect(() => readResponse(null)).toThrow('llm_bad_response');
     expect(() => readResponse({ content: 'x' })).toThrow('llm_bad_response');
-    expect(readResponse({ stop_reason: 'end_turn', model: 'm', content: [{ type: 'thinking' }, { type: 'text', text: 'a' }, { type: 'text', text: 'b' }] })).toEqual({ text: 'ab', model: 'm' });
+    expect(
+      readResponse({
+        stop_reason: 'end_turn',
+        model: 'm',
+        content: [{ type: 'thinking' }, { type: 'text', text: 'a' }, { type: 'text', text: 'b' }],
+      }),
+    ).toEqual({ text: 'ab', model: 'm' });
   });
 
   it('LL-8 a 200 response that is not JSON is llm_bad_response', async () => {

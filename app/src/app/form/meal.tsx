@@ -1,1 +1,1 @@
-export { default } from '@/screens/MealForm';
+export { default } from '@/forms/meal/MealForm';

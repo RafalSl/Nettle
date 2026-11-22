@@ -10,10 +10,10 @@ export class SqliteSettings implements SettingsStore {
     return row?.value ?? null;
   }
   async set(key: string, value: string) {
-    await this.db.run(
-      'INSERT INTO app_setting (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value',
-      [key, value],
-    );
+    await this.db.run('INSERT INTO app_setting (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value', [
+      key,
+      value,
+    ]);
   }
   async delete(key: string) {
     await this.db.run('DELETE FROM app_setting WHERE key = ?', [key]);

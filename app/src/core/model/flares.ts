@@ -10,7 +10,8 @@ export const DEFAULT_FLARE_THRESHOLD = 8;
 export type FlareRule = number | { fallback: number; perArea: Readonly<Record<string, number>> };
 
 /** SK-8: the threshold that applies to one area. */
-export const thresholdOf = (rule: FlareRule, areaId: string): number => (typeof rule === 'number' ? rule : (rule.perArea[areaId] ?? rule.fallback));
+export const thresholdOf = (rule: FlareRule, areaId: string): number =>
+  typeof rule === 'number' ? rule : (rule.perArea[areaId] ?? rule.fallback);
 
 /** SK-8: the single number behind a rule (the fallback of a per-area rule), for texts that state one threshold. */
 export const baseThreshold = (rule: FlareRule): number => (typeof rule === 'number' ? rule : rule.fallback);

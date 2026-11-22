@@ -2,7 +2,7 @@ import { buildAnalysisInput } from '../llm/analysisInput';
 import { parseSummary } from '../llm/parse';
 import { SUMMARY_PROMPT_VERSION, summaryPrompt } from '../llm/summaryPrompt';
 import { NettleError } from '../model/errors';
-import { addDays, localDay, makeStamp } from '../model/time';
+import { isDayRange, localDay, makeStamp } from '../model/time';
 import type { LocalDay, ReportSummary } from '../model/types';
 import type { Language, LlmRequest } from '../ports/llm';
 import { MAX_INPUT_CHARS } from './analysis';
@@ -37,20 +37,29 @@ export interface SummaryDraft {
   text: string;
 }
 
-const validDay = (d: string) => /^\d{4}-\d{2}-\d{2}$/.test(d) && addDays(d, 0) === d;
-
 /**
  * LL-14: turns the doctor report's period (open ends allowed) into concrete diary days: an open start becomes the
  * first day that has an entry, an open end today (NF-7). Null when the diary has nothing to summarize.
  */
-export async function summaryDays(deps: Deps, days: { from?: string; to?: string }): Promise<{ dayFrom: LocalDay; dayTo: LocalDay } | null> {
+export async function summaryDays(
+  deps: Deps,
+  days: { from?: string; to?: string },
+): Promise<{ dayFrom: LocalDay; dayTo: LocalDay } | null> {
   const start = deps.dayStart.get();
   const tz = deps.clock.timeZone();
   const today = localDay(deps.clock.now().toISOString(), tz, start);
   let dayFrom = days.from;
   if (!dayFrom) {
     const snap = await deps.repo.snapshot();
-    const all = [...snap.meals, ...snap.skinEntries, ...snap.nailEntries, ...snap.checkIns, ...snap.drinks, ...snap.stoolEntries, ...snap.medicalEvents].map((r) => localDay(r.at.utc, r.at.tz, start));
+    const all = [
+      ...snap.meals,
+      ...snap.skinEntries,
+      ...snap.nailEntries,
+      ...snap.checkIns,
+      ...snap.drinks,
+      ...snap.stoolEntries,
+      ...snap.medicalEvents,
+    ].map((r) => localDay(r.at.utc, r.at.tz, start));
     dayFrom = all.sort()[0];
   }
   const dayTo = days.to ?? today;
@@ -59,13 +68,27 @@ export async function summaryDays(deps: Deps, days: { from?: string; to?: string
 
 /** LL-14, LL-2, LL-5: build the request from the same diary data as the analysis, without photos. Sends nothing, changes nothing. */
 export async function prepareSummary(deps: Deps, sel: SummarySelection): Promise<PreparedSummary> {
-  if (!validDay(sel.dayFrom) || !validDay(sel.dayTo) || sel.dayFrom > sel.dayTo) throw new NettleError('invalid_range');
-  const built = buildAnalysisInput(await deps.repo.snapshot(), sel.dayFrom, sel.dayTo, deps.dayStart.get(), flareRule(await getPreferences(deps)), deps.clock.now().toISOString());
+  if (!isDayRange(sel.dayFrom, sel.dayTo)) throw new NettleError('invalid_range');
+  const built = buildAnalysisInput(
+    await deps.repo.snapshot(),
+    sel.dayFrom,
+    sel.dayTo,
+    deps.dayStart.get(),
+    flareRule(await getPreferences(deps)),
+    deps.clock.now().toISOString(),
+  );
   if (built.periodRecords === 0) throw new NettleError('analysis_no_data');
   const prompt = summaryPrompt(sel.language, { json: built.json });
   const sentCharacters = prompt.system.length + prompt.user.length;
   if (sentCharacters > MAX_INPUT_CHARS) throw new NettleError('analysis_too_large');
-  return { ...sel, model: await getModel(deps, 'report_summary'), promptVersion: SUMMARY_PROMPT_VERSION, counts: built.counts, sentCharacters, request: prompt };
+  return {
+    ...sel,
+    model: await getModel(deps, 'report_summary'),
+    promptVersion: SUMMARY_PROMPT_VERSION,
+    counts: built.counts,
+    sentCharacters,
+    request: prompt,
+  };
 }
 
 /**

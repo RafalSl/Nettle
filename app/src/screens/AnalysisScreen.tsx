@@ -21,12 +21,15 @@ import { WaitArc } from '@/ui/WaitArc';
 import { Text } from '@/ui/themed';
 import { color } from '@/ui/theme';
 import { formatElapsed } from '@/core/usecases/analysisRunner';
+import { showError } from '@/ui/showError';
+import { toggled } from '@/ui/sets';
+import { useFocusLoad } from '@/ui/useFocusLoad';
 
 /** Earlier analyses, and the photos taken in the chosen days with a label for each. */
 async function loadScreenData(deps: Deps, dayFrom: string, dayTo: string) {
   const areas = new Map((await deps.repo.listAreas()).map((a) => [a.id, a]));
   const entryArea = new Map(
-    [...(await deps.repo.listSkinEntries()), ...(await deps.repo.listRecords('nailEntries'))].map((e) => [e.id, e.areaId]),
+    [...(await deps.repo.listRecords('skinEntries')), ...(await deps.repo.listRecords('nailEntries'))].map((e) => [e.id, e.areaId]),
   );
   const photos = (await deps.repo.listRecords('photos'))
     .filter((p) => localDay(p.at.utc, p.at.tz, deps.dayStart.get()) >= dayFrom && localDay(p.at.utc, p.at.tz, deps.dayStart.get()) <= dayTo)
@@ -60,22 +63,16 @@ export default function AnalysisScreen() {
   const dayFrom = localDay(from.toISOString(), tz);
   const dayTo = localDay(to.toISOString(), tz);
 
-  const reload = useCallback(() => {
-    loadScreenData(deps, dayFrom, dayTo)
-      .then((data) => {
-        setPast(data.past);
-        setPhotos(data.photos);
-      })
-      .catch((e) => Alert.alert(errorMessage(e)));
-  }, [deps, dayFrom, dayTo, setPast, setPhotos]);
-  useFocusEffect(reload);
+  const reload = useFocusLoad(
+    () => loadScreenData(deps, dayFrom, dayTo),
+    [deps, dayFrom, dayTo],
+    (data) => {
+      setPast(data.past);
+      setPhotos(data.photos);
+    },
+  );
 
-  const toggle = (id: string) =>
-    setChosen((cur) => {
-      const next = new Set(cur);
-      if (!next.delete(id)) next.add(id);
-      return next;
-    });
+  const toggle = (id: string) => setChosen((cur) => toggled(cur, id));
 
   // LL-12: elapsed time while the request runs. The run itself lives in the runner, so it goes on when this screen is left.
   const startedAt = run.status === 'running' ? run.startedAt : null;
@@ -99,7 +96,12 @@ export default function AnalysisScreen() {
     const lines = [
       t('analysis.confirmIntro'),
       '',
-      t('analysis.range', { from: prepared.dayFrom, to: prepared.dayTo, days: prepared.counts.days ?? 0, complete: prepared.counts.completeDays ?? 0 }),
+      t('analysis.range', {
+        from: prepared.dayFrom,
+        to: prepared.dayTo,
+        days: prepared.counts.days ?? 0,
+        complete: prepared.counts.completeDays ?? 0,
+      }),
       ...RECORD_KINDS.filter((k) => (prepared.counts[k] ?? 0) > 0).map((k) => `• ${t(`delete.line.${k}`, { n: prepared.counts[k] ?? 0 })}`),
       ...(prepared.counts.lookbackDays ? [t('analysis.lookback', { n: prepared.counts.lookbackDays })] : []),
       ...prepared.photos.map((p) => `• ${t(p.sensitive ? 'analysis.photoLineSensitive' : 'analysis.photoLine', { label: p.label })}`),
@@ -123,12 +125,20 @@ export default function AnalysisScreen() {
       });
       confirm(prepared, () => runner.start(prepared));
     } catch (e) {
-      Alert.alert(errorMessage(e));
+      showError(e);
     }
   }
 
   return (
-    <Screen floating={run.status === 'running' ? undefined : run.status === 'interrupted' || run.status === 'failed' ? <FloatingAction title={t('analysis.retry')} icon="sparkle" onPress={() => confirm(run.prepared, () => void runner.retry())} /> : <FloatingAction title={t('analysis.review')} icon="sparkle" onPress={review} />}>
+    <Screen
+      floating={
+        run.status === 'running' ? undefined : run.status === 'interrupted' || run.status === 'failed' ? (
+          <FloatingAction title={t('analysis.retry')} icon="sparkle" onPress={() => confirm(run.prepared, () => void runner.retry())} />
+        ) : (
+          <FloatingAction title={t('analysis.review')} icon="sparkle" onPress={review} />
+        )
+      }
+    >
       <Heading>{t('analysis.title')}</Heading>
       <Hint>{t('analysis.disclaimer')}</Hint>
       <NavRow title={t('plan.link')} subtitle={t('plan.linkHint')} onPress={() => router.push('/review/pack')} />
@@ -147,7 +157,12 @@ export default function AnalysisScreen() {
         <Hint>{t('analysis.photosNone')}</Hint>
       ) : (
         <PhotoGrid
-          items={photos.map(({ photo, label }) => ({ id: photo.id, file: photo.file, sensitive: photo.sensitive, label: photo.sensitive ? `${label} (${t('analysis.sensitiveMark')})` : label }))}
+          items={photos.map(({ photo, label }) => ({
+            id: photo.id,
+            file: photo.file,
+            sensitive: photo.sensitive,
+            label: photo.sensitive ? `${label} (${t('analysis.sensitiveMark')})` : label,
+          }))}
           selected={chosen}
           onToggle={toggle}
           onAll={() => setChosen(new Set(photos.filter((p) => !p.photo.sensitive).map((p) => p.photo.id)))}
@@ -170,7 +185,16 @@ export default function AnalysisScreen() {
         <>
           {run.status === 'interrupted' && <Hint>{t('analysis.interrupted')}</Hint>}
           {run.status === 'failed' && (
-            <View style={{ padding: 14, borderRadius: 22, gap: 2, backgroundColor: color.alertSoft, borderWidth: 1, borderColor: color.alertLine }}>
+            <View
+              style={{
+                padding: 14,
+                borderRadius: 22,
+                gap: 2,
+                backgroundColor: color.alertSoft,
+                borderWidth: 1,
+                borderColor: color.alertLine,
+              }}
+            >
               <Text style={{ color: color.alert, fontWeight: '700', fontSize: 14.5 }}>{errorMessage(run.error)}</Text>
               <Text style={{ color: color.soft, fontSize: 13.5 }}>{t('analysis.failedNote')}</Text>
             </View>

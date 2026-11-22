@@ -2,7 +2,20 @@ import type { EntryType } from '@/core/model/preferences';
 import { t } from '@/i18n';
 
 /** UX-2: the form each entry type opens. */
-export const ENTRY_ROUTE: Record<EntryType, '/form/meal' | '/form/drink' | '/form/medication' | '/form/skin' | '/form/nails' | '/form/treatment' | '/form/checkin' | '/form/stool' | '/form/reaction' | '/form/change' | '/form/medical'> = {
+export const ENTRY_ROUTE: Record<
+  EntryType,
+  | '/form/meal'
+  | '/form/drink'
+  | '/form/medication'
+  | '/form/skin'
+  | '/form/nails'
+  | '/form/treatment'
+  | '/form/checkin'
+  | '/form/stool'
+  | '/form/reaction'
+  | '/form/change'
+  | '/form/medical'
+> = {
   meal: '/form/meal',
   drink: '/form/drink',
   medication: '/form/medication',

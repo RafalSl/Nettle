@@ -1,49 +1,185 @@
 // Generated from design/generator (the icon set of the Design system board). Edit the generator, not this file.
-export type IconShape = { tag: 'path' | 'circle' | 'rect'; a: Record<string, string | number>; fill?: 'wash' | 'nail' | 'washMeal'; noStroke?: boolean };
+export type IconShape = {
+  tag: 'path' | 'circle' | 'rect';
+  a: Record<string, string | number>;
+  fill?: 'wash' | 'nail' | 'washMeal';
+  noStroke?: boolean;
+};
 
 export const ICON_SHAPES: Record<string, IconShape[]> = {
-  meal: [{ tag: 'path', a: {"d": "M4 17a8 8 0 0 1 16 0Z"}, fill: 'washMeal' }, { tag: 'path', a: {"d": "M2.5 20.5h19"} }, { tag: 'path', a: {"d": "M12 9V7"} }, { tag: 'circle', a: {"cx": 12.0, "cy": 5.8, "r": 1.2} }],
-  treatment: [{ tag: 'path', a: {"d": "m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"}, fill: 'wash' }, { tag: 'path', a: {"d": "m8.5 8.5 7 7"} }],
-  drink: [{ tag: 'path', a: {"d": "M6 4h12l-1.4 14.2a2 2 0 0 1-2 1.8H9.4a2 2 0 0 1-2-1.8Z"} }, { tag: 'path', a: {"d": "M6.9 11h10.2l-.8 7.2a2 2 0 0 1-2 1.8H9.7a2 2 0 0 1-2-1.8Z"}, fill: 'wash', noStroke: true }],
-  medication: [{ tag: 'rect', a: {"x": 3.0, "y": 8.5, "width": 18.0, "height": 7.0, "rx": 3.5, "transform": "rotate(-35 12 12)"} }, { tag: 'path', a: {"d": "M12 12l3.6-5.1a3.5 3.5 0 0 1 2.9 5L15 17Z"}, fill: 'wash', noStroke: true }, { tag: 'path', a: {"d": "M10 9.2l4 5.6"} }],
-  nails: [{ tag: 'path', a: {"d": "M14.8 5.9a1.2 1.2 0 0 1 2.4 0v1.6h-2.4Z"}, fill: 'nail', noStroke: true }, { tag: 'path', a: {"d": "M10.8 3.9a1.2 1.2 0 0 1 2.4 0v1.6h-2.4Z"}, fill: 'nail', noStroke: true }, { tag: 'path', a: {"d": "M6.8 5.9a1.2 1.2 0 0 1 2.4 0v1.6H6.8Z"}, fill: 'nail', noStroke: true }, { tag: 'path', a: {"d": "M18.8 7.9a1.2 1.2 0 0 1 2.4 0v1.6h-2.4Z"}, fill: 'nail', noStroke: true }, { tag: 'path', a: {"d": "M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2"} }, { tag: 'path', a: {"d": "M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2"} }, { tag: 'path', a: {"d": "M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8"} }, { tag: 'path', a: {"d": "M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"} }],
-  reaction: [{ tag: 'path', a: {"d": "M12 3 2.5 20h19Z"}, fill: 'wash' }, { tag: 'path', a: {"d": "M12 9.5v4.5M12 17h.01"} }],
-  change: [{ tag: 'path', a: {"d": "M4 12a8 8 0 0 1 13.7-5.6L20 9"} }, { tag: 'path', a: {"d": "M20 4v5h-5"} }, { tag: 'path', a: {"d": "M20 12a8 8 0 0 1-13.7 5.6L4 15"} }, { tag: 'path', a: {"d": "M4 20v-5h5"} }],
-  medical: [{ tag: 'rect', a: {"x": 4.0, "y": 4.0, "width": 16.0, "height": 16.0, "rx": 5.0}, fill: 'wash' }, { tag: 'path', a: {"d": "M12 8.5v7M8.5 12h7"} }],
-  guide: [{ tag: 'circle', a: {"cx": 12.0, "cy": 12.0, "r": 9.0} }, { tag: 'path', a: {"d": "M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.4M12 17h.01"} }],
-  edit: [{ tag: 'rect', a: {"x": 3.5, "y": 4.0, "width": 7.0, "height": 7.0, "rx": 2.0} }, { tag: 'rect', a: {"x": 13.5, "y": 4.0, "width": 7.0, "height": 7.0, "rx": 2.0}, fill: 'wash' }, { tag: 'rect', a: {"x": 3.5, "y": 14.0, "width": 7.0, "height": 7.0, "rx": 2.0} }, { tag: 'path', a: {"d": "M14 17.5h6M17 14.5v6"} }],
-  scan: [{ tag: 'path', a: {"d": "M4 6v12M8 6v12M11 6v12M15 6v12M18 6v12M20.5 6v12"} }],
-  camera: [{ tag: 'path', a: {"d": "M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"} }, { tag: 'circle', a: {"cx": 12.0, "cy": 13.5, "r": 3.5} }],
-  label: [{ tag: 'rect', a: {"x": 5.0, "y": 3.0, "width": 14.0, "height": 18.0, "rx": 2.5} }, { tag: 'path', a: {"d": "M8.5 8h7M8.5 11.5h7M8.5 15h4"} }],
-  sparkle: [{ tag: 'path', a: {"d": "M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8Z"} }, { tag: 'path', a: {"d": "M19 16l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7Z"} }],
-  search: [{ tag: 'circle', a: {"cx": 11.0, "cy": 11.0, "r": 7.0} }, { tag: 'path', a: {"d": "M20 20l-3.5-3.5"} }],
-  star: [{ tag: 'path', a: {"d": "M12 3.5l2.6 5.3 5.9.9-4.2 4.1 1 5.8L12 16.9l-5.3 2.7 1-5.8-4.2-4.1 5.9-.9Z"} }],
-  chev: [{ tag: 'path', a: {"d": "M9 6l6 6-6 6"} }],
-  back: [{ tag: 'path', a: {"d": "M15 6l-6 6 6 6"} }],
-  check: [{ tag: 'path', a: {"d": "M5 12.5l4.5 4.5L19 7.5"} }],
-  plus: [{ tag: 'path', a: {"d": "M12 5v14M5 12h14"} }],
-  x: [{ tag: 'path', a: {"d": "M7 7l10 10M17 7 7 17"} }],
-  clock: [{ tag: 'circle', a: {"cx": 12.0, "cy": 12.0, "r": 8.5} }, { tag: 'path', a: {"d": "M12 7.5V12l3 2"} }],
-  skin: [{ tag: 'path', a: {"d": "M6 12H22V14a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15L6 14Z"}, fill: 'wash', noStroke: true }, { tag: 'path', a: {"d": "M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2"} }, { tag: 'path', a: {"d": "M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2"} }, { tag: 'path', a: {"d": "M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8"} }, { tag: 'path', a: {"d": "M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"} }],
-  health: [{ tag: 'path', a: {"d": "M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"}, fill: 'wash' }, { tag: 'path', a: {"d": "M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"} }],
-  stool: [{ tag: 'rect', a: {"x": 3.5, "y": 15.5, "width": 17.0, "height": 5.0, "rx": 2.5, "transform": "rotate(-3 12 18)"}, fill: 'wash' }, { tag: 'rect', a: {"x": 6.0, "y": 10.5, "width": 12.0, "height": 5.0, "rx": 2.5, "transform": "rotate(3 12 13)"}, fill: 'wash' }, { tag: 'rect', a: {"x": 8.5, "y": 6.0, "width": 7.0, "height": 4.5, "rx": 2.25, "transform": "rotate(-4 12 8)"}, fill: 'wash' }, { tag: 'path', a: {"d": "M12 6c0-1.6.8-2.6 2.2-3.2"} }],
-  report: [{ tag: 'path', a: {"d": "M6 3h8l4 4v14H6Z"}, fill: 'wash' }, { tag: 'path', a: {"d": "M14 3v4h4"} }, { tag: 'path', a: {"d": "M9 12h6M9 15.5h6M9 19h3"} }],
-  bell: [{ tag: 'path', a: {"d": "M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15Z"}, fill: 'wash' }, { tag: 'path', a: {"d": "M10 21h4"} }],
-  lock: [{ tag: 'rect', a: {"x": 5.0, "y": 10.5, "width": 14.0, "height": 10.0, "rx": 3.0}, fill: 'wash' }, { tag: 'path', a: {"d": "M8 10.5V8a4 4 0 0 1 8 0v2.5"} }],
-  key: [{ tag: 'circle', a: {"cx": 8.0, "cy": 15.0, "r": 4.5}, fill: 'wash' }, { tag: 'path', a: {"d": "M11.2 11.8 20 3M17 6l2.5 2.5M14.5 8.5 16.5 10.5"} }],
-  box: [{ tag: 'path', a: {"d": "M3.5 8 12 3.5 20.5 8v8L12 20.5 3.5 16Z"} }, { tag: 'path', a: {"d": "M3.5 8 12 12.5 20.5 8M12 12.5v8"} }, { tag: 'path', a: {"d": "M12 12.5 20.5 8v8L12 20.5Z"}, fill: 'wash', noStroke: true }],
-  trash: [{ tag: 'path', a: {"d": "M4 7h16M10 3.5h4M6 7l1 13h10l1-13"} }, { tag: 'path', a: {"d": "M10 11v5.5M14 11v5.5"} }],
-  info: [{ tag: 'circle', a: {"cx": 12.0, "cy": 12.0, "r": 9.0}, fill: 'wash' }, { tag: 'path', a: {"d": "M12 11v5.5M12 7.8h.01"} }],
-  sliders: [{ tag: 'path', a: {"d": "M4 7h9M17 7h3M4 17h3M11 17h9"} }, { tag: 'circle', a: {"cx": 15.0, "cy": 7.0, "r": 2.0} }, { tag: 'circle', a: {"cx": 9.0, "cy": 17.0, "r": 2.0} }],
-  calendar: [{ tag: 'rect', a: {"x": 4.0, "y": 5.0, "width": 16.0, "height": 15.0, "rx": 3.5} }, { tag: 'path', a: {"d": "M4 10h16M9 3v4M15 3v4"} }],
-  chart: [{ tag: 'path', a: {"d": "M6 20v-9M12 20V5M18 20v-6"} }],
-  list: [{ tag: 'path', a: {"d": "M9 6h11M9 12h11M9 18h11"} }, { tag: 'circle', a: {"cx": 4.5, "cy": 6.0, "r": 1.0} }, { tag: 'circle', a: {"cx": 4.5, "cy": 12.0, "r": 1.0} }, { tag: 'circle', a: {"cx": 4.5, "cy": 18.0, "r": 1.0} }],
-  tag: [{ tag: 'path', a: {"d": "M3.5 12.5V4.5h8l9 9-8 8Z"}, fill: 'wash' }, { tag: 'circle', a: {"cx": 8.0, "cy": 9.0, "r": 1.4} }],
-  sun: [{ tag: 'circle', a: {"cx": 12.0, "cy": 12.0, "r": 4.0} }, { tag: 'path', a: {"d": "M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"} }],
-  flame: [{ tag: 'path', a: {"d": "M12 3c1 3 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3 0-6 1-9z"} }],
-  copy: [{ tag: 'rect', a: {"x": 8.5, "y": 8.5, "width": 12.0, "height": 12.0, "rx": 3.0}, fill: 'wash' }, { tag: 'path', a: {"d": "M15.5 8.5V6a2.5 2.5 0 0 0-2.5-2.5H6A2.5 2.5 0 0 0 3.5 6v7A2.5 2.5 0 0 0 6 15.5h2.5"} }],
-  minus: [{ tag: 'path', a: {"d": "M5 12h14"} }],
-  dots: [{ tag: 'circle', a: { cx: 6, cy: 12, r: 1.2 } }, { tag: 'circle', a: { cx: 12, cy: 12, r: 1.2 } }, { tag: 'circle', a: { cx: 18, cy: 12, r: 1.2 } }],
+  meal: [
+    { tag: 'path', a: { d: 'M4 17a8 8 0 0 1 16 0Z' }, fill: 'washMeal' },
+    { tag: 'path', a: { d: 'M2.5 20.5h19' } },
+    { tag: 'path', a: { d: 'M12 9V7' } },
+    { tag: 'circle', a: { cx: 12.0, cy: 5.8, r: 1.2 } },
+  ],
+  treatment: [
+    { tag: 'path', a: { d: 'm10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z' }, fill: 'wash' },
+    { tag: 'path', a: { d: 'm8.5 8.5 7 7' } },
+  ],
+  drink: [
+    { tag: 'path', a: { d: 'M6 4h12l-1.4 14.2a2 2 0 0 1-2 1.8H9.4a2 2 0 0 1-2-1.8Z' } },
+    { tag: 'path', a: { d: 'M6.9 11h10.2l-.8 7.2a2 2 0 0 1-2 1.8H9.7a2 2 0 0 1-2-1.8Z' }, fill: 'wash', noStroke: true },
+  ],
+  medication: [
+    { tag: 'rect', a: { x: 3.0, y: 8.5, width: 18.0, height: 7.0, rx: 3.5, transform: 'rotate(-35 12 12)' } },
+    { tag: 'path', a: { d: 'M12 12l3.6-5.1a3.5 3.5 0 0 1 2.9 5L15 17Z' }, fill: 'wash', noStroke: true },
+    { tag: 'path', a: { d: 'M10 9.2l4 5.6' } },
+  ],
+  nails: [
+    { tag: 'path', a: { d: 'M14.8 5.9a1.2 1.2 0 0 1 2.4 0v1.6h-2.4Z' }, fill: 'nail', noStroke: true },
+    { tag: 'path', a: { d: 'M10.8 3.9a1.2 1.2 0 0 1 2.4 0v1.6h-2.4Z' }, fill: 'nail', noStroke: true },
+    { tag: 'path', a: { d: 'M6.8 5.9a1.2 1.2 0 0 1 2.4 0v1.6H6.8Z' }, fill: 'nail', noStroke: true },
+    { tag: 'path', a: { d: 'M18.8 7.9a1.2 1.2 0 0 1 2.4 0v1.6h-2.4Z' }, fill: 'nail', noStroke: true },
+    { tag: 'path', a: { d: 'M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2' } },
+    { tag: 'path', a: { d: 'M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2' } },
+    { tag: 'path', a: { d: 'M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8' } },
+    { tag: 'path', a: { d: 'M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15' } },
+  ],
+  reaction: [
+    { tag: 'path', a: { d: 'M12 3 2.5 20h19Z' }, fill: 'wash' },
+    { tag: 'path', a: { d: 'M12 9.5v4.5M12 17h.01' } },
+  ],
+  change: [
+    { tag: 'path', a: { d: 'M4 12a8 8 0 0 1 13.7-5.6L20 9' } },
+    { tag: 'path', a: { d: 'M20 4v5h-5' } },
+    { tag: 'path', a: { d: 'M20 12a8 8 0 0 1-13.7 5.6L4 15' } },
+    { tag: 'path', a: { d: 'M4 20v-5h5' } },
+  ],
+  medical: [
+    { tag: 'rect', a: { x: 4.0, y: 4.0, width: 16.0, height: 16.0, rx: 5.0 }, fill: 'wash' },
+    { tag: 'path', a: { d: 'M12 8.5v7M8.5 12h7' } },
+  ],
+  guide: [
+    { tag: 'circle', a: { cx: 12.0, cy: 12.0, r: 9.0 } },
+    { tag: 'path', a: { d: 'M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.4M12 17h.01' } },
+  ],
+  edit: [
+    { tag: 'rect', a: { x: 3.5, y: 4.0, width: 7.0, height: 7.0, rx: 2.0 } },
+    { tag: 'rect', a: { x: 13.5, y: 4.0, width: 7.0, height: 7.0, rx: 2.0 }, fill: 'wash' },
+    { tag: 'rect', a: { x: 3.5, y: 14.0, width: 7.0, height: 7.0, rx: 2.0 } },
+    { tag: 'path', a: { d: 'M14 17.5h6M17 14.5v6' } },
+  ],
+  scan: [{ tag: 'path', a: { d: 'M4 6v12M8 6v12M11 6v12M15 6v12M18 6v12M20.5 6v12' } }],
+  camera: [
+    { tag: 'path', a: { d: 'M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z' } },
+    { tag: 'circle', a: { cx: 12.0, cy: 13.5, r: 3.5 } },
+  ],
+  label: [
+    { tag: 'rect', a: { x: 5.0, y: 3.0, width: 14.0, height: 18.0, rx: 2.5 } },
+    { tag: 'path', a: { d: 'M8.5 8h7M8.5 11.5h7M8.5 15h4' } },
+  ],
+  sparkle: [
+    { tag: 'path', a: { d: 'M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8Z' } },
+    { tag: 'path', a: { d: 'M19 16l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7Z' } },
+  ],
+  search: [
+    { tag: 'circle', a: { cx: 11.0, cy: 11.0, r: 7.0 } },
+    { tag: 'path', a: { d: 'M20 20l-3.5-3.5' } },
+  ],
+  star: [{ tag: 'path', a: { d: 'M12 3.5l2.6 5.3 5.9.9-4.2 4.1 1 5.8L12 16.9l-5.3 2.7 1-5.8-4.2-4.1 5.9-.9Z' } }],
+  chev: [{ tag: 'path', a: { d: 'M9 6l6 6-6 6' } }],
+  back: [{ tag: 'path', a: { d: 'M15 6l-6 6 6 6' } }],
+  check: [{ tag: 'path', a: { d: 'M5 12.5l4.5 4.5L19 7.5' } }],
+  plus: [{ tag: 'path', a: { d: 'M12 5v14M5 12h14' } }],
+  x: [{ tag: 'path', a: { d: 'M7 7l10 10M17 7 7 17' } }],
+  clock: [
+    { tag: 'circle', a: { cx: 12.0, cy: 12.0, r: 8.5 } },
+    { tag: 'path', a: { d: 'M12 7.5V12l3 2' } },
+  ],
+  skin: [
+    {
+      tag: 'path',
+      a: { d: 'M6 12H22V14a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15L6 14Z' },
+      fill: 'wash',
+      noStroke: true,
+    },
+    { tag: 'path', a: { d: 'M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2' } },
+    { tag: 'path', a: { d: 'M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2' } },
+    { tag: 'path', a: { d: 'M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8' } },
+    { tag: 'path', a: { d: 'M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15' } },
+  ],
+  health: [
+    {
+      tag: 'path',
+      a: {
+        d: 'M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z',
+      },
+      fill: 'wash',
+    },
+    { tag: 'path', a: { d: 'M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27' } },
+  ],
+  stool: [
+    { tag: 'rect', a: { x: 3.5, y: 15.5, width: 17.0, height: 5.0, rx: 2.5, transform: 'rotate(-3 12 18)' }, fill: 'wash' },
+    { tag: 'rect', a: { x: 6.0, y: 10.5, width: 12.0, height: 5.0, rx: 2.5, transform: 'rotate(3 12 13)' }, fill: 'wash' },
+    { tag: 'rect', a: { x: 8.5, y: 6.0, width: 7.0, height: 4.5, rx: 2.25, transform: 'rotate(-4 12 8)' }, fill: 'wash' },
+    { tag: 'path', a: { d: 'M12 6c0-1.6.8-2.6 2.2-3.2' } },
+  ],
+  report: [
+    { tag: 'path', a: { d: 'M6 3h8l4 4v14H6Z' }, fill: 'wash' },
+    { tag: 'path', a: { d: 'M14 3v4h4' } },
+    { tag: 'path', a: { d: 'M9 12h6M9 15.5h6M9 19h3' } },
+  ],
+  bell: [
+    { tag: 'path', a: { d: 'M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15Z' }, fill: 'wash' },
+    { tag: 'path', a: { d: 'M10 21h4' } },
+  ],
+  lock: [
+    { tag: 'rect', a: { x: 5.0, y: 10.5, width: 14.0, height: 10.0, rx: 3.0 }, fill: 'wash' },
+    { tag: 'path', a: { d: 'M8 10.5V8a4 4 0 0 1 8 0v2.5' } },
+  ],
+  key: [
+    { tag: 'circle', a: { cx: 8.0, cy: 15.0, r: 4.5 }, fill: 'wash' },
+    { tag: 'path', a: { d: 'M11.2 11.8 20 3M17 6l2.5 2.5M14.5 8.5 16.5 10.5' } },
+  ],
+  box: [
+    { tag: 'path', a: { d: 'M3.5 8 12 3.5 20.5 8v8L12 20.5 3.5 16Z' } },
+    { tag: 'path', a: { d: 'M3.5 8 12 12.5 20.5 8M12 12.5v8' } },
+    { tag: 'path', a: { d: 'M12 12.5 20.5 8v8L12 20.5Z' }, fill: 'wash', noStroke: true },
+  ],
+  trash: [
+    { tag: 'path', a: { d: 'M4 7h16M10 3.5h4M6 7l1 13h10l1-13' } },
+    { tag: 'path', a: { d: 'M10 11v5.5M14 11v5.5' } },
+  ],
+  info: [
+    { tag: 'circle', a: { cx: 12.0, cy: 12.0, r: 9.0 }, fill: 'wash' },
+    { tag: 'path', a: { d: 'M12 11v5.5M12 7.8h.01' } },
+  ],
+  sliders: [
+    { tag: 'path', a: { d: 'M4 7h9M17 7h3M4 17h3M11 17h9' } },
+    { tag: 'circle', a: { cx: 15.0, cy: 7.0, r: 2.0 } },
+    { tag: 'circle', a: { cx: 9.0, cy: 17.0, r: 2.0 } },
+  ],
+  calendar: [
+    { tag: 'rect', a: { x: 4.0, y: 5.0, width: 16.0, height: 15.0, rx: 3.5 } },
+    { tag: 'path', a: { d: 'M4 10h16M9 3v4M15 3v4' } },
+  ],
+  chart: [{ tag: 'path', a: { d: 'M6 20v-9M12 20V5M18 20v-6' } }],
+  list: [
+    { tag: 'path', a: { d: 'M9 6h11M9 12h11M9 18h11' } },
+    { tag: 'circle', a: { cx: 4.5, cy: 6.0, r: 1.0 } },
+    { tag: 'circle', a: { cx: 4.5, cy: 12.0, r: 1.0 } },
+    { tag: 'circle', a: { cx: 4.5, cy: 18.0, r: 1.0 } },
+  ],
+  tag: [
+    { tag: 'path', a: { d: 'M3.5 12.5V4.5h8l9 9-8 8Z' }, fill: 'wash' },
+    { tag: 'circle', a: { cx: 8.0, cy: 9.0, r: 1.4 } },
+  ],
+  sun: [
+    { tag: 'circle', a: { cx: 12.0, cy: 12.0, r: 4.0 } },
+    { tag: 'path', a: { d: 'M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4' } },
+  ],
+  flame: [{ tag: 'path', a: { d: 'M12 3c1 3 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3 0-6 1-9z' } }],
+  copy: [
+    { tag: 'rect', a: { x: 8.5, y: 8.5, width: 12.0, height: 12.0, rx: 3.0 }, fill: 'wash' },
+    { tag: 'path', a: { d: 'M15.5 8.5V6a2.5 2.5 0 0 0-2.5-2.5H6A2.5 2.5 0 0 0 3.5 6v7A2.5 2.5 0 0 0 6 15.5h2.5' } },
+  ],
+  minus: [{ tag: 'path', a: { d: 'M5 12h14' } }],
+  dots: [
+    { tag: 'circle', a: { cx: 6, cy: 12, r: 1.2 } },
+    { tag: 'circle', a: { cx: 12, cy: 12, r: 1.2 } },
+    { tag: 'circle', a: { cx: 18, cy: 12, r: 1.2 } },
+  ],
   up: [{ tag: 'path', a: { d: 'M6 15l6-6 6 6' } }],
   down: [{ tag: 'path', a: { d: 'M6 9l6 6 6-6' } }],
 };

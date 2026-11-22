@@ -717,3 +717,8 @@ On iOS 26 the system draws its own glass capsule behind a custom header view, so
 - **Report:** in the Polish app, tapping the first ingredient field with the keyboard hidden left the field under the keyboard. The code has nothing language-specific; the only thing doing the lift was the automatic keyboard inset (UX-3), which is not reliable on its own.
 - **Fix:** `useAddIngredientScroll` now also has `revealField`: on focus with the keyboard hidden, once the keyboard is up (`keyboardDidShow`) it measures the field and scrolls the missing distance (needs the scroll offset, so `Screen` and `FormModal` take `onScrollY`). If the automatic inset already lifted the field, nothing moves. 881 tests pass; not seen on a phone.
 - **Next:** phone check in Polish and English: tap the first ingredient field, then a field further down.
+
+## 2026-11-22: Add ingredient hidden behind the keyboard in Polish (branch feature/add-ingredient-measure)
+- **Report:** after the previous change, tapping Add ingredient did not scroll in the Polish app and the button stayed under the keyboard. The scroll was a formula (button position plus constants), which can be off by a few rows of height.
+- **Fix:** the formula stays as the first, smooth move; once the keyboard has settled (`keyboardDidShow`, or 450 ms when it was already up) the button is measured on screen and any remaining gap is scrolled (UX-3). While the add scroll is pending, the focus scroll of the new field stays out of its way so the two do not fight. 881 tests pass; not seen on a phone.
+- **Next:** phone check in Polish: add several ingredients, with the keyboard hidden and shown.

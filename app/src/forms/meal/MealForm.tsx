@@ -71,7 +71,7 @@ export default function MealScreen() {
   const { description, setDescription, ingredients, setIngredients, allergens, setAllergens, note, setNote, fillLater, setFillLater } =
     draft;
   const { at, setAt, edited, setEdited, origin, setOrigin, dateHint, setDateHint, touch, setIngredient, saveFields } = draft;
-  const { scrollRef, onScrollY, revealField, onAddLayout, focusNew, setFocusNew } = useAddIngredientScroll(ingredients.length);
+  const { scrollRef, addRef, onScrollY, revealField, onAddLayout, focusNew, setFocusNew } = useAddIngredientScroll(ingredients.length);
   const ingredientRun = useIngredientRun();
   // IN-10: the AI's allergen suggestion lands as a hint with a select button; nothing is selected by itself.
   const allergenAi = useAllergenAi((tags, note) =>
@@ -390,7 +390,7 @@ export default function MealScreen() {
               )}
             </View>
           ))}
-          <View onLayout={(e) => onAddLayout(e.nativeEvent.layout.y)}>
+          <View ref={addRef} collapsable={false} onLayout={(e) => onAddLayout(e.nativeEvent.layout.y)}>
             <Button
               kind="secondary"
               title={t('meal.addIngredient')}

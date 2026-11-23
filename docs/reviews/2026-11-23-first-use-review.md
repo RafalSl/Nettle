@@ -1,6 +1,6 @@
 # First-use review (2026-11-23)
 
-The user has started using the app day to day, before any formal release. This file collects their remarks and the notes from the phone test plan (`docs/phone-test-plan.md`, run in progress). For each item it gives what the code does now, the cause where one was found, and a proposed fix. The proposals are not built yet. Items marked **Decide** need the user's answer before work starts.
+The user has started using the app day to day, before any formal release. This file collects their remarks and the notes from the phone test plan (`docs/phone-test-plan.md`, run in progress). For each item it gives what the code does now, the cause where one was found, and a proposed fix. The proposals are not built yet. Items marked **Decide** were answered on 2026-11-23 (see the end of this file).
 
 Code read: `develop` at a9a5d7c. Nothing was run on a phone for this review.
 
@@ -193,10 +193,12 @@ Each is one `feature/` branch from `develop`, with its migration and tests.
 9. **drink-recents-by-name**: key by name, favorites re-keyed.
 10. **polish-titles-and-rows**: the title hook and its test, `Segmented` and `SwitchRow` fixes, checked in Polish.
 
-## Decisions needed
+## Decisions (user, 2026-11-23)
 
-1. Backfill of existing skin entries into checks: **A** (same time only) or **B** (also within 15 minutes, recommended).
-2. Destructive test-plan checks: only after a Full backup, or a developer "test diary" database.
-3. Stool rows: glyphs and descriptions, or descriptions only.
-4. Which form titles stayed in English, and whether they are Polish after a restart.
-5. Approve the skin stepper design (section 1) before it is built; the requirement rows (SK-3, UX-2, EN-1, SK-8, EX-1) are rewritten when it is approved.
+1. Existing skin entries are grouped into checks: entries of different areas within 15 minutes (option B).
+2. Destructive phone checks run after a Full backup, which is restored afterwards; no test diary.
+3. Stool rows: descriptions only for now, no drawings.
+4. Untranslated titles: no list yet. The fix is general (every title follows the language, with a test of every route in Polish); report any title still in English after it lands.
+5. The skin stepper design is approved. Requirements v0.9.8 rewrites SK-3 and extends SK-2, SK-7, SK-8, EN-1, EX-1, IN-14, UX-2 and NF-6.
+
+The work plan is `docs/work-plan-2026-11-23.md`.

@@ -50,7 +50,7 @@ Both come from the user after looking at the finished boards. Branch per task, a
 
 ## Phase 4: changes after the first real use (2026-11-23)
 
-From the user's first days with a real diary and the phone test notes; details, causes and designs in `docs/reviews/2026-11-23-first-use-review.md`. Every task ships its data migration (NF-8). Branch per task; tasks 21 and later wait for the decisions listed in the review.
+From the user's first days with a real diary and the phone test notes; details, causes and designs in `docs/reviews/2026-11-23-first-use-review.md`. Every task ships its data migration (NF-8). Branch per task. The user's decisions are in, and each task is planned in detail in `docs/work-plan-2026-11-23.md` (scope, migration, tests, phone checks, order).
 
 19. **migration-safety** (NF-8): preferences version and upgrade chain, export `schema_version` 2 with a reader that upgrades 1, a copy of the database file before pending migrations run.
 20. **area-order** (SK-2): `skin_area.position`, up and down in Settings, every area list follows it.

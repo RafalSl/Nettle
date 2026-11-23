@@ -6,7 +6,7 @@ How to read it: each check has an ID, what to do, and what you should see. Mark 
 
 ## 0. Setup
 
-- **The diary on the phone now holds real data (NF-8).** Export a Full backup before installing a new build or switching the dev server to another branch, and before any destructive check (the clean start below, E6, E7, E8); restore it afterwards. How to run these checks without touching the real diary is an open decision (`docs/reviews/2026-11-23-first-use-review.md`, section 0).
+- **The diary on the phone now holds real data (NF-8).** Export a Full backup before installing a new build or switching the dev server to another branch, and before any destructive check (the clean start below, E6, E7, E8); restore it afterwards.
 - Start the server with `./run.sh`. Phone on the same Wi-Fi as the computer, or use `./run.sh npx expo start --tunnel --port 8081` (see README.md). Open in Expo Go.
 - Start from a clean state: Settings, Data and backup, Delete data (everything), or reinstall Expo Go. This also tests the first run.
 - Notifications: allow when asked. Camera and photos: allow when asked.

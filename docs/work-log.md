@@ -729,3 +729,8 @@ On iOS 26 the system draws its own glass capsule behind a custom header view, so
 - **Proposed:** a skin check (one entry over all areas, `check_id` on the per-area entries, a stepper with the area name and step in the title), area order, and build-plan Phase 4 (tasks 19 to 28). Docs only, no app code.
 - **Next:** the user's decisions listed at the end of the review; then task 19 (migration-safety).
 
+## 2026-11-23: decisions on the review, work plan (branch feature/first-use-review)
+- **Decisions (user):** existing skin entries are grouped into checks (within 15 minutes); destructive phone checks run after a Full backup; stool rows with descriptions only; no list of untranslated titles yet, so the fix is general; the skin stepper is approved.
+- **Done:** requirements v0.9.8 (SK-3 rewritten as the skin check; SK-2, SK-7, SK-8, EN-1, EX-1, IN-14, UX-2, NF-6 extended, all "v0.9.8 change not built"); the review lists the decisions; open-questions and the test plan follow. `docs/work-plan-2026-11-23.md` plans tasks 19 to 28 in detail: database copy with `VACUUM INTO` before migrating, preferences and export upgrade chains, `check_id` with a one-off grouping shared by the migration and the import of old files, a batch write so a check is saved whole, then the UI tasks. Docs only.
+- **Next:** the user approves the plan; merge PR #1 into `develop`; start task 19.
+

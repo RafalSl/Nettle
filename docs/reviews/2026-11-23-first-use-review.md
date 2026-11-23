@@ -178,6 +178,43 @@ The full form (`StoolForm`) shows seven chips labelled 1 to 7; only the Today qu
 | S4, S6, S7 | "checked only in Expo" | Fine for now; the standalone build repeats them. |
 | S8 | "later" | Left for later. |
 
+## 13. Nails: pick from the 20 nails instead of typing them (added 2026-11-23)
+
+### What the user hit
+There are only 20 nails, yet each one has to be added by hand with a typed name (Nails form, "Add nail", or Settings). The user would rather pick from a list or a picture and log or add a photo from there.
+
+### Now
+Nail areas are user areas of kind `nail` with free-text names (`addArea(name, 'nail')`); the Nails form shows them as chips with an add field.
+
+### Proposal: a nail map
+- **20 predefined nail areas**, stable ids `nail-hand-left-1` … `nail-hand-left-5`, `nail-hand-right-1` … `-5`, `nail-foot-left-1` … `-5`, `nail-foot-right-1` … `-5` (1 = thumb or big toe, 5 = little finger or toe), with localized names ("Left hand · thumb", "Lewa ręka · kciuk"). They are seeded **archived**, which already means "not asked, history kept": a nail is tracked by un-archiving it. No new column.
+- **The map:** four rows of five rounded nail tiles, left hand, right hand, left foot, right foot, in the order you see them looking down at the back of your hands, with a small label per row. Drawn as plain shapes in our own style (no anatomical drawing needed). A tracked nail shows the colour of its last stage and a dot when it has photos; an untracked one is a faint outline.
+- **Tap an untracked nail:** "Track this nail" (one tap); it joins the skin check and the weekly nail reminder (SK-9).
+- **Tap a tracked nail:** a sheet with stage, extent, No change, **Add photo** (camera or library) and Save; "Stop tracking" at the bottom (archives it).
+- **Where it appears:** the Nails form (the map instead of the chips and the add field), the nail steps of the skin check (the strip groups the tracked nails under "Nails"), and Settings, Skin and nail areas (the map instead of the nail list; renaming stays possible).
+- **Nails you already added by name** stay as they are, listed under the map as "Other nails". Each has "This is…" which opens the map to pick the matching nail: its entries and photos move to that nail and the old area is archived. That move is an explicit user action, not part of the automatic migration, because a free-text name cannot be matched reliably.
+- **One photo of a whole hand:** **Decide.** (a) Photos stay per nail; to cover a hand, add the photo to each nail (the file is copied; photos are compressed, so the cost is small). (b) A photo can belong to several nail entries (a link table, a bigger data change). Proposed: (a) now.
+
+Data and migration (NF-8): one SQL step seeds the 20 areas archived, at the end of the area order; no existing row changes. The export already carries areas; `schema_version` does not change for new rows. The "This is…" move is a use case with tests (entries, photos and tombstones follow, the old area is archived, the reminder schedule is refreshed).
+
+Requirements affected: SK-10 (nails are picked, not typed), SK-2 (predefined nail areas), SK-9 (the weekly reminder follows tracked nails), UX-6 (Settings).
+
+## 14. Skin: cracks and size are hidden behind Details (added 2026-11-23)
+
+### What the user hit
+To record cracks or a wound, the user taps Details, which opens a diameter field.
+
+### Now
+`SkinExtraFields` shows the "Cracks or open wounds" switch, then a Details button that opens the size field. The size is meant for the patch (the largest diameter of a fixed patch, SK-3), not for the wound, but the layout puts it right under the cracks switch, so it reads as the size of the wound, and it costs an extra tap.
+
+### Proposal
+- No Details button. Under the five scores, one compact card with two rows, both always visible:
+  - **Cracks or open wounds**: the switch row, as now.
+  - **Patch size**: "Largest diameter of the patch" with the value in mm and − and + buttons (like the scores), or **Set** while there is none; once set, a small × clears it. A typed value is still possible by tapping the number. This removes the text field, the number pad and its validation messages from the common path.
+- The prefill stays: an area with a size starts from its last size.
+- In the skin check this card is part of every skin step (task 21b).
+- **Decide:** is the size meant for the patch (as now), or do you also want the size of the wound? A wound size would be a new field (a data change); the patch size stays either way.
+
 ## 12. Proposed order of work
 
 Each is one `feature/` branch from `develop`, with its migration and tests.
@@ -192,6 +229,12 @@ Each is one `feature/` branch from `develop`, with its migration and tests.
 8. **stool-layout**: the banded rows with descriptions (and glyphs, if chosen).
 9. **drink-recents-by-name**: key by name, favorites re-keyed.
 10. **polish-titles-and-rows**: the title hook and its test, `Segmented` and `SwitchRow` fixes, checked in Polish.
+
+## Still to decide (added 2026-11-23)
+
+6. Nails (section 13): one photo of a whole hand, (a) a copy per nail (proposed) or (b) one photo linked to several nails.
+7. Size (section 14): patch only (as now), or also the size of a wound.
+8. Approve the nail map (section 13) and the inline size row (section 14).
 
 ## Decisions (user, 2026-11-23)
 

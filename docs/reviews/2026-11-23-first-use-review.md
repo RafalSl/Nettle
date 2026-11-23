@@ -193,7 +193,7 @@ Nail areas are user areas of kind `nail` with free-text names (`addArea(name, 'n
 - **Tap a tracked nail:** a sheet with stage, extent, No change, **Add photo** (camera or library) and Save; "Stop tracking" at the bottom (archives it).
 - **Where it appears:** the Nails form (the map instead of the chips and the add field), the nail steps of the skin check (the strip groups the tracked nails under "Nails"), and Settings, Skin and nail areas (the map instead of the nail list; renaming stays possible).
 - **Nails you already added by name** stay as they are, listed under the map as "Other nails". Each has "This is…" which opens the map to pick the matching nail: its entries and photos move to that nail and the old area is archived. That move is an explicit user action, not part of the automatic migration, because a free-text name cannot be matched reliably.
-- **One photo of a whole hand:** **Decide.** (a) Photos stay per nail; to cover a hand, add the photo to each nail (the file is copied; photos are compressed, so the cost is small). (b) A photo can belong to several nail entries (a link table, a bigger data change). Proposed: (a) now.
+- **Photos:** close-ups, one nail per photo, added from that nail's sheet (decided 2026-11-23: no photo of a whole hand).
 
 Data and migration (NF-8): one SQL step seeds the 20 areas archived, at the end of the area order; no existing row changes. The export already carries areas; `schema_version` does not change for new rows. The "This is…" move is a use case with tests (entries, photos and tombstones follow, the old area is archived, the reminder schedule is refreshed).
 
@@ -213,7 +213,7 @@ To record cracks or a wound, the user taps Details, which opens a diameter field
   - **Patch size**: "Largest diameter of the patch" with the value in mm and − and + buttons (like the scores), or **Set** while there is none; once set, a small × clears it. A typed value is still possible by tapping the number. This removes the text field, the number pad and its validation messages from the common path.
 - The prefill stays: an area with a size starts from its last size.
 - In the skin check this card is part of every skin step (task 21b).
-- **Decide:** is the size meant for the patch (as now), or do you also want the size of the wound? A wound size would be a new field (a data change); the patch size stays either way.
+- Decided 2026-11-23: the size stays the patch's; only the layout changes.
 
 ## 12. Proposed order of work
 
@@ -230,11 +230,11 @@ Each is one `feature/` branch from `develop`, with its migration and tests.
 9. **drink-recents-by-name**: key by name, favorites re-keyed.
 10. **polish-titles-and-rows**: the title hook and its test, `Segmented` and `SwitchRow` fixes, checked in Polish.
 
-## Still to decide (added 2026-11-23)
+## Decisions on sections 13 and 14 (user, 2026-11-23)
 
-6. Nails (section 13): one photo of a whole hand, (a) a copy per nail (proposed) or (b) one photo linked to several nails.
-7. Size (section 14): patch only (as now), or also the size of a wound.
-8. Approve the nail map (section 13) and the inline size row (section 14).
+6. Nail photos are close-ups of one nail each; no photo of a whole hand, so nothing is copied or shared between nails.
+7. The size stays the size of the patch; only the layout changes (no Details button).
+8. The nail map and the inline size row are approved. Screens: group 8 on the design canvas.
 
 ## Decisions (user, 2026-11-23)
 

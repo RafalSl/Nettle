@@ -6,7 +6,8 @@ from html.parser import HTMLParser
 VOID = {'meta', 'link', 'input', 'img', 'br', 'hr', 'path', 'circle', 'rect', 'line', 'polyline', 'polygon', 'stop', 'ellipse'}
 HOLES = {'accent', 'accentSoft', 'accentLine', 'glowA', 'glowB', 'glowC', 'accentGlow', 'accentGlowSoft'}
 TOKENS = {'#070B12', '#F2F5F9', '#C9D0DA', '#9AA4B2', '#5EEAD4', '#062A26', '#FF8A6B', '#2A0D04', '#6D4AE0', '#2563EB', '#FFFFFF', '#E6EAF0',
-          '#0E141E', '#000', '#C9A39A', '#8E6E68', '#3B302F', '#A3E635', '#C4B5FD'}
+          '#0E141E', '#000', '#C9A39A', '#8E6E68', '#3B302F', '#A3E635', '#C4B5FD',
+          '#E8C468'}  # nail stage yellow (SK-10, design-system.md, Nail stage colours)
 
 class P(HTMLParser):
     def __init__(self):

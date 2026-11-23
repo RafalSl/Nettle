@@ -11,7 +11,6 @@ The file has five parts: undecided questions, accepted limits, known bugs, decid
 - **Anthropic refusal fallback.** Not used (needs the beta request shape); a refusal shows a message. Revisit once a real call has worked.
 - **Merge keeps local settings.** Merging into a fresh install skips the six pre-seeded predefined areas, so a renamed or archived predefined area from the file is not applied; Replace (settings) restores them. Revisit with EX-12, or adopt incoming values for areas still at factory state.
 - **Unused template dependencies.** Prune when moving to a standalone build (reanimated, gesture-handler, expo-image, expo-glass-effect, `@expo/ui`, ...). No effect in Expo Go.
-- **Nail map and patch size (2026-11-23).** Proposed in the review, sections 13 and 14: the 20-nail map, whole-hand photos (copy per nail or one shared photo), and whether the size is the patch's only or also a wound's.
 - **Privacy row placement (phone test N4).** Privacy sits under Reminders and privacy; it could fit under Data and backup or About.
 - **Favorite button in the meal form (phone test L1).** Should Favorite sit just under the name, next to the AI ingredient suggestion button?
 - **Drink form layout (phone test L3).** Placement and order of the pills and the suggestions.

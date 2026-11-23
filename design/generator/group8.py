@@ -99,10 +99,10 @@ def scores(vals):
 
 def step_bar(no_change=True, skip='Skip', next_label='Next', skip_note=None):
     nc = (f'<button style="flex: 1; min-width: 0; height: 56px; border-radius: 999px; box-shadow: inset 0 0 0 1.5px @L@; color: @A@; font-size: 15.5px; font-weight: 700; background: rgba(13,19,29,0.86); '
-          f'backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); display: flex; align-items: center; justify-content: center; gap: 6px">{svg(IC["check"], 17, "@A@", 2.4)}No change</button>' if no_change else '')
+          f'backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); display: flex; align-items: center; justify-content: center; text-align: center; gap: 6px">{svg(IC["check"], 17, "@A@", 2.4)}No change</button>' if no_change else '')
     sk = (f'<button style="flex: {"1" if no_change else "1.2"}; min-width: 0; height: 56px; border-radius: 999px; {GLASS}; background: rgba(30,38,52,0.86); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); '
-          f'font-size: 15.5px; font-weight: 600">{skip}</button>')
-    nx = (f'<button style="flex: 1.25; min-width: 0; height: 56px; border-radius: 999px; background: @A@; color: {ONACC}; font-size: 16.5px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 6px; '
+          f'font-size: 15.5px; font-weight: 600; display: flex; align-items: center; justify-content: center; text-align: center; gap: 6px">{skip}</button>')
+    nx = (f'<button style="flex: 1.25; min-width: 0; height: 56px; border-radius: 999px; background: @A@; color: {ONACC}; font-size: 16.5px; font-weight: 800; display: flex; align-items: center; justify-content: center; text-align: center; gap: 6px; '
           f'box-shadow: 0 14px 34px rgba(0,0,0,0.45), 0 0 30px @S@">{next_label}{svg(IC["chev"], 18, ONACC, 2.6)}</button>')
     note = f'<span style="font-size: 13px; color: {CORAL}; text-align: center">{skip_note}</span>' if skip_note else ''
     return (f'<div class="ax-r ax-d5" style="position: absolute; left: 16px; right: 16px; bottom: 24px; display: flex; flex-direction: column; gap: 8px">{note}'
@@ -190,7 +190,7 @@ def run():
     # ======================================================== 1. skin check: step 2 of 8
     body = (strip(STRIP_STEP2) + step_head('Neck', 'Skin', 'Last: yesterday 21:40 · severity 6') + scores([6, 5, 2, 6, 4])
             + extras_card(False, None) + photos_block(()) + note_only())
-    check_form('G8-SkinCheck-Step.dc.html', 'Skin check: one area per step', 'Skin · Neck  2/8', body, step_bar(), h=1500)
+    check_form('G8-SkinCheck-Step.dc.html', 'Skin check: one area per step', 'Skin · Neck  2/6', body, step_bar(), h=1500)
 
     # ======================================================== 2. first step, with "No change for all areas"
     first_strip = [('Chin', 'current'), ('Neck', 'pending'), ('Ears, inside', 'pending'), ('Behind the ears', 'pending'), ('Sternum', 'pending'), ('Left elbow', 'pending')]
@@ -198,45 +198,32 @@ def run():
                f'{hint("Marks every area that has an earlier entry and goes to the summary. One area has no earlier entry yet and stays to do.")}</div>')
     body = (strip(first_strip) + all_btn + step_head('Chin', 'Skin', 'Last: yesterday 21:38 · severity 5') + scores([5, 4, 1, 5, 3])
             + extras_card(True, 18) + photos_block(()) + note_only())
-    check_form('G8-SkinCheck-First.dc.html', 'Skin check: first step', 'Skin · Chin  1/8', body, step_bar(), h=1640)
+    check_form('G8-SkinCheck-First.dc.html', 'Skin check: first step', 'Skin · Chin  1/6', body, step_bar(), h=1640)
 
     # ======================================================== 3. an area in flare
     fl_strip = [('Chin', 'done'), ('Neck', 'same'), ('Ears, inside', 'current', 8), ('Behind the ears', 'pending'), ('Sternum', 'pending'), ('Left elbow', 'pending')]
     body = (strip(fl_strip) + step_head('Ears, inside', 'Skin', 'Last: yesterday 21:41 · severity 8', flare=(8, '12 Nov'))
             + scores([8, 7, 3, 7, 6]) + extras_card(True, None) + photos_block(('yesterday',)) + note_only())
-    check_form('G8-SkinCheck-Flare.dc.html', 'Skin check: an area in flare', 'Skin · Ears, inside  3/8', body,
+    check_form('G8-SkinCheck-Flare.dc.html', 'Skin check: an area in flare', 'Skin · Ears, inside  3/6', body,
                step_bar(skip='Skip', skip_note='Skip leaves the flare open since 12 Nov. No change records that it goes on.'), h=1560)
 
     # ======================================================== 4. an area with no earlier entry
-    new_strip = [('Sternum', 'same'), ('Left elbow', 'current'), ('Left thumb', 'pending'), ('Right big toe', 'pending')]
+    new_strip = [('Ears, inside', 'done', 8), ('Behind the ears', 'same'), ('Sternum', 'same'), ('Left elbow', 'current')]
     body = (strip(new_strip) + step_head('Left elbow', 'Skin', 'First entry for this area')
             + (f'<div class="ax-r ax-d2" style="display: flex; justify-content: flex-end; padding: 0 4px; margin-bottom: -8px"><span style="font-size: 13px; color: {MUTED}">0 none · 10 worst</span></div>'
                f'<div class="ax-r ax-d2" style="display: flex; flex-direction: column; gap: 8px">{score_row("Severity", 0)}{score_row("Itch", 0)}{score_row("Pain", 0)}{score_row("Dryness", 0)}{score_row("Scaling", 0)}</div>')
             + extras_card(False, None) + photos_block(()) + note_only())
-    check_form('G8-SkinCheck-NewArea.dc.html', 'Skin check: an area without an earlier entry', 'Skin · Left elbow  6/8', body, step_bar(no_change=False), h=1500)
-
-    # ======================================================== 5. a nail step
-    nail_strip = [('Left elbow', 'done'), ('Left thumb', 'current'), ('Right big toe', 'pending')]
-    stage = chips([chip('Red or dark edge'), chip('Separation', 'on'), chip('Yellow'), chip('White'), chip('Clear')])
-    extent = chips([chip('None'), chip('Under a quarter'), chip('Up to half', 'on'), chip('More than half')])
-    body = (strip(nail_strip) + step_head('Left thumb', 'Nail', 'Last: 16 Nov · separation, up to half')
-            + block('Stage', stage) + block('How much of the nail', extent)
-            + photos_block(('16 Nov',), 'Close-up photos', 'one nail per photo') + note_only())
-    check_form('G8-SkinCheck-Nail.dc.html', 'Skin check: a nail step', 'Skin · Left thumb  7/8', body, step_bar(), h=1160)
+    check_form('G8-SkinCheck-NewArea.dc.html', 'Skin check: an area without an earlier entry', 'Skin · Left elbow  6/6', body, step_bar(no_change=False), h=1500)
 
     # ======================================================== 6. summary
     rows = [('Chin', [5, 4, 1, 5, 3], 'changed', 'cracks · 18 mm'), ('Neck', [6, 5, 2, 6, 4], 'same', ''), ('Ears, inside', [8, 7, 3, 7, 6], 'changed', '1 photo'),
             ('Behind the ears', [3, 2, 0, 3, 2], 'same', ''), ('Sternum', [None] * 5, 'skipped', 'not logged'), ('Left elbow', [2, 3, 0, 2, 1], 'changed', 'first entry')]
-    nails_sum = panel(
-        f'<div style="display: flex; align-items: center; gap: 10px"><span style="flex: 1; font-size: 15px; font-weight: 600">Left thumb</span><span style="font-size: 13.5px; color: {SOFT}">Separation · up to half</span><span style="color: @A@; font-weight: 800">=</span></div>'
-        + hair() + f'<div style="display: flex; align-items: center; gap: 10px"><span style="flex: 1; font-size: 15px; font-weight: 600">Right big toe</span><span style="font-size: 13.5px; color: {MUTED}">not logged</span><span style="color: {MUTED}; font-weight: 800">–</span></div>', pad='12px 16px', gap=10)
     not_logged = (f'<div class="ax-r ax-d3" style="display: flex; align-items: center; gap: 12px; padding: 12px 12px 12px 16px; border-radius: 26px; background: rgba(255,255,255,0.05); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.10)">'
-                  f'<span style="flex: 1; min-width: 0; font-size: 14px; line-height: 19px; color: {SOFT}">Not logged: Sternum, Right big toe</span>{btn("No change for these", "outline", h=44, extra="; flex: none; padding: 0 14px")}</div>')
-    body = (strip([('Chin', 'done'), ('Neck', 'same'), ('Ears, inside', 'done', 8), ('Behind the ears', 'same'), ('Sternum', 'skipped'), ('Left elbow', 'done'), ('Left thumb', 'same'), ('Right big toe', 'skipped')])
+                  f'<span style="flex: 1; min-width: 0; font-size: 14px; line-height: 19px; color: {SOFT}">Not logged: Sternum</span>{btn("No change for these", "outline", h=44, extra="; flex: none; padding: 0 14px")}</div>')
+    body = (strip([('Chin', 'done'), ('Neck', 'same'), ('Ears, inside', 'done', 8), ('Behind the ears', 'same'), ('Sternum', 'skipped'), ('Left elbow', 'done')])
             + f'<div class="ax-r ax-d1" style="display: flex; flex-direction: column; gap: 4px"><h2 style="margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.6px">Check this check</h2>'
               f'{hint("Tap a row to go back to that area. Everything is saved together, at one time.")}</div>'
-            + f'<div class="ax-r ax-d2" style="display: flex; flex-direction: column; gap: 8px">{section_label("Skin", cnt("5 of 6 logged"))}{score_table(rows, thresh=8)}</div>'
-            + f'<div class="ax-r ax-d2" style="display: flex; flex-direction: column; gap: 8px">{section_label("Nails", cnt("1 of 2 logged"))}{nails_sum}</div>'
+            + f'<div class="ax-r ax-d2" style="display: flex; flex-direction: column; gap: 8px">{section_label("Areas", cnt("5 of 6 logged"))}{score_table(rows, thresh=8)}</div>'
             + not_logged + time_note())
     put('G8-SkinCheck-Summary.dc.html', 'Skin check: summary and Save', modal_top('Skin · Summary') + body + '<div aria-hidden="true" style="height: 90px"></div>' + save_bar('Save skin check') + MODAL_END, h=1240)
 
@@ -245,8 +232,8 @@ def run():
              ('Behind the ears', [3, 2, 0, 3, 2], '', ''), ('Left elbow', [2, 3, 0, 2, 1], '', '')]
     body = (f'<div class="ax-r ax-d1" style="display: flex; flex-direction: column; gap: 4px"><h2 style="margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.6px">Skin check, 21:40</h2>'
             f'{hint("Tap an area to change it. Removing an area deletes only that area’s entry.")}</div>'
-            + f'<div class="ax-r ax-d2" style="display: flex; flex-direction: column; gap: 8px">{section_label("Logged", cnt("5 skin · 1 nail"))}{score_table(erows, state=False, thresh=8)}</div>'
-            + block('Not in this check', chips([add_chip('Sternum'), add_chip('Right big toe')]), cls='ax-r ax-d3')
+            + f'<div class="ax-r ax-d2" style="display: flex; flex-direction: column; gap: 8px">{section_label("Logged", cnt("5 areas"))}{score_table(erows, state=False, thresh=8)}</div>'
+            + block('Not in this check', chips([add_chip('Sternum')]), cls='ax-r ax-d3')
             + time_note('Thu 19 Nov · 21:40')
             + f'<div class="ax-r ax-d4">{btn("Delete this check", "danger", "trash", full=True, h=52)}</div>')
     put('G8-SkinCheck-Edit.dc.html', 'Skin check: editing a saved check', modal_top('Edit skin check') + body + '<div aria-hidden="true" style="height: 90px"></div>' + save_bar('Save changes') + MODAL_END, h=1060)
@@ -260,14 +247,14 @@ def run():
               + f'<div style="padding: 10px 10px 12px 16px; display: flex; flex-direction: column; gap: 8px"><span style="font-size: 15.5px; font-weight: 600">Patch size</span>'
               + field('sizeMm', 'Patch size in mm', 'mm', '18', focus=True, suffix='mm', h=52, inputmode='numeric')
               + f'<span style="font-size: 12.5px; color: {MUTED}">Whole millimetres, 1 to 500. Done closes the keypad.</span></div></div></div>')
-    put('G8-SkinExtras-States.dc.html', 'Skin: cracks and patch size, three states', modal_top('Skin · Chin  1/8') + states + MODAL_END, h=900)
+    put('G8-SkinExtras-States.dc.html', 'Skin: cracks and patch size, three states', modal_top('Skin · Chin  1/6') + states + MODAL_END, h=900)
 
     # ======================================================== 9. Today with a skin check (one dot, one row)
-    rows_t = [log_row('skin', 'Skin check · 6 areas', 'worst: Ears, inside 8 · 1 skipped', '21:40', new=True), log_row('health', 'Daily health', 'Wellbeing 6 · Stress 4', '21:30'),
+    rows_t = [log_row('skin', 'Skin check · 5 areas', 'worst: Ears, inside 8 · 1 skipped', '21:40', new=True), log_row('health', 'Daily health', 'Wellbeing 6 · Stress 4', '21:30'),
               log_row('meal', 'Rice with vegetables', '', '19:10')]
     today('G8-Today-SkinCheck.dc.html', 'Today: a skin check is one dot and one row',
           dots=[ring_dot('out', 7.5, 'filled', 'Oatmeal, 07:30'), ring_dot('out', 19.2, 'filled', 'Rice with vegetables, 19:10'), ring_dot('in', 21.0, 'hollow', 'Daily health, 21:30'),
-                ring_dot('in', 21.7, 'care', 'Skin check, 6 areas, 21:40')],
+                ring_dot('in', 21.7, 'care', 'Skin check, 5 areas, 21:40')],
           arc=21.8, count='4 entries · 21:48', pills=[pill('Ears, inside: severity 8 since 12 Nov', 'flare', 8)], rows=rows_t, log_n='4 entries')
 
     # ======================================================== 10. the action sheet of a check
@@ -276,7 +263,7 @@ def run():
     today('G8-Sheet-SkinCheck.dc.html', 'A skin check: Edit or Delete',
           dots=[ring_dot('out', 7.5, 'filled', 'Oatmeal, 07:30'), ring_dot('in', 21.7, 'care', 'Skin check, 21:40')],
           arc=21.8, count='4 entries · 21:48', rows=rows_t, log_n='4 entries',
-          overlay=scrim + action_sheet('Skin check, 21:40', '6 areas and 1 nail. Deleting also deletes 1 photo.', acts))
+          overlay=scrim + action_sheet('Skin check, 21:40', '5 areas. Deleting also deletes 1 photo.', acts))
 
     # ======================================================== 11. merged dot: Edit and Delete on each row
     def mrow(icon, title, detail, time):
@@ -306,7 +293,7 @@ def run():
           dots=[ring_dot('out', 7.5, 'filled', 'Oatmeal, 07:30'), ring_dot('out', 12.7, 'filled', 'Chicken salad, 12:40'), ring_dot('in', 21.6, 'care', 'Skin check, 21:40'), ring_dot('in', 21.0, 'hollow', 'Daily health, 21:30')],
           arc=None, weekday='Thursday', date='19 Nov', count='5 entries', past=True,
           pills=[pill(svg(IC['check'], 16, '@A@', 2.6) + 'Daily health saved')],
-          rows=[log_row('skin', 'Skin check · 6 areas', 'worst: Ears, inside 8', '21:40'), log_row('health', 'Daily health', 'Wellbeing 6 · Stress 4', '21:30'), log_row('meal', 'Chicken salad', 'egg, mustard', '12:40')],
+          rows=[log_row('skin', 'Skin check · 5 areas', 'worst: Ears, inside 8', '21:40'), log_row('health', 'Daily health', 'Wellbeing 6 · Stress 4', '21:30'), log_row('meal', 'Chicken salad', 'egg, mustard', '12:40')],
           log_n='5 entries', overlay=back_chip)
     today('G8-Today-PastDay-NotLogged.dc.html', 'A past day without Daily health',
           dots=[ring_dot('out', 8.0, 'filled', 'Toast, 08:00'), ring_dot('out', 13.2, 'filled', 'Soup, 13:10')],
@@ -344,26 +331,46 @@ def run():
             + hint('Today is full: move one to More to pin another. A type you move to More goes to the end of this list.') + '</div>')
     pushed('G8-EditToday-Preview.dc.html', 'Edit Today: live preview, numbered pins, sortable More', 'Edit Today', 'Choose what sits on Today', 'Back to More', body, h=1500)
 
-    # ======================================================== 15. Review: a day, with the date as title
-    day_rows = [('Chin', [5, 4, 1, 5, 3], '', 'cracks · 18 mm'), ('Neck', [6, 5, 2, 6, 4], '', ''), ('Ears, inside', [8, 7, 3, 7, 6], '', '1 photo'), ('Behind the ears', [3, 2, 0, 3, 2], '', ''), ('Left elbow', [2, 3, 0, 2, 1], '', '')]
-    check_block = (f'<div style="display: flex; flex-direction: column; gap: 8px; padding: 8px; border-radius: 32px; background: rgba(255,255,255,0.04); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08)">'
-                   + log_row('skin', 'Skin check · 6 areas', 'worst: Ears, inside 8 · nails: Left thumb =', '21:40') + score_table(day_rows, state=False, legend=False, thresh=8) + '</div>')
-    log = check_block + ''.join([log_row('health', 'Daily health', 'Wellbeing 6 · Stress 4', '21:30'), log_row('meal', 'Rice with vegetables', '', '19:10'), log_row('meal', 'Chicken salad', 'egg, mustard', '12:40')])
-    day = (f'<div class="ax-r ax-d2">{banner("", "This day has a Daily health record. Newest first.", "check")}</div>'
+    # ======================================================== 15. Review: a day, with the date as title (layout as G4-DayLog)
+    log = ''.join([log_row('skin', 'Skin check · 5 areas', 'worst: Ears, inside 8 · 1 photo', '21:40'), log_row('health', 'Daily health', 'Wellbeing 6 · Stress 4', '21:30'),
+                   log_row('meal', 'Rice with vegetables', '', '19:10'), log_row('stool', 'Stool, type 4', '', '13:05'), log_row('meal', 'Chicken salad', 'egg, mustard', '12:40'),
+                   log_row('nails', 'Nails: Left thumb', 'Separation · up to half', '09:30')])
+    day = (f'<div class="ax-r ax-d2">{banner("", "This day has a Daily health record. Entries below are newest first.", "check")}</div>'
            f'<div class="ax-r ax-d3" style="display: flex; flex-direction: column; gap: 8px">{section_label("Log", cnt("6 entries"))}{log}</div>'
            f'<div class="ax-r ax-d4">{btn("Open this day on Today", "glass", "clock", full=True, h=52)}</div>')
-    pushed('G8-ReviewDay-Title.dc.html', 'Review day: the date and weekday as title, a check as a table', 'Thursday, 19 November', '6 entries', 'Back to Review', day, h=1260)
+    pushed('G8-ReviewDay-Title.dc.html', 'Review day: the date and weekday as title, layout unchanged', 'Thursday, 19 November', '6 entries', 'Back to Review', day, h=1060)
 
-    # ======================================================== 16. area timeline as a table
-    tl_rows = [('Thu 19 Nov', [8, 7, 3, 7, 6], '', '21:40 · 1 photo'), ('Wed 18 Nov', [8, 7, 4, 7, 6], '', '21:12'), ('Tue 17 Nov', [7, 6, 3, 6, 5], '', '21:30 · cracks'),
-               ('Mon 16 Nov', [6, 5, 2, 6, 4], '', '22:05 · 2 photos'), ('Sun 15 Nov', [5, 5, 2, 5, 4], '', '20:50'), ('Sat 14 Nov', [5, 4, 1, 5, 3], '', '21:00')]
+    # ======================================================== 16. area timeline: entries as a table (dates as rows, symptoms as columns)
+    def tl_table(rows, thresh=8):
+        heads = ['Severity', 'Itch', 'Pain', 'Dryness', 'Scaling']
+        cols = '86px repeat(5, minmax(0, 1fr))'
+        hd = ''.join(f'<span style="text-align: center">{h}</span>' for h in heads)
+        out = (f'<div role="row" style="display: grid; grid-template-columns: {cols}; gap: 2px; align-items: end; padding: 0 10px 8px 14px; font-size: 11px; font-weight: 700; color: {MUTED}; border-bottom: 1px solid rgba(255,255,255,0.10)">'
+               f'<span role="columnheader">Date</span>{hd.replace("<span ", "<span role=\"columnheader\" ")}</div>')
+        for i, (day, time, vals, note) in enumerate(rows):
+            cells = ''
+            for j, v in enumerate(vals):
+                if j == 0 and v >= thresh:
+                    cells += (f'<span role="cell" style="display: flex; justify-content: center"><span style="width: 30px; height: 30px; border-radius: 999px; background: {CORAL}; color: {ONALERT}; display: flex; align-items: center; justify-content: center; font-weight: 800">{v}</span></span>')
+                else:
+                    cells += f'<span role="cell" style="text-align: center; font-weight: {"800" if j == 0 else "600"}">{v}</span>'
+            nt = f'<span style="display: block; font-size: 11.5px; line-height: 15px; color: {MUTED}">{note}</span>' if note else ''
+            zebra = 'background: rgba(255,255,255,0.035); ' if i % 2 else ''
+            out += (f'<button role="row" aria-label="{day}" style="display: grid; grid-template-columns: {cols}; gap: 2px; align-items: center; min-height: 52px; padding: 6px 10px 6px 14px; {zebra}font-size: 16px; font-variant-numeric: tabular-nums; text-align: left">'
+                    f'<span role="rowheader" style="min-width: 0"><span style="display: block; font-size: 14.5px; font-weight: 700">{day}</span><span style="display: block; font-size: 11.5px; color: {MUTED}">{time}</span>{nt}</span>{cells}</button>')
+        return (f'<div role="table" aria-label="Entries of this area" style="display: flex; flex-direction: column; padding: 10px 0 8px 0; border-radius: 28px; overflow: hidden; {GLASS_BLUR}">{out}'
+                f'<span style="font-size: 12px; line-height: 16px; color: {MUTED}; padding: 10px 14px 2px 14px">0 none · 10 worst. Coral: at or above the flare threshold (8).</span></div>')
+    tl_rows = [('Thu 19 Nov', '21:40', [8, 7, 3, 7, 6], '1 photo'), ('Wed 18 Nov', '21:12', [8, 7, 4, 7, 6], ''), ('Tue 17 Nov', '21:30', [7, 6, 3, 6, 5], 'cracks'),
+               ('Mon 16 Nov', '22:05', [6, 5, 2, 6, 4], '2 photos'), ('Sun 15 Nov', '20:50', [5, 5, 2, 5, 4], ''), ('Sat 14 Nov', '21:00', [5, 4, 1, 5, 3], 'cracks · 12 mm'),
+               ('Fri 13 Nov', '21:20', [4, 4, 1, 4, 3], '')]
     chart = (f'<div class="ax-r ax-d2" style="display: flex; flex-direction: column; gap: 10px; padding: 14px 14px 12px 14px; border-radius: 30px; {GLASS_BLUR}">'
-             f'<div style="display: flex; align-items: center; justify-content: space-between"><h2 style="margin: 0; font-size: 16px; font-weight: 700">Trend</h2><span style="font-size: 13px; color: {MUTED}">90 days</span></div>'
-             f'{R["trend_chart"]()}</div>')
+             f'<div style="display: flex; align-items: center; justify-content: space-between"><h2 style="margin: 0; font-size: 16px; font-weight: 700">Trend</h2><span style="font-size: 13px; color: {MUTED}">All</span></div>'
+             f'<div style="display: flex; gap: 2px; overflow-x: auto; margin: 0 -4px">{R["score_chips"]}</div>{R["trend_chart"]()}</div>')
     tl = (pushed_header('Ears, inside', 'Skin · flare since 12 Nov', 'Back to Review', btn('Go to date', 'glass', 'calendar', h=40)) + chart
-          + f'<div class="ax-r ax-d3" style="display: flex; flex-direction: column; gap: 8px">{section_label("Entries", cnt("coral: at or above the flare threshold, 8"))}{score_table(tl_rows, first="Day", state=False, thresh=8)}</div>'
-          + hint('A tap on a row opens the Edit and Delete sheet of its skin check; Edit opens the check at this area.'))
-    put('G8-AreaTimeline-Table.dc.html', 'Area timeline: entries as a table', content() + tl + '</div>', h=1180)
+          + f'<div class="ax-r ax-d3">{btn("Compare two photos", "glass", "camera", full=True, h=48)}</div>'
+          + f'<div class="ax-r ax-d3" style="display: flex; flex-direction: column; gap: 8px">{section_label("Entries", cnt("newest first"))}{tl_table(tl_rows)}</div>'
+          + hint('A tap on a row opens Edit and Delete for that entry. The rest of Review is unchanged.'))
+    put('G8-AreaTimeline-Table.dc.html', 'Review, Areas: an area’s entries as a table', content() + tl + '</div>', h=1300)
 
     # ======================================================== 17. stool rows with descriptions (form)
     DESC = [(1, 'Hard lumps', 'Separate hard lumps, hard to pass'), (2, 'Lumpy sausage', 'Sausage-shaped but lumpy'), (3, 'Cracked sausage', 'Sausage shape with cracks on the surface'),
@@ -422,7 +429,7 @@ def run():
     nails_entry = R['nav_row']('nails', 'Nail map', '3 tracked', 'Pick the nails you follow', last=True).replace('<button style="', f'<button style="padding-left: 12px; padding-right: 14px; border-radius: 26px; {GLASS_BLUR}; ', 1)
     sa = (f'<div class="ax-r ax-d2" style="display: flex; flex-direction: column; gap: 8px">{section_label("Skin", cnt("this order everywhere"))}{list_panel([skin_list])}</div>'
           f'<div class="ax-r ax-d3">{add_row("Add a skin area")}</div>'
-          + hint('The skin check goes through the areas in this order, then the nails. Review, the report and the area pickers use it too.')
+          + hint('The skin check goes through the skin areas in this order. Review, the report and the area pickers use it too. Nails are logged on their own, from the nail map.')
           + f'<div class="ax-r ax-d3" style="display: flex; flex-direction: column; gap: 8px">{section_label("Nails")}{nails_entry}</div>'
           + f'<div class="ax-r ax-d4">{btn("Archived areas (1)", "glass", "box", full=True, h=48)}</div>')
     pushed('G8-SkinAreas-Order.dc.html', 'Settings: area order and the nail map', 'Skin and nail areas', 'Settings', 'Back to Settings', sa, h=1180)
@@ -431,9 +438,11 @@ def run():
     other = (f'<div class="ax-r ax-d3" style="display: flex; flex-direction: column; gap: 8px">{section_label("Other nails", cnt("added by name before"))}'
              f'<div style="display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 16px; border-radius: 999px; {GLASS_BLUR}"><span style="flex: 1; min-width: 0"><span style="display: block; font-size: 15.5px; font-weight: 600">Big toe right</span>'
              f'<span style="display: block; font-size: 12.5px; color: {MUTED}">4 entries · 2 photos</span></span>{btn("This is…", "outline", h=44, extra="; flex: none")}</div></div>')
-    nmap = (f'<div class="ax-r ax-d1">{hint("Tap a nail to log it or add a close-up photo. A dashed nail is not tracked: tap it to start.")}</div>'
+    nc_all = (f'<div class="ax-r ax-d1" style="display: flex; flex-direction: column; gap: 6px">{btn("No change for all tracked nails", "outline", "check", full=True, h=52)}'
+              f'{hint("Saves one entry per tracked nail with its last stage and extent.")}</div>')
+    nmap = (nc_all + f'<div class="ax-r ax-d2">{hint("Tap a nail to log it or add a close-up photo. A dashed nail is not tracked: tap it to start.")}</div>'
             + nail_map(**MAP_STATES) + other + time_note())
-    form('G8-NailMap.dc.html', 'Nails: pick a nail on the map', 'Nails', nmap, None, h=1080)
+    form('G8-NailMap.dc.html', 'Nails: its own entry, picked on the map', 'Nails', nmap, None, h=1160)
 
     # ======================================================== 22. a tracked nail's sheet
     ns_inner = (f'<div style="display: flex; flex-direction: column; gap: 14px; padding: 0 4px">'
@@ -444,7 +453,7 @@ def run():
                 + block('Close-up photos', f'<div style="display: flex; gap: 10px">{btn("Take photo", "glass", "camera", h=48, extra="; flex: 1")}{btn("From library", "glass", "plus", h=48, extra="; flex: 1")}</div>'
                         f'<div style="display: flex; gap: 10px">{R["photo"]("16 Nov", size=64)}{R["photo"]("16 Nov", size=64)}</div>', cls='')
                 + btn('Save Left thumb', 'primary', 'check', full=True, h=56, extra='; font-size: 17px')
-                + f'<button style="height: 44px; font-size: 14.5px; font-weight: 600; color: {CORAL}">Stop tracking this nail</button></div>')
+                + f'<button style="height: 44px; font-size: 14.5px; font-weight: 600; color: {CORAL}; display: flex; align-items: center; justify-content: center; text-align: center; gap: 6px">Stop tracking this nail</button></div>')
     put('G8-NailMap-Sheet.dc.html', 'Nails: a tracked nail’s sheet with close-up photos',
         modal_top('Nails') + f'<div style="opacity: 0.35">{nail_map(**MAP_STATES, sel=("Left hand", "Thumb"), cls="")}</div>' + MODAL_END
         + '<div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(3,6,10,0.55)"></div>'
@@ -452,7 +461,7 @@ def run():
 
     # ======================================================== 23. tracking a new nail
     tr_inner = (f'<div style="display: flex; flex-direction: column; gap: 12px; padding: 0 4px">'
-                + body_text('This nail joins the skin check and the weekly nail photo reminder. You can stop tracking it at any time; its entries stay.', SOFT, 14)
+                + body_text('This nail goes on the nail map in colour and into the weekly nail reminder. You can stop tracking it at any time; its entries stay.', SOFT, 14)
                 + btn('Track this nail', 'primary', 'plus', full=True, h=56, extra='; font-size: 17px') + btn('Not now', 'glass', full=True, h=48) + '</div>')
     put('G8-NailMap-Track.dc.html', 'Nails: start tracking a nail',
         modal_top('Nails') + f'<div style="opacity: 0.35">{nail_map(**MAP_STATES, sel=("Right hand", "Index"), cls="")}</div>' + MODAL_END
@@ -493,8 +502,8 @@ NEEDS = '''Group 8: approved in the review, for building (tasks 20 to 29)
 
 Skin check: one area per step (title "Skin · Neck 2/8"), area strip, No change / Skip / Next, flare badge and Skip note, summary table with one Save, editing a saved check. Cracks and patch size in one card, no Details.
 Today: one dot and one row per check; merged-dot rows with Edit and Delete, delete asks in the sheet; past day with "Today" chip in the top bar and a status pill.
-Edit Today: live preview, numbered pins, sortable In More. Review day titled with the date; area timeline and check as score tables.
-Stool rows with descriptions (no drawings). Drinks by name. Area order. Nail map (20 nails, close-up photos), its sheet, tracking, "This is…". Polish layout fixes.
+Edit Today: live preview, numbered pins, sortable In More. Review: layout unchanged; the day title has the weekday; an area's entries are a table (dates as rows, symptoms as columns).
+Stool rows with descriptions (no drawings). Drinks by name. Area order. Nails stay their own entry, logged on the nail map (20 nails, close-up photos, No change for all tracked nails), its sheet, tracking, "This is…". Polish layout fixes.
 
 See docs/reviews/2026-11-23-first-use-review.md and docs/work-plan-2026-11-23.md.'''
 

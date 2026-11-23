@@ -38,7 +38,7 @@ Two safety nets, proposed:
 
 ### Data model proposal
 Keep one `SkinEntry` per area. The flares (SK-6), time to relapse (SK-12), area timelines (SK-8), photos (SK-4), the report and the analysis all work per area and need no change. Add a grouping:
-- `skin_entry.check_id TEXT NOT NULL` and `nail_entry.check_id TEXT NOT NULL`: all entries saved together share one id and one timestamp. A check is not a table of its own: it is the set of entries with the same `check_id`. (Like a batch id on rows written by one request.)
+- `skin_entry.check_id TEXT NOT NULL`: all entries saved together share one id and one timestamp. (Nails stay their own entry type and get no check id; decided 2026-11-23.) A check is not a table of its own: it is the set of entries with the same `check_id`. (Like a batch id on rows written by one request.)
 - `skin_area.position INTEGER NOT NULL`: the user's order, used everywhere areas are listed.
 
 Migration (one SQL step plus a data step, with an upgrade test):
@@ -46,10 +46,10 @@ Migration (one SQL step plus a data step, with an upgrade test):
 - `check_id` for existing entries. **Decide**:
   - **A (safe):** entries with the exact same timestamp (what "No change for all areas" saves) share one check; every other entry becomes a check of one area.
   - **B (recommended for your diary):** as A, plus entries of different areas saved within 15 minutes of each other on the same local day are grouped into one check, keeping each entry's own time. This turns what you logged area by area so far into checks. It cannot be undone cleanly after the fact, so the database copy above matters.
-- Export: `check_id` on skin and nail entries, `position` on areas (schema 2, version 1 upgraded on import as in section 0).
+- Export: `check_id` on skin entries, `position` on areas (schema 2, version 1 upgraded on import as in section 0).
 
 ### UX proposal: a stepper, one area per screen
-Opening Skin starts a **skin check** over all active areas in your order (skin areas first, then nails, if any).
+Opening Skin starts a **skin check** over all active skin areas in your order. Nails are not part of it: they stay their own entry type, logged on the nail map (section 13; decided 2026-11-23).
 
 ```
  Cancel        Skin · Neck  2/8
@@ -108,7 +108,7 @@ The area timeline (SK-8) prints each entry as one line of text: "Severity 7, Itc
 - Fixed columns with tabular figures, short headers with a one-line legend under the table (Polish: Nas., Swędz., Ból, Such., Łusz.).
 - A severity at or above the area's flare threshold gets the coral circle used elsewhere.
 - Cracks as a mark, size in mm, a photo count; a tap on a row opens its Edit and Delete sheet as now.
-- The day view lists a check as one row with one table line per area.
+- Decided 2026-11-23: only the area timeline (Review, Areas) gets the table, with dates as rows and symptoms as columns; the rest of Review keeps its layout, and a check is one plain row in the day view.
 
 ## 5. Today: the layout jumps when leaving today
 
@@ -189,9 +189,9 @@ Nail areas are user areas of kind `nail` with free-text names (`addArea(name, 'n
 ### Proposal: a nail map
 - **20 predefined nail areas**, stable ids `nail-hand-left-1` … `nail-hand-left-5`, `nail-hand-right-1` … `-5`, `nail-foot-left-1` … `-5`, `nail-foot-right-1` … `-5` (1 = thumb or big toe, 5 = little finger or toe), with localized names ("Left hand · thumb", "Lewa ręka · kciuk"). They are seeded **archived**, which already means "not asked, history kept": a nail is tracked by un-archiving it. No new column.
 - **The map:** four rows of five rounded nail tiles, left hand, right hand, left foot, right foot, in the order you see them looking down at the back of your hands, with a small label per row. Drawn as plain shapes in our own style (no anatomical drawing needed). A tracked nail shows the colour of its last stage and a dot when it has photos; an untracked one is a faint outline.
-- **Tap an untracked nail:** "Track this nail" (one tap); it joins the skin check and the weekly nail reminder (SK-9).
+- **Tap an untracked nail:** "Track this nail" (one tap); it joins the weekly nail reminder (SK-9).
 - **Tap a tracked nail:** a sheet with stage, extent, No change, **Add photo** (camera or library) and Save; "Stop tracking" at the bottom (archives it).
-- **Where it appears:** the Nails form (the map instead of the chips and the add field), the nail steps of the skin check (the strip groups the tracked nails under "Nails"), and Settings, Skin and nail areas (the map instead of the nail list; renaming stays possible).
+- **Where it appears:** the Nails form (the map instead of the chips and the add field, with "No change for all tracked nails" at the top; nails stay their own entry type, outside the skin check), and Settings, Skin and nail areas (the map instead of the nail list; renaming stays possible).
 - **Nails you already added by name** stay as they are, listed under the map as "Other nails". Each has "This is…" which opens the map to pick the matching nail: its entries and photos move to that nail and the old area is archived. That move is an explicit user action, not part of the automatic migration, because a free-text name cannot be matched reliably.
 - **Photos:** close-ups, one nail per photo, added from that nail's sheet (decided 2026-11-23: no photo of a whole hand).
 
@@ -235,6 +235,7 @@ Each is one `feature/` branch from `develop`, with its migration and tests.
 6. Nail photos are close-ups of one nail each; no photo of a whole hand, so nothing is copied or shared between nails.
 7. The size stays the size of the patch; only the layout changes (no Details button).
 8. The nail map and the inline size row are approved. Screens: group 8 on the design canvas.
+9. After the screens: nails stay their own entry type, not part of the skin check, with the nail-map flow; Review keeps its layout and only an area's entry list becomes a table (dates as rows, symptoms as columns); the bottom buttons of the skin check centre their text.
 
 ## Decisions (user, 2026-11-23)
 

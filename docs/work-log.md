@@ -722,3 +722,10 @@ On iOS 26 the system draws its own glass capsule behind a custom header view, so
 - **Report:** after the previous change, tapping Add ingredient did not scroll in the Polish app and the button stayed under the keyboard. The scroll was a formula (button position plus constants), which can be off by a few rows of height.
 - **Fix:** the formula stays as the first, smooth move; once the keyboard has settled (`keyboardDidShow`, or 450 ms when it was already up) the button is measured on screen and any remaining gap is scrolled (UX-3). While the add scroll is pending, the focus scroll of the new field stays out of its way so the two do not fight. 881 tests pass; not seen on a phone.
 - **Next:** phone check in Polish: add several ingredients, with the keyboard hidden and shown.
+
+## 2026-11-23: first-use review (branch feature/first-use-review)
+- **Done:** the user's remarks after a few days of real use and the notes in the phone test plan are in `docs/reviews/2026-11-23-first-use-review.md`, each with the current code, the cause where found and a proposed fix. Causes found in code: skin areas are listed `ORDER BY id` (alphabetical by id); Today's layout jumps only when leaving today because the "Back to today" row is inserted and the pills row collapses; the merged-dot sheet opens the native action sheet while its own `Modal` is closing (likely why nothing appears); drink suggestions are keyed by name and amount; `Segmented` labels are not centred; `SwitchRow` pills lose their shape when text wraps. All `nav.*` titles have Polish strings, so the untranslated titles need a phone check.
+- **Decision (user):** the diary holds real data, so every data change ships with a migration. CLAUDE.md's prototyping rule is replaced; requirements v0.9.7 adds NF-8; open-questions updated; the test plan's Setup warns to back up first.
+- **Proposed:** a skin check (one entry over all areas, `check_id` on the per-area entries, a stepper with the area name and step in the title), area order, and build-plan Phase 4 (tasks 19 to 28). Docs only, no app code.
+- **Next:** the user's decisions listed at the end of the review; then task 19 (migration-safety).
+

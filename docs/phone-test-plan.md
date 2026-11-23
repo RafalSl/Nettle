@@ -21,29 +21,29 @@ How to read it: each check has an ID, what to do, and what you should see. Mark 
 | S3 | Open Review. | An empty state (dashed ring, title, one sentence, one button) with a button back to Today; the two output cards (Doctor report, AI analysis) above it. | y |  |
 | S4 | Kill the app and reopen it. | No crash; database migrates (the schema changed several times). | y | checked only in expo |
 | S5 | Settings, About, Language: choose Polski, then English, then Device language, with the phone language set to the other one. | Each choice changes the text of the visible screens and the tab labels at once, without a restart; Polish strings are drafts (the Polish review is out of scope for now). The Language row shows "Polski", "English" or "Device (…)" with the phone's language (UX-7). Entries you logged stay as written. |  | want to switch it in the app |
-| S6 | Look at the app icon on the home screen, then open the app. Expo Go always shows its own icon: check this in a standalone build, or open `app/assets/images/icon.png` and `splash-icon.png` on the computer. | The icon is one serrated nettle leaf inside an accent ring on a dark ground (UX-12), readable at the smallest size; a dark splash with the same mark and the word Nettle, then Today with no white flash. |  |  |
-| S7 | With Polski chosen, kill the app and reopen it. Then choose Device language. | Still Polish after the restart; Device language follows the phone again (UX-7). |  |  |
-| S8 | With Polski chosen, open Review, Doctor report. Then choose English and open it again. | The report language starts as Polish, then English; you can still change it for each report (EX-3). |  |  |
+| S6 | Look at the app icon on the home screen, then open the app. Expo Go always shows its own icon: check this in a standalone build, or open `app/assets/images/icon.png` and `splash-icon.png` on the computer. | The icon is one serrated nettle leaf inside an accent ring on a dark ground (UX-12), readable at the smallest size; a dark splash with the same mark and the word Nettle, then Today with no white flash. | y | checked only in expo |
+| S7 | With Polski chosen, kill the app and reopen it. Then choose Device language. | Still Polish after the restart; Device language follows the phone again (UX-7). | y | checked only in expo |
+| S8 | With Polski chosen, open Review, Doctor report. Then choose English and open it again. | The report language starts as Polish, then English; you can still change it for each report (EX-3). |  | later |
 
 ## 2. Navigation shell (P0)
 
 | ID | Do | Expect | Pass | Notes |
 | --- | --- | --- | --- | --- |
-| N1 | Tap the gear on Today. | Settings opens above the tabs: tab bar hidden, a glass back circle, a large title, no Done (UX-1). |  |  |
-| N2 | Back. Repeat from the Review tab. | Back returns to the tab you came from each time. |  |  |
-| N3 | Settings list. | Grouped glass rows with icons: Logging; Reminders and privacy; AI analysis; Data and backup; About (Language, Where do I log…?, About Nettle). |  |  |
-| N4 | Open each group and each sub-row (Suggestions, Skin and nail areas, Regular items, Favorites, Privacy). | Every screen opens and goes back; titles fit. |  |  |
-| N5 | Open any entry form, make a change, swipe down to dismiss. | Discard Changes sheet appears (UX-3). Cancel keeps the form. The form has a glass Cancel in the header and no Save there; Save floats at the bottom. |  |  |
-| N6 | Large titles, form grabber, floating tab bar. | Nothing overlaps the notch, the home bar or the tab bar. Note anything ugly. |  |  |
+| N1 | Tap the gear on Today. | Settings opens above the tabs: tab bar hidden, a glass back circle, a large title, no Done (UX-1). | y |  |
+| N2 | Back. Repeat from the Review tab. | Back returns to the tab you came from each time. | y |  |
+| N3 | Settings list. | Grouped glass rows with icons: Logging; Reminders and privacy; AI analysis; Data and backup; About (Language, Where do I log…?, About Nettle). | y |  |
+| N4 | Open each group and each sub-row (Suggestions, Skin and nail areas, Regular items, Favorites, Privacy). | Every screen opens and goes back; titles fit. | y | 1. In polish version Wpisy.zaostrzenia.jednakowy dla wszystkich doesn't fit in one line and is aligned to the left - should fit in one line or be centered; 2. Prywatność - Blokada face id albo kodem - also aligned to the left which doesn't look good (the same with meal:Uzupełnij później z ai - not aligned well - text is aligned to the left and sits to close to the rounded corner, toggle is aligned to the top instead of the center); 3. I'm not sure if Privacy should be in "Przypomnienia i prywatność" - it fits well also in "Data & backup" and "About" |
+| N5 | Open any entry form, make a change, swipe down to dismiss. | Discard Changes sheet appears (UX-3). Cancel keeps the form. The form has a glass Cancel in the header and no Save there; Save floats at the bottom. | y |  |
+| N6 | Large titles, form grabber, floating tab bar. | Nothing overlaps the notch, the home bar or the tab bar. Note anything ugly. | y |  |
 
 ## 3. Daily logging (P0)
 
 | ID | Do | Expect | Pass | Notes |
 | --- | --- | --- | --- | --- |
-| L1 | Meal: New meal, type a description, Continue (the choose phase has no Save), add ingredients with Add ingredient, tap the floating Save. | Appears at the top of Today's log with an accent line for about 3 seconds. Add ingredient puts the cursor in the new field, and the form scrolls so the field and the button stay above the keyboard in one smooth move, with the keyboard hidden or open. |  |  |
-| L2 | Repeat the same meal. | It is offered as a suggestion; 3 taps to log (NF-2). |  |  |
-| L3 | Drink with the alcohol switch on. | Saved; row says alcohol. |  |  |
-| L4 | Skin: pick an area, move the slider by drag, by − and +. | Whole steps only; value readable and not hidden by the thumb. Optional scores show "–" with Clear. |  |  |
+| L1 | Meal: New meal, type a description, Continue (the choose phase has no Save), add ingredients with Add ingredient, tap the floating Save. | Appears at the top of Today's log with an accent line for about 3 seconds. Add ingredient puts the cursor in the new field, and the form scrolls so the field and the button stay above the keyboard in one smooth move, with the keyboard hidden or open. | y | I'm just not sure if Favorite button should be just under the name with ai suggestions button - record this as an open question |
+| L2 | Repeat the same meal. | It is offered as a suggestion; 3 taps to log (NF-2). | y | |
+| L3 | Drink with the alcohol switch on. | Saved; row says alcohol. | y | i'm not sure about pills and suggestions placement and order - record as open question |
+| L4 | Skin: pick an area, move the slider by drag, by − and +. | Whole steps only; value readable and not hidden by the thumb. Optional scores show "–" with Clear. | y | |
 | L5 | Skin: save, then open Skin again for the same area. | Starts from the last scores. "No change" saves in one tap. |  |  |
 | L6 | Daily health: set two scores, toggle two yes/no chips, Save with no meals logged. | Asks to confirm the empty day; after confirming, saved and the day is logged. |  |  |
 | L7 | Daily health tomorrow-style: use "Same as yesterday" (create a record for yesterday first via the day switcher). | Copies all items; nothing filled silently. |  |  |

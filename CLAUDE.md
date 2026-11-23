@@ -18,14 +18,19 @@ Requirements: @docs/requirements.md.
 - Develop for Expo Go: use only libraries available in Expo Go unless a spike
   proves otherwise.
 
-## Prototyping phase (decided 2026-11-15)
-Nothing logged so far is real data. Do not plan or build data migrations,
-old-data handling, importers for old export shapes or backward-compatible
-parsers; change the schema freely (`schema_version` stays 1; a plain new SQL
-migration step is fine when the app needs one). This holds until the first
-release on GitHub or until the user changes the decision. Also out of the plan
-until the user says so: the accessibility pass (UX-8) and the Polish string
-review.
+## Real data: every data change ships with a migration (decided 2026-11-23, NF-8)
+The user logs real data in the app (no formal release yet). This replaces the
+prototyping-phase rule of 2026-11-15. Every change to a data structure includes
+its migration, with a test that upgrades data in the previous shape (synthetic
+rows only):
+- SQLite: a new append-only step in `adapters/storage/migrations.ts`; never edit
+  or drop a shipped step, never delete user rows as "prototype data".
+- Preferences JSON: bump its version and add a pure upgrade function.
+- Export: bump `schema_version` when the shape changes; the importer keeps
+  reading every earlier version and upgrades it in memory.
+- Photos and other files keep their ids and paths, or the migration moves them.
+Still out of the plan until the user says so: the accessibility pass (UX-8)
+and the Polish string review.
 
 ## Health and privacy rules
 - LLM or app output is never a medical conclusion, only tentative hypotheses.

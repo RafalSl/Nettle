@@ -41,6 +41,8 @@ Status: approved 2026-11-21 on the design canvas and built in the app (requireme
 
 The accent is a single value so a theme switch stays possible; alternatives tried on the canvas were lime `#A3E635` and lavender `#C4B5FD`.
 
+**Nail stage colours (SK-10, v0.9.8).** The nail map tints each tracked nail by its last stage: red or dark edge coral `#FF8A6B`, separation lavender `#C4B5FD`, yellow `#E8C468`, white `#E6EAF0`, clear the accent. They are data colours, used only on the nail map and its legend, and the stage is always named in the tile's label and the sheet, so colour is never the only cue. An untracked nail is a dashed outline.
+
 ### Type
 
 Gabarito, weights 400 to 800. Tabular figures for times, scores and dates in lists.

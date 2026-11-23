@@ -48,9 +48,24 @@ Both come from the user after looking at the finished boards. Branch per task, a
    - Docs in the same branch: requirements statuses of UX-6, UX-7, NF-6 and LL-11 to Done (drop "v0.9.5 change not built"), and a step in `phone-test-plan.md` (S5: choose Polski and English from the setting, with the device set to the other language). The phone run: Expo Go takes its language from the device, so the explicit choices are the real test.
 18. **app-icon-nettle** (UX-12; boards `G7-AppIcon-Nettle`, `G7-Splash-Nettle`). The user chose option A on 2026-11-21: one serrated nettle leaf inside the ring (B and C stay on the canvas for the record). `design/generator/appicon.py` draws the leaf with the same shape as `leaf_path` in `design/generator/group7.py` and rewrites `icon.png`, `splash-icon.png`, `favicon.png` and the three Android layers (the monochrome layer is the leaf and the ring in one colour). Check the PNGs by opening them, at 1024, 180, 60 and 29 pt; Expo Go always shows its own icon, so the icon is only seen in a standalone build. The boards `G6-AppIcon` and `G6-Splash` are the first version and can be deleted. Add the icon and splash checks to `phone-test-plan.md` (S6, done 2026-11-21).
 
+## Phase 4: changes after the first real use (2026-11-23)
+
+From the user's first days with a real diary and the phone test notes; details, causes and designs in `docs/reviews/2026-11-23-first-use-review.md`. Every task ships its data migration (NF-8). Branch per task. The user's decisions are in, and each task is planned in detail in `docs/work-plan-2026-11-23.md` (scope, migration, tests, phone checks, order).
+
+19. **migration-safety** (NF-8): preferences version and upgrade chain, export `schema_version` 2 with a reader that upgrades 1, a copy of the database file before pending migrations run.
+20. **area-order** (SK-2): `skin_area.position`, up and down in Settings, every area list follows it.
+21. **skin-check** (SK-3, UX-2, EN-1, SK-8, EX-1): `check_id` on skin and nail entries, the stepper with the area strip and the summary, one ring dot and one log row per check, editing and deleting a check, the backfill of existing entries.
+22. **ring-sheet-actions** (UX-2, EN-1): Edit and Delete in the merged-dot sheet, native sheets only after the quick sheet has closed.
+23. **today-steady-layout** (UX-2): Back to today in the top bar, the past-day status pill.
+24. **more-order-and-preview** (UX-2, UX-11): `moreOrder`, sorting In More, the live grid preview in Edit Today.
+25. **review-day-and-tables** (SK-8): Review day title with the weekday, scores as a table.
+26. **stool-layout** (SK-7): banded rows with descriptions (and glyphs, if chosen) in the form, the edit form and the quick sheet.
+27. **drink-recents-by-name** (IN-14): suggestion and favorite key by name, favorites re-keyed.
+28. **polish-titles-and-rows** (NF-6, UX-12): `useScreenTitle` and a test of every title in Polish, `Segmented` and `SwitchRow` fixes.
+
 ## Out of this plan
 
-UX-8 (accessibility), the Polish string review, migrations and old data, pruning unused dependencies (reanimated, gesture-handler, `expo-blur` and `react-native-svg` now get used; prune what is left after phase 1), UX-13 (drag around the ring, Later), and everything the user marks as changed on the canvas until the board is redrawn.
+UX-8 (accessibility), the Polish string review, pruning unused dependencies (reanimated, gesture-handler, `expo-blur` and `react-native-svg` now get used; prune what is left after phase 1), UX-13 (drag around the ring, Later), and everything the user marks as changed on the canvas until the board is redrawn.
 
 ## Checks that need the phone
 

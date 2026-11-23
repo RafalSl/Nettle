@@ -11,18 +11,20 @@ The file has five parts: undecided questions, accepted limits, known bugs, decid
 - **Anthropic refusal fallback.** Not used (needs the beta request shape); a refusal shows a message. Revisit once a real call has worked.
 - **Merge keeps local settings.** Merging into a fresh install skips the six pre-seeded predefined areas, so a renamed or archived predefined area from the file is not applied; Replace (settings) restores them. Revisit with EX-12, or adopt incoming values for areas still at factory state.
 - **Unused template dependencies.** Prune when moving to a standalone build (reanimated, gesture-handler, expo-image, expo-glass-effect, `@expo/ui`, ...). No effect in Expo Go.
+- **Privacy row placement (phone test N4).** Privacy sits under Reminders and privacy; it could fit under Data and backup or About.
+- **Favorite button in the meal form (phone test L1).** Should Favorite sit just under the name, next to the AI ingredient suggestion button?
+- **Drink form layout (phone test L3).** Placement and order of the pills and the suggestions.
 
 ## Not planned until the user says so
 
 - **Accessibility pass (UX-8).** Decided 2026-11-15: not done and not planned until the user decides.
 - **Polish string review.** Decided 2026-11-15: not in the plan until the user says so (first draft in `app/src/i18n/pl.json`).
-- **Migrations and old data.** Prototyping phase: no migration, no old-data handling until the first GitHub release or until the user changes this (see CLAUDE.md).
 
 ## Accepted limits
 
 - **`expo-sqlite` wrapper is untested in code.** Storage logic is tested through the `SqlDb` seam on `node:sqlite`; the ~20-line `app/src/adapters/storage/expoSqliteDb.ts` is verified on a phone only.
 - **One Daily health record per day is enforced by the use case only.** No database constraint, so a merge from another phone could add a second one for the same day; the newest is shown. Revisit with EX-12.
-- **`schema_version` stays 1 in development.** Exports made before the current required sections will not import.
+- **Exports from before 2026-11-23.** Exports made before the current required sections will not import; from now on the importer keeps reading every earlier `schema_version` (NF-8).
 - **Export memory.** Photos are read one at a time, but the whole ZIP is held in memory (about the sum of the photos). Fine for months of daily photos; watch it on a large archive.
 - **Backup exclusion of photos (SE-7).** Expo Go cannot mark files as excluded from iOS backup; revisit in a standalone build (`isExcludedFromBackup` through a config plugin or native code).
 
